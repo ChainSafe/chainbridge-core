@@ -1,0 +1,21 @@
+version: '3'
+services:
+  geth:
+    image: "chainsafe/chainbridge-geth:20200505131100-5586a65"
+    container_name: geth
+    ports:
+      - "8545:8545"
+
+  celo:
+    image: "chainsafe/chainbridge-celo-blockchain:20200720215414-7a61816"
+    container_name: celo
+    ports:
+      - "8546:8545"
+
+#
+#  sub-chain:
+#    image: "chainsafe/chainbridge-substrate-chain:v1.1.0"
+#    container_name: sub-chain
+#    command: chainbridge-substrate-chain --dev --alice --ws-external --rpc-external
+#    ports:
+#      - "9944:9944"
