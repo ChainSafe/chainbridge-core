@@ -6,9 +6,11 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/ChainSafe/chainbridgev2/modules/evm/handlers"
+
 	"github.com/ChainSafe/chainbridge-utils/keystore"
-	"github.com/ChainSafe/chainbridgev2/modules/eth/client"
-	"github.com/ChainSafe/chainbridgev2/modules/eth/listener"
+	"github.com/ChainSafe/chainbridgev2/modules/evm/client"
+	"github.com/ChainSafe/chainbridgev2/modules/evm/listener"
 	"github.com/ChainSafe/chainbridgev2/relayer"
 	"github.com/ethereum/go-ethereum/common"
 	ethcommon "github.com/ethereum/go-ethereum/common"
@@ -50,8 +52,14 @@ func Run(ctx *cli.Context) error {
 		panic(err)
 	}
 	bridgeAddressCelo := ethcommon.HexToAddress("0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B")
-	ethListener := listener.NewListener(c, bridgeAddressCelo)
-	celoListener := listener.NewListener(celoC, bridgeAddressCelo)
+	ethListener := listener.NewListener(c, bridgeAddressCelo, 1)
+	celoListener := listener.NewListener(celoC, bridgeAddressCelo, 2)
+
+	ethListener.RegisterHandler(common.HexToAddress("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF"), handlers.HandleErc20DepositedEvent)
+	//ethListener.RegisterHandler(common.HexToAddress("0x3f709398808af36ADBA86ACC617FeB7F5B7B193E"), handlers.HandleErc721DepositedEvent)
+	//ethListener.RegisterHandler(common.HexToAddress("0x2B6Ab4b880A45a07d83Cf4d664Df4Ab85705Bc07"), handlers.HandleGenericDepositedEvent)
+
+	celoListener.RegisterHandler(common.HexToAddress("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF"), handlers.HandleErc20DepositedEvent)
 
 	// It should listen different chains and accept different configs
 	r := relayer.NewRelayer([]relayer.IListener{ethListener, celoListener})

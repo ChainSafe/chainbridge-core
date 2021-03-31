@@ -34,7 +34,7 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan<- error) {
 //	r.registry[id] = w
 //}
 //
-//func (r *Registry) Send(dest uint8, m Messager) error {
+//func (r *Registry) Send(dest uint8, m XCMessager) error {
 //	log.Debug().Msgf("Sending message %+v to destination %v", m, dest)
 //	return nil
 //}
