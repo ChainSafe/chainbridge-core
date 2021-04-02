@@ -37,20 +37,6 @@ func newGenericHandledMessage(source, dest uint8, nonce uint64, resourceId [32]b
 	}
 }
 
-func newErc20Message(source, dest uint8, nonce uint64, amount *big.Int, resourceId [32]byte, recipient []byte) *relayer.XCMessage {
-	return &relayer.XCMessage{
-		Source:       source,
-		Destination:  dest,
-		Type:         relayer.FungibleTransfer,
-		DepositNonce: nonce,
-		ResourceId:   resourceId,
-		Payload: []interface{}{
-			amount.Bytes(),
-			recipient,
-		},
-	}
-}
-
 func HandleErc20DepositedEvent(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, backend bind.ContractBackend) (*relayer.XCMessage, error) {
 	contract, err := erc20Handler.NewERC20Handler(handlerContractAddress, backend)
 	if err != nil {

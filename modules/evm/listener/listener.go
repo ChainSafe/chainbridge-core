@@ -16,9 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-type Client interface {
-}
-
 type IBridge interface {
 	ResourceIDToHandlerAddress(opts *bind.CallOpts, arg0 [32]byte) (ethcommon.Address, error)
 }

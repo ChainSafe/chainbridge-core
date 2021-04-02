@@ -116,7 +116,7 @@ func getDepositEventsForBlock(l IListener, latestBlock *big.Int) error {
 			return fmt.Errorf("failed to get handler from resource ID %x, reason: %w", rId, err)
 		}
 		backend := l.GetContractBackend()
-		m, err := h(sourceID, destId, nonce, addr, backend)
+		m, err := h(l.GetChainID(), destId, nonce, addr, backend)
 		log.Debug().Msgf("Resolved message %+v", m)
 		//Router.Send(m)
 	}
