@@ -14,7 +14,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type Handler func(sourceID, destID uint8, nonce uint64, handlerContractAddress common.Address, backend bind.ContractBackend) (*XCMessage, error)
+type Handler func(sourceID, destID uint8, nonce uint64, handlerContractAddress common.Address, backend bind.ContractBackend) (*XCMessager, error)
 type Handlers map[ethcommon.Address]Handler
 
 type IListener interface {

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -22,6 +24,28 @@ type DefaultEVMMessage struct {
 	DepositNonce uint64       // Nonce for the deposit
 	ResourceId   [32]byte
 	Payload      []interface{} // data associated with event sequence
+}
+
+func (m *DefaultEVMMessage) GetSource() uint8 {
+	return m.GetSource()
+}
+func (m *DefaultEVMMessage) GetDestination() uint8 {
+	return m.GetDestination()
+}
+func (m *DefaultEVMMessage) GetType() string {
+	return m.GetType()
+}
+func (m *DefaultEVMMessage) GetDepositNonce() uint64 {
+	return m.GetDepositNonce()
+}
+func (m *DefaultEVMMessage) GetResourceID() [32]byte {
+	return m.GetResourceID()
+}
+func (m *DefaultEVMMessage) GetPayload() []interface{} {
+	return m.GetPayload()
+}
+func (m *DefaultEVMMessage) CreateProposalDataHash(data []byte) common.Hash {
+	return crypto.Keccak256Hash(data)
 }
 
 func (m *DefaultEVMMessage) CreateProposalData() ([]byte, error) {

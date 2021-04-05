@@ -13,5 +13,5 @@ type XCMessager interface {
 	GetResourceID() [32]byte
 	GetPayload() []interface{} // Maybe this should be some bytes encoding
 	CreateProposalData() ([]byte, error)
-	CreateProposalDataHash() common.Hash
+	CreateProposalDataHash(data []byte) common.Hash
 }

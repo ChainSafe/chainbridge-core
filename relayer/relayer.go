@@ -26,5 +26,6 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan<- error) {
 		go PollBlocks(l, stop, sysErr)
 	}
 
+	// PollBlocks should send all events to channel. Here we read events from channel and push them to the router.
 	err := r.router.Send(dest, m)
 }

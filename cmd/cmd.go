@@ -56,7 +56,7 @@ func Run(ctx *cli.Context) error {
 	celoListener.RegisterHandler(common.HexToAddress("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF"), evm.HandleErc20DepositedEvent)
 
 	// It should listen different chains and accept different configs
-	r := relayer.NewRelayer([]relayer.IListener{ethListener, celoListener})
+	r := relayer.NewRelayer([]relayer.IListener{ethListener, celoListener}, router)
 
 	go r.Start(stopChn, errChn)
 
