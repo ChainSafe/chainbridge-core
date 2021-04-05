@@ -1,4 +1,4 @@
-package client
+package evm
 
 import (
 	"context"

@@ -111,14 +111,14 @@ func getDepositEventsForBlock(l IListener, latestBlock *big.Int) error {
 			return err
 		}
 
-		h, err := l.MatchAddressWithHandler(addr)
+		eventHandler, err := l.MatchAddressWithHandler(addr)
 		if err != nil {
 			return fmt.Errorf("failed to get handler from resource ID %x, reason: %w", rId, err)
 		}
 		backend := l.GetContractBackend()
-		m, err := h(l.GetChainID(), destId, nonce, addr, backend)
+		m, err := eventHandler(l.GetChainID(), destId, nonce, addr, backend)
 		log.Debug().Msgf("Resolved message %+v", m)
-		//Router.Send(m)
+		// Here we should send message to dest writer. For this we need to have router instance, but it will require to pass it, so maybe we can return some channel and send events to channel
 	}
 	return nil
 }

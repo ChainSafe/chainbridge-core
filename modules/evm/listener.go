@@ -1,4 +1,4 @@
-package listener
+package evm
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/ChainSafe/chainbridgev2/bindings/eth/bindings/Bridge"
-	"github.com/ChainSafe/chainbridgev2/modules/evm/client"
 	"github.com/ChainSafe/chainbridgev2/relayer"
 	goeth "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -22,7 +21,7 @@ type IBridge interface {
 
 var ExpectedBlockTime = time.Second
 
-func NewListener(client *client.Client, bridgeAddress ethcommon.Address, chainID uint8) *Listener {
+func NewListener(client *Client, bridgeAddress ethcommon.Address, chainID uint8) *Listener {
 	bridgeContract, err := Bridge.NewBridge(bridgeAddress, client)
 	if err != nil {
 		panic(err)
@@ -38,7 +37,7 @@ type Listener struct {
 	BridgeContractAddress ethcommon.Address
 	handlers              relayer.Handlers
 	currentBlock          *big.Int
-	client                *client.Client
+	client                *Client
 	chainID               uint8
 }
 

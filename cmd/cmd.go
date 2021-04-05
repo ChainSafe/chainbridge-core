@@ -6,11 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ChainSafe/chainbridgev2/modules/evm/handlers"
-
 	"github.com/ChainSafe/chainbridge-utils/keystore"
-	"github.com/ChainSafe/chainbridgev2/modules/evm/client"
-	"github.com/ChainSafe/chainbridgev2/modules/evm/listener"
+	"github.com/ChainSafe/chainbridgev2/modules/evm"
 	"github.com/ChainSafe/chainbridgev2/relayer"
 	"github.com/ethereum/go-ethereum/common"
 	ethcommon "github.com/ethereum/go-ethereum/common"
@@ -43,23 +40,20 @@ func Run(ctx *cli.Context) error {
 	errChn := make(chan error)
 	stopChn := make(chan struct{})
 
-	c, err := client.NewClient(TestEndpoint, false, AliceKp, big.NewInt(DefaultGasLimit), big.NewInt(DefaultGasPrice))
+	c, err := evm.NewClient(TestEndpoint, false, AliceKp, big.NewInt(DefaultGasLimit), big.NewInt(DefaultGasPrice))
 	if err != nil {
 		panic(err)
 	}
-	celoC, err := client.NewClient(TestEndpoint2, false, AliceKp, big.NewInt(DefaultGasLimit), big.NewInt(DefaultGasPrice))
+	celoC, err := evm.NewClient(TestEndpoint2, false, AliceKp, big.NewInt(DefaultGasLimit), big.NewInt(DefaultGasPrice))
 	if err != nil {
 		panic(err)
 	}
-	bridgeAddressCelo := ethcommon.HexToAddress("0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B")
-	ethListener := listener.NewListener(c, bridgeAddressCelo, 1)
-	celoListener := listener.NewListener(celoC, bridgeAddressCelo, 2)
+	bridgeAddress := ethcommon.HexToAddress("0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B")
+	ethListener := evm.NewListener(c, bridgeAddress, 1)
+	celoListener := evm.NewListener(celoC, bridgeAddress, 2)
 
-	ethListener.RegisterHandler(common.HexToAddress("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF"), handlers.HandleErc20DepositedEvent)
-	//ethListener.RegisterHandler(common.HexToAddress("0x3f709398808af36ADBA86ACC617FeB7F5B7B193E"), handlers.HandleErc721DepositedEvent)
-	//ethListener.RegisterHandler(common.HexToAddress("0x2B6Ab4b880A45a07d83Cf4d664Df4Ab85705Bc07"), handlers.HandleGenericDepositedEvent)
-
-	celoListener.RegisterHandler(common.HexToAddress("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF"), handlers.HandleErc20DepositedEvent)
+	ethListener.RegisterHandler(common.HexToAddress("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF"), evm.HandleErc20DepositedEvent)
+	celoListener.RegisterHandler(common.HexToAddress("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF"), evm.HandleErc20DepositedEvent)
 
 	// It should listen different chains and accept different configs
 	r := relayer.NewRelayer([]relayer.IListener{ethListener, celoListener})
