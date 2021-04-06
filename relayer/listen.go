@@ -14,7 +14,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type Handler func(sourceID, destID uint8, nonce uint64, handlerContractAddress common.Address, backend bind.ContractBackend) (*XCMessager, error)
+type Handler func(sourceID, destID uint8, nonce uint64, handlerContractAddress common.Address, backend bind.ContractBackend) (XCMessager, error)
 type Handlers map[ethcommon.Address]Handler
 
 type IListener interface {
@@ -33,7 +33,7 @@ var BlockRetryLimit = 5
 var BlockRetryInterval = time.Second * 5
 var BlockDelay = big.NewInt(1) //TODO: move to config
 
-func PollBlocks(l IListener, stop <-chan struct{}, sysErr chan<- error) {
+func PollEvents(l IListener, stop <-chan struct{}, sysErr chan<- error, eventsChan chan XCMessager) {
 	log.Info().Msg("Polling Blocks...")
 	var currentBlock = big.NewInt(0)
 	var retry = BlockRetryLimit
@@ -63,7 +63,7 @@ func PollBlocks(l IListener, stop <-chan struct{}, sysErr chan<- error) {
 			}
 
 			// Parse out events
-			err = getDepositEventsForBlock(l, currentBlock)
+			err = getDepositEventsForBlock(l, currentBlock, eventsChan)
 			if err != nil {
 				log.Error().Str("block", currentBlock.String()).Err(err).Msg("Failed to get events for block")
 				retry--
@@ -92,7 +92,7 @@ const (
 	Deposit string = "Deposit(uint8,bytes32,uint64)"
 )
 
-func getDepositEventsForBlock(l IListener, latestBlock *big.Int) error {
+func getDepositEventsForBlock(l IListener, latestBlock *big.Int, eventsChan chan XCMessager) error {
 	logs, err := l.LogsForBlock(context.Background(), latestBlock)
 	if err != nil {
 		return fmt.Errorf("unable to Filter Logs: %w", err)
@@ -118,7 +118,8 @@ func getDepositEventsForBlock(l IListener, latestBlock *big.Int) error {
 		backend := l.GetContractBackend()
 		m, err := eventHandler(l.GetChainID(), destId, nonce, addr, backend)
 		log.Debug().Msgf("Resolved message %+v", m)
-		// Here we should send message to dest writer. For this we need to have router instance, but it will require to pass it, so maybe we can return some channel and send events to channel
+		// TODO: if noone to receive this will blocks forever
+		eventsChan <- m
 	}
 	return nil
 }

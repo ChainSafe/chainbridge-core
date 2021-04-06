@@ -94,7 +94,7 @@ func (c *Client) newTransactOpts(value, gasLimit, gasPrice *big.Int) (*bind.Tran
 		return nil, err
 	}
 
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, id) // TODO pass ChainID thru config somehow
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, id)
 	if err != nil {
 		return nil, err
 	}
