@@ -123,3 +123,35 @@ func getDepositEventsForBlock(l IListener, latestBlock *big.Int, eventsChan chan
 	}
 	return nil
 }
+
+type ChainWithLatestBlock interface {
+	LatestBlock() (*big.Int, error)
+}
+
+// BlockWaiter function accepts fetcher of type LatestBlockFetcher interface, targetBlock, delay and waits for chain to reach targetBlock plus delay
+func BlockWaiter(fetcher ChainWithLatestBlock, targetBlock *big.Int, delay *big.Int, stopChan <-chan struct{}) error {
+	connErrRetries := BlockRetryLimit
+	for {
+		select {
+		case <-stopChan:
+			return errors.New("connection terminated")
+		case <-time.After(BlockRetryInterval):
+			if connErrRetries <= 0 {
+				return errors.New("error fetching latest block")
+			}
+			currBlock, err := fetcher.LatestBlock()
+			if err != nil {
+				connErrRetries -= 1
+				continue
+			}
+			if delay != nil {
+				currBlock.Sub(currBlock, delay)
+			}
+			// Equal or greater than target
+			if currBlock.Cmp(targetBlock) >= 0 {
+				return nil
+			}
+			continue
+		}
+	}
+}

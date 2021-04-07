@@ -2,13 +2,32 @@ package relayer
 
 import (
 	"context"
+	"errors"
 	"math/big"
+	"time"
 
+	"github.com/ethereum/go-ethereum/crypto"
+
+	goeth "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/rs/zerolog/log"
 )
+
+// Number of blocks to wait for an finalization event
+const ExecuteBlockWatchLimit = 100
+
+// Time between retrying a failed tx
+const TxRetryInterval = time.Second * 2
+
+// Time between retrying a failed tx
+const TxRetryLimit = 10
+
+var ErrNonceTooLow = errors.New("nonce too low")
+var ErrTxUnderpriced = errors.New("replacement transaction underpriced")
+var ErrFatalTx = errors.New("submission of transaction failed")
+var ErrFatalQuery = errors.New("query of chain state failed")
 
 type ProposalVoter interface {
 	VoteProposal(opts *bind.TransactOpts, m XCMessager, dataHash [32]byte) (*types.Transaction, error)
@@ -18,10 +37,25 @@ type ProposalExecuter interface {
 	ExecuteProposal(m XCMessager, data []byte, dataHash ethcommon.Hash)
 }
 
+type ContractCaller interface {
+	FilterLogs(ctx context.Context, q goeth.FilterQuery) ([]types.Log, error)
+	LatestBlock() (*big.Int, error)
+	ProposalStatusDefiner() ProposalStatus
+	//BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error)
+	//CallOpts() *bind.CallOpts
+	//Opts() *bind.TransactOpts
+	//LockAndUpdateOpts() error
+	//UnlockOpts()
+	//WaitForBlock(block *big.Int) error
+}
+
 type Writer struct {
 	voter        ProposalVoter
 	executer     ProposalExecuter
 	transactOpts *bind.TransactOpts
+	stop         <-chan struct{}
+	sysErr       chan<- error
+	client       ContractCaller
 }
 
 func NewWriter(voter ProposalVoter, executer ProposalExecuter, transactOpts *bind.TransactOpts) *Writer {
@@ -55,8 +89,15 @@ func (w *Writer) Write(m XCMessager) {
 }
 
 // watchThenExecute watches for the latest block and executes once the matching finalized event is found
-func (w *Writer) watchThenExecute(m *utils.Message, data []byte, dataHash ethcommon.Hash, latestBlock *big.Int) {
-	log.Info().Interface("src", m.Source).Interface("nonce", m.DepositNonce).Msg("Watching for finalization event")
+func (w *Writer) watchThenExecute(m XCMessager, data []byte, dataHash ethcommon.Hash) {
+	delay := big.NewInt(10)
+	blockToWatch, err := w.client.LatestBlock()
+	if err != nil {
+		log.Error().Err(err).Msg("unable to fetch latest block")
+		w.sysErr <- errors.New("unable to fetch latest block")
+		return
+	}
+	log.Info().Interface("src", m.GetSource()).Interface("nonce", m.GetDepositNonce()).Msg("Watching for finalization event")
 
 	// watching for the latest block, querying and matching the finalized event will be retried up to ExecuteBlockWatchLimit times
 	for i := 0; i < ExecuteBlockWatchLimit; i++ {
@@ -64,24 +105,15 @@ func (w *Writer) watchThenExecute(m *utils.Message, data []byte, dataHash ethcom
 		case <-w.stop:
 			return
 		default:
-			// watch for the lastest block, retry up to BlockRetryLimit times
-			for waitRetrys := 0; waitRetrys <= BlockRetryLimit; waitRetrys++ {
-				err := w.client.WaitForBlock(latestBlock)
-				if err != nil {
-					log.Error().Err(err).Msg("Waiting for block failed")
-					// Exit if retries exceeded
-					if waitRetrys == BlockRetryLimit {
-						log.Error().Err(err).Msg("Waiting for block retries exceeded, shutting down")
-						w.sysErr <- ErrFatalQuery
-						return
-					}
-				} else {
-					break
-				}
+			// Waits chain to overtake current block for delay
+			err := BlockWaiter(w.client, blockToWatch, delay, w.stop)
+			if err != nil {
+				w.sysErr <- err
+				return
 			}
 
 			// query for logs
-			query := buildQuery(w.cfg.BridgeContract, utils.ProposalEvent, latestBlock, latestBlock)
+			query := buildQuery(w.cfg.BridgeContract, crypto.Keccak256Hash([]byte("ProposalEvent(uint8,uint64,uint8,bytes32,bytes32)")), blockToWatch, blockToWatch.Add(blockToWatch, delay))
 			evts, err := w.client.FilterLogs(context.Background(), query)
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to fetch logs")
@@ -94,8 +126,8 @@ func (w *Writer) watchThenExecute(m *utils.Message, data []byte, dataHash ethcom
 				depositNonce := evt.Topics[2].Big().Uint64()
 				status := evt.Topics[3].Big().Uint64()
 
-				if m.Source == utils.ChainId(sourceId) &&
-					m.DepositNonce.Big().Uint64() == depositNonce &&
+				if m.GetSource() == sourceId &&
+					m.GetDepositNonce() == depositNonce &&
 					utils.IsPassed(uint8(status)) {
 					w.executer.ExecuteProposal(m, data, dataHash)
 					return
@@ -108,4 +140,17 @@ func (w *Writer) watchThenExecute(m *utils.Message, data []byte, dataHash ethcom
 		}
 	}
 	log.Warn().Interface("source", m.Source).Interface("dest", m.Destination).Interface("nonce", m.DepositNonce).Msg("Block watch limit exceeded, skipping execution")
+}
+
+// buildQuery constructs a query for the bridgeContract by hashing sig to get the event topic
+func buildQuery(contract ethcommon.Address, sig ethcommon.Hash, startBlock *big.Int, endBlock *big.Int) goeth.FilterQuery {
+	query := goeth.FilterQuery{
+		FromBlock: startBlock,
+		ToBlock:   endBlock,
+		Addresses: []ethcommon.Address{contract},
+		Topics: [][]ethcommon.Hash{
+			{sig},
+		},
+	}
+	return query
 }

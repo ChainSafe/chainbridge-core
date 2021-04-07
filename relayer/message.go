@@ -15,3 +15,12 @@ type XCMessager interface {
 	CreateProposalData() ([]byte, error)
 	CreateProposalDataHash(data []byte) common.Hash
 }
+
+type ProposalStatus uint8
+
+const (
+	ProposalNotPassedStatus   ProposalStatus = 1
+	ProposalStatusPassed      ProposalStatus = 2
+	ProposalStatusTransferred ProposalStatus = 3
+	ProposalStatusCancelled   ProposalStatus = 4
+)
