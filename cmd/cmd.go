@@ -58,8 +58,8 @@ func Run(ctx *cli.Context) error {
 	// It should listen different chains and accept different configs
 	r := relayer.NewRelayer([]relayer.IListener{ethListener, celoListener})
 
-	ethWriter := evm.NewWriter()
-	celoWriter := evm.NewWriter()
+	ethWriter := relayer.NewWriter()
+	celoWriter := relayer.NewWriter()
 
 	r.RegisterWriter(1, ethWriter)
 	r.RegisterWriter(2, celoWriter)

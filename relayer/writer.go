@@ -6,12 +6,11 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ethereum/go-ethereum/crypto"
-
 	goeth "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
 )
 
@@ -24,72 +23,67 @@ const TxRetryInterval = time.Second * 2
 // Time between retrying a failed tx
 const TxRetryLimit = 10
 
-var ErrNonceTooLow = errors.New("nonce too low")
-var ErrTxUnderpriced = errors.New("replacement transaction underpriced")
-var ErrFatalTx = errors.New("submission of transaction failed")
-var ErrFatalQuery = errors.New("query of chain state failed")
+//var ErrNonceTooLow = errors.New("nonce too low")
+//var ErrTxUnderpriced = errors.New("replacement transaction underpriced")
+//var ErrFatalTx = errors.New("submission of transaction failed")
+//var ErrFatalQuery = errors.New("query of chain state failed")
 
 type ProposalVoter interface {
-	VoteProposal(opts *bind.TransactOpts, m XCMessager, dataHash [32]byte) (*types.Transaction, error)
+	VoteProposal(proposal Proposal) (*types.Transaction, error)
 }
 
 type ProposalExecuter interface {
-	ExecuteProposal(m XCMessager, data []byte, dataHash ethcommon.Hash)
+	ExecuteProposal(proposal Proposal)
 }
 
 type ContractCaller interface {
 	FilterLogs(ctx context.Context, q goeth.FilterQuery) ([]types.Log, error)
 	LatestBlock() (*big.Int, error)
-	ProposalStatusDefiner() ProposalStatus
-	//BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error)
-	//CallOpts() *bind.CallOpts
-	//Opts() *bind.TransactOpts
-	//LockAndUpdateOpts() error
-	//UnlockOpts()
-	//WaitForBlock(block *big.Int) error
 }
 
 type Writer struct {
-	voter        ProposalVoter
-	executer     ProposalExecuter
-	transactOpts *bind.TransactOpts
-	stop         <-chan struct{}
-	sysErr       chan<- error
-	client       ContractCaller
+	voter          ProposalVoter
+	executer       ProposalExecuter
+	transactOpts   *bind.TransactOpts
+	stop           <-chan struct{}
+	sysErr         chan<- error
+	client         ContractCaller
+	propCreatorFn  ProposalCreatorFn
+	BridgeContract ethcommon.Address
 }
 
-func NewWriter(voter ProposalVoter, executer ProposalExecuter, transactOpts *bind.TransactOpts) *Writer {
+func NewWriter(voter ProposalVoter, executer ProposalExecuter, transactOpts *bind.TransactOpts, propCreatorFn ProposalCreatorFn) *Writer {
 	return &Writer{
-		voter:        voter,
-		executer:     executer,
-		transactOpts: transactOpts,
+		voter:         voter,
+		executer:      executer,
+		transactOpts:  transactOpts,
+		propCreatorFn: propCreatorFn,
 	}
 }
 
 func (w *Writer) Write(m XCMessager) {
-	data, err := m.CreateProposalData()
+
+	prop, err := w.propCreatorFn(m)
 	if err != nil {
-		panic(err)
+		w.sysErr <- err
 	}
-	dataHash := m.CreateProposalDataHash(data)
 
-	//if !w.shouldVote(m, dataHash) {
-	//	if w.proposalIsPassed(m.Source, m.DepositNonce, dataHash) {
-	//		// We should not vote for this proposal but it is ready to be executed
-	//		w.executeProposal(m, data, dataHash)
-	//		return true
-	//	} else {
-	//		return false
-	//	}
-	//}
+	if !prop.ShouldVoteFor() {
+		if prop.GetProposalStatus() == ProposalStatusPassed {
+			// We should not vote for this proposal but it is ready to be executed
+			w.executer.ExecuteProposal(prop)
+			return
+		} else {
+			return
+		}
+	}
 
-	w.voter.VoteProposal(transactOpts, m, dataHash)
-
-	w.watchThenExecute(query)
+	go w.watchThenExecute(prop)
+	w.voter.VoteProposal(prop)
 }
 
 // watchThenExecute watches for the latest block and executes once the matching finalized event is found
-func (w *Writer) watchThenExecute(m XCMessager, data []byte, dataHash ethcommon.Hash) {
+func (w *Writer) watchThenExecute(prop Proposal) {
 	delay := big.NewInt(10)
 	blockToWatch, err := w.client.LatestBlock()
 	if err != nil {
@@ -97,7 +91,7 @@ func (w *Writer) watchThenExecute(m XCMessager, data []byte, dataHash ethcommon.
 		w.sysErr <- errors.New("unable to fetch latest block")
 		return
 	}
-	log.Info().Interface("src", m.GetSource()).Interface("nonce", m.GetDepositNonce()).Msg("Watching for finalization event")
+	log.Info().Interface("src", prop.GetSource()).Interface("nonce", prop.GetDepositNonce()).Msg("Watching for finalization event")
 
 	// watching for the latest block, querying and matching the finalized event will be retried up to ExecuteBlockWatchLimit times
 	for i := 0; i < ExecuteBlockWatchLimit; i++ {
@@ -113,7 +107,7 @@ func (w *Writer) watchThenExecute(m XCMessager, data []byte, dataHash ethcommon.
 			}
 
 			// query for logs
-			query := buildQuery(w.cfg.BridgeContract, crypto.Keccak256Hash([]byte("ProposalEvent(uint8,uint64,uint8,bytes32,bytes32)")), blockToWatch, blockToWatch.Add(blockToWatch, delay))
+			query := buildQuery(w.BridgeContract, crypto.Keccak256Hash([]byte("ProposalEvent(uint8,uint64,uint8,bytes32,bytes32)")), blockToWatch, blockToWatch.Add(blockToWatch, delay))
 			evts, err := w.client.FilterLogs(context.Background(), query)
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to fetch logs")
@@ -126,20 +120,20 @@ func (w *Writer) watchThenExecute(m XCMessager, data []byte, dataHash ethcommon.
 				depositNonce := evt.Topics[2].Big().Uint64()
 				status := evt.Topics[3].Big().Uint64()
 
-				if m.GetSource() == sourceId &&
-					m.GetDepositNonce() == depositNonce &&
-					utils.IsPassed(uint8(status)) {
-					w.executer.ExecuteProposal(m, data, dataHash)
+				if prop.GetSource() == uint8(sourceId) &&
+					prop.GetDepositNonce() == depositNonce &&
+					prop.GetProposalStatus() == ProposalStatusPassed {
+					w.executer.ExecuteProposal(prop)
 					return
 				} else {
 					log.Trace().Interface("src", sourceId).Interface("nonce", depositNonce).Uint64("status", status).Msg("Ignoring event")
 				}
 			}
-			log.Trace().Interface("block", latestBlock).Interface("src", m.Source).Interface("nonce", m.DepositNonce).Msg("No finalization event found in current block")
-			latestBlock = latestBlock.Add(latestBlock, big.NewInt(1))
+			log.Trace().Interface("block", blockToWatch).Interface("src", prop.GetSource()).Interface("nonce", prop.GetDepositNonce()).Msg("No finalization event found in current block")
+			blockToWatch = blockToWatch.Add(blockToWatch, big.NewInt(1))
 		}
 	}
-	log.Warn().Interface("source", m.Source).Interface("dest", m.Destination).Interface("nonce", m.DepositNonce).Msg("Block watch limit exceeded, skipping execution")
+	log.Warn().Interface("source", prop.GetSource()).Interface("dest", prop.GetDestination()).Interface("nonce", prop.GetDepositNonce()).Msg("Block watch limit exceeded, skipping execution")
 }
 
 // buildQuery constructs a query for the bridgeContract by hashing sig to get the event topic
