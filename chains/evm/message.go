@@ -6,22 +6,18 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ChainSafe/chainbridgev2/relayer"
+
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type TransferType string
-
-var FungibleTransfer TransferType = "FungibleTransfer"
-var NonFungibleTransfer TransferType = "NonFungibleTransfer"
-var GenericTransfer TransferType = "GenericTransfer"
-
 type DefaultEVMMessage struct {
-	Source       uint8        // Source where message was initiated
-	Destination  uint8        // Destination chain of message
-	Type         TransferType // type of bridge transfer
-	DepositNonce uint64       // Nonce for the deposit
+	Source       uint8                // Source where message was initiated
+	Destination  uint8                // Destination chain of message
+	Type         relayer.TransferType // type of bridge transfer
+	DepositNonce uint64               // Nonce for the deposit
 	ResourceId   [32]byte
 	Payload      []interface{} // data associated with event sequence
 }
@@ -52,11 +48,11 @@ func (m *DefaultEVMMessage) CreateProposalData() ([]byte, error) {
 	var data []byte
 	var err error
 	switch m.Type {
-	case FungibleTransfer:
+	case relayer.FungibleTransfer:
 		data, err = m.createERC20ProposalData()
-	case NonFungibleTransfer:
+	case relayer.NonFungibleTransfer:
 		data, err = m.createErc721ProposalData()
-	case GenericTransfer:
+	case relayer.GenericTransfer:
 		data, err = m.createGenericDepositProposalData()
 	default:
 		return nil, errors.New(fmt.Sprintf("unknown message type received %s", m.Type))
@@ -131,3 +127,25 @@ func (m *DefaultEVMMessage) createGenericDepositProposalData() ([]byte, error) {
 	data.Write(metadata)
 	return data.Bytes(), nil
 }
+
+//
+//type EVMProposal struct {
+//	DefaultEVMMessage
+//}
+//
+//func (EVMProposal) GetProposalData() []byte {
+//
+//}
+//func (EVMProposal) GetProposalDataHash(data []byte) common.Hash {
+//
+//}
+//func (EVMProposal) GetProposalStatus() relayer.ProposalStatus {
+//
+//}
+//func (EVMProposal) ShouldVoteFor() bool {
+//
+//}
+//
+//func EVMProposalCreatorFn(msg relayer.XCMessager) (relayer.Proposal, error) {
+//
+//}

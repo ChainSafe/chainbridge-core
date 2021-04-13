@@ -2,35 +2,46 @@ package relayer
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/rs/zerolog/log"
 )
 
-func NewRelayer(listeners []IListener) *Relayer {
-	return &Relayer{listeners: listeners}
+type BlockStorer interface {
+	StoreBlock(block *big.Int, chainID uint8) error
+	GetLastStoredBlock(chainID uint8) error
+}
+
+type RelayedChain interface {
+	PollEvents(bs BlockStorer, stop <-chan struct{}, sysErr chan<- error, eventsChan chan XCMessager)
+	Write(XCMessager)
+	ChainID() uint8
+}
+
+func NewRelayer(chains []RelayedChain) *Relayer {
+	return &Relayer{relayedChains: chains}
 }
 
 type Relayer struct {
-	listeners []IListener
-	registry  map[uint8]ChainWriter
-}
-
-type ChainWriter interface {
-	Write(XCMessager)
+	relayedChains []RelayedChain
+	registry      map[uint8]RelayedChain
 }
 
 // Starts the relayer. Relayer routine is starting all the chains
 // and passing them with a channel that accepts unified cross chain message format
-func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
+func (r *Relayer) Start(bs BlockStorer, stop <-chan struct{}, sysErr chan error) {
 	messagesChannel := make(chan XCMessager)
-	for _, l := range r.listeners {
-		go PollEvents(l, stop, sysErr, messagesChannel)
+	for _, c := range r.relayedChains {
+		r.addRelayedChain(c)
+		go c.PollEvents(bs, stop, sysErr, messagesChannel)
 	}
-	select {
-	case m := <-messagesChannel:
-		go r.Route(m)
-	case _ = <-stop:
-		return
+	for {
+		select {
+		case m := <-messagesChannel:
+			go r.Route(m)
+		case _ = <-stop:
+			return
+		}
 	}
 }
 
@@ -45,9 +56,10 @@ func (r *Relayer) Route(m XCMessager) {
 	w.Write(m)
 }
 
-func (r *Relayer) RegisterWriter(chainID uint8, w ChainWriter) {
+func (r *Relayer) addRelayedChain(c RelayedChain) {
 	if r.registry == nil {
-		r.registry = make(map[uint8]ChainWriter)
+		r.registry = make(map[uint8]RelayedChain)
 	}
-	r.registry[chainID] = w
+	chainID := c.ChainID()
+	r.registry[chainID] = c
 }

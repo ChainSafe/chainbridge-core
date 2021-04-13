@@ -1,4 +1,4 @@
-package relayer
+package common
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"time"
 
 	goeth "github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -17,22 +16,13 @@ import (
 // Number of blocks to wait for an finalization event
 const ExecuteBlockWatchLimit = 100
 
-// Time between retrying a failed tx
-const TxRetryInterval = time.Second * 2
-
-// Time between retrying a failed tx
-const TxRetryLimit = 10
-
 //var ErrNonceTooLow = errors.New("nonce too low")
 //var ErrTxUnderpriced = errors.New("replacement transaction underpriced")
 //var ErrFatalTx = errors.New("submission of transaction failed")
 //var ErrFatalQuery = errors.New("query of chain state failed")
 
-type ProposalVoter interface {
-	VoteProposal(proposal Proposal) (*types.Transaction, error)
-}
-
-type ProposalExecuter interface {
+type ProposalVoterExecutor interface {
+	VoteProposal(proposal Proposal)
 	ExecuteProposal(proposal Proposal)
 }
 
@@ -42,9 +32,7 @@ type ContractCaller interface {
 }
 
 type Writer struct {
-	voter          ProposalVoter
-	executer       ProposalExecuter
-	transactOpts   *bind.TransactOpts
+	voterExecutor  ProposalVoterExecutor
 	stop           <-chan struct{}
 	sysErr         chan<- error
 	client         ContractCaller
@@ -52,11 +40,9 @@ type Writer struct {
 	BridgeContract ethcommon.Address
 }
 
-func NewWriter(voter ProposalVoter, executer ProposalExecuter, transactOpts *bind.TransactOpts, propCreatorFn ProposalCreatorFn) *Writer {
+func NewWriter(ve ProposalVoterExecutor, propCreatorFn ProposalCreatorFn) *Writer {
 	return &Writer{
-		voter:         voter,
-		executer:      executer,
-		transactOpts:  transactOpts,
+		voterExecutor: ve,
 		propCreatorFn: propCreatorFn,
 	}
 }
@@ -71,7 +57,7 @@ func (w *Writer) Write(m XCMessager) {
 	if !prop.ShouldVoteFor() {
 		if prop.GetProposalStatus() == ProposalStatusPassed {
 			// We should not vote for this proposal but it is ready to be executed
-			w.executer.ExecuteProposal(prop)
+			w.voterExecutor.ExecuteProposal(prop)
 			return
 		} else {
 			return
@@ -79,7 +65,7 @@ func (w *Writer) Write(m XCMessager) {
 	}
 
 	go w.watchThenExecute(prop)
-	w.voter.VoteProposal(prop)
+	w.voterExecutor.VoteProposal(prop)
 }
 
 // watchThenExecute watches for the latest block and executes once the matching finalized event is found
@@ -123,7 +109,7 @@ func (w *Writer) watchThenExecute(prop Proposal) {
 				if prop.GetSource() == uint8(sourceId) &&
 					prop.GetDepositNonce() == depositNonce &&
 					prop.GetProposalStatus() == ProposalStatusPassed {
-					w.executer.ExecuteProposal(prop)
+					w.voterExecutor.ExecuteProposal(prop)
 					return
 				} else {
 					log.Trace().Interface("src", sourceId).Interface("nonce", depositNonce).Uint64("status", status).Msg("Ignoring event")
@@ -147,4 +133,32 @@ func buildQuery(contract ethcommon.Address, sig ethcommon.Hash, startBlock *big.
 		},
 	}
 	return query
+}
+
+// BlockWaiter function accepts fetcher of type LatestBlockFetcher interface, targetBlock, delay and waits for chain to reach targetBlock plus delay
+func BlockWaiter(fetcher ChainWithLatestBlock, targetBlock *big.Int, delay *big.Int, stopChan <-chan struct{}) error {
+	connErrRetries := BlockRetryLimit
+	for {
+		select {
+		case <-stopChan:
+			return errors.New("connection terminated")
+		case <-time.After(BlockRetryInterval):
+			if connErrRetries <= 0 {
+				return errors.New("error fetching latest block")
+			}
+			currBlock, err := fetcher.LatestBlock()
+			if err != nil {
+				connErrRetries -= 1
+				continue
+			}
+			if delay != nil {
+				currBlock.Sub(currBlock, delay)
+			}
+			// Equal or greater than target
+			if currBlock.Cmp(targetBlock) >= 0 {
+				return nil
+			}
+			continue
+		}
+	}
 }

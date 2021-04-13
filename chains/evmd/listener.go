@@ -1,4 +1,4 @@
-package evm
+package evmd
 
 import (
 	"context"
@@ -10,10 +10,18 @@ import (
 	"github.com/ChainSafe/chainbridgev2/relayer"
 	goeth "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 )
+
+const (
+	Deposit string = "Deposit(uint8,bytes32,uint64)"
+)
+
+type Handler func(sourceID, destID uint8, nonce uint64, handlerContractAddress common.Address, backend bind.ContractBackend) (relayer.XCMessager, error)
+type Handlers map[ethcommon.Address]Handler
 
 type IBridge interface {
 	ResourceIDToHandlerAddress(opts *bind.CallOpts, arg0 [32]byte) (ethcommon.Address, error)
@@ -35,7 +43,7 @@ type Listener struct {
 	sysErr                chan<- error // Reports fatal error to core
 	bridgeContract        IBridge
 	BridgeContractAddress ethcommon.Address
-	handlers              relayer.Handlers
+	handlers              Handlers
 	currentBlock          *big.Int
 	client                *Client
 	chainID               uint8
@@ -60,7 +68,7 @@ func (l *Listener) MatchResourceIDToHandlerAddress(rID [32]byte) (ethcommon.Addr
 	return l.bridgeContract.ResourceIDToHandlerAddress(&bind.CallOpts{}, rID)
 }
 
-func (l *Listener) MatchAddressWithHandler(addr ethcommon.Address) (relayer.Handler, error) {
+func (l *Listener) MatchAddressWithHandlerFunc(addr ethcommon.Address) (Handler, error) {
 	h, ok := l.handlers[addr]
 	if !ok {
 		return nil, errors.New("no corresponding handler for this address exists")
@@ -68,7 +76,7 @@ func (l *Listener) MatchAddressWithHandler(addr ethcommon.Address) (relayer.Hand
 	return h, nil
 }
 
-func (l *Listener) RegisterHandler(address ethcommon.Address, handler relayer.Handler) {
+func (l *Listener) RegisterHandler(address ethcommon.Address, handler Handler) {
 	l.handlers[address] = handler
 }
 

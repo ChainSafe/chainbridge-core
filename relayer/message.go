@@ -4,6 +4,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+type TransferType string
+
+var FungibleTransfer TransferType = "FungibleTransfer"
+var NonFungibleTransfer TransferType = "NonFungibleTransfer"
+var GenericTransfer TransferType = "GenericTransfer"
+
 // XCMessage is used as a generic format cross-chain communications
 type XCMessager interface {
 	GetSource() uint8
@@ -25,10 +31,15 @@ const (
 
 type Proposal interface {
 	XCMessager
-	GetProposalData() ([]byte, error)
+	GetProposalData() []byte
 	GetProposalDataHash(data []byte) common.Hash
 	GetProposalStatus() ProposalStatus
 	ShouldVoteFor() bool
 }
 
 type ProposalCreatorFn func(msg XCMessager) (Proposal, error)
+
+func ProposalIsComplete(prop Proposal) bool {
+	propStatus := prop.GetProposalStatus()
+	return propStatus == ProposalStatusPassed || propStatus == ProposalStatusTransferred || propStatus == ProposalStatusCancelled
+}

@@ -7,8 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func HandleErc20DepositedEvent(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, backend bind.ContractBackend) (relayer.XCMessager, error) {
-	contract, err := erc20Handler.NewERC20Handler(handlerContractAddress, backend)
+func HandleErc20DepositedEvent(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, backend bind.ContractCaller) (relayer.XCMessager, error) {
+	contract, err := erc20Handler.NewERC20HandlerCaller(handlerContractAddress, backend)
 	if err != nil {
 		return nil, err
 	}

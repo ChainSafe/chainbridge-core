@@ -1,4 +1,4 @@
-package relayer
+package evm
 
 import (
 	"context"
@@ -7,33 +7,44 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ChainSafe/chainbridgev2/relayer"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/rs/zerolog/log"
 )
 
-type Handler func(sourceID, destID uint8, nonce uint64, handlerContractAddress common.Address, backend bind.ContractBackend) (XCMessager, error)
+var ErrFatalPolling = errors.New("listener block polling failed")
+var BlockRetryLimit = 5
+var BlockRetryInterval = time.Second * 5
+var BlockDelay = big.NewInt(10) //TODO: move to config
+
+type Handler func(sourceID, destID uint8, nonce uint64, handlerContractAddress ethcommon.Address, backend bind.ContractCaller) (relayer.XCMessager, error)
 type Handlers map[ethcommon.Address]Handler
 
-type IListener interface {
+type EVMListener interface {
 	LatestBlock() (*big.Int, error)
-	GetBridgeAddress() ethcommon.Address
-	StoreCurrentBlock(*big.Int) error
 	MatchResourceIDToHandlerAddress(rID [32]byte) (ethcommon.Address, error)
-	MatchAddressWithHandler(addr ethcommon.Address) (Handler, error)
+	MatchAddressWithHandlerFunc(addr ethcommon.Address) (Handler, error)
 	LogsForBlock(ctx context.Context, latestBlock *big.Int) ([]types.Log, error)
 	GetContractBackend() bind.ContractBackend
 	GetChainID() uint8
 }
 
-var ErrFatalPolling = errors.New("listener block polling failed")
-var BlockRetryLimit = 5
-var BlockRetryInterval = time.Second * 5
-var BlockDelay = big.NewInt(1) //TODO: move to config
+type EVMWriter interface {
+	Write()
+}
 
-func PollEvents(l IListener, stop <-chan struct{}, sysErr chan<- error, eventsChan chan XCMessager) {
+type EVMChain struct {
+	listener EVMListener
+	writer   EVMWriter
+}
+
+func NewEVMChain(listener EVMListener) *EVMChain {
+	return &EVMChain{}
+}
+
+func (c *EVMChain) PollEvents(bs relayer.BlockStorer, stop <-chan struct{}, sysErr chan<- error, eventsChan chan relayer.XCMessager) {
 	log.Info().Msg("Polling Blocks...")
 	var currentBlock = big.NewInt(0)
 	var retry = BlockRetryLimit
@@ -48,7 +59,7 @@ func PollEvents(l IListener, stop <-chan struct{}, sysErr chan<- error, eventsCh
 				sysErr <- ErrFatalPolling
 				return
 			}
-			latestBlock, err := l.LatestBlock()
+			latestBlock, err := c.listener.LatestBlock()
 			if err != nil {
 				log.Error().Err(err).Str("block", currentBlock.String()).Msg("Unable to get latest block")
 				retry--
@@ -63,7 +74,7 @@ func PollEvents(l IListener, stop <-chan struct{}, sysErr chan<- error, eventsCh
 			}
 
 			// Parse out events
-			err = getDepositEventsForBlock(l, currentBlock, eventsChan)
+			err = getDepositEventsForBlock(c.listener, currentBlock, eventsChan)
 			if err != nil {
 				log.Error().Str("block", currentBlock.String()).Err(err).Msg("Failed to get events for block")
 				retry--
@@ -76,7 +87,7 @@ func PollEvents(l IListener, stop <-chan struct{}, sysErr chan<- error, eventsCh
 			}
 
 			//Write to block store. Not a critical operation, no need to retry
-			err = l.StoreCurrentBlock(currentBlock)
+			err = bs.StoreBlock(currentBlock, c.listener.GetChainID())
 			if err != nil {
 				log.Error().Str("block", currentBlock.String()).Err(err).Msg("Failed to write latest block to blockstore")
 			}
@@ -88,11 +99,7 @@ func PollEvents(l IListener, stop <-chan struct{}, sysErr chan<- error, eventsCh
 	}
 }
 
-const (
-	Deposit string = "Deposit(uint8,bytes32,uint64)"
-)
-
-func getDepositEventsForBlock(l IListener, latestBlock *big.Int, eventsChan chan XCMessager) error {
+func getDepositEventsForBlock(l EVMListener, latestBlock *big.Int, eventsChan chan relayer.XCMessager) error {
 	logs, err := l.LogsForBlock(context.Background(), latestBlock)
 	if err != nil {
 		return fmt.Errorf("unable to Filter Logs: %w", err)
@@ -111,47 +118,25 @@ func getDepositEventsForBlock(l IListener, latestBlock *big.Int, eventsChan chan
 			return err
 		}
 
-		eventHandler, err := l.MatchAddressWithHandler(addr)
+		eventHandler, err := l.MatchAddressWithHandlerFunc(addr)
 		if err != nil {
 			return fmt.Errorf("failed to get handler from resource ID %x, reason: %w", rId, err)
 		}
+
 		backend := l.GetContractBackend()
 		m, err := eventHandler(l.GetChainID(), destId, nonce, addr, backend)
 		log.Debug().Msgf("Resolved message %+v", m)
+
 		// TODO: if noone to receive this will blocks forever
 		eventsChan <- m
 	}
 	return nil
 }
 
-type ChainWithLatestBlock interface {
-	LatestBlock() (*big.Int, error)
+func (c *EVMChain) Write(relayer.XCMessager) {
+	c.writer.Write() // TODO
 }
 
-// BlockWaiter function accepts fetcher of type LatestBlockFetcher interface, targetBlock, delay and waits for chain to reach targetBlock plus delay
-func BlockWaiter(fetcher ChainWithLatestBlock, targetBlock *big.Int, delay *big.Int, stopChan <-chan struct{}) error {
-	connErrRetries := BlockRetryLimit
-	for {
-		select {
-		case <-stopChan:
-			return errors.New("connection terminated")
-		case <-time.After(BlockRetryInterval):
-			if connErrRetries <= 0 {
-				return errors.New("error fetching latest block")
-			}
-			currBlock, err := fetcher.LatestBlock()
-			if err != nil {
-				connErrRetries -= 1
-				continue
-			}
-			if delay != nil {
-				currBlock.Sub(currBlock, delay)
-			}
-			// Equal or greater than target
-			if currBlock.Cmp(targetBlock) >= 0 {
-				return nil
-			}
-			continue
-		}
-	}
+func (c *EVMChain) ChainID() uint8 {
+	return 0
 }
