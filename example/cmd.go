@@ -5,7 +5,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ChainSafe/chainbridgev2/blockstore/lvldb"
+	"github.com/ChainSafe/chainbridgev2/relayer/blockstore"
+
 	"github.com/ChainSafe/chainbridgev2/chains/evm/listener"
 
 	"github.com/ChainSafe/chainbridgev2/chains/evm"
@@ -49,7 +50,7 @@ func Run(ctx *cli.Context) error {
 		panic(err)
 	}
 
-	blockStore := lvldb.NewLVLDBBlockStore()
+	blockStore := blockstore.NewBlockStore()
 
 	r := relayer.NewRelayer([]relayer.RelayedChain{c}, blockStore)
 

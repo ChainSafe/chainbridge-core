@@ -41,14 +41,15 @@ type EVMChain struct {
 	chainID  uint8
 	block    *big.Int
 	bg       LatestBlockGetter
+	bs       relayer.BlockStorer
 }
 
-func NewEVMChain(dr EventReader, writer EVMWriter) *EVMChain {
-	return &EVMChain{listener: dr, writer: writer}
+func NewEVMChain(dr EventReader, writer EVMWriter, bs relayer.BlockStorer) *EVMChain {
+	return &EVMChain{listener: dr, writer: writer, bs: bs}
 }
 
 // PollEvents is the gorutine that polling blocks and searching Deposit Events in them. Event then sent to eventsChan
-func (c *EVMChain) PollEvents(bs relayer.BlockStorer, stop <-chan struct{}, sysErr chan<- error, eventsChan chan relayer.XCMessager) {
+func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan relayer.XCMessager) {
 	log.Info().Msg("Polling Blocks...")
 	for {
 		select {
@@ -86,7 +87,7 @@ func (c *EVMChain) PollEvents(bs relayer.BlockStorer, stop <-chan struct{}, sysE
 			}
 
 			//Write to block store. Not a critical operation, no need to retry
-			err = bs.StoreBlock(c.block, c.chainID)
+			err = c.bs.StoreBlock(c.block, c.chainID)
 			if err != nil {
 				log.Error().Str("block", c.block.String()).Err(err).Msg("Failed to write latest block to blockstore")
 			}
