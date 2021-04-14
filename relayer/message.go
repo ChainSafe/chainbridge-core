@@ -1,14 +1,10 @@
 package relayer
 
-import (
-	"github.com/ethereum/go-ethereum/common"
-)
-
-type TransferType string
-
-var FungibleTransfer TransferType = "FungibleTransfer"
-var NonFungibleTransfer TransferType = "NonFungibleTransfer"
-var GenericTransfer TransferType = "GenericTransfer"
+//type TransferType string
+//
+//var FungibleTransfer TransferType = "FungibleTransfer"
+//var NonFungibleTransfer TransferType = "NonFungibleTransfer"
+//var GenericTransfer TransferType = "GenericTransfer"
 
 // XCMessage is used as a generic format cross-chain communications
 type XCMessager interface {
@@ -29,17 +25,18 @@ const (
 	ProposalStatusCancelled   ProposalStatus = 4
 )
 
-type Proposal interface {
-	XCMessager
-	GetProposalData() []byte
-	GetProposalDataHash(data []byte) common.Hash
-	GetProposalStatus() ProposalStatus
-	ShouldVoteFor() bool
-}
-
-type ProposalCreatorFn func(msg XCMessager) (Proposal, error)
-
-func ProposalIsComplete(prop Proposal) bool {
-	propStatus := prop.GetProposalStatus()
-	return propStatus == ProposalStatusPassed || propStatus == ProposalStatusTransferred || propStatus == ProposalStatusCancelled
-}
+//
+//type Proposal interface {
+//	XCMessager
+//	GetProposalData() []byte
+//	GetProposalDataHash(data []byte) common.Hash
+//	GetProposalStatus() ProposalStatus
+//	ShouldVoteFor() bool
+//}
+//
+//type ProposalCreatorFn func(msg XCMessager) (Proposal, error)
+//
+//func ProposalIsComplete(prop Proposal) bool {
+//	propStatus := prop.GetProposalStatus()
+//	return propStatus == ProposalStatusPassed || propStatus == ProposalStatusTransferred || propStatus == ProposalStatusCancelled
+//}

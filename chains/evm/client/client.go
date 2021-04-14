@@ -1,4 +1,4 @@
-package evmd
+package client
 
 import (
 	"context"

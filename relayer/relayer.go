@@ -10,6 +10,7 @@ import (
 type BlockStorer interface {
 	StoreBlock(block *big.Int, chainID uint8) error
 	GetLastStoredBlock(chainID uint8) error
+	Close() error
 }
 
 type RelayedChain interface {
@@ -18,22 +19,23 @@ type RelayedChain interface {
 	ChainID() uint8
 }
 
-func NewRelayer(chains []RelayedChain) *Relayer {
-	return &Relayer{relayedChains: chains}
+func NewRelayer(chains []RelayedChain, bs BlockStorer) *Relayer {
+	return &Relayer{relayedChains: chains, bs: bs}
 }
 
 type Relayer struct {
 	relayedChains []RelayedChain
 	registry      map[uint8]RelayedChain
+	bs            BlockStorer
 }
 
 // Starts the relayer. Relayer routine is starting all the chains
 // and passing them with a channel that accepts unified cross chain message format
-func (r *Relayer) Start(bs BlockStorer, stop <-chan struct{}, sysErr chan error) {
+func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 	messagesChannel := make(chan XCMessager)
 	for _, c := range r.relayedChains {
 		r.addRelayedChain(c)
-		go c.PollEvents(bs, stop, sysErr, messagesChannel)
+		go c.PollEvents(r.bs, stop, sysErr, messagesChannel)
 	}
 	for {
 		select {
