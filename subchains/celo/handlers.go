@@ -3,23 +3,29 @@ package celo
 import (
 	"context"
 	"fmt"
+	"math/big"
 
-	erc20Handler "github.com/ChainSafe/chainbridgev2/bindings/celo/bindings/ERC20Handler"
 	"github.com/ChainSafe/chainbridgev2/chains/evm"
 	"github.com/ChainSafe/chainbridgev2/chains/evm/listener"
 	"github.com/ChainSafe/chainbridgev2/relayer"
+	erc20Handler "github.com/ChainSafe/chainbridgev2/subchains/celo/bindings/ERC20Handler"
 	"github.com/ChainSafe/chainbridgev2/subchains/celo/txtrie"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/celo-org/celo-blockchain"
+	"github.com/celo-org/celo-blockchain/accounts/abi/bind"
+	"github.com/celo-org/celo-blockchain/common"
+	"github.com/celo-org/celo-blockchain/rlp"
 )
 
-func HandleErc20DepositedEventCelo(sourceID, destId uint8, nonce uint64, handlerContractAddress string, backend listener.ChainClient) (relayer.XCMessager, error) {
+type ValidatorsAggregator interface {
+	GetAPKForBlock(block *big.Int, chainID uint8, epochSize uint64) ([]byte, error)
+}
+
+func HandleErc20DepositedEventCelo(sourceID, destId uint8, nonce uint64, handlerContractAddress string, backend listener.ChainClientReader, block, txIndex *big.Int) (relayer.XCMessager, error) {
 	contract, err := erc20Handler.NewERC20HandlerCaller(common.HexToAddress(handlerContractAddress), backend)
 	if err != nil {
 		return nil, err
 	}
-	record, err := contract.GetDepositRecord(&bind.CallOpts{}, uint64(nonce), uint8(destId))
+	record, err := contract.GetDepositRecord(&bind.CallOpts{}, uint64(nonce), destId)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +40,9 @@ func HandleErc20DepositedEventCelo(sourceID, destId uint8, nonce uint64, handler
 			record.DestinationRecipientAddress,
 		},
 	}
-	blockData, err := backend.BlockByNumber(context.Background(), txBlock)
+
+	b := backend.(celo.ChainReader)
+	blockData, err := b.BlockByNumber(context.Background(), block)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +50,7 @@ func HandleErc20DepositedEventCelo(sourceID, destId uint8, nonce uint64, handler
 	if err != nil {
 		return nil, err
 	}
-	apk, err := l.valsAggr.GetAPKForBlock(txBlock, uint8(l.cfg.ID), l.cfg.EpochSize)
+	apk, err := l.valsAggr.GetAPKForBlock(block, uint8(l.cfg.ID), l.cfg.EpochSize)
 	if err != nil {
 		return nil, err
 
