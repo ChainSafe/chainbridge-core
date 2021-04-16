@@ -6,11 +6,11 @@ services:
     ports:
       - "8545:8545"
 
-  celo:
-    image: "chainsafe/chainbridge-celo-blockchain:20200720215414-7a61816"
-    container_name: celo
-    ports:
-      - "8546:8545"
+#  celo:
+#    image: "chainsafe/chainbridge-celo-blockchain:20200720215414-7a61816"
+#    container_name: celo
+#    ports:
+#      - "8546:8545"
 
 #
 #  sub-chain:

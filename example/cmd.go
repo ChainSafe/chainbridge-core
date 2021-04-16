@@ -5,15 +5,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ChainSafe/chainbridgev2/relayer/blockstore"
-
-	"github.com/ChainSafe/chainbridgev2/chains/evm/listener"
+	"github.com/ChainSafe/chainbridgev2/lvldatabase"
 
 	"github.com/ChainSafe/chainbridgev2/chains/evm"
-
+	"github.com/ChainSafe/chainbridgev2/chains/evm/client"
+	"github.com/ChainSafe/chainbridgev2/chains/evm/listener"
+	"github.com/ChainSafe/chainbridgev2/example/keystore"
 	"github.com/ChainSafe/chainbridgev2/relayer"
-
-	"github.com/ChainSafe/chainbridge-utils/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -43,36 +41,26 @@ func Run(ctx *cli.Context) error {
 	errChn := make(chan error)
 	stopChn := make(chan struct{})
 
-	eventReader := listener.NewEVMListener(chainReader, "0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B", 1)
-
-	c, err := evm.NewEVMChain(eventReader, voter)
+	c, err := client.NewClient(TestEndpoint, false, AliceKp, stopChn, errChn, common.HexToAddress("0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B"))
 	if err != nil {
 		panic(err)
 	}
 
-	blockStore := blockstore.NewBlockStore()
+	eventListener := listener.NewEVMListener(c, "0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B", 1)
 
-	r := relayer.NewRelayer([]relayer.RelayedChain{c}, blockStore)
+	lvldb, err := lvldatabase.NewLvlDB("./lvldbdata")
+	if err != nil {
+		panic(err)
+	}
+
+	chain := evm.NewEVMChain(eventListener, nil, lvldb, c)
+	if err != nil {
+		panic(err)
+	}
+
+	r := relayer.NewRelayer([]relayer.RelayedChain{chain})
 
 	r.Start(stopChn, errChn)
-
-	//bridgeAddress := ethcommon.HexToAddress("0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B")
-	//ethListener := evmd.NewListener(c, bridgeAddress, 1)
-	//celoListener := evmd.NewListener(celoC, bridgeAddress, 2)
-	//
-	//ethListener.RegisterHandler(common.HexToAddress("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF"), evmd.HandleErc20DepositedEvent)
-	//celoListener.RegisterHandler(common.HexToAddress("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF"), evmd.HandleErc20DepositedEvent)
-	//
-	//// It should listen different chains and accept different configs
-	//
-	//ethWriter := relayer.NewWriter(propExecuterETH)
-	//celoWriter := relayer.NewWriter(propExecuterCelo)
-	//
-	//r.RegisterWriter(1, ethWriter)
-	//r.RegisterWriter(2, celoWriter)
-	//
-	//go r.Start(stopChn, errChn)
-	//
 
 	sysErr := make(chan os.Signal, 1)
 	signal.Notify(sysErr,

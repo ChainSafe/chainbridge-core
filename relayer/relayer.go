@@ -2,31 +2,23 @@ package relayer
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/rs/zerolog/log"
 )
 
-type BlockStorer interface {
-	StoreBlock(block *big.Int, chainID uint8) error
-	GetLastStoredBlock(chainID uint8) error
-	Close() error
-}
-
 type RelayedChain interface {
-	PollEvents(bs BlockStorer, stop <-chan struct{}, sysErr chan<- error, eventsChan chan XCMessager)
+	PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan XCMessager)
 	Write(XCMessager)
 	ChainID() uint8
 }
 
-func NewRelayer(chains []RelayedChain, bs BlockStorer) *Relayer {
-	return &Relayer{relayedChains: chains, bs: bs}
+func NewRelayer(chains []RelayedChain) *Relayer {
+	return &Relayer{relayedChains: chains}
 }
 
 type Relayer struct {
 	relayedChains []RelayedChain
 	registry      map[uint8]RelayedChain
-	bs            BlockStorer
 }
 
 // Starts the relayer. Relayer routine is starting all the chains
@@ -35,7 +27,7 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 	messagesChannel := make(chan XCMessager)
 	for _, c := range r.relayedChains {
 		r.addRelayedChain(c)
-		go c.PollEvents(r.bs, stop, sysErr, messagesChannel)
+		go c.PollEvents(stop, sysErr, messagesChannel)
 	}
 	for {
 		select {

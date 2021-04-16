@@ -1,29 +1,17 @@
 package evm
 
 import (
-	"errors"
+	"fmt"
 	"math/big"
-	"time"
+
+	"github.com/ChainSafe/chainbridgev2/blockstore"
 
 	"github.com/ChainSafe/chainbridgev2/relayer"
 	"github.com/rs/zerolog/log"
 )
 
-var ErrFatalPolling = errors.New("listener block polling failed")
-var BlockRetryLimit = 5
-var BlockRetryInterval = time.Second * 5
-var BlockDelay = big.NewInt(10) //TODO: move to config
-
-//type AddressType [32]byte
-
-// DepositReader
-type EventReader interface {
-	//LatestBlock() (*big.Int, error)
-	//MatchResourceIDToHandlerAddress(rID [32]byte) (ethcommon.Address, error)
-	//MatchAddressWithHandlerFunc(addr ethcommon.Address) (Handler, error)
-	//LogsForBlock(ctx context.Context, latestBlock *big.Int) ([]types.Log, error)
-	//GetContractBackend() bind.ContractBackend
-	GetDepositEventsForBlockRange(blockFrom, blockTo *big.Int) ([]relayer.XCMessager, error)
+type EventListener interface {
+	ListenToEvents(startBlock *big.Int, stop <-chan struct{}, sysErr chan<- error) <-chan relayer.XCMessager
 }
 
 type LatestBlockGetter interface {
@@ -36,64 +24,36 @@ type EVMWriter interface {
 
 // EVMChain is struct that aggregates all data required for
 type EVMChain struct {
-	listener EventReader // Rename
+	listener EventListener // Rename
 	writer   EVMWriter
 	chainID  uint8
 	block    *big.Int
 	bg       LatestBlockGetter
-	bs       relayer.BlockStorer
+	kvdb     blockstore.KeyValueReaderWriter
 }
 
-func NewEVMChain(dr EventReader, writer EVMWriter, bs relayer.BlockStorer) *EVMChain {
-	return &EVMChain{listener: dr, writer: writer, bs: bs}
+func NewEVMChain(dr EventListener, writer EVMWriter, kvdb blockstore.KeyValueReaderWriter, bg LatestBlockGetter) *EVMChain {
+	return &EVMChain{listener: dr, writer: writer, kvdb: kvdb, bg: bg}
 }
 
-// PollEvents is the gorutine that polling blocks and searching Deposit Events in them. Event then sent to eventsChan
+// PollEvents is the goroutine that polling blocks and searching Deposit Events in them. Event then sent to eventsChan
 func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan relayer.XCMessager) {
 	log.Info().Msg("Polling Blocks...")
+	b, err := blockstore.GetLastStoredBlock(c.kvdb, c.chainID)
+	if err != nil {
+		sysErr <- fmt.Errorf("error %w on getting last stored block", err)
+		return
+	}
+	c.block = b
+	ech := c.listener.ListenToEvents(b, stop, sysErr)
 	for {
 		select {
 		case <-stop:
 			return
-		default:
-			latestBlock, err := c.bg.LatestBlock()
-			if err != nil {
-				log.Error().Err(err).Str("block", c.block.String()).Msg("Unable to get latest block")
-				time.Sleep(BlockRetryInterval)
-				continue
-			}
-
-			// Sleep if the difference is less than BlockDelay; (latest - current) < BlockDelay
-			if big.NewInt(0).Sub(latestBlock, c.block).Cmp(BlockDelay) == -1 {
-				time.Sleep(BlockRetryInterval)
-				continue
-			}
-
-			// Parse out events
-			events, err := c.listener.GetDepositEventsForBlockRange(c.block, c.block)
-			if err != nil {
-				log.Error().Str("block", c.block.String()).Err(err).Msg("Failed to get events for block")
-				time.Sleep(BlockRetryInterval)
-				continue
-			}
-			// TODO: FIX THIS
-			for _, e := range events {
-				eventsChan <- e
-			}
-
-			if c.block.Int64()%20 == 0 {
-				// Logging process every 20 bocks to exclude spam
-				log.Debug().Str("block", c.block.String()).Msg("Queried block for deposit events")
-			}
-
-			//Write to block store. Not a critical operation, no need to retry
-			err = c.bs.StoreBlock(c.block, c.chainID)
-			if err != nil {
-				log.Error().Str("block", c.block.String()).Err(err).Msg("Failed to write latest block to blockstore")
-			}
-
-			// Goto next block
-			c.block.Add(c.block, big.NewInt(1))
+		case newEvent := <-ech:
+			// Here we can place middlewares for custom logic
+			eventsChan <- newEvent
+			// TODO: We can store blocks to DB inside listener or make lestiener send something to channel each block to save it.
 		}
 	}
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func HandleErc20DepositedEvent(sourceID, destId uint8, nonce uint64, handlerContractAddress string, backend ChainClient) (relayer.XCMessager, error) {
+func HandleErc20DepositedEvent(sourceID, destId uint8, nonce uint64, handlerContractAddress string, backend ChainClientReader) (relayer.XCMessager, error) {
 	contract, err := erc20Handler.NewERC20HandlerCaller(common.HexToAddress(handlerContractAddress), backend)
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func HandleErc20DepositedEvent(sourceID, destId uint8, nonce uint64, handlerCont
 	}, nil
 }
 
-func HandleErc721DepositedEvent(sourceID, destId uint8, nonce uint64, handlerContractAddress string, backend ChainClient) (relayer.XCMessager, error) {
+func HandleErc721DepositedEvent(sourceID, destId uint8, nonce uint64, handlerContractAddress string, backend ChainClientReader) (relayer.XCMessager, error) {
 	contract, err := erc721Handler.NewERC721HandlerCaller(common.HexToAddress(handlerContractAddress), backend)
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func HandleErc721DepositedEvent(sourceID, destId uint8, nonce uint64, handlerCon
 	}, nil
 }
 
-func HandleGenericDepositedEvent(sourceID, destId uint8, nonce uint64, handlerContractAddress string, backend ChainClient) (relayer.XCMessager, error) {
+func HandleGenericDepositedEvent(sourceID, destId uint8, nonce uint64, handlerContractAddress string, backend ChainClientReader) (relayer.XCMessager, error) {
 	contract, err := genericHandler.NewGenericHandlerCaller(common.HexToAddress(handlerContractAddress), backend)
 	if err != nil {
 		return nil, err
