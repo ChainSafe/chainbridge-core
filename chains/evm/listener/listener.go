@@ -79,6 +79,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, stop <-chan struct{}, 
 			case <-stop:
 				return
 			default:
+				log.Debug().Msgf("listening for %s", startBlock.String())
 				head, err := l.chainReader.HeaderByNumber(context.Background(), nil)
 				if err != nil {
 					log.Error().Err(err).Msg("Unable to get latest block")

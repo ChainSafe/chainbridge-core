@@ -37,6 +37,8 @@ const DefaultGasPrice = 20000000000
 const TestEndpoint = "ws://localhost:8545"
 const TestEndpoint2 = "ws://localhost:8546"
 
+//Bridge:             0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B
+//Erc20 Handler:      0x3167776db165D8eA0f51790CA2bbf44Db5105ADF
 func Run(ctx *cli.Context) error {
 	errChn := make(chan error)
 	stopChn := make(chan struct{})
@@ -60,7 +62,7 @@ func Run(ctx *cli.Context) error {
 
 	r := relayer.NewRelayer([]relayer.RelayedChain{chain})
 
-	r.Start(stopChn, errChn)
+	go r.Start(stopChn, errChn)
 
 	sysErr := make(chan os.Signal, 1)
 	signal.Notify(sysErr,

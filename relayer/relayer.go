@@ -24,8 +24,11 @@ type Relayer struct {
 // Starts the relayer. Relayer routine is starting all the chains
 // and passing them with a channel that accepts unified cross chain message format
 func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
+	log.Debug().Msgf("Starting relayer")
 	messagesChannel := make(chan XCMessager)
 	for _, c := range r.relayedChains {
+		log.Debug().Msgf("Starting chain %v", c.ChainID())
+
 		r.addRelayedChain(c)
 		go c.PollEvents(stop, sysErr, messagesChannel)
 	}
@@ -33,6 +36,7 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 		select {
 		case m := <-messagesChannel:
 			go r.Route(m)
+			continue
 		case _ = <-stop:
 			return
 		}
