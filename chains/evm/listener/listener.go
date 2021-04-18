@@ -19,11 +19,9 @@ const (
 	DepositSignature string = "Deposit(uint8,bytes32,uint64)"
 )
 
-type EventHandler func(sourceID, destID uint8, nonce uint64, handlerContractAddress string, backend ChainClientReader, args ...interface{}) (relayer.XCMessager, error)
+type EventHandler func(sourceID, destID uint8, nonce uint64, handlerContractAddress string, backend ChainClientReader) (relayer.XCMessager, error)
 type EventHandlers map[ethcommon.Address]EventHandler
 
-var ErrFatalPolling = errors.New("listener block polling failed")
-var BlockRetryLimit = 5
 var BlockRetryInterval = time.Second * 5
 var BlockDelay = big.NewInt(10) //TODO: move to config
 

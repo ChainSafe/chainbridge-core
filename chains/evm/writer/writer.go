@@ -13,17 +13,17 @@ const ExecuteBlockWatchLimit = 100
 
 var BlockRetryInterval = time.Second * 5
 
-//var ErrNonceTooLow = errors.New("nonce too low")
-//var ErrTxUnderpriced = errors.New("replacement transaction underpriced")
-//var ErrFatalTx = errors.New("submission of transaction failed")
-//var ErrFatalQuery = errors.New("query of chain state failed")
-
 type ProposalExecutor interface {
 	ExecuteProposal(proposal relayer.Proposal)
 }
 
 type ProposalVoter interface {
 	VoteProposal(proposal relayer.Proposal)
+}
+
+type VoterExecutor interface {
+	ProposalExecutor
+	ProposalVoter
 }
 
 type ProposalHandler func(msg relayer.XCMessager, handlerAddr string) (relayer.Proposal, error)
@@ -34,53 +34,54 @@ type BridgeReader interface {
 }
 
 type Writer struct {
-	stop             <-chan struct{}
-	sysErr           chan<- error
-	BridgeContract   ethcommon.Address
-	handlers         ProposalHandlers
-	bridgeReader     BridgeReader
-	proposalExecutor ProposalExecutor
-	proposalVoter    ProposalVoter
+	stop                  <-chan struct{}
+	errChn                chan<- error
+	handlers              ProposalHandlers
+	bridgeReader          BridgeReader
+	proposalVoterExecutor VoterExecutor
 }
 
-func NewWriter() *Writer {
-	return &Writer{}
+func NewWriter(stop <-chan struct{}, errChn chan<- error, ve VoterExecutor, bridgeReader BridgeReader) *Writer {
+	return &Writer{
+		stop:                  stop,
+		errChn:                errChn,
+		proposalVoterExecutor: ve,
+		bridgeReader:          bridgeReader,
+	}
 }
 
 func (w *Writer) Write(m relayer.XCMessager) {
-
 	// Matching resource ID with handler.
 	addr, err := w.bridgeReader.MatchResourceIDToHandlerAddress(m.GetResourceID())
 	// Based on handler that registered on BridgeContract
-
 	propHandler, err := w.MatchAddressWithHandlerFunc(addr)
 	if err != nil {
-		w.sysErr <- err
+		w.errChn <- err
 		return
 	}
 	prop, err := propHandler(m, addr)
 	if err != nil {
-		w.sysErr <- err
+		w.errChn <- err
 		return
 	}
 
 	if !prop.ShouldBeVotedFor() {
 		if prop.ProposalIsReadyForExecute() {
 			// We should not vote for this proposal but it is ready to be executed
-			w.proposalExecutor.ExecuteProposal(prop)
+			w.proposalVoterExecutor.ExecuteProposal(prop)
 			return
 		} else {
 			return
 		}
 	}
-	w.proposalVoter.VoteProposal(prop)
-
+	w.proposalVoterExecutor.VoteProposal(prop)
 	// Checking every 5 seconds does proposal is ready to be executed
+	// TODO: update infinity loop to break after some period of time
 	for {
 		select {
 		case <-time.After(BlockRetryInterval):
 			if prop.ProposalIsReadyForExecute() {
-				w.proposalExecutor.ExecuteProposal(prop)
+				w.proposalVoterExecutor.ExecuteProposal(prop)
 				return
 			}
 			continue

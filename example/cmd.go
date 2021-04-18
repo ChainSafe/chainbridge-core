@@ -5,12 +5,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ChainSafe/chainbridgev2/lvldatabase"
-
 	"github.com/ChainSafe/chainbridgev2/chains/evm"
 	"github.com/ChainSafe/chainbridgev2/chains/evm/client"
 	"github.com/ChainSafe/chainbridgev2/chains/evm/listener"
+	"github.com/ChainSafe/chainbridgev2/chains/evm/writer"
+	"github.com/ChainSafe/chainbridgev2/chains/evm/writer/bridger"
 	"github.com/ChainSafe/chainbridgev2/example/keystore"
+	"github.com/ChainSafe/chainbridgev2/lvldb"
 	"github.com/ChainSafe/chainbridgev2/relayer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -43,7 +44,8 @@ func Run(ctx *cli.Context) error {
 	errChn := make(chan error)
 	stopChn := make(chan struct{})
 
-	c, err := client.NewClient(TestEndpoint, false, AliceKp, stopChn, errChn, common.HexToAddress("0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B"))
+	// TODO: Bridge address passed both to client and listener
+	c, err := client.NewClient(TestEndpoint, false, stopChn, errChn, common.HexToAddress("0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B"))
 	if err != nil {
 		panic(err)
 	}
@@ -52,12 +54,19 @@ func Run(ctx *cli.Context) error {
 
 	eventListener.RegisterHandler("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF", listener.HandleErc20DepositedEvent)
 
-	lvldb, err := lvldatabase.NewLvlDB("./lvldbdata")
+	ve, err := bridger.NewBridgeClient(common.HexToAddress("0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B"), c, AliceKp, stopChn, errChn)
 	if err != nil {
 		panic(err)
 	}
 
-	chain := evm.NewEVMChain(eventListener, nil, lvldb, c)
+	eventWriter := writer.NewWriter(stopChn, errChn, ve, c)
+
+	lvldb, err := lvldb.NewLvlDB("./lvldbdata")
+	if err != nil {
+		panic(err)
+	}
+
+	chain := evm.NewEVMChain(eventListener, eventWriter, lvldb, c)
 	if err != nil {
 		panic(err)
 	}

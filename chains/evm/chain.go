@@ -18,7 +18,7 @@ type LatestBlockGetter interface {
 }
 
 type EVMWriter interface {
-	Write()
+	Write(messager relayer.XCMessager)
 }
 
 // EVMChain is struct that aggregates all data required for
@@ -48,7 +48,7 @@ func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsC
 		case <-stop:
 			return
 		case newEvent := <-ech:
-			// Here we can place middlewares for custom logic
+			// Here we can place middlewares for custom logic?
 			eventsChan <- newEvent
 			continue
 			// TODO: We can store blocks to DB inside listener or make lestiener send something to channel each block to save it.
@@ -57,8 +57,8 @@ func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsC
 }
 
 // Write function pass XCMessager to underlying chain writer
-func (c *EVMChain) Write(relayer.XCMessager) {
-	c.writer.Write() // TODO
+func (c *EVMChain) Write(msg relayer.XCMessager) {
+	c.writer.Write(msg)
 }
 
 func (c *EVMChain) ChainID() uint8 {

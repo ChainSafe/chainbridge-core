@@ -1,4 +1,4 @@
-package lvldatabase
+package lvldb
 
 import (
 	"github.com/pkg/errors"
