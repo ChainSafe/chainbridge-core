@@ -20,7 +20,7 @@ type ValidatorsAggregator interface {
 	GetAPKForBlock(block *big.Int, chainID uint8, epochSize uint64) ([]byte, error)
 }
 
-func HandleErc20DepositedEventCelo(sourceID, destId uint8, nonce uint64, handlerContractAddress string, backend listener.ChainClientReader, block, txIndex *big.Int) (relayer.XCMessager, error) {
+func HandleErc20DepositedEventCelo(sourceID, destId uint8, nonce uint64, handlerContractAddress string, backend listener.ChainClientReader, block, txIndex *big.Int, args ...interface{}) (relayer.XCMessager, error) {
 	contract, err := erc20Handler.NewERC20HandlerCaller(common.HexToAddress(handlerContractAddress), backend)
 	if err != nil {
 		return nil, err

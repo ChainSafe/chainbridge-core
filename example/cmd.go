@@ -50,6 +50,8 @@ func Run(ctx *cli.Context) error {
 
 	eventListener := listener.NewEVMListener(c, "0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B", 1)
 
+	eventListener.RegisterHandler("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF", listener.HandleErc20DepositedEvent)
+
 	lvldb, err := lvldatabase.NewLvlDB("./lvldbdata")
 	if err != nil {
 		panic(err)

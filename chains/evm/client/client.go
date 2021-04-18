@@ -92,7 +92,7 @@ func (c *Client) connect() error {
 	return nil
 }
 
-func (c *Client) MatchResourceIDToHandlerAddress(rID [32]byte, bridgeAddress string) (string, error) {
+func (c *Client) MatchResourceIDToHandlerAddress(rID [32]byte) (string, error) {
 	addr, err := c.bridgeContract.ResourceIDToHandlerAddress(&bind.CallOpts{}, rID)
 	if err != nil {
 		return "", fmt.Errorf("failed to get handler from resource ID %x, reason: %w", rID, err)

@@ -20,10 +20,9 @@ func HandleErc20DepositedEvent(sourceID, destId uint8, nonce uint64, handlerCont
 		return nil, err
 	}
 
-	return &evm.DefaultEVMMessage{
+	return &evm.EVMMessage{
 		Source:       sourceID,
 		Destination:  destId,
-		Type:         evm.FungibleTransfer,
 		DepositNonce: nonce,
 		ResourceId:   record.ResourceID,
 		Payload: []interface{}{
@@ -42,10 +41,9 @@ func HandleErc721DepositedEvent(sourceID, destId uint8, nonce uint64, handlerCon
 	if err != nil {
 		return nil, err
 	}
-	return &evm.DefaultEVMMessage{
+	return &evm.EVMMessage{
 		Source:       sourceID,
 		Destination:  destId,
-		Type:         evm.NonFungibleTransfer,
 		DepositNonce: nonce,
 		ResourceId:   record.ResourceID,
 		Payload: []interface{}{
@@ -65,10 +63,9 @@ func HandleGenericDepositedEvent(sourceID, destId uint8, nonce uint64, handlerCo
 	if err != nil {
 		return nil, err
 	}
-	return &evm.DefaultEVMMessage{
+	return &evm.EVMMessage{
 		Source:       sourceID,
 		Destination:  destId,
-		Type:         evm.FungibleTransfer,
 		DepositNonce: nonce,
 		ResourceId:   record.ResourceID,
 		Payload: []interface{}{

@@ -1,164 +1,104 @@
 package writer
 
 import (
-	"context"
 	"errors"
-	"math/big"
 	"time"
 
-	goeth "github.com/ethereum/go-ethereum"
+	"github.com/ChainSafe/chainbridgev2/relayer"
 	ethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/rs/zerolog/log"
 )
 
 // Number of blocks to wait for an finalization event
 const ExecuteBlockWatchLimit = 100
+
+var BlockRetryInterval = time.Second * 5
 
 //var ErrNonceTooLow = errors.New("nonce too low")
 //var ErrTxUnderpriced = errors.New("replacement transaction underpriced")
 //var ErrFatalTx = errors.New("submission of transaction failed")
 //var ErrFatalQuery = errors.New("query of chain state failed")
 
-type ProposalVoterExecutor interface {
-	VoteProposal(proposal Proposal)
-	ExecuteProposal(proposal Proposal)
+type ProposalExecutor interface {
+	ExecuteProposal(proposal relayer.Proposal)
 }
 
-type ContractCaller interface {
-	FilterLogs(ctx context.Context, q goeth.FilterQuery) ([]types.Log, error)
-	LatestBlock() (*big.Int, error)
+type ProposalVoter interface {
+	VoteProposal(proposal relayer.Proposal)
+}
+
+type ProposalHandler func(msg relayer.XCMessager, handlerAddr string) (relayer.Proposal, error)
+type ProposalHandlers map[ethcommon.Address]ProposalHandler
+
+type BridgeReader interface {
+	MatchResourceIDToHandlerAddress(rID [32]byte) (string, error)
 }
 
 type Writer struct {
-	voterExecutor  ProposalVoterExecutor
-	stop           <-chan struct{}
-	sysErr         chan<- error
-	client         ContractCaller
-	propCreatorFn  ProposalCreatorFn
-	BridgeContract ethcommon.Address
+	stop             <-chan struct{}
+	sysErr           chan<- error
+	BridgeContract   ethcommon.Address
+	handlers         ProposalHandlers
+	bridgeReader     BridgeReader
+	proposalExecutor ProposalExecutor
+	proposalVoter    ProposalVoter
 }
 
-func NewWriter(ve ProposalVoterExecutor, propCreatorFn ProposalCreatorFn) *Writer {
-	return &Writer{
-		voterExecutor: ve,
-		propCreatorFn: propCreatorFn,
-	}
+func NewWriter() *Writer {
+	return &Writer{}
 }
 
-func (w *Writer) Write(m XCMessager) {
+func (w *Writer) Write(m relayer.XCMessager) {
 
-	prop, err := w.propCreatorFn(m)
+	// Matching resource ID with handler.
+	addr, err := w.bridgeReader.MatchResourceIDToHandlerAddress(m.GetResourceID())
+	// Based on handler that registered on BridgeContract
+
+	propHandler, err := w.MatchAddressWithHandlerFunc(addr)
 	if err != nil {
 		w.sysErr <- err
+		return
+	}
+	prop, err := propHandler(m, addr)
+	if err != nil {
+		w.sysErr <- err
+		return
 	}
 
-	if !prop.ShouldVoteFor() {
-		if prop.GetProposalStatus() == ProposalStatusPassed {
+	if !prop.ShouldBeVotedFor() {
+		if prop.ProposalIsReadyForExecute() {
 			// We should not vote for this proposal but it is ready to be executed
-			w.voterExecutor.ExecuteProposal(prop)
+			w.proposalExecutor.ExecuteProposal(prop)
 			return
 		} else {
 			return
 		}
 	}
+	w.proposalVoter.VoteProposal(prop)
 
-	go w.watchThenExecute(prop)
-	w.voterExecutor.VoteProposal(prop)
-}
-
-// watchThenExecute watches for the latest block and executes once the matching finalized event is found
-func (w *Writer) watchThenExecute(prop Proposal) {
-	delay := big.NewInt(10)
-	blockToWatch, err := w.client.LatestBlock()
-	if err != nil {
-		log.Error().Err(err).Msg("unable to fetch latest block")
-		w.sysErr <- errors.New("unable to fetch latest block")
-		return
-	}
-	log.Info().Interface("src", prop.GetSource()).Interface("nonce", prop.GetDepositNonce()).Msg("Watching for finalization event")
-
-	// watching for the latest block, querying and matching the finalized event will be retried up to ExecuteBlockWatchLimit times
-	for i := 0; i < ExecuteBlockWatchLimit; i++ {
-		select {
-		case <-w.stop:
-			return
-		default:
-			// Waits chain to overtake current block for delay
-			err := BlockWaiter(w.client, blockToWatch, delay, w.stop)
-			if err != nil {
-				w.sysErr <- err
-				return
-			}
-
-			// query for logs
-			query := buildQuery(w.BridgeContract, crypto.Keccak256Hash([]byte("ProposalEvent(uint8,uint64,uint8,bytes32,bytes32)")), blockToWatch, blockToWatch.Add(blockToWatch, delay))
-			evts, err := w.client.FilterLogs(context.Background(), query)
-			if err != nil {
-				log.Error().Err(err).Msg("Failed to fetch logs")
-				return
-			}
-
-			// execute the proposal once we find the matching finalized event
-			for _, evt := range evts {
-				sourceId := evt.Topics[1].Big().Uint64()
-				depositNonce := evt.Topics[2].Big().Uint64()
-				status := evt.Topics[3].Big().Uint64()
-
-				if prop.GetSource() == uint8(sourceId) &&
-					prop.GetDepositNonce() == depositNonce &&
-					prop.GetProposalStatus() == ProposalStatusPassed {
-					w.voterExecutor.ExecuteProposal(prop)
-					return
-				} else {
-					log.Trace().Interface("src", sourceId).Interface("nonce", depositNonce).Uint64("status", status).Msg("Ignoring event")
-				}
-			}
-			log.Trace().Interface("block", blockToWatch).Interface("src", prop.GetSource()).Interface("nonce", prop.GetDepositNonce()).Msg("No finalization event found in current block")
-			blockToWatch = blockToWatch.Add(blockToWatch, big.NewInt(1))
-		}
-	}
-	log.Warn().Interface("source", prop.GetSource()).Interface("dest", prop.GetDestination()).Interface("nonce", prop.GetDepositNonce()).Msg("Block watch limit exceeded, skipping execution")
-}
-
-// buildQuery constructs a query for the bridgeContract by hashing sig to get the event topic
-func buildQuery(contract ethcommon.Address, sig ethcommon.Hash, startBlock *big.Int, endBlock *big.Int) goeth.FilterQuery {
-	query := goeth.FilterQuery{
-		FromBlock: startBlock,
-		ToBlock:   endBlock,
-		Addresses: []ethcommon.Address{contract},
-		Topics: [][]ethcommon.Hash{
-			{sig},
-		},
-	}
-	return query
-}
-
-// BlockWaiter function accepts fetcher of type LatestBlockFetcher interface, targetBlock, delay and waits for chain to reach targetBlock plus delay
-func BlockWaiter(fetcher ChainWithLatestBlock, targetBlock *big.Int, delay *big.Int, stopChan <-chan struct{}) error {
-	connErrRetries := BlockRetryLimit
+	// Checking every 5 seconds does proposal is ready to be executed
 	for {
 		select {
-		case <-stopChan:
-			return errors.New("connection terminated")
 		case <-time.After(BlockRetryInterval):
-			if connErrRetries <= 0 {
-				return errors.New("error fetching latest block")
-			}
-			currBlock, err := fetcher.LatestBlock()
-			if err != nil {
-				connErrRetries -= 1
-				continue
-			}
-			if delay != nil {
-				currBlock.Sub(currBlock, delay)
-			}
-			// Equal or greater than target
-			if currBlock.Cmp(targetBlock) >= 0 {
-				return nil
+			if prop.ProposalIsReadyForExecute() {
+				w.proposalExecutor.ExecuteProposal(prop)
+				return
 			}
 			continue
+		case <-w.stop:
+			return
+
 		}
 	}
+}
+
+func (w *Writer) MatchAddressWithHandlerFunc(addr string) (ProposalHandler, error) {
+	h, ok := w.handlers[ethcommon.HexToAddress(addr)]
+	if !ok {
+		return nil, errors.New("no corresponding handler for this address exists")
+	}
+	return h, nil
+}
+
+func (w *Writer) RegisterHandler(address string, handler ProposalHandler) {
+	w.handlers[ethcommon.HexToAddress(address)] = handler
 }

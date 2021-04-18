@@ -35,7 +35,7 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 	for {
 		select {
 		case m := <-messagesChannel:
-			go r.Route(m)
+			go r.route(m)
 			continue
 		case _ = <-stop:
 			return
@@ -44,7 +44,7 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 }
 
 // Route function winds destination writer by mapping DestinationID from message to registered writer.
-func (r *Relayer) Route(m XCMessager) {
+func (r *Relayer) route(m XCMessager) {
 	w, ok := r.registry[m.GetDestination()]
 	if !ok {
 		log.Error().Msgf(fmt.Sprintf("no resolver for destID %v to send message registered", m.GetDestination()))

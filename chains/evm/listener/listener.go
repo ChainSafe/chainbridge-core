@@ -19,7 +19,7 @@ const (
 	DepositSignature string = "Deposit(uint8,bytes32,uint64)"
 )
 
-type EventHandler func(sourceID, destID uint8, nonce uint64, handlerContractAddress string, backend ChainClientReader) (relayer.XCMessager, error)
+type EventHandler func(sourceID, destID uint8, nonce uint64, handlerContractAddress string, backend ChainClientReader, args ...interface{}) (relayer.XCMessager, error)
 type EventHandlers map[ethcommon.Address]EventHandler
 
 var ErrFatalPolling = errors.New("listener block polling failed")
@@ -31,7 +31,7 @@ type ChainClientReader interface {
 	goeth.ChainReader
 	bind.ContractCaller
 	FilterLogs(ctx context.Context, q goeth.FilterQuery) ([]types.Log, error)
-	MatchResourceIDToHandlerAddress(rID [32]byte, bridgeAddress string) (string, error)
+	MatchResourceIDToHandlerAddress(rID [32]byte) (string, error)
 }
 
 type EVMListener struct {
@@ -79,7 +79,6 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, stop <-chan struct{}, 
 			case <-stop:
 				return
 			default:
-				log.Debug().Msgf("listening for %s", startBlock.String())
 				head, err := l.chainReader.HeaderByNumber(context.Background(), nil)
 				if err != nil {
 					log.Error().Err(err).Msg("Unable to get latest block")
@@ -99,17 +98,12 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, stop <-chan struct{}, 
 					log.Error().Err(err).Str("ChainID", string(l.chainID)).Msgf("Unable to filter logs")
 					continue
 				}
-				if len(logs) == 0 {
-					// No logs found in current block
-					startBlock.Add(startBlock, big.NewInt(1))
-					continue
-				}
 				for _, eventLog := range logs {
 					destId := uint8(eventLog.Topics[1].Big().Uint64())
 					rId := eventLog.Topics[2]
 					nonce := eventLog.Topics[3].Big().Uint64()
 
-					addr, err := l.chainReader.MatchResourceIDToHandlerAddress(rId, l.bridgeContractAddress.String())
+					addr, err := l.chainReader.MatchResourceIDToHandlerAddress(rId)
 					if err != nil {
 						errChn <- err
 						log.Error().Err(err)
