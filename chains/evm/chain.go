@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type EventListener interface {
+type EVMEventListener interface {
 	ListenToEvents(startBlock *big.Int, bridgeContractAddress string, kvrw blockstore.KeyValueReaderWriter, chainID uint8, stop <-chan struct{}, sysErr chan<- error) <-chan relayer.XCMessager
 }
 
@@ -19,19 +19,19 @@ type LatestBlockGetter interface {
 }
 
 type EVMWriter interface {
-	Write(messager relayer.XCMessager)
+	Write(messager relayer.XCMessager) error
 }
 
 // EVMChain is struct that aggregates all data required for
 type EVMChain struct {
-	listener              EventListener // Rename
+	listener              EVMEventListener // Rename
 	writer                EVMWriter
 	chainID               uint8
 	kvdb                  blockstore.KeyValueReaderWriter
 	bridgeContractAddress string
 }
 
-func NewEVMChain(dr EventListener, writer EVMWriter, kvdb blockstore.KeyValueReaderWriter, bridgeContractAddress string) *EVMChain {
+func NewEVMChain(dr EVMEventListener, writer EVMWriter, kvdb blockstore.KeyValueReaderWriter, bridgeContractAddress string) *EVMChain {
 	return &EVMChain{listener: dr, writer: writer, kvdb: kvdb, bridgeContractAddress: bridgeContractAddress}
 }
 
@@ -57,8 +57,8 @@ func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsC
 }
 
 // Write function pass XCMessager to underlying chain writer
-func (c *EVMChain) Write(msg relayer.XCMessager) {
-	c.writer.Write(msg)
+func (c *EVMChain) Write(msg relayer.XCMessager) error {
+	return c.writer.Write(msg)
 }
 
 func (c *EVMChain) ChainID() uint8 {

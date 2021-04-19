@@ -11,7 +11,6 @@ import (
 	goeth "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
 )
@@ -20,25 +19,25 @@ const (
 	DepositSignature string = "Deposit(uint8,bytes32,uint64)"
 )
 
-type EventHandler func(sourceID, destID uint8, nonce uint64, handlerContractAddress string, backend ChainClientReader) (relayer.XCMessager, error)
+type EventHandler func(sourceID, destID uint8, nonce uint64, handlerContractAddress string, backend ChainReader) (relayer.XCMessager, error)
 type EventHandlers map[ethcommon.Address]EventHandler
 
 var BlockRetryInterval = time.Second * 5
 var BlockDelay = big.NewInt(10) //TODO: move to config
 
-type ChainClientReader interface {
+type ChainReader interface {
 	goeth.ChainReader
 	bind.ContractCaller
-	FilterLogs(ctx context.Context, q goeth.FilterQuery) ([]types.Log, error)
+	bind.ContractFilterer
 	MatchResourceIDToHandlerAddress(bridgeAddr ethcommon.Address, rID [32]byte) (string, error)
 }
 
 type EVMListener struct {
-	chainReader   ChainClientReader
+	chainReader   ChainReader
 	eventHandlers EventHandlers
 }
 
-func NewEVMListener(chainReader ChainClientReader) *EVMListener {
+func NewEVMListener(chainReader ChainReader) *EVMListener {
 	return &EVMListener{chainReader: chainReader, eventHandlers: make(map[ethcommon.Address]EventHandler)}
 }
 

@@ -3,7 +3,10 @@ package evm
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"math/big"
+
+	"github.com/status-im/keycard-go/hexutils"
 
 	"github.com/ChainSafe/chainbridgev2/relayer"
 	"github.com/ethereum/go-ethereum/common"
@@ -19,6 +22,10 @@ type EVMProposal struct {
 	data           []byte
 	dataHash       common.Hash
 	handlerAddress common.Address
+}
+
+func (p EVMProposal) String() string {
+	return fmt.Sprintf("evmProposal from %v to %v nonce %v rID %v", p.Source, p.Destination, p.DepositNonce, hexutils.BytesToHex(p.ResourceId[:]))
 }
 
 func (p *EVMProposal) GetSource() uint8 {

@@ -1,7 +1,10 @@
 package evm
 
 import (
+	"fmt"
+
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/status-im/keycard-go/hexutils"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -12,6 +15,10 @@ type EVMMessage struct {
 	DepositNonce uint64 // Nonce for the deposit
 	ResourceId   [32]byte
 	Payload      []interface{} // data associated with event sequence
+}
+
+func (p EVMMessage) String() string {
+	return fmt.Sprintf("evmMesssage from %v to %v nonce %v rID %v", p.Source, p.Destination, p.DepositNonce, hexutils.BytesToHex(p.ResourceId[:]))
 }
 
 func (m *EVMMessage) GetSource() uint8 {

@@ -39,35 +39,32 @@ type Writer struct {
 
 func NewWriter(stop <-chan struct{}, errChn chan<- error, ve VoterExecutor) *Writer {
 	return &Writer{
-		stop:                  stop,
-		errChn:                errChn,
+		//stop:                  stop,
 		proposalVoterExecutor: ve,
 		handlers:              make(map[ethcommon.Address]ProposalHandler),
 	}
 }
 
-func (w *Writer) Write(m relayer.XCMessager) {
+func (w *Writer) Write(m relayer.XCMessager) error {
 	// Matching resource ID with handler.
 	addr, err := w.proposalVoterExecutor.MatchResourceIDToHandlerAddress(m.GetResourceID())
 	// Based on handler that registered on BridgeContract
 	propHandler, err := w.MatchAddressWithHandlerFunc(addr)
 	if err != nil {
-		w.errChn <- err
-		return
+		return err
 	}
 	prop, err := propHandler(m, addr)
 	if err != nil {
-		w.errChn <- err
-		return
+		return err
 	}
 
 	if !prop.ShouldBeVotedFor() {
 		if prop.ProposalIsReadyForExecute() {
 			// We should not vote for this proposal but it is ready to be executed
 			w.proposalVoterExecutor.ExecuteProposal(prop)
-			return
+			return nil
 		} else {
-			return
+			return nil
 		}
 	}
 	w.proposalVoterExecutor.VoteProposal(prop)
@@ -78,11 +75,11 @@ func (w *Writer) Write(m relayer.XCMessager) {
 		case <-time.After(BlockRetryInterval):
 			if prop.ProposalIsReadyForExecute() {
 				w.proposalVoterExecutor.ExecuteProposal(prop)
-				return
+				return nil
 			}
 			continue
 		case <-w.stop:
-			return
+			return nil
 
 		}
 	}

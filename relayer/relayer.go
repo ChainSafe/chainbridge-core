@@ -8,7 +8,7 @@ import (
 
 type RelayedChain interface {
 	PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan XCMessager)
-	Write(XCMessager)
+	Write(XCMessager) error
 	ChainID() uint8
 }
 
@@ -51,7 +51,10 @@ func (r *Relayer) route(m XCMessager) {
 		return
 	}
 	log.Debug().Msgf("Sending message %+v to destination %v", m, m.GetDestination())
-	w.Write(m)
+	if err := w.Write(m); err != nil {
+		log.Error().Err(err).Msg(fmt.Sprint(m))
+		return
+	}
 }
 
 func (r *Relayer) addRelayedChain(c RelayedChain) {

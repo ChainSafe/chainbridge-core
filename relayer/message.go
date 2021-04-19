@@ -9,6 +9,7 @@ type XCMessager interface {
 	GetDepositNonce() uint64
 	GetResourceID() [32]byte
 	GetPayload() []interface{} // Maybe this should be some bytes encoding
+	String() string
 }
 
 type ProposalStatus uint8
