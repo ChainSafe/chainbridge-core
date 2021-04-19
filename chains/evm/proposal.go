@@ -48,7 +48,7 @@ func (p *EVMProposal) GetProposalDataHash() common.Hash {
 	return crypto.Keccak256Hash(append(p.handlerAddress.Bytes(), p.data...))
 }
 
-func (p *EVMProposal) ShouldVoteFor() bool {
+func (p *EVMProposal) ShouldBeVotedFor() bool {
 	return false
 }
 func (p *EVMProposal) ProposalIsComplete() bool {

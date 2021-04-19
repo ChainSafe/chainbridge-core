@@ -13,37 +13,28 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func NewClient(endpoint string, http bool, stopChan <-chan struct{}, errChan chan<- error, bridgeAddr common.Address) (*Client, error) {
+func NewClient(endpoint string, http bool) (*Client, error) {
 	c := &Client{
 		endpoint: endpoint,
 		http:     http,
-		stopChn:  stopChan,
-		errChn:   errChan,
 	}
 	if err := c.connect(); err != nil {
 		return nil, err
 	}
-
-	bridgeContract, err := bridgeHandler.NewBridge(bridgeAddr, c)
-	if err != nil {
-		return nil, err
-	}
-	c.bridgeContract = bridgeContract
 	return c, nil
 }
 
 type Client struct {
-	client         *ethclient.Client
-	endpoint       string
-	http           bool
-	bridgeContract *bridgeHandler.Bridge
-	stopChn        <-chan struct{}
-	errChn         chan<- error
+	*ethclient.Client
+	endpoint string
+	http     bool
+	stopChn  <-chan struct{}
+	errChn   chan<- error
 }
 
 // LatestBlock returns the latest block from the current chain
 func (c *Client) LatestBlock() (*big.Int, error) {
-	header, err := c.client.HeaderByNumber(context.Background(), nil)
+	header, err := c.Client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -64,25 +55,20 @@ func (c *Client) connect() error {
 	if err != nil {
 		return err
 	}
-	c.client.Client = ethclient.NewClient(rpcClient)
-
-	// Construct tx opts, call opts, and nonce mechanism
-	//opts, err := c.newTransactOpts(big.NewInt(0), c.gasLimit, c.maxGasPrice)
-	//if err != nil {
-	//	return err
-	//}
-	//c.opts = opts
-	//c.callOpts = &bind.CallOpts{From: c.senderKP.CommonAddress()}
+	c.Client = ethclient.NewClient(rpcClient)
 	return nil
 }
 
-// This is done because we can't pass ethclient.Client in to the evm.Writer because client.ChainID function is not a part of any interfaces inside go-ethereum library
 func (c *Client) GetEthClient() *ethclient.Client {
-	return c.client
+	return c.Client
 }
 
-func (c *Client) MatchResourceIDToHandlerAddress(rID [32]byte) (string, error) {
-	addr, err := c.bridgeContract.ResourceIDToHandlerAddress(&bind.CallOpts{}, rID)
+func (c *Client) MatchResourceIDToHandlerAddress(bridgeAddr common.Address, rID [32]byte) (string, error) {
+	bridgeContract, err := bridgeHandler.NewBridge(bridgeAddr, c)
+	if err != nil {
+		return "", err
+	}
+	addr, err := bridgeContract.ResourceIDToHandlerAddress(&bind.CallOpts{}, rID)
 	if err != nil {
 		return "", fmt.Errorf("failed to get handler from resource ID %x, reason: %w", rID, err)
 	}

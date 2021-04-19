@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ChainSafe/chainbridgev2/blockstore"
 	"github.com/ChainSafe/chainbridgev2/relayer"
 	goeth "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -29,18 +30,16 @@ type ChainClientReader interface {
 	goeth.ChainReader
 	bind.ContractCaller
 	FilterLogs(ctx context.Context, q goeth.FilterQuery) ([]types.Log, error)
-	MatchResourceIDToHandlerAddress(rID [32]byte) (string, error)
+	MatchResourceIDToHandlerAddress(bridgeAddr ethcommon.Address, rID [32]byte) (string, error)
 }
 
 type EVMListener struct {
-	chainReader           ChainClientReader
-	bridgeContractAddress ethcommon.Address
-	eventHandlers         EventHandlers
-	chainID               uint8
+	chainReader   ChainClientReader
+	eventHandlers EventHandlers
 }
 
-func NewEVMListener(chainReader ChainClientReader, bridgeContractAddress string, chainID uint8) *EVMListener {
-	return &EVMListener{chainReader: chainReader, bridgeContractAddress: ethcommon.HexToAddress(bridgeContractAddress), chainID: chainID}
+func NewEVMListener(chainReader ChainClientReader) *EVMListener {
+	return &EVMListener{chainReader: chainReader, eventHandlers: make(map[ethcommon.Address]EventHandler)}
 }
 
 func (l *EVMListener) MatchAddressWithHandlerFunc(addr string) (EventHandler, error) {
@@ -68,7 +67,8 @@ func buildQuery(contract ethcommon.Address, sig string, startBlock *big.Int, end
 	return query
 }
 
-func (l *EVMListener) ListenToEvents(startBlock *big.Int, stop <-chan struct{}, errChn chan<- error) <-chan relayer.XCMessager {
+func (l *EVMListener) ListenToEvents(startBlock *big.Int, bridgeContractAddress string, kvrw blockstore.KeyValueReaderWriter, chainID uint8, stop <-chan struct{}, errChn chan<- error) <-chan relayer.XCMessager {
+	bridgeAddress := ethcommon.HexToAddress(bridgeContractAddress)
 	// TODO: This channel should be closed somewhere!
 	ch := make(chan relayer.XCMessager)
 	go func() {
@@ -88,12 +88,12 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, stop <-chan struct{}, 
 					time.Sleep(BlockRetryInterval)
 					continue
 				}
-				query := buildQuery(l.bridgeContractAddress, DepositSignature, startBlock, startBlock)
+				query := buildQuery(bridgeAddress, DepositSignature, startBlock, startBlock)
 				logs, err := l.chainReader.FilterLogs(context.Background(), query)
 				if err != nil {
 					// Filtering logs error really can appear only on wrong configuration or temporary network problem
 					// so i do no see any reason to break execution
-					log.Error().Err(err).Str("ChainID", string(l.chainID)).Msgf("Unable to filter logs")
+					log.Error().Err(err).Str("ChainID", string(chainID)).Msgf("Unable to filter logs")
 					continue
 				}
 				for _, eventLog := range logs {
@@ -101,7 +101,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, stop <-chan struct{}, 
 					rId := eventLog.Topics[2]
 					nonce := eventLog.Topics[3].Big().Uint64()
 
-					addr, err := l.chainReader.MatchResourceIDToHandlerAddress(rId)
+					addr, err := l.chainReader.MatchResourceIDToHandlerAddress(bridgeAddress, rId)
 					if err != nil {
 						errChn <- err
 						log.Error().Err(err)
@@ -115,7 +115,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, stop <-chan struct{}, 
 						return
 					}
 
-					m, err := eventHandler(l.chainID, destId, nonce, addr, l.chainReader)
+					m, err := eventHandler(chainID, destId, nonce, addr, l.chainReader)
 					if err != nil {
 						errChn <- err
 						log.Error().Err(err)
@@ -131,10 +131,10 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, stop <-chan struct{}, 
 				}
 				// TODO: We can store blocks to DB inside listener or make listener send something to channel each block to save it.
 				//Write to block store. Not a critical operation, no need to retry
-				//err = c.blockStore.StoreBlock(c.block, c.chainID)
-				//if err != nil {
-				//	log.Error().Str("block", c.block.String()).Err(err).Msg("Failed to write latest block to blockstore")
-				//}
+				err = blockstore.StoreBlock(kvrw, startBlock, chainID)
+				if err != nil {
+					log.Error().Str("block", startBlock.String()).Err(err).Msg("Failed to write latest block to blockstore")
+				}
 
 				// Goto next block
 				startBlock.Add(startBlock, big.NewInt(1))

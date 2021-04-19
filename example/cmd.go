@@ -5,11 +5,12 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/ChainSafe/chainbridgev2/chains/evm/writer"
+	"github.com/ChainSafe/chainbridgev2/chains/evm/writer/bridger"
+
 	"github.com/ChainSafe/chainbridgev2/chains/evm"
 	"github.com/ChainSafe/chainbridgev2/chains/evm/client"
 	"github.com/ChainSafe/chainbridgev2/chains/evm/listener"
-	"github.com/ChainSafe/chainbridgev2/chains/evm/writer"
-	"github.com/ChainSafe/chainbridgev2/chains/evm/writer/bridger"
 	"github.com/ChainSafe/chainbridgev2/example/keystore"
 	"github.com/ChainSafe/chainbridgev2/lvldb"
 	"github.com/ChainSafe/chainbridgev2/relayer"
@@ -44,29 +45,28 @@ func Run(ctx *cli.Context) error {
 	errChn := make(chan error)
 	stopChn := make(chan struct{})
 
-	// TODO: Bridge address passed both to client and listener
-	c, err := client.NewClient(TestEndpoint, false, stopChn, errChn, common.HexToAddress("0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B"))
+	ethClient, err := client.NewClient(TestEndpoint2, false)
 	if err != nil {
 		panic(err)
 	}
 
-	eventListener := listener.NewEVMListener(c, "0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B", 1)
+	eventListener := listener.NewEVMListener(ethClient)
 
 	eventListener.RegisterHandler("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF", listener.HandleErc20DepositedEvent)
 
-	ve, err := bridger.NewBridgeClient(common.HexToAddress("0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B"), c, AliceKp, stopChn, errChn)
+	ve, err := bridger.NewBridgeClient(common.HexToAddress("0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B"), ethClient.GetEthClient(), AliceKp, stopChn, errChn)
+	if err != nil {
+		panic(err)
+	}
+	eventWriter := writer.NewWriter(stopChn, errChn, ve)
+	eventWriter.RegisterProposalHandler("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF", evm.ERC20ProposalHandler)
+
+	kvdb, err := lvldb.NewLvlDB("./lvldbdata")
 	if err != nil {
 		panic(err)
 	}
 
-	eventWriter := writer.NewWriter(stopChn, errChn, ve, c)
-
-	lvldb, err := lvldb.NewLvlDB("./lvldbdata")
-	if err != nil {
-		panic(err)
-	}
-
-	chain := evm.NewEVMChain(eventListener, eventWriter, lvldb, c)
+	chain := evm.NewEVMChain(eventListener, eventWriter, kvdb, "0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B")
 	if err != nil {
 		panic(err)
 	}

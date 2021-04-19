@@ -24,35 +24,31 @@ type ProposalVoter interface {
 type VoterExecutor interface {
 	ProposalExecutor
 	ProposalVoter
+	MatchResourceIDToHandlerAddress(rID [32]byte) (string, error)
 }
 
 type ProposalHandler func(msg relayer.XCMessager, handlerAddr string) (relayer.Proposal, error)
 type ProposalHandlers map[ethcommon.Address]ProposalHandler
 
-type BridgeReader interface {
-	MatchResourceIDToHandlerAddress(rID [32]byte) (string, error)
-}
-
 type Writer struct {
 	stop                  <-chan struct{}
 	errChn                chan<- error
 	handlers              ProposalHandlers
-	bridgeReader          BridgeReader
 	proposalVoterExecutor VoterExecutor
 }
 
-func NewWriter(stop <-chan struct{}, errChn chan<- error, ve VoterExecutor, bridgeReader BridgeReader) *Writer {
+func NewWriter(stop <-chan struct{}, errChn chan<- error, ve VoterExecutor) *Writer {
 	return &Writer{
 		stop:                  stop,
 		errChn:                errChn,
 		proposalVoterExecutor: ve,
-		bridgeReader:          bridgeReader,
+		handlers:              make(map[ethcommon.Address]ProposalHandler),
 	}
 }
 
 func (w *Writer) Write(m relayer.XCMessager) {
 	// Matching resource ID with handler.
-	addr, err := w.bridgeReader.MatchResourceIDToHandlerAddress(m.GetResourceID())
+	addr, err := w.proposalVoterExecutor.MatchResourceIDToHandlerAddress(m.GetResourceID())
 	// Based on handler that registered on BridgeContract
 	propHandler, err := w.MatchAddressWithHandlerFunc(addr)
 	if err != nil {
@@ -100,6 +96,6 @@ func (w *Writer) MatchAddressWithHandlerFunc(addr string) (ProposalHandler, erro
 	return h, nil
 }
 
-func (w *Writer) RegisterHandler(address string, handler ProposalHandler) {
+func (w *Writer) RegisterProposalHandler(address string, handler ProposalHandler) {
 	w.handlers[ethcommon.HexToAddress(address)] = handler
 }

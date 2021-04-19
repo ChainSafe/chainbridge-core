@@ -2,14 +2,21 @@ package blockstore
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"math/big"
+
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 type KeyValueReaderWriter interface {
 	GetByKey(key []byte) ([]byte, error)
 	SetByKey(key []byte, value []byte) error
 }
+
+var (
+	ErrNotFound = errors.New("key not found")
+)
 
 func StoreBlock(db KeyValueReaderWriter, block *big.Int, chainID uint8) error {
 	key := bytes.Buffer{}
@@ -28,6 +35,9 @@ func GetLastStoredBlock(db KeyValueReaderWriter, chainID uint8) (*big.Int, error
 	key.WriteString(keyS)
 	v, err := db.GetByKey(key.Bytes())
 	if err != nil {
+		if errors.Is(err, leveldb.ErrNotFound) {
+			return big.NewInt(0), nil
+		}
 		return nil, err
 	}
 	block := big.NewInt(0).SetBytes(v)

@@ -3,6 +3,7 @@ package bridger
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/big"
 	"sync"
 	"time"
@@ -135,6 +136,14 @@ func (v *BridgeClient) VoteProposal(proposal relayer.Proposal) {
 	}
 	log.Error().Msgf("Submission of vote transaction failed, source %v dest %v depNonce %v", proposal.GetSource(), proposal.GetDestination(), proposal.GetDepositNonce())
 	v.errChn <- ErrFatalTx
+}
+
+func (v *BridgeClient) MatchResourceIDToHandlerAddress(rID [32]byte) (string, error) {
+	addr, err := v.bridgeContract.ResourceIDToHandlerAddress(&bind.CallOpts{}, rID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get handler from resource ID %x, reason: %w", rID, err)
+	}
+	return addr.String(), nil
 }
 
 // newTransactOpts builds the TransactOpts for the connection's keypair.
