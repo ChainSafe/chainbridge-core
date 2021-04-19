@@ -3,10 +3,9 @@ package evm
 import (
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/status-im/keycard-go/hexutils"
-
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 type EVMMessage struct {
@@ -18,7 +17,7 @@ type EVMMessage struct {
 }
 
 func (p EVMMessage) String() string {
-	return fmt.Sprintf("evmMesssage from %v to %v nonce %v rID %v", p.Source, p.Destination, p.DepositNonce, hexutils.BytesToHex(p.ResourceId[:]))
+	return fmt.Sprintf("evmMesssage from %v to %v nonce %v rID %v", p.Source, p.Destination, p.DepositNonce, hexutil.Encode(p.ResourceId[:]))
 }
 
 func (m *EVMMessage) GetSource() uint8 {

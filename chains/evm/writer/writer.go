@@ -8,9 +8,6 @@ import (
 	ethcommon "github.com/ethereum/go-ethereum/common"
 )
 
-// Number of blocks to wait for an finalization event
-const ExecuteBlockWatchLimit = 100
-
 var BlockRetryInterval = time.Second * 5
 
 type ProposalExecutor interface {
@@ -37,9 +34,8 @@ type Writer struct {
 	proposalVoterExecutor VoterExecutor
 }
 
-func NewWriter(stop <-chan struct{}, errChn chan<- error, ve VoterExecutor) *Writer {
+func NewWriter(ve VoterExecutor) *Writer {
 	return &Writer{
-		//stop:                  stop,
 		proposalVoterExecutor: ve,
 		handlers:              make(map[ethcommon.Address]ProposalHandler),
 	}

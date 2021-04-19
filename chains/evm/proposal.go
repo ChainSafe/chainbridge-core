@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/status-im/keycard-go/hexutils"
-
 	"github.com/ChainSafe/chainbridgev2/relayer"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -25,7 +24,7 @@ type EVMProposal struct {
 }
 
 func (p EVMProposal) String() string {
-	return fmt.Sprintf("evmProposal from %v to %v nonce %v rID %v", p.Source, p.Destination, p.DepositNonce, hexutils.BytesToHex(p.ResourceId[:]))
+	return fmt.Sprintf("evmProposal from %v to %v nonce %v rID %v", p.Source, p.Destination, p.DepositNonce, hexutil.Encode(p.ResourceId[:]))
 }
 
 func (p *EVMProposal) GetSource() uint8 {

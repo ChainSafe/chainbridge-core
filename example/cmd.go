@@ -58,7 +58,7 @@ func Run(ctx *cli.Context) error {
 	if err != nil {
 		panic(err)
 	}
-	eventWriter := writer.NewWriter(stopChn, errChn, ve)
+	eventWriter := writer.NewWriter(ve)
 	eventWriter.RegisterProposalHandler("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF", evm.ERC20ProposalHandler)
 
 	kvdb, err := lvldb.NewLvlDB("./lvldbdata")
