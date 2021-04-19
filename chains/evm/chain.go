@@ -5,33 +5,28 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridgev2/blockstore"
-
 	"github.com/ChainSafe/chainbridgev2/relayer"
 	"github.com/rs/zerolog/log"
 )
 
 type EVMEventListener interface {
-	ListenToEvents(startBlock *big.Int, bridgeContractAddress string, kvrw blockstore.KeyValueReaderWriter, chainID uint8, stop <-chan struct{}, sysErr chan<- error) <-chan relayer.XCMessager
+	ListenToEvents(startBlock *big.Int, bridgeContractAddress string, kvrw blockstore.KeyValueReaderWriter, chainID uint8, stopChn <-chan struct{}, errChn chan<- error) <-chan relayer.XCMessager
 }
 
-type LatestBlockGetter interface {
-	LatestBlock() (*big.Int, error)
-}
-
-type EVMWriter interface {
+type EVMProposalWriter interface {
 	Write(messager relayer.XCMessager) error
 }
 
 // EVMChain is struct that aggregates all data required for
 type EVMChain struct {
 	listener              EVMEventListener // Rename
-	writer                EVMWriter
+	writer                EVMProposalWriter
 	chainID               uint8
 	kvdb                  blockstore.KeyValueReaderWriter
 	bridgeContractAddress string
 }
 
-func NewEVMChain(dr EVMEventListener, writer EVMWriter, kvdb blockstore.KeyValueReaderWriter, bridgeContractAddress string) *EVMChain {
+func NewEVMChain(dr EVMEventListener, writer EVMProposalWriter, kvdb blockstore.KeyValueReaderWriter, bridgeContractAddress string) *EVMChain {
 	return &EVMChain{listener: dr, writer: writer, kvdb: kvdb, bridgeContractAddress: bridgeContractAddress}
 }
 

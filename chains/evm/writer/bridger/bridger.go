@@ -18,7 +18,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type BridgeClient struct {
+type EVMBridgeClient struct {
 	stop           <-chan struct{}
 	errChn         chan<- error
 	bridgeContract *Bridge.Bridge
@@ -38,12 +38,12 @@ const TxRetryInterval = time.Second * 2
 // Tries to retry sending transaction
 const TxRetryLimit = 10
 
-func NewBridgeClient(bridgeAddress common.Address, backend *ethclient.Client, sender *secp256k1.Keypair, stop <-chan struct{}, errChn chan<- error) (*BridgeClient, error) {
+func NewBridgeClient(bridgeAddress common.Address, backend *ethclient.Client, sender *secp256k1.Keypair, stop <-chan struct{}, errChn chan<- error) (*EVMBridgeClient, error) {
 	b, err := Bridge.NewBridge(bridgeAddress, backend)
 	if err != nil {
 		return nil, err
 	}
-	return &BridgeClient{
+	return &EVMBridgeClient{
 		stop:           stop,
 		errChn:         errChn,
 		bridgeContract: b,
@@ -55,7 +55,7 @@ func NewBridgeClient(bridgeAddress common.Address, backend *ethclient.Client, se
 var ErrNonceTooLow = errors.New("nonce too low")
 var ErrTxUnderpriced = errors.New("replacement transaction underpriced")
 
-func (v *BridgeClient) ExecuteProposal(proposal relayer.Proposal) {
+func (v *EVMBridgeClient) ExecuteProposal(proposal relayer.Proposal) {
 	for i := 0; i < TxRetryLimit; i++ {
 		select {
 		case <-v.stop:
@@ -82,7 +82,7 @@ func (v *BridgeClient) ExecuteProposal(proposal relayer.Proposal) {
 				log.Error().Err(err).Msg("Nonce too low, will retry")
 				time.Sleep(TxRetryInterval)
 			} else {
-				// TODO: this part is unclear. Does sending transaction with contract binding respons with error if transaction failed inside contract?
+				// TODO: this part is unclear. Does sending transaction with contract binding response with error if transaction failed inside contract?
 				log.Error().Err(err).Msg("Execution failed, proposal may already be complete")
 				time.Sleep(TxRetryInterval)
 			}
@@ -97,7 +97,7 @@ func (v *BridgeClient) ExecuteProposal(proposal relayer.Proposal) {
 	v.errChn <- ErrFatalTx
 }
 
-func (v *BridgeClient) VoteProposal(proposal relayer.Proposal) {
+func (v *EVMBridgeClient) VoteProposal(proposal relayer.Proposal) {
 	for i := 0; i < TxRetryLimit; i++ {
 		select {
 		case <-v.stop:
@@ -123,7 +123,7 @@ func (v *BridgeClient) VoteProposal(proposal relayer.Proposal) {
 				log.Error().Err(err).Msg("Nonce too low, will retry")
 				time.Sleep(TxRetryInterval)
 			} else {
-				// TODO: this part is unclear. Does sending transaction with contract binding respons with error if transaction failed inside contract?
+				// TODO: this part is unclear. Does sending transaction with contract binding response with error if transaction failed inside contract?
 				log.Error().Err(err).Msg("Execution failed, proposal may already be complete")
 				time.Sleep(TxRetryInterval)
 			}
@@ -138,7 +138,7 @@ func (v *BridgeClient) VoteProposal(proposal relayer.Proposal) {
 	v.errChn <- ErrFatalTx
 }
 
-func (v *BridgeClient) MatchResourceIDToHandlerAddress(rID [32]byte) (string, error) {
+func (v *EVMBridgeClient) MatchResourceIDToHandlerAddress(rID [32]byte) (string, error) {
 	addr, err := v.bridgeContract.ResourceIDToHandlerAddress(&bind.CallOpts{}, rID)
 	if err != nil {
 		return "", fmt.Errorf("failed to get handler from resource ID %x, reason: %w", rID, err)
@@ -147,7 +147,7 @@ func (v *BridgeClient) MatchResourceIDToHandlerAddress(rID [32]byte) (string, er
 }
 
 // newTransactOpts builds the TransactOpts for the connection's keypair.
-func (v *BridgeClient) newTransactOpts(value, gasLimit, gasPrice *big.Int) (*bind.TransactOpts, error) {
+func (v *EVMBridgeClient) newTransactOpts(value, gasLimit, gasPrice *big.Int) (*bind.TransactOpts, error) {
 	privateKey := v.sender.PrivateKey()
 	address := crypto.PubkeyToAddress(privateKey.PublicKey)
 
@@ -174,11 +174,11 @@ func (v *BridgeClient) newTransactOpts(value, gasLimit, gasPrice *big.Int) (*bin
 	return auth, nil
 }
 
-func (v *BridgeClient) unlockOpts() {
+func (v *EVMBridgeClient) unlockOpts() {
 	v.optsLock.Unlock()
 }
 
-func (v *BridgeClient) lockAndUpdateOpts() error {
+func (v *EVMBridgeClient) lockAndUpdateOpts() error {
 	v.optsLock.Lock()
 
 	gasPrice, err := v.safeEstimateGas(context.TODO())
@@ -196,11 +196,11 @@ func (v *BridgeClient) lockAndUpdateOpts() error {
 	return nil
 }
 
-func (v *BridgeClient) getOpts() *bind.TransactOpts {
+func (v *EVMBridgeClient) getOpts() *bind.TransactOpts {
 	return v.opts
 }
 
-func (v *BridgeClient) safeEstimateGas(ctx context.Context) (*big.Int, error) {
+func (v *EVMBridgeClient) safeEstimateGas(ctx context.Context) (*big.Int, error) {
 	suggestedGasPrice, err := v.backend.SuggestGasPrice(context.TODO())
 	if err != nil {
 		return nil, err

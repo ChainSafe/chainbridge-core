@@ -10,38 +10,29 @@ import (
 
 var BlockRetryInterval = time.Second * 5
 
-type ProposalExecutor interface {
-	ExecuteProposal(proposal relayer.Proposal)
-}
-
-type ProposalVoter interface {
-	VoteProposal(proposal relayer.Proposal)
-}
-
 type VoterExecutor interface {
-	ProposalExecutor
-	ProposalVoter
+	ExecuteProposal(proposal relayer.Proposal)
+	VoteProposal(proposal relayer.Proposal)
 	MatchResourceIDToHandlerAddress(rID [32]byte) (string, error)
 }
 
 type ProposalHandler func(msg relayer.XCMessager, handlerAddr string) (relayer.Proposal, error)
 type ProposalHandlers map[ethcommon.Address]ProposalHandler
 
-type Writer struct {
+type EVMWriter struct {
 	stop                  <-chan struct{}
-	errChn                chan<- error
 	handlers              ProposalHandlers
 	proposalVoterExecutor VoterExecutor
 }
 
-func NewWriter(ve VoterExecutor) *Writer {
-	return &Writer{
+func NewWriter(ve VoterExecutor) *EVMWriter {
+	return &EVMWriter{
 		proposalVoterExecutor: ve,
 		handlers:              make(map[ethcommon.Address]ProposalHandler),
 	}
 }
 
-func (w *Writer) Write(m relayer.XCMessager) error {
+func (w *EVMWriter) Write(m relayer.XCMessager) error {
 	// Matching resource ID with handler.
 	addr, err := w.proposalVoterExecutor.MatchResourceIDToHandlerAddress(m.GetResourceID())
 	// Based on handler that registered on BridgeContract
@@ -81,7 +72,7 @@ func (w *Writer) Write(m relayer.XCMessager) error {
 	}
 }
 
-func (w *Writer) MatchAddressWithHandlerFunc(addr string) (ProposalHandler, error) {
+func (w *EVMWriter) MatchAddressWithHandlerFunc(addr string) (ProposalHandler, error) {
 	h, ok := w.handlers[ethcommon.HexToAddress(addr)]
 	if !ok {
 		return nil, errors.New("no corresponding handler for this address exists")
@@ -89,6 +80,6 @@ func (w *Writer) MatchAddressWithHandlerFunc(addr string) (ProposalHandler, erro
 	return h, nil
 }
 
-func (w *Writer) RegisterProposalHandler(address string, handler ProposalHandler) {
+func (w *EVMWriter) RegisterProposalHandler(address string, handler ProposalHandler) {
 	w.handlers[ethcommon.HexToAddress(address)] = handler
 }

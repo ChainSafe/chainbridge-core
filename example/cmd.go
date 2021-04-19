@@ -5,12 +5,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ChainSafe/chainbridgev2/chains/evm/writer"
-	"github.com/ChainSafe/chainbridgev2/chains/evm/writer/bridger"
-
 	"github.com/ChainSafe/chainbridgev2/chains/evm"
 	"github.com/ChainSafe/chainbridgev2/chains/evm/client"
 	"github.com/ChainSafe/chainbridgev2/chains/evm/listener"
+	"github.com/ChainSafe/chainbridgev2/chains/evm/writer"
+	"github.com/ChainSafe/chainbridgev2/chains/evm/writer/bridger"
 	"github.com/ChainSafe/chainbridgev2/example/keystore"
 	"github.com/ChainSafe/chainbridgev2/lvldb"
 	"github.com/ChainSafe/chainbridgev2/relayer"

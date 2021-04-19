@@ -28,7 +28,6 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 	messagesChannel := make(chan XCMessager)
 	for _, c := range r.relayedChains {
 		log.Debug().Msgf("Starting chain %v", c.ChainID())
-
 		r.addRelayedChain(c)
 		go c.PollEvents(stop, sysErr, messagesChannel)
 	}
