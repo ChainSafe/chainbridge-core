@@ -30,6 +30,7 @@ func (p EVMProposal) String() string {
 func (p *EVMProposal) GetSource() uint8 {
 	return p.GetSource()
 }
+
 func (p *EVMProposal) GetDestination() uint8 {
 	return p.GetDestination()
 }
@@ -37,12 +38,15 @@ func (p *EVMProposal) GetDestination() uint8 {
 func (p *EVMProposal) GetDepositNonce() uint64 {
 	return p.GetDepositNonce()
 }
+
 func (p *EVMProposal) GetResourceID() [32]byte {
 	return p.GetResourceID()
 }
+
 func (p *EVMProposal) GetPayload() []interface{} {
 	return p.GetPayload()
 }
+
 func (p *EVMProposal) CreateProposalDataHash(data []byte) common.Hash {
 	return crypto.Keccak256Hash(data)
 }
@@ -50,18 +54,17 @@ func (p *EVMProposal) CreateProposalDataHash(data []byte) common.Hash {
 func (p *EVMProposal) GetProposalData() []byte {
 	return p.data
 }
+
 func (p *EVMProposal) GetProposalDataHash() common.Hash {
 	return crypto.Keccak256Hash(append(p.handlerAddress.Bytes(), p.data...))
 }
 
-func (p *EVMProposal) ShouldBeVotedFor() bool {
-	return false
-}
-func (p *EVMProposal) ProposalIsComplete() bool {
-	return false
-}
-func (p *EVMProposal) ProposalIsReadyForExecute() bool {
-	return false
+func (p *EVMProposal) GetIDAndNonce() *big.Int {
+	data := bytes.Buffer{}
+	bn := big.NewInt(0).SetUint64(p.GetDepositNonce()).Bytes()
+	data.Write(bn)
+	data.Write([]byte{p.GetSource()})
+	return big.NewInt(0).SetBytes(data.Bytes())
 }
 
 func ERC20ProposalHandler(m relayer.XCMessager, handlerAddr string) (relayer.Proposal, error) {

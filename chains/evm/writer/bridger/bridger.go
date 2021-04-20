@@ -87,7 +87,12 @@ func (v *EVMBridgeClient) ExecuteProposal(proposal relayer.Proposal) {
 				time.Sleep(TxRetryInterval)
 			}
 			// Checking proposal status one more time (Since it could be execute by some other bridge). If it is completed then we do not need to retry
-			if proposal.ProposalIsComplete() {
+			s, err := v.ProposalStatus(proposal)
+			if err != nil {
+				log.Error().Err(err).Msgf("error getting proposal status %+v", proposal)
+				continue
+			}
+			if s == relayer.ProposalStatusPassed || s == relayer.ProposalStatusExecuted || s == relayer.ProposalStatusCanceled {
 				log.Info().Interface("source", proposal.GetSource()).Interface("dest", proposal.GetDestination()).Interface("nonce", proposal.GetDepositNonce()).Msg("Proposal finalized on chain")
 				return
 			}
@@ -128,7 +133,12 @@ func (v *EVMBridgeClient) VoteProposal(proposal relayer.Proposal) {
 				time.Sleep(TxRetryInterval)
 			}
 			// Checking proposal status one more time (Since it could be execute by some other bridge). If it is completed then we do not need to retry
-			if proposal.ProposalIsReadyForExecute() {
+			ps, err := v.ProposalStatus(proposal)
+			if err != nil {
+				log.Error().Err(err).Msgf("error getting proposal status %+v", proposal)
+				continue
+			}
+			if ps == relayer.ProposalStatusPassed {
 				log.Info().Interface("source", proposal.GetSource()).Interface("dest", proposal.GetDestination()).Interface("nonce", proposal.GetDepositNonce()).Msg("Proposal is ready to be executed on chain")
 				return
 			}
@@ -136,6 +146,23 @@ func (v *EVMBridgeClient) VoteProposal(proposal relayer.Proposal) {
 	}
 	log.Error().Msgf("Submission of vote transaction failed, source %v dest %v depNonce %v", proposal.GetSource(), proposal.GetDestination(), proposal.GetDepositNonce())
 	v.errChn <- ErrFatalTx
+}
+
+func (v *EVMBridgeClient) ProposalStatus(p relayer.Proposal) (relayer.ProposalStatus, error) {
+	prop, err := v.bridgeContract.GetProposal(&bind.CallOpts{}, p.GetSource(), p.GetDepositNonce(), p.GetProposalDataHash())
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to check proposal existence")
+		return 999, err
+	}
+	return relayer.ProposalStatus(prop.Status), nil
+}
+
+func (v *EVMBridgeClient) VotedBy(p relayer.Proposal) bool {
+	b, err := v.bridgeContract.HasVotedOnProposal(&bind.CallOpts{}, p.GetIDAndNonce(), p.GetProposalDataHash(), v.sender.CommonAddress())
+	if err != nil {
+		return false
+	}
+	return b
 }
 
 func (v *EVMBridgeClient) MatchResourceIDToHandlerAddress(rID [32]byte) (string, error) {

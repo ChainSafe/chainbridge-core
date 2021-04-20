@@ -1,6 +1,10 @@
 package relayer
 
-import "github.com/ethereum/go-ethereum/common"
+import (
+	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
+)
 
 // XCMessage is used as a generic format cross-chain communications
 type XCMessager interface {
@@ -15,17 +19,16 @@ type XCMessager interface {
 type ProposalStatus uint8
 
 const (
-	ProposalNotPassedStatus   ProposalStatus = 1
-	ProposalStatusPassed      ProposalStatus = 2
-	ProposalStatusTransferred ProposalStatus = 3
-	ProposalStatusCancelled   ProposalStatus = 4
+	ProposalStatusInactive ProposalStatus = 0
+	ProposalStatusActive   ProposalStatus = 1
+	ProposalStatusPassed   ProposalStatus = 2 // Ready to be executed
+	ProposalStatusExecuted ProposalStatus = 3
+	ProposalStatusCanceled ProposalStatus = 4
 )
 
 type Proposal interface {
 	XCMessager
 	GetProposalData() []byte
 	GetProposalDataHash() common.Hash
-	ShouldBeVotedFor() bool
-	ProposalIsComplete() bool
-	ProposalIsReadyForExecute() bool
+	GetIDAndNonce() *big.Int
 }

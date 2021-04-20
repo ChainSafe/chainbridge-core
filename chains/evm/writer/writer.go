@@ -6,6 +6,7 @@ import (
 
 	"github.com/ChainSafe/chainbridgev2/relayer"
 	ethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/rs/zerolog/log"
 )
 
 var BlockRetryInterval = time.Second * 5
@@ -14,6 +15,8 @@ type VoterExecutor interface {
 	ExecuteProposal(proposal relayer.Proposal)
 	VoteProposal(proposal relayer.Proposal)
 	MatchResourceIDToHandlerAddress(rID [32]byte) (string, error)
+	ProposalStatus(proposal relayer.Proposal) (relayer.ProposalStatus, error)
+	VotedBy(p relayer.Proposal) bool
 }
 
 type ProposalHandler func(msg relayer.XCMessager, handlerAddr string) (relayer.Proposal, error)
@@ -45,8 +48,15 @@ func (w *EVMWriter) Write(m relayer.XCMessager) error {
 		return err
 	}
 
-	if !prop.ShouldBeVotedFor() {
-		if prop.ProposalIsReadyForExecute() {
+	ps, err := w.proposalVoterExecutor.ProposalStatus(prop)
+	if err != nil {
+		log.Error().Err(err).Msgf("error getting proposal status %+v", prop)
+	}
+
+	votedByCurrentExecutor := w.proposalVoterExecutor.VotedBy(prop)
+
+	if votedByCurrentExecutor || ps == relayer.ProposalStatusPassed || ps == relayer.ProposalStatusCanceled || ps == relayer.ProposalStatusExecuted {
+		if ps == relayer.ProposalStatusPassed {
 			// We should not vote for this proposal but it is ready to be executed
 			w.proposalVoterExecutor.ExecuteProposal(prop)
 			return nil
@@ -56,11 +66,11 @@ func (w *EVMWriter) Write(m relayer.XCMessager) error {
 	}
 	w.proposalVoterExecutor.VoteProposal(prop)
 	// Checking every 5 seconds does proposal is ready to be executed
-	// TODO: update infinity loop to break after some period of time
+	// TODO: somehow update infinity loop to break after some period of time
 	for {
 		select {
 		case <-time.After(BlockRetryInterval):
-			if prop.ProposalIsReadyForExecute() {
+			if ps == relayer.ProposalStatusPassed {
 				w.proposalVoterExecutor.ExecuteProposal(prop)
 				return nil
 			}
