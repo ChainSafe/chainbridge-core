@@ -7,6 +7,8 @@ import (
 )
 
 // XCMessage is used as a generic format cross-chain communications
+// GenericMessage?
+// TODO: Check change to struct bcs maybe we are not gonna need it
 type XCMessager interface {
 	GetSource() uint8
 	GetDestination() uint8
@@ -26,6 +28,7 @@ const (
 	ProposalStatusCanceled ProposalStatus = 4
 )
 
+// TODO: check this could be rewriten as struct
 type Proposal interface {
 	XCMessager
 	GetProposalData() []byte

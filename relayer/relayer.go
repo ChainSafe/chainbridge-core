@@ -63,3 +63,5 @@ func (r *Relayer) addRelayedChain(c RelayedChain) {
 	chainID := c.ChainID()
 	r.registry[chainID] = c
 }
+
+//func Stop()

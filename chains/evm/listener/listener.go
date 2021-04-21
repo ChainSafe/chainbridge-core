@@ -27,9 +27,9 @@ var BlockDelay = big.NewInt(10) //TODO: move to config
 
 type ChainReader interface {
 	goeth.ChainReader
-	bind.ContractCaller
 	bind.ContractFilterer
-	MatchResourceIDToHandlerAddress(bridgeAddr ethcommon.Address, rID [32]byte) (string, error)
+	bind.ContractCaller
+	MatchResourceIDToHandlerAddress(bridgeAddress string, rID [32]byte) (string, error)
 }
 
 type EVMListener struct {
@@ -41,6 +41,7 @@ func NewEVMListener(chainReader ChainReader) *EVMListener {
 	return &EVMListener{chainReader: chainReader, eventHandlers: make(map[ethcommon.Address]EventHandler)}
 }
 
+// TODO maybe it could be private
 func (l *EVMListener) MatchAddressWithHandlerFunc(addr string) (EventHandler, error) {
 	h, ok := l.eventHandlers[ethcommon.HexToAddress(addr)]
 	if !ok {
@@ -66,7 +67,7 @@ func buildQuery(contract ethcommon.Address, sig string, startBlock *big.Int, end
 	return query
 }
 
-func (l *EVMListener) ListenToEvents(startBlock *big.Int, bridgeContractAddress string, kvrw blockstore.KeyValueReaderWriter, chainID uint8, stop <-chan struct{}, errChn chan<- error) <-chan relayer.XCMessager {
+func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, bridgeContractAddress string, kvrw blockstore.KeyValueWriter, stop <-chan struct{}, errChn chan<- error) <-chan relayer.XCMessager {
 	bridgeAddress := ethcommon.HexToAddress(bridgeContractAddress)
 	// TODO: This channel should be closed somewhere!
 	ch := make(chan relayer.XCMessager)
@@ -100,7 +101,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, bridgeContractAddress 
 					rId := eventLog.Topics[2]
 					nonce := eventLog.Topics[3].Big().Uint64()
 
-					addr, err := l.chainReader.MatchResourceIDToHandlerAddress(bridgeAddress, rId)
+					addr, err := l.chainReader.MatchResourceIDToHandlerAddress(bridgeContractAddress, rId)
 					if err != nil {
 						errChn <- err
 						log.Error().Err(err)

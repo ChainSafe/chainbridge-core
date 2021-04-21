@@ -10,7 +10,15 @@ import (
 )
 
 type KeyValueReaderWriter interface {
+	KeyValueReader
+	KeyValueWriter
+}
+
+type KeyValueReader interface {
 	GetByKey(key []byte) ([]byte, error)
+}
+
+type KeyValueWriter interface {
 	SetByKey(key []byte, value []byte) error
 }
 
@@ -18,7 +26,7 @@ var (
 	ErrNotFound = errors.New("key not found")
 )
 
-func StoreBlock(db KeyValueReaderWriter, block *big.Int, chainID uint8) error {
+func StoreBlock(db KeyValueWriter, block *big.Int, chainID uint8) error {
 	key := bytes.Buffer{}
 	keyS := fmt.Sprintf("chain:%s:block", string(chainID))
 	key.WriteString(keyS)
@@ -29,7 +37,7 @@ func StoreBlock(db KeyValueReaderWriter, block *big.Int, chainID uint8) error {
 	return nil
 }
 
-func GetLastStoredBlock(db KeyValueReaderWriter, chainID uint8) (*big.Int, error) {
+func GetLastStoredBlock(db KeyValueReader, chainID uint8) (*big.Int, error) {
 	key := bytes.Buffer{}
 	keyS := fmt.Sprintf("chain:%s:block", string(chainID))
 	key.WriteString(keyS)

@@ -9,36 +9,37 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type EVMEventListener interface {
-	ListenToEvents(startBlock *big.Int, bridgeContractAddress string, kvrw blockstore.KeyValueReaderWriter, chainID uint8, stopChn <-chan struct{}, errChn chan<- error) <-chan relayer.XCMessager
+type EventListener interface {
+	ListenToEvents(startBlock *big.Int, chainID uint8, bridgeContractAddress string, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan relayer.XCMessager
 }
 
-type EVMProposalWriter interface {
-	Write(messager relayer.XCMessager) error
+type ProposalVoter interface {
+	VoteProposal(message relayer.XCMessager, bridgeAddress string) error
 }
 
 // EVMChain is struct that aggregates all data required for
 type EVMChain struct {
-	listener              EVMEventListener // Rename
-	writer                EVMProposalWriter
+	listener              EventListener // Rename
+	writer                ProposalVoter
 	chainID               uint8
 	kvdb                  blockstore.KeyValueReaderWriter
 	bridgeContractAddress string
 }
 
-func NewEVMChain(dr EVMEventListener, writer EVMProposalWriter, kvdb blockstore.KeyValueReaderWriter, bridgeContractAddress string) *EVMChain {
+func NewEVMChain(dr EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, bridgeContractAddress string) *EVMChain {
 	return &EVMChain{listener: dr, writer: writer, kvdb: kvdb, bridgeContractAddress: bridgeContractAddress}
 }
 
 // PollEvents is the goroutine that polling blocks and searching Deposit Events in them. Event then sent to eventsChan
 func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan relayer.XCMessager) {
 	log.Info().Msg("Polling Blocks...")
+	// Handler chain specific configs and flags
 	b, err := blockstore.GetLastStoredBlock(c.kvdb, c.chainID)
 	if err != nil {
 		sysErr <- fmt.Errorf("error %w on getting last stored block", err)
 		return
 	}
-	ech := c.listener.ListenToEvents(b, c.bridgeContractAddress, c.kvdb, c.chainID, stop, sysErr)
+	ech := c.listener.ListenToEvents(b, c.chainID, c.bridgeContractAddress, c.kvdb, stop, sysErr)
 	for {
 		select {
 		case <-stop:
@@ -53,7 +54,7 @@ func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsC
 
 // Write function pass XCMessager to underlying chain writer
 func (c *EVMChain) Write(msg relayer.XCMessager) error {
-	return c.writer.Write(msg)
+	return c.writer.VoteProposal(msg, c.bridgeContractAddress)
 }
 
 func (c *EVMChain) ChainID() uint8 {
