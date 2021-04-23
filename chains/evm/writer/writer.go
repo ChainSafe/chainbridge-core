@@ -12,14 +12,14 @@ import (
 var BlockRetryInterval = time.Second * 5
 
 type VoterExecutor interface {
-	ExecuteProposal(bridgeAddress string, proposal relayer.Proposal) error
-	VoteProposal(bridgeAddress string, proposal relayer.Proposal) error
+	ExecuteProposal(bridgeAddress string, proposal *relayer.Proposal) error
+	VoteProposal(bridgeAddress string, proposal *relayer.Proposal) error
 	MatchResourceIDToHandlerAddress(bridgeAddress string, rID [32]byte) (string, error)
-	ProposalStatus(bridgeAddress string, proposal relayer.Proposal) (relayer.ProposalStatus, error)
-	VotedBy(bridgeAddress string, p relayer.Proposal) bool
+	ProposalStatus(bridgeAddress string, proposal *relayer.Proposal) (relayer.ProposalStatus, error)
+	VotedBy(bridgeAddress string, p *relayer.Proposal) bool
 }
 
-type ProposalHandler func(msg relayer.XCMessager, handlerAddr string) (relayer.Proposal, error)
+type ProposalHandler func(msg *relayer.Message, handlerAddr string) (*relayer.Proposal, error)
 type ProposalHandlers map[ethcommon.Address]ProposalHandler
 
 type EVMVoter struct {
@@ -35,9 +35,9 @@ func NewWriter(ve VoterExecutor) *EVMVoter {
 	}
 }
 
-func (w *EVMVoter) VoteProposal(m relayer.XCMessager, bridgeAddress string) error {
+func (w *EVMVoter) VoteProposal(m *relayer.Message, bridgeAddress string) error {
 	// Matching resource ID with handler.
-	addr, err := w.proposalVoterExecutor.MatchResourceIDToHandlerAddress(bridgeAddress, m.GetResourceID())
+	addr, err := w.proposalVoterExecutor.MatchResourceIDToHandlerAddress(bridgeAddress, m.ResourceId)
 	// Based on handler that registered on BridgeContract
 	propHandler, err := w.MatchAddressWithHandlerFunc(addr)
 	if err != nil {

@@ -10,11 +10,11 @@ import (
 )
 
 type EventListener interface {
-	ListenToEvents(startBlock *big.Int, chainID uint8, bridgeContractAddress string, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan relayer.XCMessager
+	ListenToEvents(startBlock *big.Int, chainID uint8, bridgeContractAddress string, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message
 }
 
 type ProposalVoter interface {
-	VoteProposal(message relayer.XCMessager, bridgeAddress string) error
+	VoteProposal(message *relayer.Message, bridgeAddress string) error
 }
 
 // EVMChain is struct that aggregates all data required for
@@ -31,7 +31,7 @@ func NewEVMChain(dr EventListener, writer ProposalVoter, kvdb blockstore.KeyValu
 }
 
 // PollEvents is the goroutine that polling blocks and searching Deposit Events in them. Event then sent to eventsChan
-func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan relayer.XCMessager) {
+func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *relayer.Message) {
 	log.Info().Msg("Polling Blocks...")
 	// Handler chain specific configs and flags
 	b, err := blockstore.GetLastStoredBlock(c.kvdb, c.chainID)
@@ -53,7 +53,7 @@ func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsC
 }
 
 // Write function pass XCMessager to underlying chain writer
-func (c *EVMChain) Write(msg relayer.XCMessager) error {
+func (c *EVMChain) Write(msg *relayer.Message) error {
 	return c.writer.VoteProposal(msg, c.bridgeContractAddress)
 }
 

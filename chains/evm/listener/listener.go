@@ -19,7 +19,7 @@ const (
 	DepositSignature string = "Deposit(uint8,bytes32,uint64)"
 )
 
-type EventHandler func(sourceID, destID uint8, nonce uint64, handlerContractAddress string, backend ChainReader) (relayer.XCMessager, error)
+type EventHandler func(sourceID, destID uint8, nonce uint64, handlerContractAddress string, backend ChainReader) (*relayer.Message, error)
 type EventHandlers map[ethcommon.Address]EventHandler
 
 var BlockRetryInterval = time.Second * 5
@@ -67,10 +67,10 @@ func buildQuery(contract ethcommon.Address, sig string, startBlock *big.Int, end
 	return query
 }
 
-func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, bridgeContractAddress string, kvrw blockstore.KeyValueWriter, stop <-chan struct{}, errChn chan<- error) <-chan relayer.XCMessager {
+func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, bridgeContractAddress string, kvrw blockstore.KeyValueWriter, stop <-chan struct{}, errChn chan<- error) <-chan *relayer.Message {
 	bridgeAddress := ethcommon.HexToAddress(bridgeContractAddress)
 	// TODO: This channel should be closed somewhere!
-	ch := make(chan relayer.XCMessager)
+	ch := make(chan *relayer.Message)
 	go func() {
 		for {
 			select {
