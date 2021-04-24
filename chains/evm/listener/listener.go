@@ -67,14 +67,14 @@ func buildQuery(contract ethcommon.Address, sig string, startBlock *big.Int, end
 	return query
 }
 
-func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, bridgeContractAddress string, kvrw blockstore.KeyValueWriter, stop <-chan struct{}, errChn chan<- error) <-chan *relayer.Message {
+func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, bridgeContractAddress string, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message {
 	bridgeAddress := ethcommon.HexToAddress(bridgeContractAddress)
 	// TODO: This channel should be closed somewhere!
 	ch := make(chan *relayer.Message)
 	go func() {
 		for {
 			select {
-			case <-stop:
+			case <-stopChn:
 				return
 			default:
 				head, err := l.chainReader.HeaderByNumber(context.Background(), nil)
@@ -127,7 +127,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, bridgeC
 
 				if startBlock.Int64()%20 == 0 {
 					// Logging process every 20 bocks to exclude spam
-					log.Debug().Str("block", startBlock.String()).Msg("Queried block for deposit events")
+					log.Debug().Str("block", startBlock.String()).Uint8("chainID", chainID).Msg("Queried block for deposit events")
 				}
 				// TODO: We can store blocks to DB inside listener or make listener send something to channel each block to save it.
 				//Write to block store. Not a critical operation, no need to retry

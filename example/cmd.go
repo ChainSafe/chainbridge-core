@@ -57,7 +57,7 @@ func Run(ctx *cli.Context) error {
 	eventListener.RegisterHandler("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF", listener.HandleErc20DepositedEvent)
 
 	eventWriter := writer.NewWriter(ethClient)
-	eventWriter.RegisterProposalHandler("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF", evm.ERC20ProposalHandler)
+	eventWriter.RegisterProposalHandler("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF", writer.ERC20ProposalHandler)
 
 	chain := evm.NewEVMChain(eventListener, eventWriter, db, "0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B")
 	if err != nil {
