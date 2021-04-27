@@ -4,6 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/ChainSafe/chainbridgev2/chains/evm"
+
 	"github.com/ChainSafe/chainbridgev2/relayer"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -12,14 +14,14 @@ import (
 var BlockRetryInterval = time.Second * 5
 
 type VoterExecutor interface {
-	ExecuteProposal(bridgeAddress string, proposal *relayer.Proposal) error
-	VoteProposal(bridgeAddress string, proposal *relayer.Proposal) error
+	ExecuteProposal(bridgeAddress string, proposal *evm.Proposal) error
+	VoteProposal(bridgeAddress string, proposal *evm.Proposal) error
 	MatchResourceIDToHandlerAddress(bridgeAddress string, rID [32]byte) (string, error)
-	ProposalStatus(bridgeAddress string, proposal *relayer.Proposal) (relayer.ProposalStatus, error)
-	VotedBy(bridgeAddress string, p *relayer.Proposal) bool
+	ProposalStatus(bridgeAddress string, proposal *evm.Proposal) (relayer.ProposalStatus, error)
+	VotedBy(bridgeAddress string, p *evm.Proposal) bool
 }
 
-type ProposalHandler func(msg *relayer.Message, handlerAddr string) (*relayer.Proposal, error)
+type ProposalHandler func(msg *relayer.Message, handlerAddr string) (*evm.Proposal, error)
 type ProposalHandlers map[ethcommon.Address]ProposalHandler
 
 type EVMVoter struct {
@@ -39,11 +41,11 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message, bridgeAddress string) error 
 	// Matching resource ID with handler.
 	addr, err := w.proposalVoterExecutor.MatchResourceIDToHandlerAddress(bridgeAddress, m.ResourceId)
 	// Based on handler that registered on BridgeContract
-	propHandler, err := w.MatchAddressWithHandlerFunc(addr)
+	handleProposal, err := w.MatchAddressWithHandlerFunc(addr)
 	if err != nil {
 		return err
 	}
-	prop, err := propHandler(m, addr)
+	prop, err := handleProposal(m, addr)
 	if err != nil {
 		return err
 	}

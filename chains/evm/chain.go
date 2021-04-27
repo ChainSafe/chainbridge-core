@@ -1,11 +1,13 @@
 package evm
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 
 	"github.com/ChainSafe/chainbridgev2/blockstore"
 	"github.com/ChainSafe/chainbridgev2/relayer"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
 
@@ -26,8 +28,8 @@ type EVMChain struct {
 	bridgeContractAddress string
 }
 
-func NewEVMChain(dr EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, bridgeContractAddress string) *EVMChain {
-	return &EVMChain{listener: dr, writer: writer, kvdb: kvdb, bridgeContractAddress: bridgeContractAddress}
+func NewEVMChain(dr EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, bridgeContractAddress string, chainID uint8) *EVMChain {
+	return &EVMChain{listener: dr, writer: writer, kvdb: kvdb, bridgeContractAddress: bridgeContractAddress, chainID: chainID}
 }
 
 // PollEvents is the goroutine that polling blocks and searching Deposit Events in them. Event then sent to eventsChan
@@ -59,4 +61,23 @@ func (c *EVMChain) Write(msg *relayer.Message) error {
 
 func (c *EVMChain) ChainID() uint8 {
 	return c.chainID
+}
+
+type Proposal struct {
+	Source         uint8  // Source where message was initiated
+	Destination    uint8  // Destination chain of message
+	DepositNonce   uint64 // Nonce for the deposit
+	ResourceId     [32]byte
+	Payload        []interface{} // data associated with event sequence
+	Data           []byte
+	DataHash       common.Hash
+	HandlerAddress common.Address
+}
+
+func GetIDAndNonce(p *Proposal) *big.Int {
+	data := bytes.Buffer{}
+	bn := big.NewInt(0).SetUint64(p.DepositNonce).Bytes()
+	data.Write(bn)
+	data.Write([]byte{p.Source})
+	return big.NewInt(0).SetBytes(data.Bytes())
 }

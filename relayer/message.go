@@ -1,19 +1,12 @@
 package relayer
 
-import (
-	"bytes"
-	"math/big"
+type TransferType string
 
-	"github.com/ethereum/go-ethereum/common"
+const (
+	FungibleTransfer    TransferType = "FungibleTransfer"
+	NonFungibleTransfer TransferType = "NonFungibleTransfer"
+	GenericTransfer     TransferType = "GenericTransfer"
 )
-
-type Message struct {
-	Source       uint8  // Source where message was initiated
-	Destination  uint8  // Destination chain of message
-	DepositNonce uint64 // Nonce for the deposit
-	ResourceId   [32]byte
-	Payload      []interface{} // data associated with event sequence
-}
 
 type ProposalStatus uint8
 
@@ -25,21 +18,11 @@ const (
 	ProposalStatusCanceled ProposalStatus = 4
 )
 
-type Proposal struct {
-	Source         uint8  // Source where message was initiated
-	Destination    uint8  // Destination chain of message
-	DepositNonce   uint64 // Nonce for the deposit
-	ResourceId     [32]byte
-	Payload        []interface{} // data associated with event sequence
-	Data           []byte
-	DataHash       common.Hash
-	HandlerAddress common.Address
-}
-
-func GetIDAndNonce(p *Proposal) *big.Int {
-	data := bytes.Buffer{}
-	bn := big.NewInt(0).SetUint64(p.DepositNonce).Bytes()
-	data.Write(bn)
-	data.Write([]byte{p.Source})
-	return big.NewInt(0).SetBytes(data.Bytes())
+type Message struct {
+	Source       uint8  // Source where message was initiated
+	Destination  uint8  // Destination chain of message
+	DepositNonce uint64 // Nonce for the deposit
+	ResourceId   [32]byte
+	Payload      []interface{} // data associated with event sequence
+	Type         TransferType
 }

@@ -5,13 +5,17 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ChainSafe/chainbridgev2/lvldb"
-
 	"github.com/ChainSafe/chainbridgev2/chains/evm"
 	"github.com/ChainSafe/chainbridgev2/chains/evm/client"
 	"github.com/ChainSafe/chainbridgev2/chains/evm/listener"
 	"github.com/ChainSafe/chainbridgev2/chains/evm/writer"
+	"github.com/ChainSafe/chainbridgev2/chains/substrate"
+	subClient "github.com/ChainSafe/chainbridgev2/chains/substrate/client"
+	subListener "github.com/ChainSafe/chainbridgev2/chains/substrate/listener"
+	subWriter "github.com/ChainSafe/chainbridgev2/chains/substrate/writer"
+	"github.com/ChainSafe/chainbridgev2/crypto/sr25519"
 	"github.com/ChainSafe/chainbridgev2/example/keystore"
+	"github.com/ChainSafe/chainbridgev2/lvldb"
 	"github.com/ChainSafe/chainbridgev2/relayer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -53,18 +57,33 @@ func Run(ctx *cli.Context) error {
 	if err != nil {
 		panic(err)
 	}
-	eventListener := listener.NewEVMListener(ethClient)
-	eventListener.RegisterHandler("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF", listener.HandleErc20DepositedEvent)
+	evmListener := listener.NewEVMListener(ethClient)
+	evmListener.RegisterHandler("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF", listener.HandleErc20DepositedEvent)
 
-	eventWriter := writer.NewWriter(ethClient)
-	eventWriter.RegisterProposalHandler("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF", writer.ERC20ProposalHandler)
+	evmWriter := writer.NewWriter(ethClient)
+	evmWriter.RegisterProposalHandler("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF", writer.ERC20ProposalHandler)
 
-	chain := evm.NewEVMChain(eventListener, eventWriter, db, "0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B")
+	evmChain := evm.NewEVMChain(evmListener, evmWriter, db, "0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B", 0)
 	if err != nil {
 		panic(err)
 	}
 
-	r := relayer.NewRelayer([]relayer.RelayedChain{chain})
+	kp, err := keystore.KeypairFromAddress("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY", keystore.SubChain, "alice", true)
+	if err != nil {
+		panic(err)
+	}
+	krp := kp.(*sr25519.Keypair).AsKeyringPair()
+
+	subC, err := subClient.NewSubstrateClient("ws://localhost:9944", krp, stopChn)
+	if err != nil {
+		panic(err)
+	}
+	subL := subListener.NewSubstrateListener(subC)
+	subW := subWriter.NewSubstrateWriter(1, subC)
+	subW.RegisterHandler(relayer.FungibleTransfer, subWriter.CreateFungibleProposal)
+	subChain := substrate.NewSubstrateChain(subL, subW, db)
+
+	r := relayer.NewRelayer([]relayer.RelayedChain{evmChain, subChain})
 
 	go r.Start(stopChn, errChn)
 

@@ -12,10 +12,12 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type TransferType string
+
 const (
-	FungibleTransfer    string = "FungibleTransfer"
-	NonFungibleTransfer string = "NonFungibleTransfer"
-	GenericTransfer     string = "GenericTransfer"
+	FungibleTransfer    TransferType = "FungibleTransfer"
+	NonFungibleTransfer TransferType = "NonFungibleTransfer"
+	GenericTransfer     TransferType = "GenericTransfer"
 )
 
 var BlockRetryInterval = time.Second * 5
@@ -25,15 +27,25 @@ var ErrBlockNotReady = errors.New("required result to be 32 bytes, but got 0")
 type SubstrateClienter interface {
 	GetHeaderLatest() (*types.Header, error)
 	GetBlockHash(blockNumber uint64) (types.Hash, error)
-	GetBlockEvents(hash types.Hash) (interface{}, error)
+	GetBlockEvents(hash types.Hash, target interface{}) error
 	UpdateMetatdata() error
 }
 
 type EventHandler func(interface{}) (*relayer.Message, error)
 
+func NewSubstrateListener(client SubstrateClienter) *SubstrateListener {
+	return &SubstrateListener{
+		client: client,
+	}
+}
+
 type SubstrateListener struct {
-	conn          SubstrateClienter
-	Subscriptions map[string]EventHandler
+	client        SubstrateClienter
+	subscriptions map[TransferType]EventHandler
+}
+
+func (l *SubstrateListener) RegisterHandler(tt TransferType, handler EventHandler) {
+	l.subscriptions[tt] = handler
 }
 
 func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message {
@@ -50,7 +62,7 @@ func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, chainID uint8, k
 				}
 
 				// retrieves the header of the latest block
-				finalizedHeader, err := l.conn.GetHeaderLatest()
+				finalizedHeader, err := l.client.GetHeaderLatest()
 				if err != nil {
 					log.Error().Err(err).Msg("Failed to fetch finalized header")
 					time.Sleep(BlockRetryInterval)
@@ -61,7 +73,7 @@ func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, chainID uint8, k
 					time.Sleep(BlockRetryInterval)
 					continue
 				}
-				hash, err := l.conn.GetBlockHash(startBlock.Uint64())
+				hash, err := l.client.GetBlockHash(startBlock.Uint64())
 				if err != nil && err.Error() == ErrBlockNotReady.Error() {
 					time.Sleep(BlockRetryInterval)
 					continue
@@ -70,17 +82,17 @@ func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, chainID uint8, k
 					time.Sleep(BlockRetryInterval)
 					continue
 				}
-
-				evts, err := l.conn.GetBlockEvents(hash)
+				evts := &substrate.Events{}
+				err = l.client.GetBlockEvents(evts)
 				if err != nil {
 					log.Error().Err(err).Msg("Failed to process events in block")
 					continue
 				}
-				e, ok := evts.(*substrate.Events)
-				if !ok {
-					log.Error().Msg("Error decoding events")
-				}
-				msg, err := l.handleEvents(e)
+				//e, ok := evts.(*substrate.Events)
+				//if !ok {
+				//	log.Error().Msg("Error decoding events")
+				//}
+				msg, err := l.handleEvents(evts)
 				if err != nil {
 					log.Error().Err(err).Msg("Error handling substrate events")
 				}
@@ -101,18 +113,18 @@ func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, chainID uint8, k
 // handleEvents calls the associated handler for all registered event types
 func (l *SubstrateListener) handleEvents(evts *substrate.Events) ([]*relayer.Message, error) {
 	msgs := make([]*relayer.Message, 0)
-	if l.Subscriptions[FungibleTransfer] != nil {
+	if l.subscriptions[FungibleTransfer] != nil {
 		for _, evt := range evts.ChainBridge_FungibleTransfer {
-			m, err := l.Subscriptions[FungibleTransfer](evt)
+			m, err := l.subscriptions[FungibleTransfer](evt)
 			if err != nil {
 				return nil, err
 			}
 			msgs = append(msgs, m)
 		}
 	}
-	if l.Subscriptions[NonFungibleTransfer] != nil {
+	if l.subscriptions[NonFungibleTransfer] != nil {
 		for _, evt := range evts.ChainBridge_NonFungibleTransfer {
-			m, err := l.Subscriptions[NonFungibleTransfer](evt)
+			m, err := l.subscriptions[NonFungibleTransfer](evt)
 			if err != nil {
 				return nil, err
 			}
@@ -120,9 +132,9 @@ func (l *SubstrateListener) handleEvents(evts *substrate.Events) ([]*relayer.Mes
 
 		}
 	}
-	if l.Subscriptions[GenericTransfer] != nil {
+	if l.subscriptions[GenericTransfer] != nil {
 		for _, evt := range evts.ChainBridge_GenericTransfer {
-			m, err := l.Subscriptions[GenericTransfer](evt)
+			m, err := l.subscriptions[GenericTransfer](evt)
 			if err != nil {
 				return nil, err
 			}
@@ -130,7 +142,7 @@ func (l *SubstrateListener) handleEvents(evts *substrate.Events) ([]*relayer.Mes
 		}
 	}
 	if len(evts.System_CodeUpdated) > 0 {
-		err := l.conn.UpdateMetatdata()
+		err := l.client.UpdateMetatdata()
 		if err != nil {
 			log.Error().Err(err).Msg("Unable to update Metadata")
 			return nil, err

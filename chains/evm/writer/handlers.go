@@ -5,12 +5,14 @@ import (
 	"errors"
 	"math/big"
 
+	"github.com/ChainSafe/chainbridgev2/chains/evm"
+
 	"github.com/ChainSafe/chainbridgev2/relayer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-func ERC20ProposalHandler(m *relayer.Message, handlerAddr string) (*relayer.Proposal, error) {
+func ERC20ProposalHandler(m *relayer.Message, handlerAddr string) (*evm.Proposal, error) {
 	if len(m.Payload) != 2 {
 		return nil, errors.New("malformed payload. Len  of payload should be 2")
 	}
@@ -30,14 +32,14 @@ func ERC20ProposalHandler(m *relayer.Message, handlerAddr string) (*relayer.Prop
 	b.Write(common.LeftPadBytes(recipientLen, 32))
 	b.Write(recipient)
 	caddress := common.HexToAddress(handlerAddr)
-	return &relayer.Proposal{
+	return &evm.Proposal{
 		Data:           b.Bytes(),
 		DataHash:       crypto.Keccak256Hash(append(caddress.Bytes(), b.Bytes()...)),
 		HandlerAddress: common.HexToAddress(handlerAddr),
 	}, nil
 }
 
-func ERC721ProposalHandler(msg *relayer.Message, handlerAddr string) (*relayer.Proposal, error) {
+func ERC721ProposalHandler(msg *relayer.Message, handlerAddr string) (*evm.Proposal, error) {
 	if len(msg.Payload) != 3 {
 		return nil, errors.New("malformed payload. Len  of payload should be 3")
 	}
@@ -65,14 +67,14 @@ func ERC721ProposalHandler(msg *relayer.Message, handlerAddr string) (*relayer.P
 	data.Write(common.LeftPadBytes(metadataLen, 32))
 	data.Write(metadata)
 	caddress := common.HexToAddress(handlerAddr)
-	return &relayer.Proposal{
+	return &evm.Proposal{
 		Data:           data.Bytes(),
 		DataHash:       crypto.Keccak256Hash(append(caddress.Bytes(), data.Bytes()...)),
 		HandlerAddress: common.HexToAddress(handlerAddr),
 	}, nil
 }
 
-func GenericProposalHandler(msg *relayer.Message, handlerAddr string) (*relayer.Proposal, error) {
+func GenericProposalHandler(msg *relayer.Message, handlerAddr string) (*evm.Proposal, error) {
 	if len(msg.Payload) != 1 {
 		return nil, errors.New("malformed payload. Len  of payload should be 1")
 	}
@@ -85,7 +87,7 @@ func GenericProposalHandler(msg *relayer.Message, handlerAddr string) (*relayer.
 	data.Write(common.LeftPadBytes(metadataLen, 32)) // length of metadata (uint256)
 	data.Write(metadata)
 	caddress := common.HexToAddress(handlerAddr)
-	return &relayer.Proposal{
+	return &evm.Proposal{
 		Data:           data.Bytes(),
 		DataHash:       crypto.Keccak256Hash(append(caddress.Bytes(), data.Bytes()...)),
 		HandlerAddress: common.HexToAddress(handlerAddr),

@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ChainSafe/chainbridgev2/chains/evm"
+
 	"github.com/ChainSafe/chainbridgev2/bindings/eth/bindings/Bridge"
 	"github.com/ChainSafe/chainbridgev2/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridgev2/relayer"
@@ -85,7 +87,7 @@ func (c *EVMClient) GetEthClient() *ethclient.Client {
 	return c.Client
 }
 
-func (c *EVMClient) ExecuteProposal(bridgeAddress string, proposal *relayer.Proposal) error {
+func (c *EVMClient) ExecuteProposal(bridgeAddress string, proposal *evm.Proposal) error {
 	for i := 0; i < TxRetryLimit; i++ {
 		err := c.lockAndUpdateOpts()
 		if err != nil {
@@ -131,7 +133,7 @@ func (c *EVMClient) ExecuteProposal(bridgeAddress string, proposal *relayer.Prop
 	return ErrFatalTx
 }
 
-func (c *EVMClient) VoteProposal(bridgeAddress string, proposal *relayer.Proposal) error {
+func (c *EVMClient) VoteProposal(bridgeAddress string, proposal *evm.Proposal) error {
 	for i := 0; i < TxRetryLimit; i++ {
 		err := c.lockAndUpdateOpts()
 		if err != nil {
@@ -176,7 +178,7 @@ func (c *EVMClient) VoteProposal(bridgeAddress string, proposal *relayer.Proposa
 	return ErrFatalTx
 }
 
-func (c *EVMClient) ProposalStatus(bridgeAddress string, p *relayer.Proposal) (relayer.ProposalStatus, error) {
+func (c *EVMClient) ProposalStatus(bridgeAddress string, p *evm.Proposal) (relayer.ProposalStatus, error) {
 	b, err := Bridge.NewBridge(common.HexToAddress(bridgeAddress), c)
 	if err != nil {
 		return 99, err
@@ -189,12 +191,12 @@ func (c *EVMClient) ProposalStatus(bridgeAddress string, p *relayer.Proposal) (r
 	return relayer.ProposalStatus(prop.Status), nil
 }
 
-func (c *EVMClient) VotedBy(bridgeAddress string, p *relayer.Proposal) bool {
+func (c *EVMClient) VotedBy(bridgeAddress string, p *evm.Proposal) bool {
 	b, err := Bridge.NewBridge(common.HexToAddress(bridgeAddress), c)
 	if err != nil {
 		return false
 	}
-	hv, err := b.HasVotedOnProposal(&bind.CallOpts{}, relayer.GetIDAndNonce(p), p.DataHash, c.sender.CommonAddress())
+	hv, err := b.HasVotedOnProposal(&bind.CallOpts{}, evm.GetIDAndNonce(p), p.DataHash, c.sender.CommonAddress())
 	if err != nil {
 		return false
 	}

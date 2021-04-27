@@ -1,14 +1,16 @@
 package client
 
 import (
+	"fmt"
 	"sync"
 
 	gsrpc "github.com/centrifuge/go-substrate-rpc-client"
+	"github.com/centrifuge/go-substrate-rpc-client/rpc/author"
 	"github.com/centrifuge/go-substrate-rpc-client/signature"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
 )
 
-func NewSubstrateClient(url string, name string, key *signature.KeyringPair) (*SubstrateClient, error) {
+func NewSubstrateClient(url string, key *signature.KeyringPair, stop <-chan struct{}) (*SubstrateClient, error) {
 	api, err := gsrpc.NewSubstrateAPI(url)
 	if err != nil {
 		return nil, err
@@ -21,19 +23,20 @@ func NewSubstrateClient(url string, name string, key *signature.KeyringPair) (*S
 	if err != nil {
 		return nil, err
 	}
-	return &SubstrateClient{url: url, name: name, key: key, genesisHash: genesisHash, api: api, meta: meta}, nil
+	return &SubstrateClient{url: url, key: key, genesisHash: genesisHash, api: api, meta: meta, stop: stop}, nil
 }
 
 type SubstrateClient struct {
 	api         *gsrpc.SubstrateAPI
 	url         string                 // API endpoint
-	name        string                 // Chain name
 	meta        *types.Metadata        // Latest chain metadata
 	metaLock    sync.RWMutex           // Lock metadata for updates, allows concurrent reads
 	genesisHash types.Hash             // Chain genesis hash
 	key         *signature.KeyringPair // Keyring used for signing
 	nonce       types.U32              // Latest account nonce
 	nonceLock   sync.Mutex             // Locks nonce for updates
+	stop        <-chan struct{}        // Signals system shutdown, should be observed in all selects and loops
+
 }
 
 func (c *SubstrateClient) getMetadata() (meta types.Metadata) {
@@ -71,4 +74,122 @@ func (c *SubstrateClient) GetBlockEvents(hash types.Hash, target interface{}) er
 		return err
 	}
 	return nil
+}
+
+// SubmitTx constructs and submits an extrinsic to call the method with the given arguments.
+// All args are passed directly into GSRPC. GSRPC types are recommended to avoid serialization inconsistencies.
+func (c *SubstrateClient) SubmitTx(method string, args ...interface{}) error {
+	meta := c.getMetadata()
+
+	// Create call and extrinsic
+	call, err := types.NewCall(
+		&meta,
+		string(method),
+		args...,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to construct call: %w", err)
+	}
+	ext := types.NewExtrinsic(call)
+	// Get latest runtime version
+	rv, err := c.api.RPC.State.GetRuntimeVersionLatest()
+	if err != nil {
+		return err
+	}
+
+	c.nonceLock.Lock()
+	latestNonce, err := c.getLatestNonce()
+	if err != nil {
+		c.nonceLock.Unlock()
+		return err
+	}
+	if latestNonce > c.nonce {
+		c.nonce = latestNonce
+	}
+
+	// Sign the extrinsic
+	o := types.SignatureOptions{
+		BlockHash:          c.genesisHash,
+		Era:                types.ExtrinsicEra{IsMortalEra: false},
+		GenesisHash:        c.genesisHash,
+		Nonce:              types.NewUCompactFromUInt(uint64(c.nonce)),
+		SpecVersion:        rv.SpecVersion,
+		Tip:                types.NewUCompactFromUInt(0),
+		TransactionVersion: 1,
+	}
+
+	err = ext.Sign(*c.key, o)
+	if err != nil {
+		c.nonceLock.Unlock()
+		return err
+	}
+
+	// Submit and watch the extrinsic
+	sub, err := c.api.RPC.Author.SubmitAndWatchExtrinsic(ext)
+	c.nonce++
+	c.nonceLock.Unlock()
+	if err != nil {
+		return fmt.Errorf("submission of extrinsic failed: %w", err)
+	}
+	defer sub.Unsubscribe()
+
+	return c.watchSubmission(sub)
+}
+
+func (c *SubstrateClient) watchSubmission(sub *author.ExtrinsicStatusSubscription) error {
+	for {
+		select {
+		case <-c.stop:
+			return fmt.Errorf("terminated")
+		case status := <-sub.Chan():
+			switch {
+			case status.IsInBlock:
+				return nil
+			case status.IsRetracted:
+				return fmt.Errorf("extrinsic retracted: %s", status.AsRetracted.Hex())
+			case status.IsDropped:
+				return fmt.Errorf("extrinsic dropped from network")
+			case status.IsInvalid:
+				return fmt.Errorf("extrinsic invalid")
+			}
+		case err := <-sub.Err():
+			return err
+		}
+	}
+}
+
+func (c *SubstrateClient) getLatestNonce() (types.U32, error) {
+	var acct types.AccountInfo
+	exists, err := c.QueryStorage("System", "Account", c.key.PublicKey, nil, &acct)
+	if err != nil {
+		return 0, err
+	}
+	if !exists {
+		return 0, nil
+	}
+
+	return acct.Nonce, nil
+}
+
+// queryStorage performs a storage lookup. Arguments may be nil, result must be a pointer.
+func (c *SubstrateClient) QueryStorage(prefix, method string, arg1, arg2 []byte, result interface{}) (bool, error) {
+	// Fetch account nonce
+	data := c.getMetadata()
+	key, err := types.CreateStorageKey(&data, prefix, method, arg1, arg2)
+	if err != nil {
+		return false, err
+	}
+	return c.api.RPC.State.GetStorageLatest(key, result)
+}
+
+func (c *SubstrateClient) VoterAccountID() types.AccountID {
+	return types.NewAccountID(c.key.PublicKey)
+}
+
+func (c *SubstrateClient) GetHeaderLatest() (*types.Header, error) {
+	return c.api.RPC.Chain.GetHeaderLatest()
+}
+
+func (c *SubstrateClient) GetBlockHash(blockNumber uint64) (types.Hash, error) {
+	return c.api.RPC.Chain.GetBlockHash(blockNumber)
 }

@@ -24,6 +24,7 @@ func HandleErc20DepositedEvent(sourceID, destId uint8, nonce uint64, handlerCont
 		Destination:  destId,
 		DepositNonce: nonce,
 		ResourceId:   record.ResourceID,
+		Type:         relayer.FungibleTransfer,
 		Payload: []interface{}{
 			record.Amount.Bytes(),
 			record.DestinationRecipientAddress,
@@ -45,6 +46,7 @@ func HandleErc721DepositedEvent(sourceID, destId uint8, nonce uint64, handlerCon
 		Destination:  destId,
 		DepositNonce: nonce,
 		ResourceId:   record.ResourceID,
+		Type:         relayer.NonFungibleTransfer,
 		Payload: []interface{}{
 			record.TokenID.Bytes(),
 			record.DestinationRecipientAddress,
@@ -67,6 +69,7 @@ func HandleGenericDepositedEvent(sourceID, destId uint8, nonce uint64, handlerCo
 		Destination:  destId,
 		DepositNonce: nonce,
 		ResourceId:   record.ResourceID,
+		Type:         relayer.GenericTransfer,
 		Payload: []interface{}{
 			record.MetaData,
 		},
