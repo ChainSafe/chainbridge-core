@@ -53,7 +53,7 @@ func Run(ctx *cli.Context) error {
 		panic(err)
 	}
 
-	ethClient, err := client.NewEVMClient(TestEndpoint2, false, AliceKp)
+	ethClient, err := client.NewEVMClient(TestEndpoint, false, AliceKp)
 	if err != nil {
 		panic(err)
 	}
@@ -80,8 +80,14 @@ func Run(ctx *cli.Context) error {
 	}
 	subL := subListener.NewSubstrateListener(subC)
 	subW := subWriter.NewSubstrateWriter(1, subC)
+
+	// TODO: really not need this dynamic handler assignment
+	subL.RegisterSubscription(relayer.FungibleTransfer, subListener.FungibleTransferHandler)
+	subL.RegisterSubscription(relayer.GenericTransfer, subListener.GenericTransferHandler)
+	subL.RegisterSubscription(relayer.NonFungibleTransfer, subListener.NonFungibleTransferHandler)
+
 	subW.RegisterHandler(relayer.FungibleTransfer, subWriter.CreateFungibleProposal)
-	subChain := substrate.NewSubstrateChain(subL, subW, db)
+	subChain := substrate.NewSubstrateChain(subL, subW, db, 1)
 
 	r := relayer.NewRelayer([]relayer.RelayedChain{evmChain, subChain})
 

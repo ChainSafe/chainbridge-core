@@ -10,6 +10,19 @@ import (
 	"github.com/centrifuge/go-substrate-rpc-client/types"
 )
 
+const BridgePalletName = "ChainBridge"
+const BridgeStoragePrefix = "ChainBridge"
+
+type VoteState struct {
+	VotesFor     []types.AccountID
+	VotesAgainst []types.AccountID
+	Status       struct {
+		IsActive   bool
+		IsApproved bool
+		IsRejected bool
+	}
+}
+
 func NewSubstrateClient(url string, key *signature.KeyringPair, stop <-chan struct{}) (*SubstrateClient, error) {
 	api, err := gsrpc.NewSubstrateAPI(url)
 	if err != nil {
@@ -39,7 +52,7 @@ type SubstrateClient struct {
 
 }
 
-func (c *SubstrateClient) getMetadata() (meta types.Metadata) {
+func (c *SubstrateClient) GetMetadata() (meta types.Metadata) {
 	c.metaLock.RLock()
 	meta = *c.meta
 	c.metaLock.RUnlock()
@@ -59,7 +72,7 @@ func (c *SubstrateClient) UpdateMetatdata() error {
 }
 
 func (c *SubstrateClient) GetBlockEvents(hash types.Hash, target interface{}) error {
-	meta := c.getMetadata()
+	meta := c.GetMetadata()
 	key, err := types.CreateStorageKey(&meta, "System", "Events", nil, nil)
 	if err != nil {
 		return err
@@ -79,7 +92,7 @@ func (c *SubstrateClient) GetBlockEvents(hash types.Hash, target interface{}) er
 // SubmitTx constructs and submits an extrinsic to call the method with the given arguments.
 // All args are passed directly into GSRPC. GSRPC types are recommended to avoid serialization inconsistencies.
 func (c *SubstrateClient) SubmitTx(method string, args ...interface{}) error {
-	meta := c.getMetadata()
+	meta := c.GetMetadata()
 
 	// Create call and extrinsic
 	call, err := types.NewCall(
@@ -171,10 +184,22 @@ func (c *SubstrateClient) getLatestNonce() (types.U32, error) {
 	return acct.Nonce, nil
 }
 
+func (c *SubstrateClient) ResolveResourceId(id [32]byte) (string, error) {
+	var res []byte
+	exists, err := c.QueryStorage(BridgeStoragePrefix, "Resources", id[:], nil, &res)
+	if err != nil {
+		return "", err
+	}
+	if !exists {
+		return "", fmt.Errorf("resource %x not found on chain", id)
+	}
+	return string(res), nil
+}
+
 // queryStorage performs a storage lookup. Arguments may be nil, result must be a pointer.
 func (c *SubstrateClient) QueryStorage(prefix, method string, arg1, arg2 []byte, result interface{}) (bool, error) {
 	// Fetch account nonce
-	data := c.getMetadata()
+	data := c.GetMetadata()
 	key, err := types.CreateStorageKey(&data, prefix, method, arg1, arg2)
 	if err != nil {
 		return false, err
@@ -192,4 +217,10 @@ func (c *SubstrateClient) GetHeaderLatest() (*types.Header, error) {
 
 func (c *SubstrateClient) GetBlockHash(blockNumber uint64) (types.Hash, error) {
 	return c.api.RPC.Chain.GetBlockHash(blockNumber)
+}
+
+func (c *SubstrateClient) GetProposalStatus(sourceID []byte, proposalBytes []byte) (bool, *VoteState, error) {
+	voteRes := &VoteState{}
+	exists, err := c.QueryStorage(BridgeStoragePrefix, "Votes", sourceID, proposalBytes, voteRes)
+	return exists, voteRes, err
 }

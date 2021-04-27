@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ChainSafe/chainbridgev2/chains/substrate/client"
 	"github.com/ChainSafe/chainbridgev2/relayer"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/rs/zerolog/log"
@@ -20,11 +21,14 @@ var AcknowledgeProposal = BridgePalletName + ".acknowledge_proposal"
 
 type Voter interface {
 	SubmitTx(method string, args ...interface{}) error
-	QueryStorage(prefix, method string, arg1, arg2 []byte, result interface{}) (bool, error)
 	VoterAccountID() types.AccountID
+	GetMetadata() (meta types.Metadata)
+	ResolveResourceId(id [32]byte) (string, error)
+	// TODO: Vote state should be higher abstraction
+	GetProposalStatus(sourceID, proposalBytes []byte) (bool, *client.VoteState, error)
 }
 
-type ProposalHandler func(msg *relayer.Message) (*SubstrateProposal, error)
+type ProposalHandler func(msg *relayer.Message) []interface{}
 type ProposalHandlers map[relayer.TransferType]ProposalHandler
 
 type SubstrateWriter struct {
@@ -38,6 +42,9 @@ func NewSubstrateWriter(chainID uint8, client Voter) *SubstrateWriter {
 }
 
 func (w *SubstrateWriter) RegisterHandler(t relayer.TransferType, handler ProposalHandler) {
+	if w.handlers == nil {
+		w.handlers = make(map[relayer.TransferType]ProposalHandler)
+	}
 	w.handlers[t] = handler
 }
 
@@ -46,10 +53,9 @@ func (w *SubstrateWriter) VoteProposal(m *relayer.Message) error {
 	if !ok {
 		return errors.New(fmt.Sprintf("no corresponding substrate handler found for message type %s", m.Type))
 	}
-	prop, err := handler(m)
-
+	prop, err := w.createProposal(m.Source, m.DepositNonce, m.ResourceId, handler(m)...)
 	if err != nil {
-		return fmt.Errorf("failed to construct proposal (chain=%d, name=%s) Error: %w", m.Destination, w.chainID, err)
+		return fmt.Errorf("failed to construct proposal (chain=%d, name=%v) Error: %w", m.Destination, w.chainID, err)
 	}
 
 	for i := 0; i < BlockRetryLimit; i++ {
@@ -78,17 +84,6 @@ func (w *SubstrateWriter) VoteProposal(m *relayer.Message) error {
 }
 
 func (w *SubstrateWriter) proposalValid(prop *SubstrateProposal) (bool, string, error) {
-	var voteState struct {
-		VotesFor     []types.AccountID
-		VotesAgainst []types.AccountID
-		Status       struct {
-			IsActive   bool
-			IsApproved bool
-			IsRejected bool
-		}
-	}
-
-	voteRes := &voteState
 	srcId, err := types.EncodeToBytes(prop.SourceId)
 	if err != nil {
 		return false, "", err
@@ -97,11 +92,10 @@ func (w *SubstrateWriter) proposalValid(prop *SubstrateProposal) (bool, string, 
 	if err != nil {
 		return false, "", err
 	}
-	exists, err := w.client.QueryStorage(BridgeStoragePrefix, "Votes", srcId, propBz, &voteRes)
+	exists, voteRes, err := w.client.GetProposalStatus(srcId, propBz)
 	if err != nil {
 		return false, "", err
 	}
-
 	if !exists {
 		return true, "", nil
 	} else if voteRes.Status.IsActive {
@@ -114,6 +108,37 @@ func (w *SubstrateWriter) proposalValid(prop *SubstrateProposal) (bool, string, 
 	} else {
 		return false, "proposal complete", nil
 	}
+}
+
+func (w *SubstrateWriter) createProposal(sourceChain uint8, depositNonce uint64, resourceId [32]byte, args ...interface{}) (*SubstrateProposal, error) {
+	meta := w.client.GetMetadata()
+	method, err := w.client.ResolveResourceId(resourceId)
+	if err != nil {
+		return nil, err
+	}
+	call, err := types.NewCall(
+		&meta,
+		method,
+		args...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	// TODO: add support of this later. When it makes clear what is this
+	//if w.extendCall {
+	//	eRID, err := types.EncodeToBytes(resourceId)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	call.Args = append(call.Args, eRID...)
+	//}
+	return &SubstrateProposal{
+		DepositNonce: types.U64(depositNonce),
+		Call:         call,
+		SourceId:     types.U8(sourceChain),
+		ResourceId:   types.NewBytes32(resourceId),
+		Method:       method,
+	}, nil
 }
 
 func containsVote(votes []types.AccountID, voter types.AccountID) bool {

@@ -25,8 +25,8 @@ type SubstrateChain struct {
 	kvdb     blockstore.KeyValueReaderWriter
 }
 
-func NewSubstrateChain(dr EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter) *SubstrateChain {
-	return &SubstrateChain{listener: dr, writer: writer, kvdb: kvdb}
+func NewSubstrateChain(dr EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, chainID uint8) *SubstrateChain {
+	return &SubstrateChain{listener: dr, writer: writer, kvdb: kvdb, chainID: chainID}
 }
 
 func (c *SubstrateChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *relayer.Message) {

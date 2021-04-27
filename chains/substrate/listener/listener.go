@@ -12,14 +12,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type TransferType string
-
-const (
-	FungibleTransfer    TransferType = "FungibleTransfer"
-	NonFungibleTransfer TransferType = "NonFungibleTransfer"
-	GenericTransfer     TransferType = "GenericTransfer"
-)
-
 var BlockRetryInterval = time.Second * 5
 
 var ErrBlockNotReady = errors.New("required result to be 32 bytes, but got 0")
@@ -41,10 +33,13 @@ func NewSubstrateListener(client SubstrateClienter) *SubstrateListener {
 
 type SubstrateListener struct {
 	client        SubstrateClienter
-	subscriptions map[TransferType]EventHandler
+	subscriptions map[relayer.TransferType]EventHandler
 }
 
-func (l *SubstrateListener) RegisterHandler(tt TransferType, handler EventHandler) {
+func (l *SubstrateListener) RegisterSubscription(tt relayer.TransferType, handler EventHandler) {
+	if l.subscriptions == nil {
+		l.subscriptions = make(map[relayer.TransferType]EventHandler)
+	}
 	l.subscriptions[tt] = handler
 }
 
@@ -56,11 +51,6 @@ func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, chainID uint8, k
 			case <-stopChn:
 				return
 			default:
-				if startBlock.Int64()%20 == 0 {
-					// Logging process every 20 bocks to exclude spam
-					log.Debug().Str("block", startBlock.String()).Uint8("chainID", chainID).Msg("Queried block for deposit events")
-				}
-
 				// retrieves the header of the latest block
 				finalizedHeader, err := l.client.GetHeaderLatest()
 				if err != nil {
@@ -83,27 +73,28 @@ func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, chainID uint8, k
 					continue
 				}
 				evts := &substrate.Events{}
-				err = l.client.GetBlockEvents(evts)
+				err = l.client.GetBlockEvents(hash, evts)
 				if err != nil {
 					log.Error().Err(err).Msg("Failed to process events in block")
 					continue
 				}
-				//e, ok := evts.(*substrate.Events)
-				//if !ok {
-				//	log.Error().Msg("Error decoding events")
-				//}
 				msg, err := l.handleEvents(evts)
 				if err != nil {
 					log.Error().Err(err).Msg("Error handling substrate events")
 				}
 				for _, m := range msg {
+					log.Info().Uint8("chain", chainID).Uint8("destination", m.Destination).Msgf("Sending new message %+v", m)
 					ch <- m
+				}
+				if startBlock.Int64()%20 == 0 {
+					// Logging process every 20 blocks to exclude spam
+					log.Debug().Str("block", startBlock.String()).Uint8("chainID", chainID).Msg("Queried block for deposit events")
 				}
 				err = blockstore.StoreBlock(kvrw, startBlock, chainID)
 				if err != nil {
 					log.Error().Str("block", startBlock.String()).Err(err).Msg("Failed to write latest block to blockstore")
 				}
-				startBlock.And(startBlock, big.NewInt(1))
+				startBlock.Add(startBlock, big.NewInt(1))
 			}
 		}
 	}()
@@ -113,18 +104,18 @@ func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, chainID uint8, k
 // handleEvents calls the associated handler for all registered event types
 func (l *SubstrateListener) handleEvents(evts *substrate.Events) ([]*relayer.Message, error) {
 	msgs := make([]*relayer.Message, 0)
-	if l.subscriptions[FungibleTransfer] != nil {
+	if l.subscriptions[relayer.FungibleTransfer] != nil {
 		for _, evt := range evts.ChainBridge_FungibleTransfer {
-			m, err := l.subscriptions[FungibleTransfer](evt)
+			m, err := l.subscriptions[relayer.FungibleTransfer](evt)
 			if err != nil {
 				return nil, err
 			}
 			msgs = append(msgs, m)
 		}
 	}
-	if l.subscriptions[NonFungibleTransfer] != nil {
+	if l.subscriptions[relayer.NonFungibleTransfer] != nil {
 		for _, evt := range evts.ChainBridge_NonFungibleTransfer {
-			m, err := l.subscriptions[NonFungibleTransfer](evt)
+			m, err := l.subscriptions[relayer.NonFungibleTransfer](evt)
 			if err != nil {
 				return nil, err
 			}
@@ -132,9 +123,9 @@ func (l *SubstrateListener) handleEvents(evts *substrate.Events) ([]*relayer.Mes
 
 		}
 	}
-	if l.subscriptions[GenericTransfer] != nil {
+	if l.subscriptions[relayer.GenericTransfer] != nil {
 		for _, evt := range evts.ChainBridge_GenericTransfer {
-			m, err := l.subscriptions[GenericTransfer](evt)
+			m, err := l.subscriptions[relayer.GenericTransfer](evt)
 			if err != nil {
 				return nil, err
 			}

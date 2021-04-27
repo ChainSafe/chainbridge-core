@@ -18,7 +18,7 @@ func FungibleTransferHandler(evtI interface{}) (*relayer.Message, error) {
 		DepositNonce: uint64(evt.DepositNonce),
 		ResourceId:   evt.ResourceId,
 		Payload: []interface{}{
-			evt.Amount.Int,
+			evt.Amount.Bytes(),
 			evt.Recipient,
 		},
 	}, nil
@@ -36,6 +36,7 @@ func NonFungibleTransferHandler(evtI interface{}) (*relayer.Message, error) {
 		DepositNonce: uint64(evt.DepositNonce),
 		ResourceId:   evt.ResourceId,
 		Payload: []interface{}{
+			evt.TokenId,
 			evt.Recipient,
 			evt.Metadata,
 		},

@@ -51,6 +51,9 @@ func (l *EVMListener) MatchAddressWithHandlerFunc(addr string) (EventHandler, er
 }
 
 func (l *EVMListener) RegisterHandler(address string, handler EventHandler) {
+	if l.eventHandlers == nil {
+		l.eventHandlers = make(map[ethcommon.Address]EventHandler)
+	}
 	l.eventHandlers[ethcommon.HexToAddress(address)] = handler
 }
 
