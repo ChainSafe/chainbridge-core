@@ -2,10 +2,10 @@ package writer
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ChainSafe/chainbridgev2/chains/evm"
-
 	"github.com/ChainSafe/chainbridgev2/relayer"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -45,6 +45,7 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message, bridgeAddress string) error 
 	if err != nil {
 		return err
 	}
+	log.Info().Str("type", string(m.Type)).Uint8("src", m.Source).Uint8("dst", m.Destination).Uint64("nonce", m.DepositNonce).Str("rId", fmt.Sprintf("%x", m.ResourceId)).Msg("Handling new message")
 	prop, err := handleProposal(m, addr)
 	if err != nil {
 		return err

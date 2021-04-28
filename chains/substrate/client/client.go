@@ -128,7 +128,7 @@ func (c *SubstrateClient) SubmitTx(method string, args ...interface{}) error {
 		Nonce:              types.NewUCompactFromUInt(uint64(c.nonce)),
 		SpecVersion:        rv.SpecVersion,
 		Tip:                types.NewUCompactFromUInt(0),
-		TransactionVersion: 1,
+		TransactionVersion: rv.TransactionVersion,
 	}
 
 	err = ext.Sign(*c.key, o)
@@ -172,8 +172,8 @@ func (c *SubstrateClient) watchSubmission(sub *author.ExtrinsicStatusSubscriptio
 }
 
 func (c *SubstrateClient) getLatestNonce() (types.U32, error) {
-	var acct types.AccountInfo
-	exists, err := c.QueryStorage("System", "Account", c.key.PublicKey, nil, &acct)
+	acct := &types.AccountInfo{}
+	exists, err := c.QueryStorage("System", "Account", c.key.PublicKey, nil, acct)
 	if err != nil {
 		return 0, err
 	}

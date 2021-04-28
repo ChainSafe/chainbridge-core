@@ -31,6 +31,9 @@ const TxRetryInterval = time.Second * 2
 // Tries to retry sending transaction
 const TxRetryLimit = 10
 
+const DefaultGasLimit = 6721975
+const DefaultGasPrice = 20000000000
+
 func NewEVMClient(endpoint string, http bool, sender *secp256k1.Keypair) (*EVMClient, error) {
 	c := &EVMClient{
 		endpoint: endpoint,
@@ -54,6 +57,7 @@ type EVMClient struct {
 	sender        *secp256k1.Keypair
 	maxGasPrice   *big.Int   // TODO
 	gasMultiplier *big.Float // TODO
+	gasLimit      *big.Int
 }
 
 // Connect starts the ethereum WS connection
@@ -71,6 +75,12 @@ func (c *EVMClient) connect() error {
 		return err
 	}
 	c.Client = ethclient.NewClient(rpcClient)
+	// TODO: move to config
+	opts, err := c.newTransactOpts(big.NewInt(0), big.NewInt(DefaultGasLimit), big.NewInt(DefaultGasPrice))
+	if err != nil {
+		return err
+	}
+	c.opts = opts
 	return nil
 }
 
@@ -188,6 +198,7 @@ func (c *EVMClient) ProposalStatus(bridgeAddress string, p *evm.Proposal) (relay
 		log.Error().Err(err).Msg("Failed to check proposal existence")
 		return 99, err
 	}
+	log.Debug().Msgf("Fetching proposal %+v", prop)
 	return relayer.ProposalStatus(prop.Status), nil
 }
 
@@ -239,7 +250,6 @@ func (c *EVMClient) newTransactOpts(value, gasLimit, gasPrice *big.Int) (*bind.T
 	auth.GasLimit = uint64(gasLimit.Int64())
 	auth.GasPrice = gasPrice
 	auth.Context = context.Background()
-
 	return auth, nil
 }
 
@@ -275,14 +285,14 @@ func (c *EVMClient) safeEstimateGas(ctx context.Context) (*big.Int, error) {
 		return nil, err
 	}
 
-	gasPrice := multiplyGasPrice(suggestedGasPrice, c.gasMultiplier)
+	//gasPrice := multiplyGasPrice(suggestedGasPrice, c.gasMultiplier)
 
 	// Check we aren't exceeding our limit
-	if gasPrice.Cmp(c.maxGasPrice) == 1 {
-		return c.maxGasPrice, nil
-	} else {
-		return gasPrice, nil
-	}
+	//if suggestedGasPrice.Cmp(c.maxGasPrice) == 1 {
+	//	return c.maxGasPrice, nil
+	//} else {
+	return suggestedGasPrice, nil
+	//}
 }
 
 func multiplyGasPrice(gasEstimate *big.Int, gasMultiplier *big.Float) *big.Int {

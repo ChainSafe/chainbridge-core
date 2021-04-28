@@ -26,15 +26,20 @@ func ERC20ProposalHandler(m *relayer.Message, handlerAddr string) (*evm.Proposal
 		return nil, errors.New("wrong payloads recipient format")
 
 	}
-	b := bytes.Buffer{}
-	b.Write(common.LeftPadBytes(amount, 32)) // amount (uint256)
+	var data []byte
+	data = append(data, common.LeftPadBytes(amount, 32)...) // amount (uint256)
+
 	recipientLen := big.NewInt(int64(len(recipient))).Bytes()
-	b.Write(common.LeftPadBytes(recipientLen, 32))
-	b.Write(recipient)
+	data = append(data, common.LeftPadBytes(recipientLen, 32)...) // length of recipient (uint256)
+	data = append(data, recipient...)                             // recipient ([]byte)
+
 	caddress := common.HexToAddress(handlerAddr)
 	return &evm.Proposal{
-		Data:           b.Bytes(),
-		DataHash:       crypto.Keccak256Hash(append(caddress.Bytes(), b.Bytes()...)),
+		Source:         m.Source,
+		DepositNonce:   m.DepositNonce,
+		ResourceId:     m.ResourceId,
+		Data:           data,
+		DataHash:       crypto.Keccak256Hash(append(caddress.Bytes(), data...)),
 		HandlerAddress: common.HexToAddress(handlerAddr),
 	}, nil
 }
@@ -68,6 +73,9 @@ func ERC721ProposalHandler(msg *relayer.Message, handlerAddr string) (*evm.Propo
 	data.Write(metadata)
 	caddress := common.HexToAddress(handlerAddr)
 	return &evm.Proposal{
+		Source:         msg.Source,
+		DepositNonce:   msg.DepositNonce,
+		ResourceId:     msg.ResourceId,
 		Data:           data.Bytes(),
 		DataHash:       crypto.Keccak256Hash(append(caddress.Bytes(), data.Bytes()...)),
 		HandlerAddress: common.HexToAddress(handlerAddr),
@@ -88,6 +96,9 @@ func GenericProposalHandler(msg *relayer.Message, handlerAddr string) (*evm.Prop
 	data.Write(metadata)
 	caddress := common.HexToAddress(handlerAddr)
 	return &evm.Proposal{
+		Source:         msg.Source,
+		DepositNonce:   msg.DepositNonce,
+		ResourceId:     msg.ResourceId,
 		Data:           data.Bytes(),
 		DataHash:       crypto.Keccak256Hash(append(caddress.Bytes(), data.Bytes()...)),
 		HandlerAddress: common.HexToAddress(handlerAddr),
