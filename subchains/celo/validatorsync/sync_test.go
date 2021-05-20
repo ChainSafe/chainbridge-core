@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	mock_validatorsync "github.com/ChainSafe/chainbridgev2/subchains/celo/validatorsync/mock"
+	mock_validatorsync "github.com/ChainSafe/chainbridge-core/subchains/celo/validatorsync/mock"
 	"github.com/celo-org/celo-blockchain/common"
 	"github.com/celo-org/celo-blockchain/common/hexutil"
 	"github.com/celo-org/celo-blockchain/core/types"

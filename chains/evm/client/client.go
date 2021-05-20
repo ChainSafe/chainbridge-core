@@ -11,9 +11,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ChainSafe/chainbridgev2/bindings/eth/bindings/Bridge"
-	"github.com/ChainSafe/chainbridgev2/crypto/secp256k1"
-	"github.com/ChainSafe/chainbridgev2/relayer"
+	"github.com/ChainSafe/chainbridge-core/bindings/eth/bindings/Bridge"
+	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
+	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"

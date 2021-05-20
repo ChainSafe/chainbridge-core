@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/ChainSafe/chainbridgev2/example"
+	"github.com/ChainSafe/chainbridge-core/example"
 	"github.com/urfave/cli/v2"
 )
 
