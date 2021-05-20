@@ -15,7 +15,7 @@ services:
 #    ports:
 #      - "8546:8545"
 
-#
+
   sub-chain:
     image: "chainsafe/chainbridge-substrate-chain:v1.1.0"
     container_name: sub-chain

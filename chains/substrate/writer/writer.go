@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ChainSafe/chainbridgev2/chains/substrate/client"
-	"github.com/ChainSafe/chainbridgev2/relayer"
+	"github.com/ChainSafe/chainbridge-core/chains/substrate"
+	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/rs/zerolog/log"
 )
@@ -21,11 +21,11 @@ var AcknowledgeProposal = BridgePalletName + ".acknowledge_proposal"
 
 type Voter interface {
 	SubmitTx(method string, args ...interface{}) error
-	VoterAccountID() types.AccountID
+	GetVoterAccountID() types.AccountID
 	GetMetadata() (meta types.Metadata)
 	ResolveResourceId(id [32]byte) (string, error)
 	// TODO: Vote state should be higher abstraction
-	GetProposalStatus(sourceID, proposalBytes []byte) (bool, *client.VoteState, error)
+	GetProposalStatus(sourceID, proposalBytes []byte) (bool, *substrate.VoteState, error)
 }
 
 type ProposalHandler func(msg *relayer.Message) []interface{}
@@ -99,8 +99,8 @@ func (w *SubstrateWriter) proposalValid(prop *SubstrateProposal) (bool, string, 
 	if !exists {
 		return true, "", nil
 	} else if voteRes.Status.IsActive {
-		if containsVote(voteRes.VotesFor, w.client.VoterAccountID()) ||
-			containsVote(voteRes.VotesAgainst, w.client.VoterAccountID()) {
+		if containsVote(voteRes.VotesFor, w.client.GetVoterAccountID()) ||
+			containsVote(voteRes.VotesAgainst, w.client.GetVoterAccountID()) {
 			return false, "already voted", nil
 		} else {
 			return true, "", nil
@@ -124,7 +124,7 @@ func (w *SubstrateWriter) createProposal(sourceChain uint8, depositNonce uint64,
 	if err != nil {
 		return nil, err
 	}
-	// TODO: add support of this later. When it makes clear what is this
+	// TODO: Is not these should be always enabled?
 	//if w.extendCall {
 	//	eRID, err := types.EncodeToBytes(resourceId)
 	//	if err != nil {
