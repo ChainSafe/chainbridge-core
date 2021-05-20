@@ -63,6 +63,7 @@ func (c *EVMChain) ChainID() uint8 {
 	return c.chainID
 }
 
+// TODO: should be moved somewhere else
 type Proposal struct {
 	Source         uint8  // Source where message was initiated
 	Destination    uint8  // Destination chain of message

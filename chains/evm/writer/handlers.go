@@ -6,7 +6,6 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridgev2/chains/evm"
-
 	"github.com/ChainSafe/chainbridgev2/relayer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"

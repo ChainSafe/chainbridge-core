@@ -16,7 +16,7 @@ var BlockRetryInterval = time.Second * 5
 
 var ErrBlockNotReady = errors.New("required result to be 32 bytes, but got 0")
 
-type SubstrateClienter interface {
+type SubstrateReader interface {
 	GetHeaderLatest() (*types.Header, error)
 	GetBlockHash(blockNumber uint64) (types.Hash, error)
 	GetBlockEvents(hash types.Hash, target interface{}) error
@@ -25,22 +25,22 @@ type SubstrateClienter interface {
 
 type EventHandler func(uint8, interface{}) (*relayer.Message, error)
 
-func NewSubstrateListener(client SubstrateClienter) *SubstrateListener {
+func NewSubstrateListener(client SubstrateReader) *SubstrateListener {
 	return &SubstrateListener{
 		client: client,
 	}
 }
 
 type SubstrateListener struct {
-	client        SubstrateClienter
-	subscriptions map[relayer.TransferType]EventHandler
+	client        SubstrateReader
+	eventHandlers map[relayer.TransferType]EventHandler
 }
 
 func (l *SubstrateListener) RegisterSubscription(tt relayer.TransferType, handler EventHandler) {
-	if l.subscriptions == nil {
-		l.subscriptions = make(map[relayer.TransferType]EventHandler)
+	if l.eventHandlers == nil {
+		l.eventHandlers = make(map[relayer.TransferType]EventHandler)
 	}
-	l.subscriptions[tt] = handler
+	l.eventHandlers[tt] = handler
 }
 
 func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message {
@@ -103,18 +103,18 @@ func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, chainID uint8, k
 // handleEvents calls the associated handler for all registered event types
 func (l *SubstrateListener) handleEvents(chainID uint8, evts *substrate.Events) ([]*relayer.Message, error) {
 	msgs := make([]*relayer.Message, 0)
-	if l.subscriptions[relayer.FungibleTransfer] != nil {
+	if l.eventHandlers[relayer.FungibleTransfer] != nil {
 		for _, evt := range evts.ChainBridge_FungibleTransfer {
-			m, err := l.subscriptions[relayer.FungibleTransfer](chainID, evt)
+			m, err := l.eventHandlers[relayer.FungibleTransfer](chainID, evt)
 			if err != nil {
 				return nil, err
 			}
 			msgs = append(msgs, m)
 		}
 	}
-	if l.subscriptions[relayer.NonFungibleTransfer] != nil {
+	if l.eventHandlers[relayer.NonFungibleTransfer] != nil {
 		for _, evt := range evts.ChainBridge_NonFungibleTransfer {
-			m, err := l.subscriptions[relayer.NonFungibleTransfer](chainID, evt)
+			m, err := l.eventHandlers[relayer.NonFungibleTransfer](chainID, evt)
 			if err != nil {
 				return nil, err
 			}
@@ -122,9 +122,9 @@ func (l *SubstrateListener) handleEvents(chainID uint8, evts *substrate.Events) 
 
 		}
 	}
-	if l.subscriptions[relayer.GenericTransfer] != nil {
+	if l.eventHandlers[relayer.GenericTransfer] != nil {
 		for _, evt := range evts.ChainBridge_GenericTransfer {
-			m, err := l.subscriptions[relayer.GenericTransfer](chainID, evt)
+			m, err := l.eventHandlers[relayer.GenericTransfer](chainID, evt)
 			if err != nil {
 				return nil, err
 			}
