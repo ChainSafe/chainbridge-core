@@ -3,7 +3,7 @@ package writer
 import (
 	"math/big"
 
-	"github.com/ChainSafe/chainbridgev2/relayer"
+	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
 )
 

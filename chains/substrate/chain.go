@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridgev2/blockstore"
-	"github.com/ChainSafe/chainbridgev2/relayer"
+	"github.com/ChainSafe/chainbridge-core/blockstore"
+	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/rs/zerolog/log"
 )
 

@@ -1,4 +1,4 @@
-module github.com/ChainSafe/chainbridgev2
+module github.com/ChainSafe/chainbridge-core
 
 go 1.16
 

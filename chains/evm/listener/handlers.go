@@ -1,10 +1,10 @@
 package listener
 
 import (
-	erc20Handler "github.com/ChainSafe/chainbridgev2/bindings/eth/bindings/ERC20Handler"
-	erc721Handler "github.com/ChainSafe/chainbridgev2/bindings/eth/bindings/ERC721Handler"
-	genericHandler "github.com/ChainSafe/chainbridgev2/bindings/eth/bindings/GenericHandler"
-	"github.com/ChainSafe/chainbridgev2/relayer"
+	erc20Handler "github.com/ChainSafe/chainbridge-core/bindings/eth/bindings/ERC20Handler"
+	erc721Handler "github.com/ChainSafe/chainbridge-core/bindings/eth/bindings/ERC721Handler"
+	genericHandler "github.com/ChainSafe/chainbridge-core/bindings/eth/bindings/GenericHandler"
+	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 )

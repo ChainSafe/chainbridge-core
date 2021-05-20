@@ -6,8 +6,8 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ChainSafe/chainbridgev2/blockstore"
-	"github.com/ChainSafe/chainbridgev2/relayer"
+	"github.com/ChainSafe/chainbridge-core/blockstore"
+	"github.com/ChainSafe/chainbridge-core/relayer"
 	goeth "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"

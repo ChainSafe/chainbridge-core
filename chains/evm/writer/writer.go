@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ChainSafe/chainbridgev2/chains/evm"
-	"github.com/ChainSafe/chainbridgev2/relayer"
+	"github.com/ChainSafe/chainbridge-core/chains/evm"
+	"github.com/ChainSafe/chainbridge-core/relayer"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
