@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/celo-org/celo-blockchain v1.3.0-beta.2.0.20210408210525-f34d95adc203
 	github.com/celo-org/celo-bls-go v0.2.4
-	github.com/centrifuge/go-substrate-rpc-client v2.0.0-alpha.5+incompatible
+	github.com/centrifuge/go-substrate-rpc-client v2.0.0+incompatible
 	github.com/ethereum/go-ethereum v1.10.1
 	github.com/golang/mock v1.3.1
 	github.com/pierrec/xxHash v0.1.5 // indirect

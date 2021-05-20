@@ -5,6 +5,7 @@ package writer
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/relayer"
@@ -15,14 +16,14 @@ import (
 var BlockRetryInterval = time.Second * 5
 
 type VoterExecutor interface {
-	ExecuteProposal(bridgeAddress string, proposal relayer.Proposal) error
-	VoteProposal(bridgeAddress string, proposal relayer.Proposal) error
+	ExecuteProposal(bridgeAddress string, proposal *evm.Proposal) error
+	VoteProposal(bridgeAddress string, proposal *evm.Proposal) error
 	MatchResourceIDToHandlerAddress(bridgeAddress string, rID [32]byte) (string, error)
-	ProposalStatus(bridgeAddress string, proposal relayer.Proposal) (relayer.ProposalStatus, error)
-	VotedBy(bridgeAddress string, p relayer.Proposal) bool
+	ProposalStatus(bridgeAddress string, proposal *evm.Proposal) (relayer.ProposalStatus, error)
+	VotedBy(bridgeAddress string, p *evm.Proposal) bool
 }
 
-type ProposalHandler func(msg relayer.XCMessager, handlerAddr string) (relayer.Proposal, error)
+type ProposalHandler func(msg *relayer.Message, handlerAddr string) (*evm.Proposal, error)
 type ProposalHandlers map[ethcommon.Address]ProposalHandler
 
 type EVMVoter struct {
@@ -38,15 +39,16 @@ func NewWriter(ve VoterExecutor) *EVMVoter {
 	}
 }
 
-func (w *EVMVoter) VoteProposal(m relayer.XCMessager, bridgeAddress string) error {
+func (w *EVMVoter) VoteProposal(m *relayer.Message, bridgeAddress string) error {
 	// Matching resource ID with handler.
-	addr, err := w.proposalVoterExecutor.MatchResourceIDToHandlerAddress(bridgeAddress, m.GetResourceID())
+	addr, err := w.proposalVoterExecutor.MatchResourceIDToHandlerAddress(bridgeAddress, m.ResourceId)
 	// Based on handler that registered on BridgeContract
-	propHandler, err := w.MatchAddressWithHandlerFunc(addr)
+	handleProposal, err := w.MatchAddressWithHandlerFunc(addr)
 	if err != nil {
 		return err
 	}
-	prop, err := propHandler(m, addr)
+	log.Info().Str("type", string(m.Type)).Uint8("src", m.Source).Uint8("dst", m.Destination).Uint64("nonce", m.DepositNonce).Str("rId", fmt.Sprintf("%x", m.ResourceId)).Msg("Handling new message")
+	prop, err := handleProposal(m, addr)
 	if err != nil {
 		return err
 	}

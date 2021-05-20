@@ -9,13 +9,13 @@ import (
 	"syscall"
 
 	"github.com/ChainSafe/chainbridge-core/lvldb"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/writer"
 	"github.com/ChainSafe/chainbridge-core/example/keystore"
 	"github.com/ChainSafe/chainbridge-core/relayer"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -52,22 +52,43 @@ func Run(ctx *cli.Context) error {
 		panic(err)
 	}
 
-	ethClient, err := client.NewEVMClient(TestEndpoint2, false, AliceKp)
+	ethClient, err := client.NewEVMClient(TestEndpoint, false, AliceKp)
 	if err != nil {
 		panic(err)
 	}
-	eventListener := listener.NewEVMListener(ethClient)
-	eventListener.RegisterHandler("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF", listener.HandleErc20DepositedEvent)
+	evmListener := listener.NewEVMListener(ethClient)
+	evmListener.RegisterHandler("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF", listener.HandleErc20DepositedEvent)
 
-	eventWriter := writer.NewWriter(ethClient)
-	eventWriter.RegisterProposalHandler("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF", evm.ERC20ProposalHandler)
+	evmWriter := writer.NewWriter(ethClient)
+	evmWriter.RegisterProposalHandler("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF", writer.ERC20ProposalHandler)
 
-	chain := evm.NewEVMChain(eventListener, eventWriter, db, "0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B")
+	evmChain := evm.NewEVMChain(evmListener, evmWriter, db, "0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B", 0)
 	if err != nil {
 		panic(err)
 	}
 
-	r := relayer.NewRelayer([]relayer.RelayedChain{chain})
+	kp, err := keystore.KeypairFromAddress("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY", keystore.SubChain, "alice", true)
+	if err != nil {
+		panic(err)
+	}
+	krp := kp.(*sr25519.Keypair).AsKeyringPair()
+
+	subC, err := subClient.NewSubstrateClient("ws://localhost:9944", krp, stopChn)
+	if err != nil {
+		panic(err)
+	}
+	subL := subListener.NewSubstrateListener(subC)
+	subW := subWriter.NewSubstrateWriter(1, subC)
+
+	// TODO: really not need this dynamic handler assignment
+	subL.RegisterSubscription(relayer.FungibleTransfer, subListener.FungibleTransferHandler)
+	subL.RegisterSubscription(relayer.GenericTransfer, subListener.GenericTransferHandler)
+	subL.RegisterSubscription(relayer.NonFungibleTransfer, subListener.NonFungibleTransferHandler)
+
+	subW.RegisterHandler(relayer.FungibleTransfer, subWriter.CreateFungibleProposal)
+	subChain := substrate.NewSubstrateChain(subL, subW, db, 1)
+
+	r := relayer.NewRelayer([]relayer.RelayedChain{evmChain, subChain})
 
 	go r.Start(stopChn, errChn)
 

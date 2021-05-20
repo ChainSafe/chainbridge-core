@@ -3,23 +3,13 @@
 
 package relayer
 
-import (
-	"math/big"
+type TransferType string
 
-	"github.com/ethereum/go-ethereum/common"
+const (
+	FungibleTransfer    TransferType = "FungibleTransfer"
+	NonFungibleTransfer TransferType = "NonFungibleTransfer"
+	GenericTransfer     TransferType = "GenericTransfer"
 )
-
-// XCMessage is used as a generic format cross-chain communications
-// GenericMessage?
-// TODO: Check change to struct bcs maybe we are not gonna need it
-type XCMessager interface {
-	GetSource() uint8
-	GetDestination() uint8
-	GetDepositNonce() uint64
-	GetResourceID() [32]byte
-	GetPayload() []interface{} // Maybe this should be some bytes encoding
-	String() string
-}
 
 type ProposalStatus uint8
 
@@ -31,10 +21,11 @@ const (
 	ProposalStatusCanceled ProposalStatus = 4
 )
 
-// TODO: check this could be rewriten as struct
-type Proposal interface {
-	XCMessager
-	GetProposalData() []byte
-	GetProposalDataHash() common.Hash
-	GetIDAndNonce() *big.Int
+type Message struct {
+	Source       uint8  // Source where message was initiated
+	Destination  uint8  // Destination chain of message
+	DepositNonce uint64 // Nonce for the deposit
+	ResourceId   [32]byte
+	Payload      []interface{} // data associated with event sequence
+	Type         TransferType
 }

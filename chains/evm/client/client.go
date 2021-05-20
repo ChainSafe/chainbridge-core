@@ -32,6 +32,9 @@ const TxRetryInterval = time.Second * 2
 // Tries to retry sending transaction
 const TxRetryLimit = 10
 
+const DefaultGasLimit = 6721975
+const DefaultGasPrice = 20000000000
+
 func NewEVMClient(endpoint string, http bool, sender *secp256k1.Keypair) (*EVMClient, error) {
 	c := &EVMClient{
 		endpoint: endpoint,
@@ -55,6 +58,7 @@ type EVMClient struct {
 	sender        *secp256k1.Keypair
 	maxGasPrice   *big.Int   // TODO
 	gasMultiplier *big.Float // TODO
+	gasLimit      *big.Int
 }
 
 // Connect starts the ethereum WS connection
@@ -72,6 +76,12 @@ func (c *EVMClient) connect() error {
 		return err
 	}
 	c.Client = ethclient.NewClient(rpcClient)
+	// TODO: move to config
+	opts, err := c.newTransactOpts(big.NewInt(0), big.NewInt(DefaultGasLimit), big.NewInt(DefaultGasPrice))
+	if err != nil {
+		return err
+	}
+	c.opts = opts
 	return nil
 }
 
@@ -88,7 +98,7 @@ func (c *EVMClient) GetEthClient() *ethclient.Client {
 	return c.Client
 }
 
-func (c *EVMClient) ExecuteProposal(bridgeAddress string, proposal relayer.Proposal) error {
+func (c *EVMClient) ExecuteProposal(bridgeAddress string, proposal *evm.Proposal) error {
 	for i := 0; i < TxRetryLimit; i++ {
 		err := c.lockAndUpdateOpts()
 		if err != nil {
@@ -101,14 +111,14 @@ func (c *EVMClient) ExecuteProposal(bridgeAddress string, proposal relayer.Propo
 		}
 		tx, err := b.ExecuteProposal(
 			c.getOpts(),
-			uint8(proposal.GetSource()),
-			uint64(proposal.GetDepositNonce()),
-			proposal.GetProposalData(),
-			proposal.GetResourceID(),
+			uint8(proposal.Source),
+			uint64(proposal.DepositNonce),
+			proposal.Data,
+			proposal.ResourceId,
 		)
 		c.unlockOpts()
 		if err == nil {
-			log.Info().Interface("source", proposal.GetSource()).Interface("dest", proposal.GetDestination()).Interface("nonce", proposal.GetDepositNonce()).Str("tx", tx.Hash().Hex()).Msg("Submitted proposal execution")
+			log.Info().Interface("source", proposal.Source).Interface("dest", proposal.Destination).Interface("nonce", proposal.DepositNonce).Str("tx", tx.Hash().Hex()).Msg("Submitted proposal execution")
 			return nil
 		}
 		if err.Error() == ErrNonceTooLow.Error() || err.Error() == ErrTxUnderpriced.Error() {
@@ -126,15 +136,15 @@ func (c *EVMClient) ExecuteProposal(bridgeAddress string, proposal relayer.Propo
 			continue
 		}
 		if s == relayer.ProposalStatusPassed || s == relayer.ProposalStatusExecuted || s == relayer.ProposalStatusCanceled {
-			log.Info().Interface("source", proposal.GetSource()).Interface("dest", proposal.GetDestination()).Interface("nonce", proposal.GetDepositNonce()).Msg("Proposal finalized on chain")
+			log.Info().Interface("source", proposal.Source).Interface("dest", proposal.Destination).Interface("nonce", proposal.DepositNonce).Msg("Proposal finalized on chain")
 			return nil
 		}
 	}
-	log.Error().Msgf("Submission of Execution transaction failed, source %v dest %v depNonce %v", proposal.GetSource(), proposal.GetDestination(), proposal.GetDepositNonce())
+	log.Error().Msgf("Submission of Execution transaction failed, source %v dest %v depNonce %v", proposal.Source, proposal.Destination, proposal.DepositNonce)
 	return ErrFatalTx
 }
 
-func (c *EVMClient) VoteProposal(bridgeAddress string, proposal relayer.Proposal) error {
+func (c *EVMClient) VoteProposal(bridgeAddress string, proposal *evm.Proposal) error {
 	for i := 0; i < TxRetryLimit; i++ {
 		err := c.lockAndUpdateOpts()
 		if err != nil {
@@ -146,14 +156,14 @@ func (c *EVMClient) VoteProposal(bridgeAddress string, proposal relayer.Proposal
 		}
 		tx, err := b.VoteProposal(
 			c.getOpts(),
-			uint8(proposal.GetSource()),
-			uint64(proposal.GetDepositNonce()),
-			proposal.GetResourceID(),
-			proposal.GetProposalDataHash(),
+			uint8(proposal.Source),
+			uint64(proposal.DepositNonce),
+			proposal.ResourceId,
+			proposal.DataHash,
 		)
 		c.unlockOpts()
 		if err == nil {
-			log.Info().Interface("source", proposal.GetSource()).Interface("dest", proposal.GetDestination()).Interface("nonce", proposal.GetDepositNonce()).Str("tx", tx.Hash().Hex()).Msg("Submitted proposal vote")
+			log.Info().Interface("source", proposal.Source).Interface("dest", proposal.Destination).Interface("nonce", proposal.DepositNonce).Str("tx", tx.Hash().Hex()).Msg("Submitted proposal vote")
 			return nil
 		}
 		if err.Error() == ErrNonceTooLow.Error() || err.Error() == ErrTxUnderpriced.Error() {
@@ -171,33 +181,34 @@ func (c *EVMClient) VoteProposal(bridgeAddress string, proposal relayer.Proposal
 			continue
 		}
 		if ps == relayer.ProposalStatusPassed {
-			log.Info().Interface("source", proposal.GetSource()).Interface("dest", proposal.GetDestination()).Interface("nonce", proposal.GetDepositNonce()).Msg("Proposal is ready to be executed on chain")
+			log.Info().Interface("source", proposal.Source).Interface("dest", proposal.Destination).Interface("nonce", proposal.DepositNonce).Msg("Proposal is ready to be executed on chain")
 			return nil
 		}
 	}
-	log.Error().Msgf("Submission of vote transaction failed, source %v dest %v depNonce %v", proposal.GetSource(), proposal.GetDestination(), proposal.GetDepositNonce())
+	log.Error().Msgf("Submission of vote transaction failed, source %v dest %v depNonce %v", proposal.Source, proposal.Destination, proposal.DepositNonce)
 	return ErrFatalTx
 }
 
-func (c *EVMClient) ProposalStatus(bridgeAddress string, p relayer.Proposal) (relayer.ProposalStatus, error) {
+func (c *EVMClient) ProposalStatus(bridgeAddress string, p *evm.Proposal) (relayer.ProposalStatus, error) {
 	b, err := Bridge.NewBridge(common.HexToAddress(bridgeAddress), c)
 	if err != nil {
 		return 99, err
 	}
-	prop, err := b.GetProposal(&bind.CallOpts{}, p.GetSource(), p.GetDepositNonce(), p.GetProposalDataHash())
+	prop, err := b.GetProposal(&bind.CallOpts{}, p.Source, p.DepositNonce, p.DataHash)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to check proposal existence")
 		return 99, err
 	}
+	log.Debug().Msgf("Fetching proposal %+v", prop)
 	return relayer.ProposalStatus(prop.Status), nil
 }
 
-func (c *EVMClient) VotedBy(bridgeAddress string, p relayer.Proposal) bool {
+func (c *EVMClient) VotedBy(bridgeAddress string, p *evm.Proposal) bool {
 	b, err := Bridge.NewBridge(common.HexToAddress(bridgeAddress), c)
 	if err != nil {
 		return false
 	}
-	hv, err := b.HasVotedOnProposal(&bind.CallOpts{}, p.GetIDAndNonce(), p.GetProposalDataHash(), c.sender.CommonAddress())
+	hv, err := b.HasVotedOnProposal(&bind.CallOpts{}, evm.GetIDAndNonce(p), p.DataHash, c.sender.CommonAddress())
 	if err != nil {
 		return false
 	}
@@ -240,7 +251,6 @@ func (c *EVMClient) newTransactOpts(value, gasLimit, gasPrice *big.Int) (*bind.T
 	auth.GasLimit = uint64(gasLimit.Int64())
 	auth.GasPrice = gasPrice
 	auth.Context = context.Background()
-
 	return auth, nil
 }
 
@@ -276,14 +286,14 @@ func (c *EVMClient) safeEstimateGas(ctx context.Context) (*big.Int, error) {
 		return nil, err
 	}
 
-	gasPrice := multiplyGasPrice(suggestedGasPrice, c.gasMultiplier)
+	//gasPrice := multiplyGasPrice(suggestedGasPrice, c.gasMultiplier)
 
 	// Check we aren't exceeding our limit
-	if gasPrice.Cmp(c.maxGasPrice) == 1 {
-		return c.maxGasPrice, nil
-	} else {
-		return gasPrice, nil
-	}
+	//if suggestedGasPrice.Cmp(c.maxGasPrice) == 1 {
+	//	return c.maxGasPrice, nil
+	//} else {
+	return suggestedGasPrice, nil
+	//}
 }
 
 func multiplyGasPrice(gasEstimate *big.Int, gasMultiplier *big.Float) *big.Int {
