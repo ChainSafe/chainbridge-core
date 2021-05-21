@@ -70,7 +70,7 @@ func (p *EVMProposal) GetIDAndNonce() *big.Int {
 	return big.NewInt(0).SetBytes(data.Bytes())
 }
 
-func ERC20ProposalHandler(m relayer.XCMessager, handlerAddr string) (relayer.Proposal, error) {
+func ERC20ProposalHandler(m *relayer.Message, handlerAddr string) (relayer.Proposal, error) {
 	if len(m.GetPayload()) != 2 {
 		return nil, errors.New("malformed payload. Len  of payload should be 2")
 	}
@@ -95,7 +95,7 @@ func ERC20ProposalHandler(m relayer.XCMessager, handlerAddr string) (relayer.Pro
 	}, nil
 }
 
-func ERC721ProposalHandler(msg relayer.XCMessager, handlerAddr string) (relayer.Proposal, error) {
+func ERC721ProposalHandler(msg *relayer.Message, handlerAddr string) (relayer.Proposal, error) {
 	if len(msg.GetPayload()) != 3 {
 		return nil, errors.New("malformed payload. Len  of payload should be 3")
 	}
@@ -128,7 +128,7 @@ func ERC721ProposalHandler(msg relayer.XCMessager, handlerAddr string) (relayer.
 	}, nil
 }
 
-func GenericProposalHandler(msg relayer.XCMessager, handlerAddr string) (relayer.Proposal, error) {
+func GenericProposalHandler(msg *relayer.Message, handlerAddr string) (relayer.Proposal, error) {
 	if len(msg.GetPayload()) != 1 {
 		return nil, errors.New("malformed payload. Len  of payload should be 1")
 	}
