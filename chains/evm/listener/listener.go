@@ -11,9 +11,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/blockstore"
 	"github.com/ChainSafe/chainbridge-core/relayer"
-	goeth "github.com/ethereum/go-ethereum"
 	ethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
 )
 
@@ -32,7 +30,7 @@ type IHeaderByNumber interface {
 }
 
 type LogFilterer interface {
-	FilterLogs(ctx context.Context, contractAddress string , sig string, startBlock *big.Int, endBlock *big.Int) ([]*DepositLogs, error)
+	FetchDepositLogs(ctx context.Context, contractAddress string , sig string, startBlock *big.Int, endBlock *big.Int) ([]*DepositLogs, error)
 }
 
 type DepositLogs struct {
@@ -72,19 +70,6 @@ func (l *EVMListener) RegisterHandler(address string, handler EventHandler) {
 	l.eventHandlers[ethcommon.HexToAddress(address)] = handler
 }
 
-// buildQuery constructs a query for the bridgeContract by hashing sig to get the event topic
-func buildQuery(contract ethcommon.Address, sig string, startBlock *big.Int, endBlock *big.Int) goeth.FilterQuery {
-	query := goeth.FilterQuery{
-		FromBlock: startBlock,
-		ToBlock:   endBlock,
-		Addresses: []ethcommon.Address{contract},
-		Topics: [][]ethcommon.Hash{
-			{crypto.Keccak256Hash([]byte(sig))},
-		},
-	}
-	return query
-}
-
 func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, bridgeContractAddress string, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message {
 	bridgeAddress := ethcommon.HexToAddress(bridgeContractAddress)
 	// TODO: This channel should be closed somewhere!
@@ -106,7 +91,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, bridgeC
 					time.Sleep(BlockRetryInterval)
 					continue
 				}
-				logs, err := l.chainReader.FilterLogs(context.Background(), bridgeAddress.String(), DepositSignature, startBlock, startBlock)
+				logs, err := l.chainReader.FetchDepositLogs(context.Background(), bridgeAddress.String(), DepositSignature, startBlock, startBlock)
 				if err != nil {
 					// Filtering logs error really can appear only on wrong configuration or temporary network problem
 					// so i do no see any reason to break execution
