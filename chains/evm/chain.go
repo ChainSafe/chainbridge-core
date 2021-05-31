@@ -57,7 +57,6 @@ func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsC
 	}
 }
 
-// Write function pass XCMessager to underlying chain writer
 func (c *EVMChain) Write(msg *relayer.Message) error {
 	return c.writer.VoteProposal(msg, c.bridgeContractAddress)
 }

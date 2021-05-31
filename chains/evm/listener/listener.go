@@ -12,7 +12,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/blockstore"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	goeth "github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
@@ -28,10 +27,23 @@ type EventHandlers map[ethcommon.Address]EventHandler
 var BlockRetryInterval = time.Second * 5
 var BlockDelay = big.NewInt(10) //TODO: move to config
 
+type IHeaderByNumber interface {
+	LatestBlock() (*big.Int, error)
+}
+
+type LogFilterer interface {
+	FilterLogs(ctx context.Context, contractAddress string , sig string, startBlock *big.Int, endBlock *big.Int) ([]*DepositLogs, error)
+}
+
+type DepositLogs struct {
+	DestinationID uint8
+	ResourceID [32]byte
+	DepositNonce uint64
+}
+
 type ChainReader interface {
-	goeth.ChainReader
-	bind.ContractFilterer
-	bind.ContractCaller
+	IHeaderByNumber
+	LogFilterer
 	MatchResourceIDToHandlerAddress(bridgeAddress string, rID [32]byte) (string, error)
 }
 
@@ -83,19 +95,18 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, bridgeC
 			case <-stopChn:
 				return
 			default:
-				head, err := l.chainReader.HeaderByNumber(context.Background(), nil)
+				head, err := l.chainReader.LatestBlock()
 				if err != nil {
 					log.Error().Err(err).Msg("Unable to get latest block")
 					time.Sleep(BlockRetryInterval)
 					continue
 				}
 				// Sleep if the difference is less than BlockDelay; (latest - current) < BlockDelay
-				if big.NewInt(0).Sub(head.Number, startBlock).Cmp(BlockDelay) == -1 {
+				if big.NewInt(0).Sub(head, startBlock).Cmp(BlockDelay) == -1 {
 					time.Sleep(BlockRetryInterval)
 					continue
 				}
-				query := buildQuery(bridgeAddress, DepositSignature, startBlock, startBlock)
-				logs, err := l.chainReader.FilterLogs(context.Background(), query)
+				logs, err := l.chainReader.FilterLogs(context.Background(), bridgeAddress.String(), DepositSignature, startBlock, startBlock)
 				if err != nil {
 					// Filtering logs error really can appear only on wrong configuration or temporary network problem
 					// so i do no see any reason to break execution
@@ -103,11 +114,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, bridgeC
 					continue
 				}
 				for _, eventLog := range logs {
-					destId := uint8(eventLog.Topics[1].Big().Uint64())
-					rId := eventLog.Topics[2]
-					nonce := eventLog.Topics[3].Big().Uint64()
-
-					addr, err := l.chainReader.MatchResourceIDToHandlerAddress(bridgeContractAddress, rId)
+					addr, err := l.chainReader.MatchResourceIDToHandlerAddress(bridgeContractAddress, eventLog.ResourceID)
 					if err != nil {
 						errChn <- err
 						log.Error().Err(err)
@@ -117,11 +124,11 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, bridgeC
 					eventHandler, err := l.MatchAddressWithHandlerFunc(addr)
 					if err != nil {
 						errChn <- err
-						log.Error().Err(err).Msgf("failed to get handler from resource ID %x, reason: %w", rId, err)
+						log.Error().Err(err).Msgf("failed to get handler from resource ID %x, reason: %w", eventLog.ResourceID, err)
 						return
 					}
 
-					m, err := eventHandler(chainID, destId, nonce, addr, l.chainReader)
+					m, err := eventHandler(chainID, eventLog.DestinationID, eventLog.DepositNonce, addr, l.chainReader)
 					if err != nil {
 						errChn <- err
 						log.Error().Err(err)
