@@ -19,8 +19,9 @@ const (
 	DepositSignature string = "Deposit(uint8,bytes32,uint64)"
 )
 
-type EventHandler func(sourceID, destID uint8, nonce uint64, handlerContractAddress string, backend ChainReader) (*relayer.Message, error)
-type EventHandlers map[ethcommon.Address]EventHandler
+type HandlerFabric func() EventHandler
+type EventHandler func(sourceID, destID uint8, nonce uint64, handlerContractAddress string) (*relayer.Message, error)
+type EventHandlers map[ethcommon.Address]HandlerFabric
 
 var BlockRetryInterval = time.Second * 5
 var BlockDelay = big.NewInt(10) //TODO: move to config
@@ -51,21 +52,21 @@ type EVMListener struct {
 }
 
 func NewEVMListener(chainReader ChainReader) *EVMListener {
-	return &EVMListener{chainReader: chainReader, eventHandlers: make(map[ethcommon.Address]EventHandler)}
+	return &EVMListener{chainReader: chainReader, eventHandlers: make(map[ethcommon.Address]HandlerFabric)}
 }
 
 // TODO maybe it could be private
 func (l *EVMListener) MatchAddressWithHandlerFunc(addr string) (EventHandler, error) {
-	h, ok := l.eventHandlers[ethcommon.HexToAddress(addr)]
+	hf, ok := l.eventHandlers[ethcommon.HexToAddress(addr)]
 	if !ok {
 		return nil, errors.New("no corresponding handler for this address exists")
 	}
-	return h, nil
+	return hf(), nil
 }
 
-func (l *EVMListener) RegisterHandler(address string, handler EventHandler) {
+func (l *EVMListener) RegisterHandlerFabric(address string, handler HandlerFabric) {
 	if l.eventHandlers == nil {
-		l.eventHandlers = make(map[ethcommon.Address]EventHandler)
+		l.eventHandlers = make(map[ethcommon.Address]HandlerFabric)
 	}
 	l.eventHandlers[ethcommon.HexToAddress(address)] = handler
 }
@@ -113,7 +114,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, bridgeC
 						return
 					}
 
-					m, err := eventHandler(chainID, eventLog.DestinationID, eventLog.DepositNonce, addr, l.chainReader)
+					m, err := eventHandler(chainID, eventLog.DestinationID, eventLog.DepositNonce, addr)
 					if err != nil {
 						errChn <- err
 						log.Error().Err(err)
