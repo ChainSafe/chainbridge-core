@@ -1,10 +1,10 @@
 package evm
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
@@ -43,8 +43,7 @@ func GetConfig(path string, name string) (*EVMConfig, error) {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Warn().Msgf("Failed to read in the config file: %w", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to read in the config file, error: %w", err)
 	}
 
 	// Set values requiring defaults
@@ -54,8 +53,7 @@ func GetConfig(path string, name string) (*EVMConfig, error) {
 
 	err = viper.Unmarshal(&rawConfig)
 	if err != nil {
-		log.Warn().Msgf("Failed to unmarshal config into struct: %w", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshal config into struct, error: %w", err)
 	}
 
 	config := parseConfig(&rawConfig)
