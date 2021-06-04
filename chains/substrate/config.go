@@ -1,55 +1,39 @@
 package substrate
 
 import (
-	"fmt"
+	"strconv"
 
 	"github.com/ChainSafe/chainbridge-core/chains"
-	"github.com/spf13/viper"
 )
 
-// This second struct exists for parsing fields into types that are not primitive
-// Currently only used to place the generic chain config options under ChainConfig field
 type SubstrateConfig struct {
-	ChainConfig     chains.ChainConfig
-	From            string
-	StartBlock      uint32
+	ChainConfig     chains.GeneralChainConfig
+	StartBlock      uint64
 	UseExtendedCall bool
 }
 
-type RawSubstrateConfig struct {
-	chains.ChainConfig `mapstructure:",squash"`
-	From               string `mapstructure:"from"`
-	StartBlock         uint32 `mapstructure:"startBlock"`
-	UseExtendedCall    bool   `mapstructure:"useExtendedCall"`
-}
-
-func GetConfig(path string, name string) (*SubstrateConfig, error) {
-	var rawConfig RawSubstrateConfig
-
-	viper.AddConfigPath(path)
-	viper.SetConfigName(name)
-	viper.SetConfigType("json")
-
-	err := viper.ReadInConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to read in the config file, error: %w", err)
+func ParseConfig(rawConfig *chains.RawChainConfig) *SubstrateConfig {
+	config := &SubstrateConfig{
+		ChainConfig:     rawConfig.GeneralChainConfig,
+		StartBlock:      0,
+		UseExtendedCall: false,
 	}
 
-	err = viper.Unmarshal(&rawConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config into struct, error: %w", err)
+	if blk, ok := rawConfig.Opts["startBlock"]; ok {
+		res, err := strconv.ParseUint(blk, 10, 32)
+		if err != nil {
+			panic(err)
+		}
+		config.StartBlock = res
 	}
 
-	config := parseConfig(&rawConfig)
-
-	return config, nil
-}
-
-func parseConfig(rawConfig *RawSubstrateConfig) *SubstrateConfig {
-	return &SubstrateConfig{
-		ChainConfig:     rawConfig.ChainConfig,
-		From:            rawConfig.From,
-		StartBlock:      rawConfig.StartBlock,
-		UseExtendedCall: rawConfig.UseExtendedCall,
+	if b, ok := rawConfig.Opts["useExtendedCall"]; ok {
+		res, err := strconv.ParseBool(b)
+		if err != nil {
+			panic(err)
+		}
+		config.UseExtendedCall = res
 	}
+
+	return config
 }
