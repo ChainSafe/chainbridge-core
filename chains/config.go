@@ -1,7 +1,9 @@
 package chains
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/spf13/viper"
@@ -22,6 +24,12 @@ type GeneralChainConfig struct {
 	Id       uint8  `mapstructure:"id"`
 	Endpoint string `mapstructure:"endpoint"`
 	From     string `mapstructure:"from"`
+}
+
+func NewConfig() *Config {
+	return &Config{
+		Chains: []RawChainConfig{},
+	}
 }
 
 func GetConfig(path string, name string) (*Config, error) {
@@ -69,4 +77,32 @@ func (c *Config) validate() error {
 		}
 	}
 	return nil
+}
+
+func (c *Config) ToJSON(file string) *os.File {
+	var (
+		newFile *os.File
+		err     error
+	)
+
+	var raw []byte
+	if raw, err = json.Marshal(*c); err != nil {
+		fmt.Println("error marshalling json", "err", err)
+		os.Exit(1)
+	}
+
+	newFile, err = os.Create(file)
+	if err != nil {
+		fmt.Println("error creating config file", "err", err)
+	}
+	_, err = newFile.Write(raw)
+	if err != nil {
+		fmt.Println("error writing to config file", "err", err)
+
+	}
+
+	if err := newFile.Close(); err != nil {
+		fmt.Println("failed to unmarshal config into struct", "err", err)
+	}
+	return newFile
 }

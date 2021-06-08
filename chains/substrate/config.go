@@ -7,16 +7,16 @@ import (
 )
 
 type SubstrateConfig struct {
-	ChainConfig     chains.GeneralChainConfig
-	StartBlock      uint64
-	UseExtendedCall bool
+	GeneralChainConfig chains.GeneralChainConfig
+	StartBlock         uint64
+	UseExtendedCall    bool
 }
 
 func ParseConfig(rawConfig *chains.RawChainConfig) *SubstrateConfig {
 	config := &SubstrateConfig{
-		ChainConfig:     rawConfig.GeneralChainConfig,
-		StartBlock:      0,
-		UseExtendedCall: false,
+		GeneralChainConfig: rawConfig.GeneralChainConfig,
+		StartBlock:         0,
+		UseExtendedCall:    false,
 	}
 
 	if blk, ok := rawConfig.Opts["startBlock"]; ok {

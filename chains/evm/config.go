@@ -6,7 +6,6 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains"
-	"github.com/rs/zerolog/log"
 )
 
 const DefaultGasLimit = 6721975
@@ -44,7 +43,7 @@ type EVMConfig struct {
 func ParseConfig(rawConfig *chains.RawChainConfig) (*EVMConfig, error) {
 	config := &EVMConfig{
 		GeneralChainConfig: rawConfig.GeneralChainConfig,
-		Bridge:             "0x0",
+		Bridge:             "",
 		Erc20Handler:       "",
 		Erc721Handler:      "",
 		GenericHandler:     "",
@@ -55,12 +54,9 @@ func ParseConfig(rawConfig *chains.RawChainConfig) (*EVMConfig, error) {
 	}
 
 	if contract, ok := rawConfig.Opts[BridgeOpt]; ok && contract != "" {
-		log.Info().Msgf("%v", contract)
-		log.Info().Msgf("%v", ok)
 		config.Bridge = contract
 		delete(rawConfig.Opts, BridgeOpt)
 	} else {
-		log.Info().Msg("got here")
 		return nil, fmt.Errorf("must provide opts.bridge field for ethereum config")
 	}
 
@@ -102,10 +98,10 @@ func ParseConfig(rawConfig *chains.RawChainConfig) (*EVMConfig, error) {
 	}
 
 	if gasMultiplier, ok := rawConfig.Opts[GasMultiplier]; ok {
-		multilier := big.NewFloat(1)
-		_, pass := multilier.SetString(gasMultiplier)
+		multiplier := big.NewFloat(1)
+		_, pass := multiplier.SetString(gasMultiplier)
 		if pass {
-			config.GasMultiplier = multilier
+			config.GasMultiplier = multiplier
 			delete(rawConfig.Opts, GasMultiplier)
 		} else {
 			return nil, errors.New("unable to parse gasMultiplier to float")
@@ -118,6 +114,10 @@ func ParseConfig(rawConfig *chains.RawChainConfig) (*EVMConfig, error) {
 	} else if HTTP, ok := rawConfig.Opts[HttpOpt]; ok && HTTP == "false" {
 		config.Http = false
 		delete(rawConfig.Opts, HttpOpt)
+	}
+
+	if len(rawConfig.Opts) != 0 {
+		return nil, fmt.Errorf("unknown Opts Encountered: %v", rawConfig.Opts)
 	}
 
 	return config, nil
