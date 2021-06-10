@@ -4,67 +4,52 @@
 package writer
 
 import (
-	"errors"
-	"fmt"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm"
 	"github.com/ChainSafe/chainbridge-core/relayer"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
 
 var BlockRetryInterval = time.Second * 5
 
-type VoterExecutor interface {
-	ExecuteProposal(bridgeAddress string, proposal *evm.Proposal) error
-	VoteProposal(bridgeAddress string, proposal *evm.Proposal) error
-	MatchResourceIDToHandlerAddress(bridgeAddress string, rID [32]byte) (string, error)
-	ProposalStatus(bridgeAddress string, proposal *evm.Proposal) (relayer.ProposalStatus, error)
-	VotedBy(bridgeAddress string, p *evm.Proposal) bool
+type Proposer interface {
+	Status() (relayer.ProposalStatus, error)
+	Execute() error
+	Vote() error
+	VotedBy() bool
 }
 
-type ProposalHandler func(msg *relayer.Message, handlerAddr string) (*evm.Proposal, error)
-type ProposalHandlers map[ethcommon.Address]ProposalHandler
+type MessageHandler interface {
+	HandleMessage(m *relayer.Message) (Proposer, error)
+}
 
 type EVMVoter struct {
-	stop                  <-chan struct{}
-	handlers              ProposalHandlers
-	proposalVoterExecutor VoterExecutor
+	stop <-chan struct{}
+	me   MessageHandler
 }
 
-func NewWriter(ve VoterExecutor) *EVMVoter {
+func NewWriter(me MessageHandler) *EVMVoter {
 	return &EVMVoter{
-		proposalVoterExecutor: ve,
-		handlers:              make(map[ethcommon.Address]ProposalHandler),
+		me: me,
 	}
 }
 
 func (w *EVMVoter) VoteProposal(m *relayer.Message, bridgeAddress string) error {
-	// Matching resource ID with handler.
-	addr, err := w.proposalVoterExecutor.MatchResourceIDToHandlerAddress(bridgeAddress, m.ResourceId)
-	// Based on handler that registered on BridgeContract
-	handleProposal, err := w.MatchAddressWithHandlerFunc(addr)
+	prop, err := w.me.HandleMessage(m)
 	if err != nil {
 		return err
 	}
-	log.Info().Str("type", string(m.Type)).Uint8("src", m.Source).Uint8("dst", m.Destination).Uint64("nonce", m.DepositNonce).Str("rId", fmt.Sprintf("%x", m.ResourceId)).Msg("Handling new message")
-	prop, err := handleProposal(m, addr)
-	if err != nil {
-		return err
-	}
-
-	ps, err := w.proposalVoterExecutor.ProposalStatus(bridgeAddress, prop)
+	ps, err := prop.Status()
 	if err != nil {
 		log.Error().Err(err).Msgf("error getting proposal status %+v", prop)
 	}
 
-	votedByCurrentExecutor := w.proposalVoterExecutor.VotedBy(bridgeAddress, prop)
+	votedByCurrentExecutor := prop.VotedBy()
 
 	if votedByCurrentExecutor || ps == relayer.ProposalStatusPassed || ps == relayer.ProposalStatusCanceled || ps == relayer.ProposalStatusExecuted {
 		if ps == relayer.ProposalStatusPassed {
 			// We should not vote for this proposal but it is ready to be executed
-			err = w.proposalVoterExecutor.ExecuteProposal(bridgeAddress, prop)
+			err = prop.Execute()
 			if err != nil {
 				return err
 			}
@@ -73,7 +58,7 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message, bridgeAddress string) error 
 			return nil
 		}
 	}
-	err = w.proposalVoterExecutor.VoteProposal(bridgeAddress, prop)
+	err = prop.Vote()
 	if err != nil {
 		return err
 	}
@@ -82,13 +67,13 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message, bridgeAddress string) error 
 	for {
 		select {
 		case <-time.After(BlockRetryInterval):
-			ps, err := w.proposalVoterExecutor.ProposalStatus(bridgeAddress, prop)
+			ps, err := prop.Status()
 			if err != nil {
 				log.Error().Err(err).Msgf("error getting proposal status %+v", prop)
 				return err
 			}
 			if ps == relayer.ProposalStatusPassed {
-				err = w.proposalVoterExecutor.ExecuteProposal(bridgeAddress, prop)
+				err = prop.Execute()
 				if err != nil {
 					return err
 				}
@@ -100,16 +85,4 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message, bridgeAddress string) error 
 
 		}
 	}
-}
-
-func (w *EVMVoter) MatchAddressWithHandlerFunc(addr string) (ProposalHandler, error) {
-	h, ok := w.handlers[ethcommon.HexToAddress(addr)]
-	if !ok {
-		return nil, errors.New("no corresponding handler for this address exists")
-	}
-	return h, nil
-}
-
-func (w *EVMVoter) RegisterProposalHandler(address string, handler ProposalHandler) {
-	w.handlers[ethcommon.HexToAddress(address)] = handler
 }
