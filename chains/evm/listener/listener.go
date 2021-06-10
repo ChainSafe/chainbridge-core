@@ -31,13 +31,13 @@ type IHeaderByNumber interface {
 }
 
 type LogFilterer interface {
-	FetchDepositLogs(ctx context.Context, contractAddress string , sig string, startBlock *big.Int, endBlock *big.Int) ([]*DepositLogs, error)
+	FetchDepositLogs(ctx context.Context, contractAddress string, sig string, startBlock *big.Int, endBlock *big.Int) ([]*DepositLogs, error)
 }
 
 type DepositLogs struct {
 	DestinationID uint8
-	ResourceID [32]byte
-	DepositNonce uint64
+	ResourceID    [32]byte
+	DepositNonce  uint64
 }
 
 type ChainReader interface {
