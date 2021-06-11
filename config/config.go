@@ -19,13 +19,13 @@ import (
 	"github.com/centrifuge/go-substrate-rpc-client/signature"
 )
 
-type EVMConfigurator interface {
+type EVMClient interface {
 	evmListener.ChainReader
 	evmWriter.VoterExecutor
 	InitializeClient(config *evm.EVMConfig, sender sender.Sender) error
 }
 
-type SubConfigurator interface {
+type SubstrateClient interface {
 	subListener.SubstrateReader
 	subWriter.Voter
 	InitializeClient(url string, key *signature.KeyringPair, stop <-chan struct{}) error
@@ -33,8 +33,8 @@ type SubConfigurator interface {
 
 func InitializeRelayer(
 	cfg *chains.Config,
-	evmClient EVMConfigurator,
-	subClientFactory SubConfigurator,
+	evmClient EVMClient,
+	subClient SubstrateClient,
 	sender sender.Sender,
 	kvdb blockstore.KeyValueReaderWriter,
 	handler evmListener.HandlerFabric,
@@ -50,7 +50,7 @@ func InitializeRelayer(
 			}
 			relayedChains[index] = relayedChain
 		} else if chainConfig.Type == "substrate" {
-			subChain, err := InitializeSubChain(&chainConfig, subClientFactory, kvdb, stopChn)
+			subChain, err := InitializeSubChain(&chainConfig, subClient, kvdb, stopChn)
 			if err != nil {
 				panic(err)
 			}
@@ -67,7 +67,7 @@ func InitializeRelayer(
 
 func InitializeEVMChain(
 	config *chains.RawChainConfig,
-	client EVMConfigurator,
+	client EVMClient,
 	sender sender.Sender,
 	kvdb blockstore.KeyValueReaderWriter,
 	handler evmListener.HandlerFabric) (*evm.EVMChain, error) {
@@ -80,7 +80,6 @@ func InitializeEVMChain(
 		return nil, err
 	}
 
-	// TODO: change these handlers from being hardcoded and dynamic off the config
 	listener := evmListener.NewEVMListener(client)
 	listener.RegisterHandlerFabric(cfg.Erc20Handler, handler)
 
@@ -92,7 +91,7 @@ func InitializeEVMChain(
 
 func InitializeSubChain(
 	config *chains.RawChainConfig,
-	client SubConfigurator,
+	client SubstrateClient,
 	kvdb blockstore.KeyValueReaderWriter,
 	stopChn <-chan struct{}) (*substrate.SubstrateChain, error) {
 	cfg := substrate.ParseConfig(config)

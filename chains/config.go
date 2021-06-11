@@ -39,18 +39,15 @@ func GetConfig(path string, name string) (*Config, error) {
 	viper.SetConfigName(name)
 	viper.SetConfigType("json")
 
-	err := viper.ReadInConfig()
-	if err != nil {
+	if err := viper.ReadInConfig(); err != nil {
 		return nil, fmt.Errorf("failed to read in the config file, error: %w", err)
 	}
 
-	err = viper.Unmarshal(&config)
-	if err != nil {
+	if err := viper.Unmarshal(&config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config into struct, error: %w", err)
 	}
 
-	err = config.validate()
-	if err != nil {
+	if err := config.validate(); err != nil {
 		return nil, err
 	}
 
