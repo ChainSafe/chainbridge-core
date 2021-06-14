@@ -54,6 +54,7 @@ type RawEVMConfig struct {
 	MaxGasPrice               int64   `mapstructure:"maxGasPrice"`
 	GasMultiplier             float64 `mapstructure:"gasMultiplier"`
 	GasLimit                  int64   `mapstructure:"gasLimit"`
+	Http                      bool    `mapstructure:"http"`
 	StartBlock                int64   `mapstructure:"startBlock"`
 	BlockConfirmations        int64   `mapstructure:"blockConfirmations"`
 	EgsApiKey                 string  `mapstructure:"egsApiKey"`
@@ -79,32 +80,55 @@ func GetConfig(path string, name string) (*EVMConfig, error) {
 		return nil, err
 	}
 
-	cfg := parseConfig(&config)
+	cfg, err := parseConfig(&config)
+	if err != nil {
+		return nil, err
+	}
 
 	return cfg, nil
 }
 
-func parseConfig(rawConfig *RawEVMConfig) *EVMConfig {
+func parseConfig(rawConfig *RawEVMConfig) (*EVMConfig, error) {
+
 	config := &EVMConfig{
 		GeneralChainConfig: rawConfig.GeneralChainConfig,
-		Bridge:             rawConfig.Bridge,
 		Erc20Handler:       rawConfig.Erc20Handler,
 		Erc721Handler:      rawConfig.Erc721Handler,
 		GenericHandler:     rawConfig.GenericHandler,
-		GasLimit:           big.NewInt(rawConfig.GasLimit),
-		MaxGasPrice:        big.NewInt(rawConfig.MaxGasPrice),
-		GasMultiplier:      big.NewFloat(rawConfig.GasMultiplier),
+		GasLimit:           big.NewInt(DefaultGasLimit),
+		MaxGasPrice:        big.NewInt(DefaultGasPrice),
+		GasMultiplier:      big.NewFloat(DefaultGasMultiplier),
+		Http:               rawConfig.Http,
 		StartBlock:         big.NewInt(rawConfig.StartBlock),
 		BlockConfirmations: big.NewInt(DefaultBlockConfirmations),
 		EgsApiKey:          "",
 		EgsSpeed:           "",
 	}
-	return config
-	// config.GasLimit = big.NewInt(rawConfig.GasLimit)
-	// config.MaxGasPrice = big.NewInt(rawConfig.MaxGasPrice)
-	// config.GasMultiplier = big.NewFloat(rawConfig.GasMultiplier)
-	// config.StartBlock = big.NewInt(rawConfig.StartBlock)
-	// config.BlockConfirmations = big.NewInt(rawConfig.BlockConfirmations)
+
+	// TODO: add typings for common.Address
+	if rawConfig.Bridge != "" {
+		config.Bridge = rawConfig.Bridge
+	} else {
+		return nil, fmt.Errorf("must provide opts.bridge field for ethereum config")
+	}
+
+	if rawConfig.GasLimit != 0 {
+		config.GasLimit = big.NewInt(rawConfig.GasLimit)
+	}
+
+	if rawConfig.MaxGasPrice != 0 {
+		config.MaxGasPrice = big.NewInt(rawConfig.MaxGasPrice)
+	}
+
+	if rawConfig.GasMultiplier != 0 {
+		config.GasMultiplier = big.NewFloat(rawConfig.GasMultiplier)
+	}
+
+	if rawConfig.BlockConfirmations != 0 {
+		config.BlockConfirmations = big.NewInt(rawConfig.BlockConfirmations)
+	}
+
+	return config, nil
 }
 
 // func ParseConfig(rawConfig *chains.RawChainConfig) (*EVMConfig, error) {
