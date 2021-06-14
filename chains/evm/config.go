@@ -11,21 +11,22 @@ import (
 const DefaultGasLimit = 6721975
 const DefaultGasPrice = 20000000000
 const DefaultGasMultiplier = 1
+const DefaultBlockConfirmations = 10
 
 // Chain specific options
 var (
-	BridgeOpt         = "bridge"
-	Erc20HandlerOpt   = "erc20Handler"
-	Erc721HandlerOpt  = "erc721Handler"
-	GenericHandlerOpt = "genericHandler"
-	MaxGasPriceOpt    = "maxGasPrice"
-	GasLimitOpt       = "gasLimit"
-	GasMultiplier     = "gasMultiplier"
-	HttpOpt           = "http"
-	// StartBlockOpt         = "startBlock"
-	// BlockConfirmationsOpt = "blockConfirmations"
-	// EGSApiKey             = "egsApiKey"
-	// EGSSpeed              = "egsSpeed"
+	BridgeOpt             = "bridge"
+	Erc20HandlerOpt       = "erc20Handler"
+	Erc721HandlerOpt      = "erc721Handler"
+	GenericHandlerOpt     = "genericHandler"
+	MaxGasPriceOpt        = "maxGasPrice"
+	GasLimitOpt           = "gasLimit"
+	GasMultiplier         = "gasMultiplier"
+	HttpOpt               = "http"
+	StartBlockOpt         = "startBlock"
+	BlockConfirmationsOpt = "blockConfirmations"
+	EGSApiKey             = "egsApiKey"
+	EGSSpeed              = "egsSpeed"
 )
 
 type EVMConfig struct {
@@ -38,6 +39,10 @@ type EVMConfig struct {
 	GasMultiplier      *big.Float
 	GasLimit           *big.Int
 	Http               bool
+	startBlock         *big.Int
+	blockConfirmations *big.Int
+	egsApiKey          string // API key for ethgasstation to query gas prices
+	egsSpeed           string // The speed which a transaction should be processed: average, fast, fastest. Default: fast
 }
 
 func ParseConfig(rawConfig *chains.RawChainConfig) (*EVMConfig, error) {
@@ -114,6 +119,46 @@ func ParseConfig(rawConfig *chains.RawChainConfig) (*EVMConfig, error) {
 	} else if HTTP, ok := rawConfig.Opts[HttpOpt]; ok && HTTP == "false" {
 		config.Http = false
 		delete(rawConfig.Opts, HttpOpt)
+	}
+
+	if startBlock, ok := rawConfig.Opts[StartBlockOpt]; ok && startBlock != "" {
+		block := big.NewInt(0)
+		_, pass := block.SetString(startBlock, 10)
+		if pass {
+			config.startBlock = block
+			delete(rawConfig.Opts, StartBlockOpt)
+		} else {
+			return nil, fmt.Errorf("unable to parse %s", StartBlockOpt)
+		}
+	}
+
+	if blockConfirmations, ok := rawConfig.Opts[BlockConfirmationsOpt]; ok && blockConfirmations != "" {
+		val := big.NewInt(DefaultBlockConfirmations)
+		_, pass := val.SetString(blockConfirmations, 10)
+		if pass {
+			config.blockConfirmations = val
+			delete(rawConfig.Opts, BlockConfirmationsOpt)
+		} else {
+			return nil, fmt.Errorf("unable to parse %s", BlockConfirmationsOpt)
+		}
+	} else {
+		config.blockConfirmations = big.NewInt(DefaultBlockConfirmations)
+		delete(rawConfig.Opts, BlockConfirmationsOpt)
+	}
+
+	if gsnApiKey, ok := rawConfig.Opts[EGSApiKey]; ok && gsnApiKey != "" {
+		config.egsApiKey = gsnApiKey
+		delete(rawConfig.Opts, EGSApiKey)
+	}
+
+	// TODO: change speed enums to be in separate package for querying egs
+	if speed, ok := rawConfig.Opts[EGSSpeed]; ok && speed == "average" || speed == "fast" || speed == "fastest" {
+		config.egsSpeed = speed
+		delete(rawConfig.Opts, EGSSpeed)
+	} else {
+		// Default to "fast"
+		config.egsSpeed = "fast"
+		delete(rawConfig.Opts, EGSSpeed)
 	}
 
 	if len(rawConfig.Opts) != 0 {

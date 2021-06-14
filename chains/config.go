@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/spf13/viper"
 )
@@ -39,18 +38,15 @@ func GetConfig(path string, name string) (*Config, error) {
 	viper.SetConfigName(name)
 	viper.SetConfigType("json")
 
-	err := viper.ReadInConfig()
-	if err != nil {
+	if err := viper.ReadInConfig(); err != nil {
 		return nil, fmt.Errorf("failed to read in the config file, error: %w", err)
 	}
 
-	err = viper.Unmarshal(&config)
-	if err != nil {
+	if err := viper.Unmarshal(&config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config into struct, error: %w", err)
 	}
 
-	err = config.validate()
-	if err != nil {
+	if err := config.validate(); err != nil {
 		return nil, err
 	}
 
@@ -59,7 +55,7 @@ func GetConfig(path string, name string) (*Config, error) {
 
 func (c *Config) validate() error {
 	for _, chain := range c.Chains {
-		chainId := strconv.Itoa(int(chain.Id))
+		chainId := string(chain.Id)
 		if chain.Type == "" {
 			return fmt.Errorf("required field chain.Type empty for chain %v", chain.Id)
 		}

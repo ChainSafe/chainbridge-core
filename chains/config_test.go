@@ -55,6 +55,13 @@ func TestValidateConfig(t *testing.T) {
 		From:     "0x0",
 	}
 
+	missingId := GeneralChainConfig{
+		Name:     "",
+		Type:     "ethereum",
+		Endpoint: "endpoint",
+		From:     "0x0",
+	}
+
 	rawConfig := RawChainConfig{}
 	rawConfig.GeneralChainConfig = valid
 
@@ -95,6 +102,16 @@ func TestValidateConfig(t *testing.T) {
 	err = cfg.validate()
 	if err == nil {
 		t.Fatal("must require name field")
+	}
+
+	rawConfig.GeneralChainConfig = missingId
+	cfg = Config{
+		Chains: []RawChainConfig{rawConfig},
+	}
+
+	err = cfg.validate()
+	if err == nil {
+		t.Fatal("must require chain id field")
 	}
 }
 
