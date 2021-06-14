@@ -1,10 +1,14 @@
 // Copyright 2021 ChainSafe Systems
 // SPDX-License-Identifier: LGPL-3.0-only
 
-package writer
+package voter
 
 import (
+	"context"
+	"math/big"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/rs/zerolog/log"
@@ -12,11 +16,20 @@ import (
 
 var BlockRetryInterval = time.Second * 5
 
+type Sender interface {
+	From() common.Address
+	SignAndSendTransaction(data []byte) error
+}
+
+type EVMClient interface {
+	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
+}
+
 type Proposer interface {
-	Status() (relayer.ProposalStatus, error)
-	Execute() error
-	Vote() error
-	VotedBy() bool
+	Status(evmCaller EVMClient, s Sender) (relayer.ProposalStatus, error)
+	Execute(sender Sender) error
+	Vote(sender Sender) error
+	VotedBy(evmCaller EVMClient, by common.Address) bool
 }
 
 type MessageHandler interface {
@@ -25,17 +38,17 @@ type MessageHandler interface {
 
 type EVMVoter struct {
 	stop <-chan struct{}
-	me   MessageHandler
+	mh   MessageHandler
 }
 
-func NewWriter(me MessageHandler) *EVMVoter {
+func NewWriter(mh MessageHandler) *EVMVoter {
 	return &EVMVoter{
-		me: me,
+		mh: mh,
 	}
 }
 
 func (w *EVMVoter) VoteProposal(m *relayer.Message, bridgeAddress string) error {
-	prop, err := w.me.HandleMessage(m)
+	prop, err := w.mh.HandleMessage(m)
 	if err != nil {
 		return err
 	}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math/big"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -14,20 +15,16 @@ import (
 )
 
 type EventHandlers map[common.Address]EventHandlerFunc
-type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, caller EVMClient) (*relayer.Message, error)
+type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, caller voter.EVMClient) (*relayer.Message, error)
 
-type EVMClient interface {
-	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
-}
-
-type ETHDefaultRelayerClient struct {
+type ETHRelayerClient struct {
 	bridgeContractAddress common.Address
 	eventHandlers         EventHandlers
-	evmCaller             EVMClient
+	evmCaller             voter.EVMClient
 }
 
-func (e *ETHDefaultRelayerClient) HandleEvent(sourceID, destID uint8, depositNonce uint64, rID [32]byte) (*relayer.Message, error) {
-	addr, err := e.matchResourceIDToHandlerAddress(e.bridgeContractAddress, rID)
+func (e *ETHRelayerClient) HandleEvent(sourceID, destID uint8, depositNonce uint64, rID [32]byte) (*relayer.Message, error) {
+	addr, err := e.matchResourceIDToHandlerAddress(rID)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +37,7 @@ func (e *ETHDefaultRelayerClient) HandleEvent(sourceID, destID uint8, depositNon
 	return eventHandler(sourceID, destID, depositNonce, addr, e.evmCaller)
 }
 
-func (e *ETHDefaultRelayerClient) matchResourceIDToHandlerAddress(rID [32]byte) (common.Address, error) {
+func (e *ETHRelayerClient) matchResourceIDToHandlerAddress(rID [32]byte) (common.Address, error) {
 	//_resourceIDToHandlerAddress(bytes32) view returns(address)
 	input, err := buildDataUnsafe([]byte("_resourceIDToHandlerAddress(bytes32"), rID[:])
 	if err != nil {
@@ -55,7 +52,7 @@ func (e *ETHDefaultRelayerClient) matchResourceIDToHandlerAddress(rID [32]byte) 
 	return out0, nil
 }
 
-func (e *ETHDefaultRelayerClient) matchAddressWithHandlerFunc(addr common.Address) (EventHandlerFunc, error) {
+func (e *ETHRelayerClient) matchAddressWithHandlerFunc(addr common.Address) (EventHandlerFunc, error) {
 	hf, ok := e.eventHandlers[addr]
 	if !ok {
 		return nil, errors.New("no corresponding handler for this address exists")
@@ -63,7 +60,7 @@ func (e *ETHDefaultRelayerClient) matchAddressWithHandlerFunc(addr common.Addres
 	return hf, nil
 }
 
-func (e *ETHDefaultRelayerClient) RegisterHandlerFabric(address string, handler EventHandlerFunc) {
+func (e *ETHRelayerClient) RegisterHandlerFabric(address string, handler EventHandlerFunc) {
 	if e.eventHandlers == nil {
 		e.eventHandlers = make(map[common.Address]EventHandlerFunc)
 	}
@@ -107,7 +104,7 @@ func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
 	return arg
 }
 
-func Erc20Handler(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, caller EVMClient) (*relayer.Message, error) {
+func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, caller voter.EVMClient) (*relayer.Message, error) {
 	type ERC20HandlerDepositRecord struct {
 		TokenAddress                   common.Address
 		LenDestinationRecipientAddress uint8

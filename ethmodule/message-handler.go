@@ -7,18 +7,18 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/rs/zerolog/log"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/rs/zerolog/log"
 )
 
-type HandlerFunc func(m *relayer.Message) (*Proposal, error)
+type HandlerFunc func(m *relayer.Message, handlerAddr, bridgeAddress common.Address) (*Proposal, error)
 
-func NewMessageHandler(evmCaller EVMClient, bridgeAddress common.Address) *MessageHandler {
+func NewMessageHandler(evmCaller voter.EVMClient, bridgeAddress common.Address) *MessageHandler {
 	return &MessageHandler{
 		bridgeAddress: bridgeAddress,
 		evmCaller:     evmCaller,
@@ -26,7 +26,7 @@ func NewMessageHandler(evmCaller EVMClient, bridgeAddress common.Address) *Messa
 }
 
 type MessageHandler struct {
-	evmCaller     EVMClient
+	evmCaller     voter.EVMClient
 	handlers      map[common.Address]HandlerFunc
 	bridgeAddress common.Address
 }
@@ -40,7 +40,7 @@ func (mh *MessageHandler) HandleMessage(m *relayer.Message) (*Proposal, error) {
 		return nil, err
 	}
 	log.Info().Str("type", string(m.Type)).Uint8("src", m.Source).Uint8("dst", m.Destination).Uint64("nonce", m.DepositNonce).Str("rId", fmt.Sprintf("%x", m.ResourceId)).Msg("Handling new message")
-	prop, err := handleMessage(m)
+	prop, err := handleMessage(m, addr, mh.bridgeAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -74,78 +74,7 @@ func (mh *MessageHandler) RegisterProposalHandler(address common.Address, handle
 	mh.handlers[address] = handler
 }
 
-type Sender interface {
-}
-
-type Proposal struct {
-	Source         uint8  // Source where message was initiated
-	Destination    uint8  // Destination chain of message
-	DepositNonce   uint64 // Nonce for the deposit
-	ResourceId     [32]byte
-	Payload        []interface{} // data associated with event sequence
-	Data           []byte
-	DataHash       common.Hash
-	HandlerAddress common.Address
-}
-
-func (p *Proposal) Status() (relayer.ProposalStatus, error) {
-	//_resourceIDToHandlerAddress(bytes32) view returns(address)
-	input, err := buildDataUnsafe([]byte("_resourceIDToHandlerAddress(bytes32"), rID[:])
-	if err != nil {
-		return common.Address{}, err
-	}
-	msg := ethereum.CallMsg{From: common.Address{}, To: &mh.bridgeAddress, Data: input}
-	out, err := mh.evmCaller.CallContract(context.TODO(), toCallArg(msg), nil)
-	if err != nil {
-		return common.Address{}, err
-	}
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-	return out0, nil
-}
-
-func (p *Proposal) Execute(sender Sender) error {
-	//executeProposal(uint8 chainID, uint64 depositNonce, bytes data, bytes32 resourceID) returns()
-	data, err := buildDataUnsafe(
-		[]byte("executeProposal(uint8,uint64,bytes,bytes32)"),
-		big.NewInt(int64(p.Source)).Bytes(),
-		big.NewInt(int64(p.DepositNonce)).Bytes(),
-		p.Data,
-		p.ResourceId[:])
-	if err != nil {
-		return err
-	}
-
-	err = sender.SignAndSendTransaction(data)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (p *Proposal) Vote() error {
-	//voteProposal(uint8 chainID, uint64 depositNonce, bytes32 resourceID, bytes32 dataHash)
-
-	dataHash := createProposalDataHash(data, handlerContract, m.MPParams, m.SVParams)
-
-	data, err := buildDataUnsafe(
-		[]byte("voteProposal(uint8,uint64,bytes,bytes32,bytes32)"),
-		big.NewInt(int64(proposal.Source)).Bytes(),
-		big.NewInt(int64(proposal.DepositNonce)).Bytes(),
-		proposal.ResourceId[:],
-		proposal.DataHash,
-	)
-
-	err = r.SignAndSendTransaction(data)
-	if err != nil {
-		return err
-	}
-}
-
-func (p *Proposal) VotedBy() bool {
-
-}
-
-func ERC20ProposalHandler(m *relayer.Message, handlerAddr string) (*Proposal, error) {
+func ERC20MessageHandler(m *relayer.Message, handlerAddr, bridgeAddress common.Address) (*Proposal, error) {
 	if len(m.Payload) != 2 {
 		return nil, errors.New("malformed payload. Len  of payload should be 2")
 	}
@@ -166,18 +95,17 @@ func ERC20ProposalHandler(m *relayer.Message, handlerAddr string) (*Proposal, er
 	data = append(data, common.LeftPadBytes(recipientLen, 32)...) // length of recipient (uint256)
 	data = append(data, recipient...)                             // recipient ([]byte)
 
-	caddress := common.HexToAddress(handlerAddr)
 	return &Proposal{
 		Source:         m.Source,
 		DepositNonce:   m.DepositNonce,
 		ResourceId:     m.ResourceId,
 		Data:           data,
-		DataHash:       crypto.Keccak256Hash(append(caddress.Bytes(), data...)),
-		HandlerAddress: common.HexToAddress(handlerAddr),
+		HandlerAddress: handlerAddr,
+		BridgeAddress:  bridgeAddress,
 	}, nil
 }
 
-func ERC721ProposalHandler(msg *relayer.Message, handlerAddr string) (*Proposal, error) {
+func ERC721MessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress common.Address) (*Proposal, error) {
 	if len(msg.Payload) != 3 {
 		return nil, errors.New("malformed payload. Len  of payload should be 3")
 	}
@@ -204,18 +132,17 @@ func ERC721ProposalHandler(msg *relayer.Message, handlerAddr string) (*Proposal,
 	metadataLen := big.NewInt(int64(len(metadata))).Bytes()
 	data.Write(common.LeftPadBytes(metadataLen, 32))
 	data.Write(metadata)
-	caddress := common.HexToAddress(handlerAddr)
 	return &Proposal{
 		Source:         msg.Source,
 		DepositNonce:   msg.DepositNonce,
 		ResourceId:     msg.ResourceId,
 		Data:           data.Bytes(),
-		DataHash:       crypto.Keccak256Hash(append(caddress.Bytes(), data.Bytes()...)),
-		HandlerAddress: common.HexToAddress(handlerAddr),
+		HandlerAddress: handlerAddr,
+		BridgeAddress:  bridgeAddress,
 	}, nil
 }
 
-func GenericProposalHandler(msg *relayer.Message, handlerAddr string) (*Proposal, error) {
+func GenericMessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress common.Address) (*Proposal, error) {
 	if len(msg.Payload) != 1 {
 		return nil, errors.New("malformed payload. Len  of payload should be 1")
 	}
@@ -227,13 +154,12 @@ func GenericProposalHandler(msg *relayer.Message, handlerAddr string) (*Proposal
 	metadataLen := big.NewInt(int64(len(metadata))).Bytes()
 	data.Write(common.LeftPadBytes(metadataLen, 32)) // length of metadata (uint256)
 	data.Write(metadata)
-	caddress := common.HexToAddress(handlerAddr)
 	return &Proposal{
 		Source:         msg.Source,
 		DepositNonce:   msg.DepositNonce,
 		ResourceId:     msg.ResourceId,
 		Data:           data.Bytes(),
-		DataHash:       crypto.Keccak256Hash(append(caddress.Bytes(), data.Bytes()...)),
-		HandlerAddress: common.HexToAddress(handlerAddr),
+		HandlerAddress: handlerAddr,
+		BridgeAddress:  bridgeAddress,
 	}, nil
 }
