@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-
-	"github.com/spf13/viper"
 )
 
 type Config struct {
@@ -31,49 +29,69 @@ func NewConfig() *Config {
 	}
 }
 
-func GetConfig(path string, name string) (*Config, error) {
-	var config Config
-
-	viper.AddConfigPath(path)
-	viper.SetConfigName(name)
-	viper.SetConfigType("json")
-
-	if err := viper.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("failed to read in the config file, error: %w", err)
+func (c *GeneralChainConfig) validate() error {
+	chainId := string(c.Id)
+	if c.Type == "" {
+		return fmt.Errorf("required field chain.Type empty for chain %v", c.Id)
 	}
-
-	if err := viper.Unmarshal(&config); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config into struct, error: %w", err)
+	if c.Endpoint == "" {
+		return fmt.Errorf("required field chain.Endpoint empty for chain %v", c.Id)
 	}
-
-	if err := config.validate(); err != nil {
-		return nil, err
+	if c.Name == "" {
+		return fmt.Errorf("required field chain.Name empty for chain %v", c.Id)
 	}
-
-	return &config, nil
-}
-
-func (c *Config) validate() error {
-	for _, chain := range c.Chains {
-		chainId := string(chain.Id)
-		if chain.Type == "" {
-			return fmt.Errorf("required field chain.Type empty for chain %v", chain.Id)
-		}
-		if chain.Endpoint == "" {
-			return fmt.Errorf("required field chain.Endpoint empty for chain %v", chain.Id)
-		}
-		if chain.Name == "" {
-			return fmt.Errorf("required field chain.Name empty for chain %v", chain.Id)
-		}
-		if chainId == "" {
-			return fmt.Errorf("required field chain.Id empty for chain %v", chain.Id)
-		}
-		if chain.From == "" {
-			return fmt.Errorf("required field chain.From empty for chain %v", chain.Id)
-		}
+	if chainId == "" {
+		return fmt.Errorf("required field chain.Id empty for chain %v", c.Id)
+	}
+	if c.From == "" {
+		return fmt.Errorf("required field chain.From empty for chain %v", c.Id)
 	}
 	return nil
 }
+
+// func GetConfig(path string, name string) (*Config, error) {
+// 	var config Config
+
+// 	viper.AddConfigPath(path)
+// 	viper.SetConfigName(name)
+// 	viper.SetConfigType("json")
+
+// 	if err := viper.ReadInConfig(); err != nil {
+// 		return nil, fmt.Errorf("failed to read in the config file, error: %w", err)
+// 	}
+
+// 	if err := viper.Unmarshal(&config); err != nil {
+// 		return nil, fmt.Errorf("failed to unmarshal config into struct, error: %w", err)
+// 	}
+
+// 	if err := config.validate(); err != nil {
+// 		return nil, err
+// 	}
+
+// 	return &config, nil
+// }
+
+// func (c *Config) validate() error {
+// 	for _, chain := range c.Chains {
+// 		chainId := string(chain.Id)
+// 		if chain.Type == "" {
+// 			return fmt.Errorf("required field chain.Type empty for chain %v", chain.Id)
+// 		}
+// 		if chain.Endpoint == "" {
+// 			return fmt.Errorf("required field chain.Endpoint empty for chain %v", chain.Id)
+// 		}
+// 		if chain.Name == "" {
+// 			return fmt.Errorf("required field chain.Name empty for chain %v", chain.Id)
+// 		}
+// 		if chainId == "" {
+// 			return fmt.Errorf("required field chain.Id empty for chain %v", chain.Id)
+// 		}
+// 		if chain.From == "" {
+// 			return fmt.Errorf("required field chain.From empty for chain %v", chain.Id)
+// 		}
+// 	}
+// 	return nil
+// }
 
 func (c *Config) ToJSON(file string) *os.File {
 	var (
