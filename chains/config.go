@@ -35,6 +35,9 @@ func (c *GeneralChainConfig) Validate() error {
 	// viper defaults to 0 for not specified ints, but we must have a valid chain id
 	// Previous method of checking used a string cast like below
 	//chainId := string(c.Id)
+	if c.Id == nil {
+		return fmt.Errorf("required field chain.Id empty for chain %v", c.Id)
+	}
 	if c.Type == "" {
 		return fmt.Errorf("required field chain.Type empty for chain %v", c.Id)
 	}
@@ -44,9 +47,6 @@ func (c *GeneralChainConfig) Validate() error {
 	if c.Name == "" {
 		return fmt.Errorf("required field chain.Name empty for chain %v", c.Id)
 	}
-	if c.Id == nil {
-		return fmt.Errorf("required field chain.Id empty for chain %v", c.Id)
-	}
 	if c.From == "" {
 		return fmt.Errorf("required field chain.From empty for chain %v", c.Id)
 	}
@@ -54,7 +54,7 @@ func (c *GeneralChainConfig) Validate() error {
 }
 
 func GetConfig(path string, name string) (*Config, error) {
-	var config Config
+	config := &Config{}
 
 	viper.AddConfigPath(path)
 	viper.SetConfigName(name)
@@ -64,7 +64,7 @@ func GetConfig(path string, name string) (*Config, error) {
 		return nil, fmt.Errorf("failed to read in the config file, error: %w", err)
 	}
 
-	if err := viper.Unmarshal(&config); err != nil {
+	if err := viper.Unmarshal(config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config into struct, error: %w", err)
 	}
 
@@ -72,11 +72,14 @@ func GetConfig(path string, name string) (*Config, error) {
 		return nil, err
 	}
 
-	return &config, nil
+	return config, nil
 }
 
 func (c *Config) validate() error {
 	for _, chain := range c.Chains {
+		if chain.Id == nil {
+			return fmt.Errorf("required field chain.Id empty for chain %v", *chain.Id)
+		}
 		if chain.Type == "" {
 			return fmt.Errorf("required field chain.Type empty for chain %v", chain.Id)
 		}
@@ -85,9 +88,6 @@ func (c *Config) validate() error {
 		}
 		if chain.Name == "" {
 			return fmt.Errorf("required field chain.Name empty for chain %v", chain.Id)
-		}
-		if chain.Id == nil {
-			return fmt.Errorf("required field chain.Id empty for chain %v", *chain.Id)
 		}
 		if chain.From == "" {
 			return fmt.Errorf("required field chain.From empty for chain %v", chain.Id)
@@ -115,7 +115,6 @@ func (c *Config) ToJSON(file string) *os.File {
 	_, err = newFile.Write(raw)
 	if err != nil {
 		fmt.Println("error writing to config file", "err", err)
-
 	}
 
 	if err := newFile.Close(); err != nil {

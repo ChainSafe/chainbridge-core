@@ -24,7 +24,7 @@ func TestParseChainConfig(t *testing.T) {
 		Http:               true,
 	}
 
-	out, err := parseConfig(&input)
+	out, err := ParseConfig(&input)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,7 +61,7 @@ func TestChainConfigOneContract(t *testing.T) {
 		Http:               true,
 	}
 
-	out, err := parseConfig(&input)
+	out, err := ParseConfig(&input)
 
 	if err != nil {
 		t.Fatal(err)
@@ -86,7 +86,7 @@ func TestRequiredOpts(t *testing.T) {
 	// No opts provided
 	input := RawEVMConfig{}
 
-	_, err := parseConfig(&input)
+	_, err := ParseConfig(&input)
 
 	if err == nil {
 		t.Error("config missing chainId field but no error reported")
@@ -95,7 +95,7 @@ func TestRequiredOpts(t *testing.T) {
 	// Empty bridgeContract provided
 	input = RawEVMConfig{Bridge: ""}
 
-	_, err2 := parseConfig(&input)
+	_, err2 := ParseConfig(&input)
 
 	if err2 == nil {
 		t.Error("config missing bridge address field but no error reported")

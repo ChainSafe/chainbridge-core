@@ -3,7 +3,6 @@ module github.com/ChainSafe/chainbridge-core
 go 1.16
 
 require (
-	github.com/ChainSafe/chainbridge-utils v1.0.6
 	github.com/centrifuge/go-substrate-rpc-client v2.0.0+incompatible
 	github.com/ethereum/go-ethereum v1.10.1
 	github.com/kr/pretty v0.2.0 // indirect

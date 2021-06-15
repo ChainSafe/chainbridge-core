@@ -62,7 +62,7 @@ type RawEVMConfig struct {
 }
 
 func GetConfig(path string, name string) (*EVMConfig, error) {
-	var config RawEVMConfig
+	config := &RawEVMConfig{}
 
 	viper.AddConfigPath(path)
 	viper.SetConfigName(name)
@@ -72,7 +72,7 @@ func GetConfig(path string, name string) (*EVMConfig, error) {
 		return nil, fmt.Errorf("failed to read in the config file, error: %w", err)
 	}
 
-	if err := viper.Unmarshal(&config); err != nil {
+	if err := viper.Unmarshal(config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config into struct, error: %w", err)
 	}
 
@@ -80,7 +80,7 @@ func GetConfig(path string, name string) (*EVMConfig, error) {
 		return nil, err
 	}
 
-	cfg, err := parseConfig(&config)
+	cfg, err := ParseConfig(config)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func GetConfig(path string, name string) (*EVMConfig, error) {
 	return cfg, nil
 }
 
-func parseConfig(rawConfig *RawEVMConfig) (*EVMConfig, error) {
+func ParseConfig(rawConfig *RawEVMConfig) (*EVMConfig, error) {
 
 	config := &EVMConfig{
 		GeneralChainConfig: rawConfig.GeneralChainConfig,
@@ -105,7 +105,6 @@ func parseConfig(rawConfig *RawEVMConfig) (*EVMConfig, error) {
 		EgsSpeed:           "",
 	}
 
-	// TODO: add typings for common.Address
 	if rawConfig.Bridge != "" {
 		config.Bridge = rawConfig.Bridge
 	} else {

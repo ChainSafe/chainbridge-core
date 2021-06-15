@@ -21,7 +21,7 @@ type RawSubstrateConfig struct {
 }
 
 func GetConfig(path string, name string) (*SubstrateConfig, error) {
-	var config RawSubstrateConfig
+	config := &RawSubstrateConfig{}
 
 	viper.AddConfigPath(path)
 	viper.SetConfigName(name)
@@ -31,7 +31,7 @@ func GetConfig(path string, name string) (*SubstrateConfig, error) {
 		return nil, fmt.Errorf("failed to read in the config file, error: %w", err)
 	}
 
-	if err := viper.Unmarshal(&config); err != nil {
+	if err := viper.Unmarshal(config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config into struct, error: %w", err)
 	}
 
@@ -39,7 +39,7 @@ func GetConfig(path string, name string) (*SubstrateConfig, error) {
 		return nil, err
 	}
 
-	parsedCfg := parseConfig(&config)
+	parsedCfg := parseConfig(config)
 
 	return parsedCfg, nil
 }
