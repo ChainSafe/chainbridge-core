@@ -4,6 +4,9 @@ import (
 	"context"
 	"math/big"
 
+	geth "github.com/ethereum/go-ethereum/mobile"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -22,7 +25,7 @@ type Proposal struct {
 	BridgeAddress  common.Address
 }
 
-func (p *Proposal) Status(evmCaller EVMClient, s Sender) (relayer.ProposalStatus, error) {
+func (p *Proposal) Status(evmCaller voter.EVMClient, s voter.Sender) (relayer.ProposalStatus, error) {
 	//function getProposal(uint8 originChainID, uint64 depositNonce, bytes32 dataHash) view returns((bytes32,bytes32,address[],address[],uint8,uint256))
 	input, err := buildDataUnsafe([]byte("getProposal(uint8,uint64,bytes32"), big.NewInt(0).SetUint64(uint64(p.Source)).Bytes(), big.NewInt(0).SetUint64(p.DepositNonce).Bytes(), p.GetDataHash().Bytes())
 	if err != nil {
@@ -46,7 +49,7 @@ func (p *Proposal) Status(evmCaller EVMClient, s Sender) (relayer.ProposalStatus
 	return relayer.ProposalStatus(out0.Status), nil
 }
 
-func (p *Proposal) VotedBy(evmCaller EVMClient, by common.Address) (bool, error) {
+func (p *Proposal) VotedBy(evmCaller voter.EVMClient, by common.Address) (bool, error) {
 	//_hasVotedOnProposal(uint72 , bytes32 , address ) constant returns(bool)
 	input, err := buildDataUnsafe([]byte("_hasVotedOnProposal(uint72,bytes32,address"), idAndNonce(p.Source, p.DepositNonce).Bytes(), p.GetDataHash().Bytes(), by.Bytes())
 	if err != nil {
@@ -62,7 +65,7 @@ func (p *Proposal) VotedBy(evmCaller EVMClient, by common.Address) (bool, error)
 	return out0, nil
 }
 
-func (p *Proposal) Execute(sender Sender) error {
+func (p *Proposal) Execute(sender voter.Sender) error {
 	//executeProposal(uint8 chainID, uint64 depositNonce, bytes data, bytes32 resourceID) returns()
 	data, err := buildDataUnsafe(
 		[]byte("executeProposal(uint8,uint64,bytes,bytes32)"),
@@ -81,7 +84,7 @@ func (p *Proposal) Execute(sender Sender) error {
 	return nil
 }
 
-func (p *Proposal) Vote(sender Sender) error {
+func (p *Proposal) Vote(sender voter.Sender) error {
 	//voteProposal(uint8 chainID, uint64 depositNonce, bytes32 resourceID, bytes32 dataHash)
 	data, err := buildDataUnsafe(
 		[]byte("voteProposal(uint8,uint64,bytes,bytes32,bytes32)"),
@@ -90,6 +93,9 @@ func (p *Proposal) Vote(sender Sender) error {
 		p.ResourceId[:],
 		p.GetDataHash().Bytes(),
 	)
+
+	tx, err := geth.NewTransaction()
+
 	err = sender.SignAndSendTransaction(data)
 	if err != nil {
 		return err

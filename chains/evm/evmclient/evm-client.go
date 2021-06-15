@@ -1,25 +1,24 @@
 package evmclient
 
 import (
-	"encoding"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"math/big"
 	"context"
+	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/rs/zerolog/log"
 	"github.com/ethereum/go-ethereum/rpc"
-
+	"github.com/rs/zerolog/log"
 )
 
 type EVMClient struct {
 	*ethclient.Client
 	rpClient *rpc.Client
 }
+
 func NewEVMClient(endpoint string) (*EVMClient, error) {
 	log.Info().Str("url", endpoint).Msg("Connecting to evm chain...")
 	rpcClient, err := rpc.DialContext(context.TODO(), endpoint)
@@ -27,7 +26,7 @@ func NewEVMClient(endpoint string) (*EVMClient, error) {
 		return nil, err
 	}
 	return &EVMClient{
-		Client:  ethclient.NewClient(rpcClient),
+		Client:   ethclient.NewClient(rpcClient),
 		rpClient: rpcClient,
 	}, nil
 }
@@ -63,12 +62,9 @@ func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress string
 	return depositLogs, nil
 }
 
-func (c *EVMClient) SendGeneralizedTransaction(ctx context.Context, tx encoding.BinaryMarshaler) error {
-	data, err := tx.MarshalBinary()
-	if err != nil {
-		return err
-	}
-	return c.rpClient.CallContext(ctx, nil, "eth_sendRawTransaction", hexutil.Encode(data))
+// SendRawTransaction accepts rlp-encode of signed transaction and sends it via RPC call
+func (c *EVMClient) SendRawTransaction(ctx context.Context, tx []byte) error {
+	return c.rpClient.CallContext(ctx, nil, "eth_sendRawTransaction", hexutil.Encode(tx))
 }
 
 func (c *EVMClient) CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error) {
@@ -80,7 +76,6 @@ func (c *EVMClient) CallContract(ctx context.Context, callArgs map[string]interf
 	return hex, nil
 }
 
-
 func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string]interface{}) ([]byte, error) {
 	var hex hexutil.Bytes
 	err := c.rpClient.CallContext(ctx, &hex, "eth_call", callArgs, "pending")
@@ -89,7 +84,6 @@ func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string
 	}
 	return hex, nil
 }
-
 
 func toBlockNumArg(number *big.Int) string {
 	if number == nil {

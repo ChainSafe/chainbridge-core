@@ -8,6 +8,8 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmsender"
+
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/ChainSafe/chainbridge-core/relayer"
@@ -18,7 +20,7 @@ var BlockRetryInterval = time.Second * 5
 
 type Sender interface {
 	From() common.Address
-	SignAndSendTransaction(data []byte) error
+	SignAndSendTransaction(tx evmsender.CommonTransaction) (common.Hash, error)
 }
 
 type EVMClient interface {
