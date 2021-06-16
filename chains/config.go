@@ -12,6 +12,20 @@ type GeneralChainConfig struct {
 	From     string `mapstructure:"from"`
 }
 
+type SharedEVMConfig struct {
+	GeneralChainConfig `mapstructure:",squash"`
+	Bridge             string  `mapstructure:"bridge"`
+	Erc20Handler       string  `mapstructure:"erc20Handler"`
+	Erc721Handler      string  `mapstructure:"erc721Handler"`
+	GenericHandler     string  `mapstructure:"genericHandler"`
+	MaxGasPrice        int64   `mapstructure:"maxGasPrice"`
+	GasMultiplier      float64 `mapstructure:"gasMultiplier"`
+	GasLimit           int64   `mapstructure:"gasLimit"`
+	Http               bool    `mapstructure:"http"`
+	StartBlock         int64   `mapstructure:"startBlock"`
+	BlockConfirmations int64   `mapstructure:"blockConfirmations"`
+}
+
 func (c *GeneralChainConfig) Validate() error {
 	// viper defaults to 0 for not specified ints, but we must have a valid chain id
 	// Previous method of checking used a string cast like below
@@ -30,6 +44,16 @@ func (c *GeneralChainConfig) Validate() error {
 	}
 	if c.From == "" {
 		return fmt.Errorf("required field chain.From empty for chain %v", *c.Id)
+	}
+	return nil
+}
+
+func (c *SharedEVMConfig) Validate() error {
+	if err := c.GeneralChainConfig.Validate(); err != nil {
+		return err
+	}
+	if c.Bridge == "" {
+		return fmt.Errorf("required field chain.Bridge empty for chain %v", *c.Id)
 	}
 	return nil
 }
