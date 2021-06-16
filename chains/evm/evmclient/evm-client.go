@@ -3,8 +3,10 @@ package evmclient
 import (
 	"context"
 	"math/big"
+	"sync"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
+	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -15,9 +17,18 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type config struct {
+	maxGasPrice    *big.Int
+	gasMultiplier  *big.Float
+	relayerAddress common.Address
+	kp             *secp256k1.Keypair
+}
+
 type EVMClient struct {
 	*ethclient.Client
-	rpClient *rpc.Client
+	rpClient  *rpc.Client
+	nonceLock sync.Mutex
+	config    *config
 }
 
 type CommonTransaction interface {
@@ -30,16 +41,27 @@ type CommonTransaction interface {
 	RawWithSignature(types.Signer, []byte) ([]byte, error)
 }
 
-func NewEVMClient(endpoint string) (*EVMClient, error) {
+func NewEVMClient(endpoint string, kp *secp256k1.Keypair) (*EVMClient, error) {
 	log.Info().Str("url", endpoint).Msg("Connecting to evm chain...")
 	rpcClient, err := rpc.DialContext(context.TODO(), endpoint)
 	if err != nil {
 		return nil, err
 	}
+	c := &config{
+		kp: kp,
+	}
 	return &EVMClient{
 		Client:   ethclient.NewClient(rpcClient),
 		rpClient: rpcClient,
+		config:   c,
 	}, nil
+}
+
+// TO implement interface Configurable
+func (c *EVMClient) Configurate() {
+	c.config.maxGasPrice = big.NewInt(20000000000)
+	c.config.gasMultiplier = big.NewFloat(1)
+
 }
 
 // LatestBlock returns the latest block from the current chain
@@ -98,7 +120,7 @@ func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string
 
 func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransaction) (common.Hash, error) {
 	h := tx.Hash()
-	sig, err := crypto.Sign(h[:], prvKey)
+	sig, err := crypto.Sign(h[:], c.config.kp.PrivateKey())
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -113,6 +135,60 @@ func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransac
 		return common.Hash{}, err
 	}
 	return tx.Hash(), nil
+}
+
+func (c *EVMClient) RelayerAddress() common.Address {
+	return c.config.relayerAddress
+}
+
+func (c *EVMClient) LockNonce() {
+	c.nonceLock.Lock()
+}
+
+func (c *EVMClient) UnlockNonce() {
+	c.nonceLock.Unlock()
+}
+
+func (c *EVMClient) Nonce() uint64 {
+	return 0
+}
+
+func (c *EVMClient) GasPrice() (*big.Int, error) {
+	gasPrice, err := c.SafeEstimateGas(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+	return gasPrice, nil
+}
+
+func (c *EVMClient) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
+	suggestedGasPrice, err := c.SuggestGasPrice(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+
+	gasPrice := multiplyGasPrice(suggestedGasPrice, c.config.gasMultiplier)
+
+	// Check we aren't exceeding our limit
+
+	if gasPrice.Cmp(c.config.maxGasPrice) == 1 {
+		return c.config.maxGasPrice, nil
+	} else {
+		return gasPrice, nil
+	}
+}
+
+func multiplyGasPrice(gasEstimate *big.Int, gasMultiplier *big.Float) *big.Int {
+
+	gasEstimateFloat := new(big.Float).SetInt(gasEstimate)
+
+	result := gasEstimateFloat.Mul(gasEstimateFloat, gasMultiplier)
+
+	gasPrice := new(big.Int)
+
+	result.Int(gasPrice)
+
+	return gasPrice
 }
 
 func toBlockNumArg(number *big.Int) string {

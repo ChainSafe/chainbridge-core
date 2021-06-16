@@ -8,6 +8,8 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -17,13 +19,20 @@ var BlockRetryInterval = time.Second * 5
 
 type ChainClient interface {
 	LatestBlock() (*big.Int, error)
+	SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error)
+	RelayerAddress() common.Address
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
+	Nonce() uint64
+	LockNonce()
+	UnlockNonce()
+	GasPrice() (*big.Int, error)
 }
+
 type Proposer interface {
 	Status(client ChainClient) (relayer.ProposalStatus, error)
+	VotedBy(client ChainClient, by common.Address) (bool, error)
 	Execute(client ChainClient) error
 	Vote(client ChainClient) error
-	VotedBy(client ChainClient, by common.Address) bool
 }
 
 type MessageHandler interface {
@@ -31,32 +40,37 @@ type MessageHandler interface {
 }
 
 type EVMVoter struct {
-	stop <-chan struct{}
-	mh   MessageHandler
+	stop   <-chan struct{}
+	mh     MessageHandler
+	client ChainClient
 }
 
-func NewWriter(mh MessageHandler) *EVMVoter {
+func NewWriter(mh MessageHandler, client ChainClient) *EVMVoter {
 	return &EVMVoter{
-		mh: mh,
+		mh:     mh,
+		client: client,
 	}
 }
 
-func (w *EVMVoter) VoteProposal(m *relayer.Message, bridgeAddress string) error {
+func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
 	prop, err := w.mh.HandleMessage(m)
 	if err != nil {
 		return err
 	}
-	ps, err := prop.Status()
+	ps, err := prop.Status(w.client)
 	if err != nil {
 		log.Error().Err(err).Msgf("error getting proposal status %+v", prop)
 	}
 
-	votedByCurrentExecutor := prop.VotedBy()
+	votedByCurrentExecutor, err := prop.VotedBy(w.client, w.client.RelayerAddress())
+	if err != nil {
+		return err
+	}
 
 	if votedByCurrentExecutor || ps == relayer.ProposalStatusPassed || ps == relayer.ProposalStatusCanceled || ps == relayer.ProposalStatusExecuted {
 		if ps == relayer.ProposalStatusPassed {
 			// We should not vote for this proposal but it is ready to be executed
-			err = prop.Execute()
+			err = prop.Execute(w.client)
 			if err != nil {
 				return err
 			}
@@ -65,7 +79,7 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message, bridgeAddress string) error 
 			return nil
 		}
 	}
-	err = prop.Vote()
+	err = prop.Vote(w.client)
 	if err != nil {
 		return err
 	}
@@ -74,13 +88,13 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message, bridgeAddress string) error 
 	for {
 		select {
 		case <-time.After(BlockRetryInterval):
-			ps, err := prop.Status()
+			ps, err := prop.Status(w.client)
 			if err != nil {
 				log.Error().Err(err).Msgf("error getting proposal status %+v", prop)
 				return err
 			}
 			if ps == relayer.ProposalStatusPassed {
-				err = prop.Execute()
+				err = prop.Execute(w.client)
 				if err != nil {
 					return err
 				}

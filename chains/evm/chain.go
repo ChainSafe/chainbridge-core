@@ -17,7 +17,7 @@ type EventListener interface {
 }
 
 type ProposalVoter interface {
-	VoteProposal(message *relayer.Message, bridgeAddress string) error
+	VoteProposal(message *relayer.Message) error
 }
 
 // EVMChain is struct that aggregates all data required for
@@ -56,17 +56,9 @@ func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsC
 }
 
 func (c *EVMChain) Write(msg *relayer.Message) error {
-	return c.writer.VoteProposal(msg, c.bridgeContractAddress)
+	return c.writer.VoteProposal(msg)
 }
 
 func (c *EVMChain) ChainID() uint8 {
 	return c.chainID
 }
-
-//func GetIDAndNonce(p *Proposal) *big.Int {
-//	data := bytes.Buffer{}
-//	bn := big.NewInt(0).SetUint64(p.DepositNonce).Bytes()
-//	data.Write(bn)
-//	data.Write([]byte{p.Source})
-//	return big.NewInt(0).SetBytes(data.Bytes())
-//}

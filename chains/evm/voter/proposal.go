@@ -4,29 +4,14 @@ import (
 	"context"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-
-	"github.com/rs/zerolog/log"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/rs/zerolog/log"
 )
-
-type Gaser interface {
-	GasPrice() *big.Int
-	GasLimit() uint64
-}
-
-type TxSender interface {
-	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
-	SignAndSendTransaction(tx evmclient.CommonTransaction) (common.Hash, error)
-}
 
 type Proposal struct {
 	Source         uint8  // Source where message was initiated
@@ -38,10 +23,6 @@ type Proposal struct {
 	HandlerAddress common.Address
 	BridgeAddress  common.Address
 }
-
-//type Sender interface {
-//	SignAndSendTransaction(tx evmclient.CommonTransaction) (common.Hash, error)
-//}
 
 func (p *Proposal) Status(evmCaller ChainClient) (relayer.ProposalStatus, error) {
 	//function getProposal(uint8 originChainID, uint64 depositNonce, bytes32 dataHash) view returns((bytes32,bytes32,address[],address[],uint8,uint256))
@@ -83,7 +64,8 @@ func (p *Proposal) VotedBy(evmCaller ChainClient, by common.Address) (bool, erro
 	return out0, nil
 }
 
-func (p *Proposal) Execute(evmCaller ChainClient) error {
+func (p *Proposal) Execute(client ChainClient) error {
+	gasLimit := uint64(6721975)
 	//executeProposal(uint8 chainID, uint64 depositNonce, bytes data, bytes32 resourceID) returns()
 	data, err := buildDataUnsafe(
 		[]byte("executeProposal(uint8,uint64,bytes,bytes32)"),
@@ -91,13 +73,16 @@ func (p *Proposal) Execute(evmCaller ChainClient) error {
 		big.NewInt(int64(p.DepositNonce)).Bytes(),
 		p.Data,
 		p.ResourceId[:])
+
 	if err != nil {
 		return err
 	}
-
-	tx := evmtransaction.NewTransaction(nonce, p.BridgeAddress, big.NewInt(0), gL, gP, data)
-
-	h, err := evmCaller.SignAndSendTransaction(tx)
+	gp, err := client.GasPrice()
+	if err != nil {
+		return err
+	}
+	tx := evmtransaction.NewTransaction(client.Nonce(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, data)
+	h, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return err
 	}
@@ -105,7 +90,8 @@ func (p *Proposal) Execute(evmCaller ChainClient) error {
 	return nil
 }
 
-func (p *Proposal) Vote(evmCaller voter.TxSender) error {
+func (p *Proposal) Vote(client ChainClient) error {
+	gasLimit := uint64(6721975)
 	//voteProposal(uint8 chainID, uint64 depositNonce, bytes32 resourceID, bytes32 dataHash)
 	data, err := buildDataUnsafe(
 		[]byte("voteProposal(uint8,uint64,bytes,bytes32,bytes32)"),
@@ -114,10 +100,16 @@ func (p *Proposal) Vote(evmCaller voter.TxSender) error {
 		p.ResourceId[:],
 		p.GetDataHash().Bytes(),
 	)
+	if err != nil {
+		return err
+	}
+	gp, err := client.GasPrice()
+	if err != nil {
+		return err
+	}
+	tx := evmtransaction.NewTransaction(client.Nonce(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, data)
 
-	tx := evmtransaction.NewTransaction(nonce, p.BridgeAddress, big.NewInt(0), gL, gP, data)
-
-	h, err := evmCaller.SignAndSendTransaction(tx)
+	h, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return err
 	}
