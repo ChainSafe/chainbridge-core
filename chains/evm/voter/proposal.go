@@ -1,10 +1,14 @@
-package ethmodule
+package voter
 
 import (
 	"context"
 	"math/big"
 
-	geth "github.com/ethereum/go-ethereum/mobile"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+
+	"github.com/rs/zerolog/log"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 	"github.com/ChainSafe/chainbridge-core/relayer"
@@ -13,6 +17,16 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
+
+type Gaser interface {
+	GasPrice() *big.Int
+	GasLimit() uint64
+}
+
+type TxSender interface {
+	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
+	SignAndSendTransaction(tx evmclient.CommonTransaction) (common.Hash, error)
+}
 
 type Proposal struct {
 	Source         uint8  // Source where message was initiated
@@ -25,7 +39,11 @@ type Proposal struct {
 	BridgeAddress  common.Address
 }
 
-func (p *Proposal) Status(evmCaller voter.EVMClient, s voter.Sender) (relayer.ProposalStatus, error) {
+//type Sender interface {
+//	SignAndSendTransaction(tx evmclient.CommonTransaction) (common.Hash, error)
+//}
+
+func (p *Proposal) Status(evmCaller ChainClient) (relayer.ProposalStatus, error) {
 	//function getProposal(uint8 originChainID, uint64 depositNonce, bytes32 dataHash) view returns((bytes32,bytes32,address[],address[],uint8,uint256))
 	input, err := buildDataUnsafe([]byte("getProposal(uint8,uint64,bytes32"), big.NewInt(0).SetUint64(uint64(p.Source)).Bytes(), big.NewInt(0).SetUint64(p.DepositNonce).Bytes(), p.GetDataHash().Bytes())
 	if err != nil {
@@ -49,7 +67,7 @@ func (p *Proposal) Status(evmCaller voter.EVMClient, s voter.Sender) (relayer.Pr
 	return relayer.ProposalStatus(out0.Status), nil
 }
 
-func (p *Proposal) VotedBy(evmCaller voter.EVMClient, by common.Address) (bool, error) {
+func (p *Proposal) VotedBy(evmCaller ChainClient, by common.Address) (bool, error) {
 	//_hasVotedOnProposal(uint72 , bytes32 , address ) constant returns(bool)
 	input, err := buildDataUnsafe([]byte("_hasVotedOnProposal(uint72,bytes32,address"), idAndNonce(p.Source, p.DepositNonce).Bytes(), p.GetDataHash().Bytes(), by.Bytes())
 	if err != nil {
@@ -65,7 +83,7 @@ func (p *Proposal) VotedBy(evmCaller voter.EVMClient, by common.Address) (bool, 
 	return out0, nil
 }
 
-func (p *Proposal) Execute(sender voter.Sender) error {
+func (p *Proposal) Execute(evmCaller ChainClient) error {
 	//executeProposal(uint8 chainID, uint64 depositNonce, bytes data, bytes32 resourceID) returns()
 	data, err := buildDataUnsafe(
 		[]byte("executeProposal(uint8,uint64,bytes,bytes32)"),
@@ -77,14 +95,17 @@ func (p *Proposal) Execute(sender voter.Sender) error {
 		return err
 	}
 
-	err = sender.SignAndSendTransaction(data)
+	tx := evmtransaction.NewTransaction(nonce, p.BridgeAddress, big.NewInt(0), gL, gP, data)
+
+	h, err := evmCaller.SignAndSendTransaction(tx)
 	if err != nil {
 		return err
 	}
+	log.Debug().Str("hash", h.Hex()).Msgf("Executed")
 	return nil
 }
 
-func (p *Proposal) Vote(sender voter.Sender) error {
+func (p *Proposal) Vote(evmCaller voter.TxSender) error {
 	//voteProposal(uint8 chainID, uint64 depositNonce, bytes32 resourceID, bytes32 dataHash)
 	data, err := buildDataUnsafe(
 		[]byte("voteProposal(uint8,uint64,bytes,bytes32,bytes32)"),
@@ -94,12 +115,13 @@ func (p *Proposal) Vote(sender voter.Sender) error {
 		p.GetDataHash().Bytes(),
 	)
 
-	tx, err := geth.NewTransaction()
+	tx := evmtransaction.NewTransaction(nonce, p.BridgeAddress, big.NewInt(0), gL, gP, data)
 
-	err = sender.SignAndSendTransaction(data)
+	h, err := evmCaller.SignAndSendTransaction(tx)
 	if err != nil {
 		return err
 	}
+	log.Debug().Str("hash", h.Hex()).Msgf("Voted")
 	return nil
 }
 

@@ -13,32 +13,31 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-
 var BlockRetryInterval = time.Second * 5
 var BlockDelay = big.NewInt(10) //TODO: move to config
 
 type DepositLogs struct {
 	DestinationID uint8
-	ResourceID [32]byte
-	DepositNonce uint64
+	ResourceID    [32]byte
+	DepositNonce  uint64
 }
 
-type ChainReader interface {
+type ChainClient interface {
 	LatestBlock() (*big.Int, error)
 	FetchDepositLogs(ctx context.Context, startBlock *big.Int, endBlock *big.Int) ([]*DepositLogs, error)
+	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
 }
 
 type EventHandler interface {
-  	HandleEvent(sourceID, destID uint8, nonce uint64, rID [32]byte) (*relayer.Message, error)
+	HandleEvent(sourceID, destID uint8, nonce uint64, rID [32]byte) (*relayer.Message, error)
 }
 
-
 type EVMListener struct {
-	chainReader   ChainReader
+	chainReader  ChainClient
 	eventHandler EventHandler
 }
 
-func NewEVMListener(chainReader ChainReader, handler EventHandler) *EVMListener {
+func NewEVMListener(chainReader ChainClient, handler EventHandler) *EVMListener {
 	return &EVMListener{chainReader: chainReader, eventHandler: handler}
 }
 

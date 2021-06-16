@@ -8,30 +8,22 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmsender"
-
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
 
 var BlockRetryInterval = time.Second * 5
 
-type Sender interface {
-	From() common.Address
-	SignAndSendTransaction(tx evmsender.CommonTransaction) (common.Hash, error)
-}
-
-type EVMClient interface {
+type ChainClient interface {
+	LatestBlock() (*big.Int, error)
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
 }
-
 type Proposer interface {
-	Status(evmCaller EVMClient, s Sender) (relayer.ProposalStatus, error)
-	Execute(sender Sender) error
-	Vote(sender Sender) error
-	VotedBy(evmCaller EVMClient, by common.Address) bool
+	Status(client ChainClient) (relayer.ProposalStatus, error)
+	Execute(client ChainClient) error
+	Vote(client ChainClient) error
+	VotedBy(client ChainClient, by common.Address) bool
 }
 
 type MessageHandler interface {

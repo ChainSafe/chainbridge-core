@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -17,6 +18,16 @@ import (
 type EVMClient struct {
 	*ethclient.Client
 	rpClient *rpc.Client
+}
+
+type CommonTransaction interface {
+	// Hash returns the transaction hash.
+	Hash() common.Hash
+	// RawWithSignature mostly copies WithSignature interface of type.Transaction from go-ethereum,
+	// but return raw rlp encoded signed transaction to be compatible and interchangeable between different go-ethereum implementations
+	// WithSignature returns a new transaction with the given signature.
+	// This signature needs to be in the [R || S || V] format where V is 0 or 1.
+	RawWithSignature(types.Signer, []byte) ([]byte, error)
 }
 
 func NewEVMClient(endpoint string) (*EVMClient, error) {
@@ -83,6 +94,25 @@ func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string
 		return nil, err
 	}
 	return hex, nil
+}
+
+func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransaction) (common.Hash, error) {
+	h := tx.Hash()
+	sig, err := crypto.Sign(h[:], prvKey)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	rawTX, err := tx.RawWithSignature(types.HomesteadSigner{}, sig)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	err = c.SendRawTransaction(ctx, rawTX)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	return tx.Hash(), nil
 }
 
 func toBlockNumArg(number *big.Int) string {

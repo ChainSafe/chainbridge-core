@@ -1,11 +1,10 @@
-package ethmodule
+package listener
 
 import (
 	"context"
 	"errors"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -15,12 +14,12 @@ import (
 )
 
 type EventHandlers map[common.Address]EventHandlerFunc
-type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, caller voter.EVMClient) (*relayer.Message, error)
+type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, caller ChainClient) (*relayer.Message, error)
 
 type ETHRelayerClient struct {
 	bridgeContractAddress common.Address
 	eventHandlers         EventHandlers
-	evmCaller             voter.EVMClient
+	evmCaller             ChainClient
 }
 
 func (e *ETHRelayerClient) HandleEvent(sourceID, destID uint8, depositNonce uint64, rID [32]byte) (*relayer.Message, error) {
@@ -104,7 +103,7 @@ func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
 	return arg
 }
 
-func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, caller voter.EVMClient) (*relayer.Message, error) {
+func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, client ChainClient) (*relayer.Message, error) {
 	type ERC20HandlerDepositRecord struct {
 		TokenAddress                   common.Address
 		LenDestinationRecipientAddress uint8
@@ -119,7 +118,7 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddr
 		return nil, err
 	}
 	msg := ethereum.CallMsg{From: common.Address{}, To: &handlerContractAddress, Data: input}
-	res, err := caller.CallContract(context.TODO(), toCallArg(msg), nil)
+	res, err := client.CallContract(context.TODO(), toCallArg(msg), nil)
 	if err != nil {
 		return nil, err
 	}

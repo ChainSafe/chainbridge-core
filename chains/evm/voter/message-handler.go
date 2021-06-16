@@ -1,4 +1,4 @@
-package ethmodule
+package voter
 
 import (
 	"bytes"
@@ -7,31 +7,32 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
+	"golang.org/x/crypto/sha3"
 
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/rs/zerolog/log"
 )
 
-type HandlerFunc func(m *relayer.Message, handlerAddr, bridgeAddress common.Address) (*Proposal, error)
+type HandlerFunc func(m *relayer.Message, handlerAddr, bridgeAddress common.Address) (Proposer, error)
 
-func NewMessageHandler(evmCaller voter.EVMClient, bridgeAddress common.Address) *MessageHandler {
-	return &MessageHandler{
+func NewMessageHandler(client ChainClient, bridgeAddress common.Address) *EVMMessageHandler {
+	return &EVMMessageHandler{
 		bridgeAddress: bridgeAddress,
-		evmCaller:     evmCaller,
+		client:        client,
 	}
 }
 
-type MessageHandler struct {
-	evmCaller     voter.EVMClient
+type EVMMessageHandler struct {
+	client        ChainClient
 	handlers      map[common.Address]HandlerFunc
 	bridgeAddress common.Address
 }
 
-func (mh *MessageHandler) HandleMessage(m *relayer.Message) (*Proposal, error) {
+func (mh *EVMMessageHandler) HandleMessage(m *relayer.Message) (Proposer, error) {
 	// Matching resource ID with handler.
 	addr, err := mh.matchResourceIDToHandlerAddress(m.ResourceId)
 	// Based on handler that registered on BridgeContract
@@ -47,14 +48,14 @@ func (mh *MessageHandler) HandleMessage(m *relayer.Message) (*Proposal, error) {
 	return prop, nil
 }
 
-func (mh *MessageHandler) matchResourceIDToHandlerAddress(rID [32]byte) (common.Address, error) {
+func (mh *EVMMessageHandler) matchResourceIDToHandlerAddress(rID [32]byte) (common.Address, error) {
 	//_resourceIDToHandlerAddress(bytes32) view returns(address)
 	input, err := buildDataUnsafe([]byte("_resourceIDToHandlerAddress(bytes32"), rID[:])
 	if err != nil {
 		return common.Address{}, err
 	}
 	msg := ethereum.CallMsg{From: common.Address{}, To: &mh.bridgeAddress, Data: input}
-	out, err := mh.evmCaller.CallContract(context.TODO(), toCallArg(msg), nil)
+	out, err := mh.client.CallContract(context.TODO(), toCallArg(msg), nil)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -62,7 +63,7 @@ func (mh *MessageHandler) matchResourceIDToHandlerAddress(rID [32]byte) (common.
 	return out0, nil
 }
 
-func (mh *MessageHandler) MatchAddressWithHandlerFunc(addr common.Address) (HandlerFunc, error) {
+func (mh *EVMMessageHandler) MatchAddressWithHandlerFunc(addr common.Address) (HandlerFunc, error) {
 	h, ok := mh.handlers[addr]
 	if !ok {
 		return nil, errors.New("no corresponding handler for this address exists")
@@ -70,7 +71,7 @@ func (mh *MessageHandler) MatchAddressWithHandlerFunc(addr common.Address) (Hand
 	return h, nil
 }
 
-func (mh *MessageHandler) RegisterProposalHandler(address common.Address, handler HandlerFunc) {
+func (mh *EVMMessageHandler) RegisterProposalHandler(address common.Address, handler HandlerFunc) {
 	mh.handlers[address] = handler
 }
 
@@ -162,4 +163,41 @@ func GenericMessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress comm
 		HandlerAddress: handlerAddr,
 		BridgeAddress:  bridgeAddress,
 	}, nil
+}
+
+func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
+	arg := map[string]interface{}{
+		"from": msg.From,
+		"to":   msg.To,
+	}
+	if len(msg.Data) > 0 {
+		arg["data"] = hexutil.Bytes(msg.Data)
+	}
+	if msg.Value != nil {
+		arg["value"] = (*hexutil.Big)(msg.Value)
+	}
+	if msg.Gas != 0 {
+		arg["gas"] = hexutil.Uint64(msg.Gas)
+	}
+	if msg.GasPrice != nil {
+		arg["gasPrice"] = (*hexutil.Big)(msg.GasPrice)
+	}
+	return arg
+}
+
+func buildDataUnsafe(method []byte, params ...[]byte) ([]byte, error) {
+	hash := sha3.NewLegacyKeccak256()
+	_, err := hash.Write(method)
+	if err != nil {
+		return nil, err
+	}
+	methodID := hash.Sum(nil)[:4]
+
+	var data []byte
+	data = append(data, methodID...)
+	for _, v := range params {
+		paddedParam := common.LeftPadBytes(v, 32)
+		data = append(data, paddedParam...)
+	}
+	return data, nil
 }
