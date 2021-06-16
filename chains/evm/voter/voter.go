@@ -45,7 +45,7 @@ type EVMVoter struct {
 	client ChainClient
 }
 
-func NewWriter(mh MessageHandler, client ChainClient) *EVMVoter {
+func NewVoter(mh MessageHandler, client ChainClient) *EVMVoter {
 	return &EVMVoter{
 		mh:     mh,
 		client: client,

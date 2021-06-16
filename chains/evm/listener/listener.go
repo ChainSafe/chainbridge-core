@@ -10,6 +10,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/blockstore"
 	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
 
@@ -24,7 +25,7 @@ type DepositLogs struct {
 
 type ChainClient interface {
 	LatestBlock() (*big.Int, error)
-	FetchDepositLogs(ctx context.Context, startBlock *big.Int, endBlock *big.Int) ([]*DepositLogs, error)
+	FetchDepositLogs(ctx context.Context, address common.Address, startBlock *big.Int, endBlock *big.Int) ([]*DepositLogs, error)
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
 }
 
@@ -33,12 +34,13 @@ type EventHandler interface {
 }
 
 type EVMListener struct {
-	chainReader  ChainClient
-	eventHandler EventHandler
+	chainReader   ChainClient
+	eventHandler  EventHandler
+	bridgeAddress common.Address
 }
 
-func NewEVMListener(chainReader ChainClient, handler EventHandler) *EVMListener {
-	return &EVMListener{chainReader: chainReader, eventHandler: handler}
+func NewEVMListener(chainReader ChainClient, handler EventHandler, bridgeAddress common.Address) *EVMListener {
+	return &EVMListener{chainReader: chainReader, eventHandler: handler, bridgeAddress: bridgeAddress}
 }
 
 func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message {
@@ -61,7 +63,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw bl
 					time.Sleep(BlockRetryInterval)
 					continue
 				}
-				logs, err := l.chainReader.FetchDepositLogs(context.Background(), startBlock, startBlock)
+				logs, err := l.chainReader.FetchDepositLogs(context.Background(), l.bridgeAddress, startBlock, startBlock)
 				if err != nil {
 					// Filtering logs error really can appear only on wrong configuration or temporary network problem
 					// so i do no see any reason to break execution

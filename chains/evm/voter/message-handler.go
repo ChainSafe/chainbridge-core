@@ -19,7 +19,7 @@ import (
 
 type HandlerFunc func(m *relayer.Message, handlerAddr, bridgeAddress common.Address) (Proposer, error)
 
-func NewMessageHandler(client ChainClient, bridgeAddress common.Address) *EVMMessageHandler {
+func NewEVMMessageHandler(client ChainClient, bridgeAddress common.Address) *EVMMessageHandler {
 	return &EVMMessageHandler{
 		bridgeAddress: bridgeAddress,
 		client:        client,

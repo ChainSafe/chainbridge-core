@@ -77,8 +77,8 @@ const (
 	DepositSignature string = "Deposit(uint8,bytes32,uint64)"
 )
 
-func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress string, startBlock *big.Int, endBlock *big.Int) ([]*listener.DepositLogs, error) {
-	logs, err := c.FilterLogs(ctx, buildQuery(common.HexToAddress(contractAddress), DepositSignature, startBlock, endBlock))
+func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common.Address, startBlock *big.Int, endBlock *big.Int) ([]*listener.DepositLogs, error) {
+	logs, err := c.FilterLogs(ctx, buildQuery(contractAddress, DepositSignature, startBlock, endBlock))
 	if err != nil {
 		return nil, err
 	}

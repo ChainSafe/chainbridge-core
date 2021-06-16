@@ -13,7 +13,7 @@ import (
 )
 
 type EventListener interface {
-	ListenToEvents(startBlock *big.Int, chainID uint8, bridgeContractAddress string, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message
+	ListenToEvents(startBlock *big.Int, chainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message
 }
 
 type ProposalVoter interface {
@@ -29,8 +29,8 @@ type EVMChain struct {
 	bridgeContractAddress string
 }
 
-func NewEVMChain(dr EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, bridgeContractAddress string, chainID uint8) *EVMChain {
-	return &EVMChain{listener: dr, writer: writer, kvdb: kvdb, bridgeContractAddress: bridgeContractAddress, chainID: chainID}
+func NewEVMChain(dr EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, chainID uint8) *EVMChain {
+	return &EVMChain{listener: dr, writer: writer, kvdb: kvdb, chainID: chainID}
 }
 
 // PollEvents is the goroutine that polling blocks and searching Deposit Events in them. Event then sent to eventsChan
@@ -42,7 +42,7 @@ func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsC
 		sysErr <- fmt.Errorf("error %w on getting last stored block", err)
 		return
 	}
-	ech := c.listener.ListenToEvents(b, c.chainID, c.bridgeContractAddress, c.kvdb, stop, sysErr)
+	ech := c.listener.ListenToEvents(b, c.chainID, c.kvdb, stop, sysErr)
 	for {
 		select {
 		case <-stop:
