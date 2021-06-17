@@ -6,18 +6,19 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"strings"
 
-	"golang.org/x/crypto/sha3"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/crypto/sha3"
 )
 
-type HandlerFunc func(m *relayer.Message, handlerAddr, bridgeAddress common.Address) (Proposer, error)
+type MessageHandlerFunc func(m *relayer.Message, handlerAddr, bridgeAddress common.Address) (*Proposal, error)
 
 func NewEVMMessageHandler(client ChainClient, bridgeAddress common.Address) *EVMMessageHandler {
 	return &EVMMessageHandler{
@@ -28,7 +29,7 @@ func NewEVMMessageHandler(client ChainClient, bridgeAddress common.Address) *EVM
 
 type EVMMessageHandler struct {
 	client        ChainClient
-	handlers      map[common.Address]HandlerFunc
+	handlers      map[common.Address]MessageHandlerFunc
 	bridgeAddress common.Address
 }
 
@@ -49,8 +50,12 @@ func (mh *EVMMessageHandler) HandleMessage(m *relayer.Message) (Proposer, error)
 }
 
 func (mh *EVMMessageHandler) matchResourceIDToHandlerAddress(rID [32]byte) (common.Address, error) {
-	//_resourceIDToHandlerAddress(bytes32) view returns(address)
-	input, err := buildDataUnsafe([]byte("_resourceIDToHandlerAddress(bytes32"), rID[:])
+	definition := "[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"_resourceIDToHandlerAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
+	a, err := abi.JSON(strings.NewReader(definition))
+	if err != nil {
+		return common.Address{}, err
+	}
+	input, err := a.Pack("getProposal", rID)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -59,19 +64,23 @@ func (mh *EVMMessageHandler) matchResourceIDToHandlerAddress(rID [32]byte) (comm
 	if err != nil {
 		return common.Address{}, err
 	}
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+	res, err := a.Unpack("getProposal", out)
+	out0 := *abi.ConvertType(res[0], new(common.Address)).(*common.Address)
 	return out0, nil
 }
 
-func (mh *EVMMessageHandler) MatchAddressWithHandlerFunc(addr common.Address) (HandlerFunc, error) {
+func (mh *EVMMessageHandler) MatchAddressWithHandlerFunc(addr common.Address) (MessageHandlerFunc, error) {
 	h, ok := mh.handlers[addr]
 	if !ok {
-		return nil, errors.New("no corresponding handler for this address exists")
+		return nil, errors.New(fmt.Sprintf("no corresponding handler for this address %s exists", addr.Hex()))
 	}
 	return h, nil
 }
 
-func (mh *EVMMessageHandler) RegisterProposalHandler(address common.Address, handler HandlerFunc) {
+func (mh *EVMMessageHandler) RegisterMessageHandler(address common.Address, handler MessageHandlerFunc) {
+	if mh.handlers == nil {
+		mh.handlers = make(map[common.Address]MessageHandlerFunc)
+	}
 	mh.handlers[address] = handler
 }
 

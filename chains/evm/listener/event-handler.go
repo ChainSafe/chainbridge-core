@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"math/big"
+	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"
@@ -44,8 +45,12 @@ func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint6
 }
 
 func (e *ETHEventHandler) matchResourceIDToHandlerAddress(rID [32]byte) (common.Address, error) {
-	//_resourceIDToHandlerAddress(bytes32) view returns(address)
-	input, err := buildDataUnsafe([]byte("_resourceIDToHandlerAddress(bytes32"), rID[:])
+	definition := "[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"_resourceIDToHandlerAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
+	a, err := abi.JSON(strings.NewReader(definition))
+	if err != nil {
+		return common.Address{}, err
+	}
+	input, err := a.Pack("getProposal", rID)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -54,7 +59,8 @@ func (e *ETHEventHandler) matchResourceIDToHandlerAddress(rID [32]byte) (common.
 	if err != nil {
 		return common.Address{}, err
 	}
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+	res, err := a.Unpack("getProposal", out)
+	out0 := *abi.ConvertType(res[0], new(common.Address)).(*common.Address)
 	return out0, nil
 }
 
@@ -66,7 +72,7 @@ func (e *ETHEventHandler) matchAddressWithHandlerFunc(addr common.Address) (Even
 	return hf, nil
 }
 
-func (e *ETHEventHandler) RegisterHandlerFabric(address string, handler EventHandlerFunc) {
+func (e *ETHEventHandler) RegisterEventHandler(address string, handler EventHandlerFunc) {
 	if e.eventHandlers == nil {
 		e.eventHandlers = make(map[common.Address]EventHandlerFunc)
 	}
