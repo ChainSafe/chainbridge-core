@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"math/big"
 )
 
@@ -20,11 +19,6 @@ type RawSharedSubstrateConfig struct {
 func (c *RawSharedSubstrateConfig) ParseConfig() *SharedSubstrateConfig {
 
 	c.GeneralChainConfig.ParseConfig()
-
-	fmt.Println(c.GeneralChainConfig.KeystorePath)
-	fmt.Println(c.GeneralChainConfig.BlockstorePath)
-	fmt.Println(c.GeneralChainConfig.FreshStart)
-	fmt.Println(c.GeneralChainConfig.LatestBlock)
 
 	config := &SharedSubstrateConfig{
 		GeneralChainConfig: c.GeneralChainConfig,

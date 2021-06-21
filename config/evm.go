@@ -47,11 +47,6 @@ func (c *RawSharedEVMConfig) ParseConfig() (*SharedEVMConfig, error) {
 
 	c.GeneralChainConfig.ParseConfig()
 
-	// fmt.Println(c.GeneralChainConfig.KeystorePath)
-	// fmt.Println(c.GeneralChainConfig.BlockstorePath)
-	// fmt.Println(c.GeneralChainConfig.FreshStart)
-	// fmt.Println(c.GeneralChainConfig.LatestBlock)
-
 	config := &SharedEVMConfig{
 		GeneralChainConfig: c.GeneralChainConfig,
 		Erc20Handler:       c.Erc20Handler,
