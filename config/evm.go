@@ -5,6 +5,11 @@ import (
 	"math/big"
 )
 
+const DefaultGasLimit = 6721975
+const DefaultGasPrice = 20000000000
+const DefaultGasMultiplier = 1
+const DefaultBlockConfirmations = 10
+
 type SharedEVMConfig struct {
 	GeneralChainConfig GeneralChainConfig
 	Bridge             string

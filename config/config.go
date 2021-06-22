@@ -6,11 +6,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-const DefaultGasLimit = 6721975
-const DefaultGasPrice = 20000000000
-const DefaultGasMultiplier = 1
-const DefaultBlockConfirmations = 10
-
 type GeneralChainConfig struct {
 	Name           string `mapstructure:"name"`
 	Type           string `mapstructure:"type"`

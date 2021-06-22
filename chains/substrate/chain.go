@@ -37,33 +37,16 @@ func NewSubstrateChain(listener EventListener, writer ProposalVoter, kvdb blocks
 	}
 }
 
-// setupBlockstore queries the blockstore for the latest known block. If the latest block is
-// greater than config.StartBlock, then config.StartBlock is replaced with the latest known block.
-func (c *SubstrateChain) setupBlockstore() error {
-	if !c.config.GeneralChainConfig.FreshStart {
-		latestBlock, err := blockstore.GetLastStoredBlock(c.kvdb, *c.config.GeneralChainConfig.Id)
-		if err != nil {
-			return err
-		}
-
-		if latestBlock.Cmp(c.config.StartBlock) == 1 {
-			c.config.StartBlock = latestBlock
-		}
-	}
-
-	return nil
-}
-
 func (c *SubstrateChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *relayer.Message) {
 	log.Info().Msg("Polling Blocks...")
 	// Handler chain specific configs and flags
 	//b, err := blockstore.GetLastStoredBlock(c.kvdb, c.chainID)
-	err := c.setupBlockstore()
+	block, err := blockstore.SetupBlockstore(&c.config.GeneralChainConfig, c.kvdb, c.config.StartBlock)
 	if err != nil {
 		sysErr <- fmt.Errorf("error %w on getting last stored block", err)
 		return
 	}
-	ech := c.listener.ListenToEvents(c.config.StartBlock, c.chainID, c.kvdb, stop, sysErr)
+	ech := c.listener.ListenToEvents(block, c.chainID, c.kvdb, stop, sysErr)
 	for {
 		select {
 		case <-stop:
