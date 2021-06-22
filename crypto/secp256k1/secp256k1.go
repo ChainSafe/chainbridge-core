@@ -12,8 +12,6 @@ import (
 	secp256k1 "github.com/ethereum/go-ethereum/crypto"
 )
 
-//var _ crypto.Keypair = &Keypair{}
-
 const PrivateKeyLength = 32
 
 type Keypair struct {
