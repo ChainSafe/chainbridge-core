@@ -19,10 +19,9 @@ import (
 )
 
 type config struct {
-	maxGasPrice    *big.Int
-	gasMultiplier  *big.Float
-	relayerAddress common.Address
-	kp             *secp256k1.Keypair
+	maxGasPrice   *big.Int
+	gasMultiplier *big.Float
+	kp            *secp256k1.Keypair
 }
 
 type EVMClient struct {
@@ -135,7 +134,7 @@ func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransac
 }
 
 func (c *EVMClient) RelayerAddress() common.Address {
-	return c.config.relayerAddress
+	return c.config.kp.CommonAddress()
 }
 
 func (c *EVMClient) LockNonce() {
@@ -164,10 +163,12 @@ func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
 
 func (c *EVMClient) UnsafeIncreaseNonce() error {
 	nonce, err := c.UnsafeNonce()
+	log.Debug().Str("nonce", nonce.String()).Msg("Before increase")
 	if err != nil {
 		return err
 	}
-	c.nonce = nonce.And(nonce, big.NewInt(1))
+	c.nonce = nonce.Add(nonce, big.NewInt(1))
+	log.Debug().Str("nonce", c.nonce.String()).Msg("After increase")
 	return nil
 }
 

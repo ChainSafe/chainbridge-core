@@ -4,8 +4,6 @@ import (
 	"crypto/ecdsa"
 	"math/big"
 
-	"github.com/rs/zerolog/log"
-
 	"github.com/ethereum/go-ethereum/rlp"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -37,7 +35,6 @@ func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, 
 	if err != nil {
 		return nil, err
 	}
-	log.Debug().Str("hash", a.Transaction.Hash().Hex()).Msg("HAAAAASH")
 	return rawTX, nil
 }
 

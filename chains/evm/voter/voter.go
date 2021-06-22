@@ -78,6 +78,7 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
 			}
 			return nil
 		} else {
+			log.Debug().Bool("voted", votedByCurrentExecutor).Str("voter", w.client.RelayerAddress().String()).Msgf("proposal status %s", relayer.StatusMap[ps])
 			return nil
 		}
 	}
