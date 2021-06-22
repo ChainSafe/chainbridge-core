@@ -1,6 +1,7 @@
 package config
 
 var (
+	ConfigFlagName      = "config"
 	KeystoreFlagName    = "keystore"
 	BlockstoreFlagName  = "blockstore"
 	FreshStartFlagName  = "fresh"
