@@ -5,74 +5,45 @@ package listener
 
 import (
 	"context"
-	"errors"
 	"math/big"
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/blockstore"
 	"github.com/ChainSafe/chainbridge-core/relayer"
-	ethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
-
-const (
-	DepositSignature string = "Deposit(uint8,bytes32,uint64)"
-)
-
-type HandlerFabric func() EventHandler
-type EventHandler func(sourceID, destID uint8, nonce uint64, handlerContractAddress string) (*relayer.Message, error)
-type EventHandlers map[ethcommon.Address]HandlerFabric
 
 var BlockRetryInterval = time.Second * 5
 var BlockDelay = big.NewInt(10) //TODO: move to config
 
-type IHeaderByNumber interface {
-	LatestBlock() (*big.Int, error)
-}
-
-type LogFilterer interface {
-	FetchDepositLogs(ctx context.Context, contractAddress string , sig string, startBlock *big.Int, endBlock *big.Int) ([]*DepositLogs, error)
-}
-
 type DepositLogs struct {
 	DestinationID uint8
-	ResourceID [32]byte
-	DepositNonce uint64
+	ResourceID    [32]byte
+	DepositNonce  uint64
 }
 
-type ChainReader interface {
-	IHeaderByNumber
-	LogFilterer
-	MatchResourceIDToHandlerAddress(bridgeAddress string, rID [32]byte) (string, error)
+type ChainClient interface {
+	LatestBlock() (*big.Int, error)
+	FetchDepositLogs(ctx context.Context, address common.Address, startBlock *big.Int, endBlock *big.Int) ([]*DepositLogs, error)
+	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
+}
+
+type EventHandler interface {
+	HandleEvent(sourceID, destID uint8, nonce uint64, rID [32]byte) (*relayer.Message, error)
 }
 
 type EVMListener struct {
-	chainReader   ChainReader
-	eventHandlers EventHandlers
+	chainReader   ChainClient
+	eventHandler  EventHandler
+	bridgeAddress common.Address
 }
 
-func NewEVMListener(chainReader ChainReader) *EVMListener {
-	return &EVMListener{chainReader: chainReader, eventHandlers: make(map[ethcommon.Address]HandlerFabric)}
+func NewEVMListener(chainReader ChainClient, handler EventHandler, bridgeAddress common.Address) *EVMListener {
+	return &EVMListener{chainReader: chainReader, eventHandler: handler, bridgeAddress: bridgeAddress}
 }
 
-// TODO maybe it could be private
-func (l *EVMListener) MatchAddressWithHandlerFunc(addr string) (EventHandler, error) {
-	hf, ok := l.eventHandlers[ethcommon.HexToAddress(addr)]
-	if !ok {
-		return nil, errors.New("no corresponding handler for this address exists")
-	}
-	return hf(), nil
-}
-
-func (l *EVMListener) RegisterHandlerFabric(address string, handler HandlerFabric) {
-	if l.eventHandlers == nil {
-		l.eventHandlers = make(map[ethcommon.Address]HandlerFabric)
-	}
-	l.eventHandlers[ethcommon.HexToAddress(address)] = handler
-}
-
-func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, bridgeContractAddress string, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message {
-	bridgeAddress := ethcommon.HexToAddress(bridgeContractAddress)
+func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message {
 	// TODO: This channel should be closed somewhere!
 	ch := make(chan *relayer.Message)
 	go func() {
@@ -92,7 +63,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, bridgeC
 					time.Sleep(BlockRetryInterval)
 					continue
 				}
-				logs, err := l.chainReader.FetchDepositLogs(context.Background(), bridgeAddress.String(), DepositSignature, startBlock, startBlock)
+				logs, err := l.chainReader.FetchDepositLogs(context.Background(), l.bridgeAddress, startBlock, startBlock)
 				if err != nil {
 					// Filtering logs error really can appear only on wrong configuration or temporary network problem
 					// so i do no see any reason to break execution
@@ -100,21 +71,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, bridgeC
 					continue
 				}
 				for _, eventLog := range logs {
-					addr, err := l.chainReader.MatchResourceIDToHandlerAddress(bridgeContractAddress, eventLog.ResourceID)
-					if err != nil {
-						errChn <- err
-						log.Error().Err(err)
-						return
-					}
-
-					eventHandler, err := l.MatchAddressWithHandlerFunc(addr)
-					if err != nil {
-						errChn <- err
-						log.Error().Err(err).Msgf("failed to get handler from resource ID %x, reason: %w", eventLog.ResourceID, err)
-						return
-					}
-
-					m, err := eventHandler(chainID, eventLog.DestinationID, eventLog.DepositNonce, addr)
+					m, err := l.eventHandler.HandleEvent(chainID, eventLog.DestinationID, eventLog.DepositNonce, eventLog.ResourceID)
 					if err != nil {
 						errChn <- err
 						log.Error().Err(err)
@@ -123,7 +80,6 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, bridgeC
 					log.Debug().Msgf("Resolved message %+v in block %s", m, startBlock.String())
 					ch <- m
 				}
-
 				if startBlock.Int64()%20 == 0 {
 					// Logging process every 20 bocks to exclude spam
 					log.Debug().Str("block", startBlock.String()).Uint8("chainID", chainID).Msg("Queried block for deposit events")
@@ -134,7 +90,6 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, bridgeC
 				if err != nil {
 					log.Error().Str("block", startBlock.String()).Err(err).Msg("Failed to write latest block to blockstore")
 				}
-
 				// Goto next block
 				startBlock.Add(startBlock, big.NewInt(1))
 			}
