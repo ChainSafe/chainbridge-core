@@ -35,7 +35,6 @@ func (p *Proposal) Status(evmCaller ChainClient) (relayer.ProposalStatus, error)
 	if err != nil {
 		return relayer.ProposalStatusInactive, err // Not sure what status to use here
 	}
-	log.Debug().Str("datahash", p.GetDataHash().String()).Uint8("source", p.Source).Uint64("nonce", p.DepositNonce).Msg("Getting proposal status")
 	input, err := a.Pack("getProposal", p.Source, p.DepositNonce, p.GetDataHash())
 	if err != nil {
 		return relayer.ProposalStatusInactive, err
@@ -58,13 +57,11 @@ func (p *Proposal) Status(evmCaller ChainClient) (relayer.ProposalStatus, error)
 	}
 	res, err := a.Unpack("getProposal", out)
 	out0 := *abi.ConvertType(res[0], new(bridgeProposal)).(*bridgeProposal)
-	log.Debug().Msgf("GETTING PROPOSAL STATUS %+v", out0)
 	return relayer.ProposalStatus(out0.Status), nil
 }
 
 func (p *Proposal) VotedBy(evmCaller ChainClient, by common.Address) (bool, error) {
 	definition := "[{\"inputs\":[{\"internalType\":\"uint72\",\"name\":\"\",\"type\":\"uint72\"},{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"_hasVotedOnProposal\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
-	//input, err := buildDataUnsafe([]byte("_hasVotedOnProposal(uint72,bytes32,address)"), idAndNonce(p.Source, p.DepositNonce).Bytes(), p.GetDataHash().Bytes(), by.Bytes())
 	a, err := abi.JSON(strings.NewReader(definition))
 	if err != nil {
 		return false, err // Not sure what status to use here
@@ -93,16 +90,26 @@ func (p *Proposal) Execute(client ChainClient) error {
 	if err != nil {
 		return err
 	}
-	gasLimit := uint64(6721975)
+	gasLimit := uint64(2000000)
 	gp, err := client.GasPrice()
 	if err != nil {
 		return err
 	}
-	tx := evmtransaction.NewTransaction(client.Nonce(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
+	client.LockNonce()
+	n, err := client.UnsafeNonce()
+	if err != nil {
+		return err
+	}
+	tx := evmtransaction.NewTransaction(n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
 	h, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return err
 	}
+	err = client.UnsafeIncreaseNonce()
+	if err != nil {
+		return err
+	}
+	client.UnlockNonce()
 	log.Debug().Str("hash", h.Hex()).Msgf("Executed")
 	return nil
 }
@@ -117,23 +124,32 @@ func (p *Proposal) Vote(client ChainClient) error {
 	if err != nil {
 		return err
 	}
-	gasLimit := uint64(6721975)
+	gasLimit := uint64(1000000)
 	gp, err := client.GasPrice()
 	if err != nil {
 		return err
 	}
-	tx := evmtransaction.NewTransaction(client.Nonce(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
+	client.LockNonce()
+	n, err := client.UnsafeNonce()
+	if err != nil {
+		return err
+	}
+	tx := evmtransaction.NewTransaction(n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
 	h, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return err
 	}
-	log.Debug().Str("hash", h.Hex()).Msgf("Executed")
+	err = client.UnsafeIncreaseNonce()
+	if err != nil {
+		return err
+	}
+	client.UnlockNonce()
+	log.Debug().Str("hash", h.Hex()).Msgf("Voted")
 	return nil
 }
 
 // CreateProposalDataHash constructs and returns proposal data hash
 func (p *Proposal) GetDataHash() common.Hash {
-	log.Debug().Str("handler", p.HandlerAddress.String()).Str("data", hexutils.BytesToHex(p.Data)).Msg("Creating datahash")
 	return crypto.Keccak256Hash(append(p.HandlerAddress.Bytes(), p.Data...))
 }
 

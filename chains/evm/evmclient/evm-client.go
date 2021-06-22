@@ -2,15 +2,16 @@ package evmclient
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"math/big"
 	"sync"
+	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -29,16 +30,14 @@ type EVMClient struct {
 	rpClient  *rpc.Client
 	nonceLock sync.Mutex
 	config    *config
+	nonce     *big.Int
 }
 
 type CommonTransaction interface {
 	// Hash returns the transaction hash.
 	Hash() common.Hash
-	// RawWithSignature mostly copies WithSignature interface of type.Transaction from go-ethereum,
-	// but return raw rlp encoded signed transaction to be compatible and interchangeable between different go-ethereum implementations
-	// WithSignature returns a new transaction with the given signature.
-	// This signature needs to be in the [R || S || V] format where V is 0 or 1.
-	RawWithSignature(types.Signer, []byte) ([]byte, error)
+	// Returns signed transaction by provided private key
+	RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
 }
 
 func NewEVMClient(endpoint string, kp *secp256k1.Keypair) (*EVMClient, error) {
@@ -119,13 +118,11 @@ func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string
 }
 
 func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransaction) (common.Hash, error) {
-	h := tx.Hash()
-	sig, err := crypto.Sign(h[:], c.config.kp.PrivateKey())
+	id, err := c.ChainID(ctx)
 	if err != nil {
-		return common.Hash{}, err
+		panic(err)
 	}
-
-	rawTX, err := tx.RawWithSignature(types.HomesteadSigner{}, sig)
+	rawTX, err := tx.RawWithSignature(c.config.kp.PrivateKey(), id)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -149,8 +146,29 @@ func (c *EVMClient) UnlockNonce() {
 	c.nonceLock.Unlock()
 }
 
-func (c *EVMClient) Nonce() uint64 {
-	return 0
+func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
+	var err error
+	for i := 0; i <= 10; i++ {
+		if c.nonce == nil {
+			nonce, err := c.PendingNonceAt(context.Background(), c.config.kp.CommonAddress())
+			if err != nil {
+				time.Sleep(1)
+				continue
+			}
+			return big.NewInt(0).SetUint64(nonce), nil
+		}
+		return c.nonce, nil
+	}
+	return nil, err
+}
+
+func (c *EVMClient) UnsafeIncreaseNonce() error {
+	nonce, err := c.UnsafeNonce()
+	if err != nil {
+		return err
+	}
+	c.nonce = nonce.And(nonce, big.NewInt(1))
+	return nil
 }
 
 func (c *EVMClient) GasPrice() (*big.Int, error) {

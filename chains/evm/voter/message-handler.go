@@ -55,7 +55,7 @@ func (mh *EVMMessageHandler) matchResourceIDToHandlerAddress(rID [32]byte) (comm
 	if err != nil {
 		return common.Address{}, err
 	}
-	input, err := a.Pack("getProposal", rID)
+	input, err := a.Pack("_resourceIDToHandlerAddress", rID)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -64,7 +64,7 @@ func (mh *EVMMessageHandler) matchResourceIDToHandlerAddress(rID [32]byte) (comm
 	if err != nil {
 		return common.Address{}, err
 	}
-	res, err := a.Unpack("getProposal", out)
+	res, err := a.Unpack("_resourceIDToHandlerAddress", out)
 	out0 := *abi.ConvertType(res[0], new(common.Address)).(*common.Address)
 	return out0, nil
 }

@@ -22,9 +22,10 @@ type ChainClient interface {
 	SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error)
 	RelayerAddress() common.Address
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
-	Nonce() uint64
+	UnsafeNonce() (*big.Int, error)
 	LockNonce()
 	UnlockNonce()
+	UnsafeIncreaseNonce() error
 	GasPrice() (*big.Int, error)
 }
 
@@ -72,6 +73,7 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
 			// We should not vote for this proposal but it is ready to be executed
 			err = prop.Execute(w.client)
 			if err != nil {
+				log.Error().Err(err).Msgf("Executing failed")
 				return err
 			}
 			return nil
@@ -81,6 +83,7 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
 	}
 	err = prop.Vote(w.client)
 	if err != nil {
+		log.Error().Err(err).Msgf("Voting failed")
 		return err
 	}
 	// Checking every 5 seconds does proposal is ready to be executed
@@ -96,6 +99,7 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
 			if ps == relayer.ProposalStatusPassed {
 				err = prop.Execute(w.client)
 				if err != nil {
+					log.Error().Err(err).Msgf("Executing failed")
 					return err
 				}
 				return nil
