@@ -3,6 +3,8 @@ package evmclient
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/json"
+	"errors"
 	"math/big"
 	"sync"
 	"time"
@@ -62,13 +64,34 @@ func (c *EVMClient) Configurate() {
 
 }
 
+type headerNumber struct {
+	Number *big.Int `json:"number"           gencodec:"required"`
+}
+
+func (h *headerNumber) UnmarshalJSON(input []byte) error {
+	type headerNumber struct {
+		Number *hexutil.Big `json:"number" gencodec:"required"`
+	}
+	var dec headerNumber
+	if err := json.Unmarshal(input, &dec); err != nil {
+		return err
+	}
+	if dec.Number == nil {
+		return errors.New("missing required field 'number' for Header")
+	}
+	h.Number = (*big.Int)(dec.Number)
+	return nil
+}
+
 // LatestBlock returns the latest block from the current chain
 func (c *EVMClient) LatestBlock() (*big.Int, error) {
-	header, err := c.Client.HeaderByNumber(context.Background(), nil)
-	if err != nil {
-		return nil, err
+	var head *headerNumber
+
+	err := c.rpClient.CallContext(context.Background(), &head, "eth_getBlockByNumber", toBlockNumArg(nil), false)
+	if err == nil && head == nil {
+		err = ethereum.NotFound
 	}
-	return header.Number, nil
+	return head.Number, err
 }
 
 const (
