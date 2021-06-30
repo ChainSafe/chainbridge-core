@@ -18,7 +18,7 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
-type MessageHandlerFunc func(m *relayer.Message, handlerAddr, bridgeAddress common.Address) (*Proposal, error)
+type MessageHandlerFunc func(m *relayer.Message, handlerAddr, bridgeAddress common.Address) (Proposer, error)
 
 func NewEVMMessageHandler(client ChainClient, bridgeAddress common.Address) *EVMMessageHandler {
 	return &EVMMessageHandler{
@@ -65,6 +65,9 @@ func (mh *EVMMessageHandler) matchResourceIDToHandlerAddress(rID [32]byte) (comm
 		return common.Address{}, err
 	}
 	res, err := a.Unpack("_resourceIDToHandlerAddress", out)
+	if len(res) == 0 {
+		return common.Address{}, errors.New("no handler associated with such resourceID")
+	}
 	out0 := *abi.ConvertType(res[0], new(common.Address)).(*common.Address)
 	return out0, nil
 }
@@ -84,7 +87,7 @@ func (mh *EVMMessageHandler) RegisterMessageHandler(address common.Address, hand
 	mh.handlers[address] = handler
 }
 
-func ERC20MessageHandler(m *relayer.Message, handlerAddr, bridgeAddress common.Address) (*Proposal, error) {
+func ERC20MessageHandler(m *relayer.Message, handlerAddr, bridgeAddress common.Address) (Proposer, error) {
 	if len(m.Payload) != 2 {
 		return nil, errors.New("malformed payload. Len  of payload should be 2")
 	}
