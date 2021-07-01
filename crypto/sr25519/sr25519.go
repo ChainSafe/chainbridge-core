@@ -11,7 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
-//var _ crypto.Keypair = &Keypair{}
 
 type Keypair struct {
 	keyringPair *signature.KeyringPair

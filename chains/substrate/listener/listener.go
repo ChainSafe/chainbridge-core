@@ -5,6 +5,8 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/status-im/keycard-go/hexutils"
+
 	"github.com/ChainSafe/chainbridge-core/blockstore"
 	"github.com/ChainSafe/chainbridge-core/chains/substrate"
 	"github.com/ChainSafe/chainbridge-core/relayer"
@@ -82,7 +84,7 @@ func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, chainID uint8, k
 					log.Error().Err(err).Msg("Error handling substrate events")
 				}
 				for _, m := range msg {
-					log.Info().Uint8("chain", chainID).Uint8("destination", m.Destination).Msgf("Sending new message %+v", m)
+					log.Info().Uint8("chain", chainID).Uint8("destination", m.Destination).Str("rID", hexutils.BytesToHex(m.ResourceId[:])).Msgf("Sending new message %+v", m)
 					ch <- m
 				}
 				if startBlock.Int64()%20 == 0 {
