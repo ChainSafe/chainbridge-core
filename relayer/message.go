@@ -14,11 +14,11 @@ const (
 type ProposalStatus uint8
 
 const (
-	ProposalStatusInactive ProposalStatus = 0
-	ProposalStatusActive   ProposalStatus = 1
-	ProposalStatusPassed   ProposalStatus = 2 // Ready to be executed
-	ProposalStatusExecuted ProposalStatus = 3
-	ProposalStatusCanceled ProposalStatus = 4
+	ProposalStatusInactive ProposalStatus = iota
+	ProposalStatusActive
+	ProposalStatusPassed // Ready to be executed
+	ProposalStatusExecuted
+	ProposalStatusCanceled
 )
 
 var (
