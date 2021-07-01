@@ -4,8 +4,6 @@
 package relayer
 
 import (
-	"fmt"
-
 	"github.com/rs/zerolog/log"
 )
 
@@ -49,12 +47,12 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 func (r *Relayer) route(m *Message) {
 	w, ok := r.registry[m.Destination]
 	if !ok {
-		log.Error().Msgf(fmt.Sprintf("no resolver for destID %v to send message registered", m.Destination))
+		log.Error().Msgf("no resolver for destID %v to send message registered", m.Destination)
 		return
 	}
 	log.Debug().Msgf("Sending message %+v to destination %v", m, m.Destination)
 	if err := w.Write(m); err != nil {
-		log.Error().Err(err).Msg(fmt.Sprint(m))
+		log.Error().Err(err).Msgf("%v", m)
 		return
 	}
 }
