@@ -24,6 +24,6 @@ func TestExtractAmountTransferred(t *testing.T) {
 	}
 
 	if payloadAmount < 1 {
-		t.Fatal("amount does not match")
+		t.Fatal("amount less than 1")
 	}
 }
