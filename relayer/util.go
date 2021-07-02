@@ -1,7 +1,6 @@
 package relayer
 
 import (
-	"encoding/binary"
 	"errors"
 )
 
@@ -19,8 +18,5 @@ func extractAmountTransferred(message *Message) (int, error) {
 		return 0, err
 	}
 
-	// set payload amount by converting []byte => uint64
-	payloadAmount := binary.BigEndian.Uint64(b)
-
-	return int(payloadAmount), nil
+	return int(b[0]), nil
 }
