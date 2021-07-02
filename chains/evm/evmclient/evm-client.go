@@ -11,6 +11,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
+	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -20,17 +21,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type config struct {
-	maxGasPrice   *big.Int
-	gasMultiplier *big.Float
-	kp            *secp256k1.Keypair
-}
-
 type EVMClient struct {
 	*ethclient.Client
 	rpClient  *rpc.Client
 	nonceLock sync.Mutex
-	config    *config
+	config    *EVMConfig
 	nonce     *big.Int
 }
 
@@ -41,26 +36,47 @@ type CommonTransaction interface {
 	RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
 }
 
-func NewEVMClient(endpoint string, kp *secp256k1.Keypair) (*EVMClient, error) {
-	log.Info().Str("url", endpoint).Msg("Connecting to evm chain...")
-	rpcClient, err := rpc.DialContext(context.TODO(), endpoint)
-	if err != nil {
-		return nil, err
-	}
-	c := &config{
-		kp: kp,
-	}
-	return &EVMClient{
-		Client:   ethclient.NewClient(rpcClient),
-		rpClient: rpcClient,
-		config:   c,
-	}, nil
+func NewEVMClient() *EVMClient {
+	return &EVMClient{}
 }
 
 // TO implement interface Configurable
-func (c *EVMClient) Configurate() {
-	c.config.maxGasPrice = big.NewInt(20000000000)
-	c.config.gasMultiplier = big.NewFloat(1)
+func (c *EVMClient) Configurate(path string, name string) error {
+	rawCfg, err := GetConfig(path, name)
+	if err != nil {
+		return err
+	}
+	cfg, err := ParseConfig(rawCfg)
+	if err != nil {
+		return err
+	}
+	c.config = cfg
+	generalConfig := cfg.SharedEVMConfig.GeneralChainConfig
+
+	kp, err := keystore.KeypairFromAddress(generalConfig.From, keystore.EthChain, generalConfig.KeystorePath, generalConfig.Insecure)
+	if err != nil {
+		panic(err)
+	}
+	krp := kp.(*secp256k1.Keypair)
+	c.config.kp = krp
+
+	log.Info().Str("url", generalConfig.Endpoint).Msg("Connecting to evm chain...")
+	rpcClient, err := rpc.DialContext(context.TODO(), generalConfig.Endpoint)
+	if err != nil {
+		return err
+	}
+	c.Client = ethclient.NewClient(rpcClient)
+	c.rpClient = rpcClient
+
+	if generalConfig.LatestBlock {
+		curr, err := c.LatestBlock()
+		if err != nil {
+			return err
+		}
+		cfg.SharedEVMConfig.StartBlock = curr
+	}
+
+	return nil
 
 }
 
@@ -209,12 +225,12 @@ func (c *EVMClient) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
 		return nil, err
 	}
 
-	gasPrice := multiplyGasPrice(suggestedGasPrice, c.config.gasMultiplier)
+	gasPrice := multiplyGasPrice(suggestedGasPrice, c.config.SharedEVMConfig.GasMultiplier)
 
 	// Check we aren't exceeding our limit
 
-	if gasPrice.Cmp(c.config.maxGasPrice) == 1 {
-		return c.config.maxGasPrice, nil
+	if gasPrice.Cmp(c.config.SharedEVMConfig.MaxGasPrice) == 1 {
+		return c.config.SharedEVMConfig.MaxGasPrice, nil
 	} else {
 		return gasPrice, nil
 	}
@@ -251,4 +267,8 @@ func buildQuery(contract common.Address, sig string, startBlock *big.Int, endBlo
 		},
 	}
 	return query
+}
+
+func (c *EVMClient) GetConfig() *EVMConfig {
+	return c.config
 }
