@@ -15,11 +15,12 @@ func extractAmountTransferred(message *Message) (int, error) {
 	// index 0: amount ([]byte)
 	// index 1: destination recipient address ([]byte)
 
-	b, ok := message.Payload[0].([]byte)
+	// cast interface to byte slice
+	amountByteSlice, ok := message.Payload[0].([]byte)
 	if !ok {
 		err := errors.New("could not cast interface to byte slice")
 		return 0, err
 	}
 
-	return int(b[0]), nil
+	return int(amountByteSlice[0]), nil
 }
