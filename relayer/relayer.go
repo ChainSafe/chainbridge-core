@@ -4,6 +4,12 @@
 package relayer
 
 import (
+	"bytes"
+	"encoding/binary"
+	"encoding/gob"
+	"net/http"
+
+	"github.com/ChainSafe/chainbridge-core/metrics"
 	"github.com/rs/zerolog/log"
 )
 
@@ -27,6 +33,17 @@ type Relayer struct {
 func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 	log.Debug().Msgf("Starting relayer")
 	messagesChannel := make(chan *Message)
+
+	// init new instance of Metrics
+	chainMetrics := metrics.New()
+
+	// register /metrics endpoint
+	http.HandleFunc("/metrics", chainMetrics.MetricsHandler)
+
+	// start listener in goroutine so non-blocking
+	go http.ListenAndServe(":2112", nil)
+	log.Info().Msg("Metrics server listening at: http://localhost:2112/metrics")
+
 	for _, c := range r.relayedChains {
 		log.Debug().Msgf("Starting chain %v", c.ChainID())
 		r.addRelayedChain(c)
@@ -35,7 +52,7 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 	for {
 		select {
 		case m := <-messagesChannel:
-			go r.route(m)
+			go r.route(m, chainMetrics)
 			continue
 		case _ = <-stop:
 			return
@@ -44,12 +61,40 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 }
 
 // Route function winds destination writer by mapping DestinationID from message to registered writer.
-func (r *Relayer) route(m *Message) {
+func (r *Relayer) route(m *Message, chainMetrics *metrics.ChainMetrics) {
 	w, ok := r.registry[m.Destination]
 	if !ok {
 		log.Error().Msgf("no resolver for destID %v to send message registered", m.Destination)
 		return
 	}
+
+	// parse payload field from event log message to obtain transfer amount
+	// payload slice of interfaces includes..
+	// index 0: amount ([]byte)
+	// index 1: destination recipient address ([]byte)
+
+	// convert interface => []byte
+	// declare new bytes buffer
+	var buf bytes.Buffer
+
+	// init new encoder
+	enc := gob.NewEncoder(&buf)
+
+	// encode interface into buffer
+	// only need index 0: amount
+	err := enc.Encode(m.Payload[0])
+	if err != nil {
+		log.Error().Err(err).Msgf("%v", m)
+		return
+	}
+
+	// convert []byte => uint64
+	payloadAmount := binary.BigEndian.Uint64(buf.Bytes())
+
+	// increment chain metrics
+	chainMetrics.TotalAmountTransferred += int(payloadAmount)
+	chainMetrics.TotalNumberOfTransfers += 1
+
 	log.Debug().Msgf("Sending message %+v to destination %v", m, m.Destination)
 	if err := w.Write(m); err != nil {
 		log.Error().Err(err).Msgf("%v", m)
