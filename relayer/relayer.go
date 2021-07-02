@@ -4,8 +4,10 @@
 package relayer
 
 import (
-	"fmt"
+	"net/http"
 
+	"github.com/ChainSafe/chainbridge-core/metrics"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 )
 
@@ -29,6 +31,17 @@ type Relayer struct {
 func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 	log.Debug().Msgf("Starting relayer")
 	messagesChannel := make(chan *Message)
+
+	// init new instance of ChainMetrics
+	chainMetrics := metrics.NewChainMetrics()
+
+	// register handler
+	http.Handle("/metrics", promhttp.Handler())
+
+	// start http server in non-blocking goroutine
+	go http.ListenAndServe(":2112", nil)
+	log.Debug().Msg("listening on: http://localhost:2112/metrics")
+
 	for _, c := range r.relayedChains {
 		log.Debug().Msgf("Starting chain %v", c.ChainID())
 		r.addRelayedChain(c)
@@ -37,7 +50,7 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 	for {
 		select {
 		case m := <-messagesChannel:
-			go r.route(m)
+			go r.route(m, chainMetrics)
 			continue
 		case _ = <-stop:
 			return
@@ -46,15 +59,27 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 }
 
 // Route function winds destination writer by mapping DestinationID from message to registered writer.
-func (r *Relayer) route(m *Message) {
+func (r *Relayer) route(m *Message, chainMetrics *metrics.ChainMetrics) {
 	w, ok := r.registry[m.Destination]
 	if !ok {
-		log.Error().Msgf(fmt.Sprintf("no resolver for destID %v to send message registered", m.Destination))
+		log.Error().Msgf("no resolver for destID %v to send message registered", m.Destination)
 		return
 	}
+
+	// extract amount from Payload field
+	payloadAmount, err := extractAmountTransferred(m)
+	if err != nil {
+		log.Error().Err(err)
+		return
+	}
+
+	// increment chain metrics
+	chainMetrics.AmountTransferred.Add(float64(payloadAmount))
+	chainMetrics.NumberOfTransfers.Inc()
+
 	log.Debug().Msgf("Sending message %+v to destination %v", m, m.Destination)
 	if err := w.Write(m); err != nil {
-		log.Error().Err(err).Msg(fmt.Sprint(m))
+		log.Error().Err(err).Msgf("%v", m)
 		return
 	}
 }
