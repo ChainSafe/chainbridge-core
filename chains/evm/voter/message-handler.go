@@ -74,7 +74,7 @@ func (mh *EVMMessageHandler) matchResourceIDToHandlerAddress(rID [32]byte) (comm
 func (mh *EVMMessageHandler) MatchAddressWithHandlerFunc(addr common.Address) (MessageHandlerFunc, error) {
 	h, ok := mh.handlers[addr]
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("no corresponding handler for this address %s exists", addr.Hex()))
+		return nil, errors.New(fmt.Sprintf("no corresponding message handler for this address %s exists", addr.Hex()))
 	}
 	return h, nil
 }

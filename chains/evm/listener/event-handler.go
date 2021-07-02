@@ -67,7 +67,7 @@ func (e *ETHEventHandler) matchResourceIDToHandlerAddress(rID [32]byte) (common.
 func (e *ETHEventHandler) matchAddressWithHandlerFunc(addr common.Address) (EventHandlerFunc, error) {
 	hf, ok := e.eventHandlers[addr]
 	if !ok {
-		return nil, errors.New("no corresponding handler for this address exists")
+		return nil, errors.New("no corresponding event handler for this address exists")
 	}
 	return hf, nil
 }
