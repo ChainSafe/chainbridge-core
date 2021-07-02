@@ -39,7 +39,6 @@ func NewEVMChain(dr EventListener, writer ProposalVoter, kvdb blockstore.KeyValu
 func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *relayer.Message) {
 	log.Info().Msg("Polling Blocks...")
 	// Handler chain specific configs and flags
-	//b, err := blockstore.GetLastStoredBlock(c.kvdb, c.chainID)
 	block, err := blockstore.SetupBlockstore(&c.config.GeneralChainConfig, c.kvdb, c.config.StartBlock)
 	if err != nil {
 		sysErr <- fmt.Errorf("error %w on getting last stored block", err)
