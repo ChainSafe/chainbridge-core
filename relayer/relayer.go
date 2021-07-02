@@ -4,9 +4,6 @@
 package relayer
 
 import (
-	"bytes"
-	"encoding/binary"
-	"encoding/gob"
 	"net/http"
 
 	"github.com/ChainSafe/chainbridge-core/metrics"
@@ -34,7 +31,7 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 	log.Debug().Msgf("Starting relayer")
 	messagesChannel := make(chan *Message)
 
-	// init new instance of Metrics
+	// init new instance of ChainMetrics
 	chainMetrics := metrics.New()
 
 	// register /metrics endpoint
@@ -68,28 +65,12 @@ func (r *Relayer) route(m *Message, chainMetrics *metrics.ChainMetrics) {
 		return
 	}
 
-	// parse payload field from event log message to obtain transfer amount
-	// payload slice of interfaces includes..
-	// index 0: amount ([]byte)
-	// index 1: destination recipient address ([]byte)
-
-	// convert interface => []byte
-	// declare new bytes buffer
-	var buf bytes.Buffer
-
-	// init new encoder
-	enc := gob.NewEncoder(&buf)
-
-	// encode interface into buffer
-	// only need index 0: amount
-	err := enc.Encode(m.Payload[0])
+	// extract amount transferred from message
+	payloadAmount, err := extractAmountTransferred(m)
 	if err != nil {
-		log.Error().Err(err).Msgf("%v", m)
+		log.Error().Err(err)
 		return
 	}
-
-	// convert []byte => uint64
-	payloadAmount := binary.BigEndian.Uint64(buf.Bytes())
 
 	// increment chain metrics
 	chainMetrics.TotalAmountTransferred += int(payloadAmount)
