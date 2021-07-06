@@ -135,6 +135,8 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddr
 	if err != nil {
 		return nil, err
 	}
+	// TODO: panic: runtime error: index out of range [0] with length 0
+	// occurs upon calling deposit on ethereum with destination chain being optimism
 	out0 := *abi.ConvertType(res[0], new(ERC20HandlerDepositRecord)).(*ERC20HandlerDepositRecord)
 	return &relayer.Message{
 		Source:       sourceID,
