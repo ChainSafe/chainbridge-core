@@ -128,7 +128,7 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddr
 		Amount                         *big.Int
 	}
 	a, err := abi.JSON(strings.NewReader(definition))
-	input, err := a.Pack("getDepositRecord", big.NewInt(0).SetUint64(nonce).Bytes(), big.NewInt(0).SetUint64(uint64(destId)).Bytes())
+	input, err := a.Pack("getDepositRecord", nonce, destId)
 	if err != nil {
 		return nil, err
 	}
