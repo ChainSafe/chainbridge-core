@@ -3,6 +3,8 @@
 
 package relayer
 
+import "errors"
+
 type TransferType string
 
 const (
@@ -32,4 +34,22 @@ type Message struct {
 	ResourceId   [32]byte
 	Payload      []interface{} // data associated with event sequence
 	Type         TransferType
+}
+
+// extractAmountTransferred is a private method to extract and transform the transfer amount
+// from the Payload field within the Message struct
+func (m *Message) extractAmountTransferred() (int, error) {
+	// parse payload field from event log message to obtain transfer amount
+	// payload slice of interfaces includes..
+	// index 0: amount ([]byte)
+	// index 1: destination recipient address ([]byte)
+
+	// cast interface to byte slice
+	amountByteSlice, ok := m.Payload[0].([]byte)
+	if !ok {
+		err := errors.New("could not cast interface to byte slice")
+		return 0, err
+	}
+
+	return int(amountByteSlice[0]), nil
 }
