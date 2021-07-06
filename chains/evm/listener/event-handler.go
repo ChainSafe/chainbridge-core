@@ -117,6 +117,7 @@ func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
 }
 
 func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, client ChainClient) (*relayer.Message, error) {
+	definition := "[{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"internalType\":\"uint8\",\"name\":\"destId\",\"type\":\"uint8\"}],\"name\":\"getDepositRecord\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"internalType\":\"uint8\",\"name\":\"_lenDestinationRecipientAddress\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"_destinationChainID\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"_resourceID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"_destinationRecipientAddress\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"_depositer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"internalType\":\"structERC20Handler.DepositRecord\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
 	type ERC20HandlerDepositRecord struct {
 		TokenAddress                   common.Address
 		LenDestinationRecipientAddress uint8
@@ -126,15 +127,22 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddr
 		Depositer                      common.Address
 		Amount                         *big.Int
 	}
-	input, err := buildDataUnsafe([]byte("getDepositRecord(uint64,uint8"), big.NewInt(0).SetUint64(nonce).Bytes(), big.NewInt(0).SetUint64(uint64(destId)).Bytes())
+	a, err := abi.JSON(strings.NewReader(definition))
+	input, err := a.Pack("getDepositRecord", big.NewInt(0).SetUint64(nonce).Bytes(), big.NewInt(0).SetUint64(uint64(destId)).Bytes())
 	if err != nil {
 		return nil, err
 	}
+
 	msg := ethereum.CallMsg{From: common.Address{}, To: &handlerContractAddress, Data: input}
-	res, err := client.CallContract(context.TODO(), toCallArg(msg), nil)
+	out, err := client.CallContract(context.TODO(), toCallArg(msg), nil)
 	if err != nil {
 		return nil, err
 	}
+	res, err := a.Unpack("getDepositRecord", out)
+	if len(res) == 0 {
+		return nil, errors.New("no handler associated with such resourceID")
+	}
+
 	out0 := *abi.ConvertType(res[0], new(ERC20HandlerDepositRecord)).(*ERC20HandlerDepositRecord)
 	return &relayer.Message{
 		Source:       sourceID,
