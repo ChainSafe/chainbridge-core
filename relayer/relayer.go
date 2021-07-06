@@ -67,7 +67,7 @@ func (r *Relayer) route(m *Message, chainMetrics *metrics.ChainMetrics) {
 	}
 
 	// extract amount from Payload field
-	payloadAmount, err := extractAmountTransferred(m)
+	payloadAmount, err := m.extractAmountTransferred()
 	if err != nil {
 		log.Error().Err(err)
 		return
