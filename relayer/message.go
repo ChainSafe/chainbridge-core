@@ -57,12 +57,9 @@ func (m *Message) extractAmountTransferred() (float64, error) {
 		return payloadAmountFloat, err
 	}
 
-	// init new big int for conversion
-	payloadAmountBigInt := big.NewInt(0).SetBytes(amountByteSlice)
-
 	// convert big int => float64
 	// ignore accuracy (rounding)
-	payloadAmountFloat, _ = new(big.Float).SetInt(payloadAmountBigInt).Float64()
+	payloadAmountFloat, _ = new(big.Float).SetInt(big.NewInt(0).SetBytes(amountByteSlice)).Float64()
 
 	return payloadAmountFloat, nil
 }
