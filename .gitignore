@@ -40,3 +40,4 @@ centrifuge-chain/
 /solidity
 /cfgBuilder/*.toml
 /lvldbdata
+/chains/evm/contracts
