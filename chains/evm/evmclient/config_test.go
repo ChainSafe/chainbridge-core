@@ -184,7 +184,6 @@ func createGeneralConfig() config.GeneralChainConfig {
 	var id uint8 = 1
 	return config.GeneralChainConfig{
 		Name:     "chain",
-		Type:     "ethereum",
 		Id:       &id,
 		Endpoint: "endpoint",
 		From:     "0x0",

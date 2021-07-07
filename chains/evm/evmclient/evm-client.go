@@ -40,7 +40,6 @@ func NewEVMClient() *EVMClient {
 	return &EVMClient{}
 }
 
-// TO implement interface Configurable
 func (c *EVMClient) Configurate(path string, name string) error {
 	rawCfg, err := GetConfig(path, name)
 	if err != nil {
