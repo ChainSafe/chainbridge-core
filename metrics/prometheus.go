@@ -19,12 +19,16 @@ type ChainMetrics struct {
 func NewChainMetrics() *ChainMetrics {
 	metrics := &ChainMetrics{
 		AmountTransferred: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "chainbridge_total_amount_transferred",
-			Help: "Number of tokens transferred across bridge",
+			Namespace: "chainbridge",
+			Name:      "total_amount_transferred",
+			Subsystem: "analytics",
+			Help:      "Number of tokens transferred across bridge",
 		}),
 		NumberOfTransfers: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "chainbridge_total_number_of_transfers",
-			Help: "Number of transfers occurred across bridge",
+			Namespace: "chainbridge",
+			Name:      "total_number_of_transfers",
+			Subsystem: "analytics",
+			Help:      "Number of transfers occurred across bridge",
 		}),
 	}
 
