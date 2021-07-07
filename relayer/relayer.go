@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/ChainSafe/chainbridge-core/metrics"
+	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 )
@@ -35,11 +36,16 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 	// init new instance of ChainMetrics
 	chainMetrics := metrics.NewChainMetrics()
 
-	// register handler
-	http.Handle("/metrics", promhttp.Handler())
+	// init new mux router
+	router := mux.NewRouter()
+
+	// register path + handler
+	router.Path("/metrics").Handler(promhttp.Handler())
 
 	// start http server in non-blocking goroutine
-	go http.ListenAndServe(":2112", nil)
+	go func() {
+		log.Fatal().Err(http.ListenAndServe(":2112", router))
+	}()
 	log.Debug().Msg("listening on: http://localhost:2112/metrics")
 
 	for _, c := range r.relayedChains {
