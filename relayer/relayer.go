@@ -74,7 +74,7 @@ func (r *Relayer) route(m *Message, chainMetrics *metrics.ChainMetrics) {
 	}
 
 	// increment chain metrics
-	chainMetrics.AmountTransferred.Add(float64(payloadAmount))
+	chainMetrics.AmountTransferred.Add(payloadAmount)
 	chainMetrics.NumberOfTransfers.Inc()
 
 	log.Debug().Msgf("Sending message %+v to destination %v", m, m.Destination)
