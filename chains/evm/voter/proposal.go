@@ -43,6 +43,7 @@ func (p *Proposal) Status(evmCaller ChainClient) (relayer.ProposalStatus, error)
 	out, err := evmCaller.CallContract(context.TODO(), toCallArg(msg), nil)
 	log.Info().Msgf("Out from contract call: %v", out)
 	log.Debug().Msg(strconv.Itoa(len(out)))
+	log.Info().Msgf("Status call err: %w", err)
 	if err != nil {
 		return relayer.ProposalStatusInactive, err
 	}

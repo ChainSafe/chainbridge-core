@@ -93,6 +93,7 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
 		select {
 		case <-time.After(BlockRetryInterval):
 			ps, err := prop.Status(w.client)
+			log.Info().Msgf("Proposal status: %v", ps)
 			if err != nil {
 				log.Error().Err(err).Msgf("error getting proposal status %+v", prop)
 				return err
