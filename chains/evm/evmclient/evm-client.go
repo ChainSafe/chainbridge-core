@@ -129,12 +129,6 @@ func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common
 	}
 	depositLogs := make([]*listener.DepositLogs, 0)
 	for _, l := range logs {
-		// Parse logs by using Unpack rather than Topics as all the event types are no longer indexed
-		// dl := &listener.DepositLogs{
-		// 	DestinationID: uint8(l.Topics[1].Big().Uint64()),
-		// 	ResourceID:    l.Topics[2],
-		// 	DepositNonce:  l.Topics[3].Big().Uint64(),
-		// }
 		var dl listener.DepositLogs
 		err := contractAbi.UnpackIntoInterface(&dl, "Deposit", l.Data)
 		if err != nil {
