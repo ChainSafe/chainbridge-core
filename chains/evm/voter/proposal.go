@@ -41,9 +41,7 @@ func (p *Proposal) Status(evmCaller ChainClient) (relayer.ProposalStatus, error)
 
 	msg := ethereum.CallMsg{From: common.Address{}, To: &p.BridgeAddress, Data: input}
 	out, err := evmCaller.CallContract(context.TODO(), toCallArg(msg), nil)
-	log.Info().Msgf("Out from contract call: %v", out)
 	log.Debug().Msg(strconv.Itoa(len(out)))
-	log.Info().Msgf("Status call err: %w", err)
 	if err != nil {
 		return relayer.ProposalStatusInactive, err
 	}
@@ -54,7 +52,6 @@ func (p *Proposal) Status(evmCaller ChainClient) (relayer.ProposalStatus, error)
 		ProposedBlock *big.Int
 	}
 	res, err := a.Unpack("getProposal", out)
-	log.Info().Msgf("Result: %v", res)
 	out0 := *abi.ConvertType(res[0], new(bridgeProposal)).(*bridgeProposal)
 	return relayer.ProposalStatus(out0.Status), nil
 }
@@ -131,7 +128,6 @@ func (p *Proposal) Vote(client ChainClient) error {
 	}
 	gasLimit := uint64(1000000)
 	gp, err := client.GasPrice()
-	log.Info().Msgf("Gas Price used: %v", gp)
 	if err != nil {
 		return err
 	}

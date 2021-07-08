@@ -11,7 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/rs/zerolog/log"
 )
 
 type EventHandlers map[common.Address]EventHandlerFunc
@@ -115,14 +114,12 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddr
 		return nil, err
 	}
 
-	log.Info().Msgf("handler contract address: %v", handlerContractAddress)
 	msg := ethereum.CallMsg{From: common.Address{}, To: &handlerContractAddress, Data: input}
 	out, err := client.CallContract(context.TODO(), toCallArg(msg), nil)
 	if err != nil {
 		return nil, err
 	}
 	res, err := a.Unpack("getDepositRecord", out)
-	log.Info().Msgf("getDepositRecord res: %v", res)
 	if len(res) == 0 {
 		return nil, errors.New("no handler associated with such resourceID")
 	}

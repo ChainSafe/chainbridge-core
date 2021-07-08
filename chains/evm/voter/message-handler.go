@@ -63,7 +63,6 @@ func (mh *EVMMessageHandler) matchResourceIDToHandlerAddress(rID [32]byte) (comm
 		return common.Address{}, err
 	}
 	res, err := a.Unpack("_resourceIDToHandlerAddress", out)
-	log.Info().Msgf("Result handler: %v", res)
 	if len(res) == 0 {
 		return common.Address{}, errors.New("no handler associated with such resourceID")
 	}
