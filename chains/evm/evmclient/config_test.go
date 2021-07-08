@@ -60,7 +60,6 @@ func TestParseChainConfig(t *testing.T) {
 			MaxGasPrice:        big.NewInt(20),
 			GasMultiplier:      big.NewFloat(1),
 			GasLimit:           big.NewInt(10),
-			Http:               true,
 			StartBlock:         big.NewInt(9999),
 			BlockConfirmations: big.NewInt(10),
 		},
@@ -106,7 +105,6 @@ func TestParseChainConfigWithNoBlockConfirmations(t *testing.T) {
 			MaxGasPrice:        big.NewInt(20),
 			GasMultiplier:      big.NewFloat(1),
 			GasLimit:           big.NewInt(10),
-			Http:               true,
 			StartBlock:         big.NewInt(9999),
 			BlockConfirmations: big.NewInt(10),
 		},
@@ -148,7 +146,6 @@ func TestChainConfigOneContract(t *testing.T) {
 			MaxGasPrice:        big.NewInt(20),
 			GasMultiplier:      big.NewFloat(1),
 			GasLimit:           big.NewInt(10),
-			Http:               true,
 			StartBlock:         big.NewInt(0),
 			BlockConfirmations: big.NewInt(10),
 		},
@@ -184,7 +181,6 @@ func createGeneralConfig() config.GeneralChainConfig {
 	var id uint8 = 1
 	return config.GeneralChainConfig{
 		Name:     "chain",
-		Type:     "ethereum",
 		Id:       &id,
 		Endpoint: "endpoint",
 		From:     "0x0",

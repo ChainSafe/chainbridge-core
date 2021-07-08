@@ -12,7 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/rs/zerolog/log"
-	"golang.org/x/crypto/sha3"
 )
 
 type EventHandlers map[common.Address]EventHandlerFunc
@@ -78,23 +77,6 @@ func (e *ETHEventHandler) RegisterEventHandler(address string, handler EventHand
 		e.eventHandlers = make(map[common.Address]EventHandlerFunc)
 	}
 	e.eventHandlers[common.HexToAddress(address)] = handler
-}
-
-func buildDataUnsafe(method []byte, params ...[]byte) ([]byte, error) {
-	hash := sha3.NewLegacyKeccak256()
-	_, err := hash.Write(method)
-	if err != nil {
-		return nil, err
-	}
-	methodID := hash.Sum(nil)[:4]
-
-	var data []byte
-	data = append(data, methodID...)
-	for _, v := range params {
-		paddedParam := common.LeftPadBytes(v, 32)
-		data = append(data, paddedParam...)
-	}
-	return data, nil
 }
 
 func toCallArg(msg ethereum.CallMsg) map[string]interface{} {

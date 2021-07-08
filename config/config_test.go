@@ -8,7 +8,6 @@ func TestValidateConfig(t *testing.T) {
 	var id uint8 = 1
 	valid := GeneralChainConfig{
 		Name:     "chain",
-		Type:     "ethereum",
 		Id:       &id,
 		Endpoint: "endpoint",
 		From:     "0x0",
@@ -16,7 +15,6 @@ func TestValidateConfig(t *testing.T) {
 
 	missingType := GeneralChainConfig{
 		Name:     "chain",
-		Type:     "",
 		Id:       &id,
 		Endpoint: "endpoint",
 		From:     "0x0",
@@ -24,7 +22,6 @@ func TestValidateConfig(t *testing.T) {
 
 	missingEndpoint := GeneralChainConfig{
 		Name:     "chain",
-		Type:     "ethereum",
 		Id:       &id,
 		Endpoint: "",
 		From:     "0x0",
@@ -32,7 +29,6 @@ func TestValidateConfig(t *testing.T) {
 
 	missingName := GeneralChainConfig{
 		Name:     "",
-		Type:     "ethereum",
 		Id:       &id,
 		Endpoint: "endpoint",
 		From:     "0x0",
@@ -40,7 +36,6 @@ func TestValidateConfig(t *testing.T) {
 
 	missingId := GeneralChainConfig{
 		Name:     "chain",
-		Type:     "ethereum",
 		Endpoint: "endpoint",
 		From:     "0x0",
 	}

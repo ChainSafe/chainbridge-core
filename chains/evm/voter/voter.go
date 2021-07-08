@@ -27,6 +27,7 @@ type ChainClient interface {
 	UnlockNonce()
 	UnsafeIncreaseNonce() error
 	GasPrice() (*big.Int, error)
+	ChainID(ctx context.Context) (*big.Int, error)
 }
 
 type Proposer interface {

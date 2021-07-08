@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/status-im/keycard-go/hexutils"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"
@@ -13,7 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
-	"github.com/status-im/keycard-go/hexutils"
 )
 
 type Proposal struct {
@@ -37,7 +38,6 @@ func (p *Proposal) Status(evmCaller ChainClient) (relayer.ProposalStatus, error)
 	if err != nil {
 		return relayer.ProposalStatusInactive, err
 	}
-	log.Debug().Msg(hexutils.BytesToHex(input))
 
 	msg := ethereum.CallMsg{From: common.Address{}, To: &p.BridgeAddress, Data: input}
 	out, err := evmCaller.CallContract(context.TODO(), toCallArg(msg), nil)
@@ -80,6 +80,7 @@ func (p *Proposal) VotedBy(evmCaller ChainClient, by common.Address) (bool, erro
 }
 
 func (p *Proposal) Execute(client ChainClient) error {
+	log.Debug().Str("rID", hexutils.BytesToHex(p.ResourceId[:])).Uint64("depositNonce", p.DepositNonce).Msg("Executing proposal")
 	definition := "[{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"chainID\",\"type\":\"uint8\"},{\"internalType\":\"uint64\",\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"resourceID\",\"type\":\"bytes32\"}],\"name\":\"executeProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 	a, err := abi.JSON(strings.NewReader(definition))
 	if err != nil {
@@ -99,21 +100,26 @@ func (p *Proposal) Execute(client ChainClient) error {
 	if err != nil {
 		return err
 	}
-	tx := evmtransaction.NewTransaction(n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
+	cid, err := client.ChainID(context.Background())
+	if err != nil {
+		return err
+	}
+	tx := evmtransaction.NewTransaction(cid, n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
 	h, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return err
 	}
+	log.Debug().Str("hash", h.Hex()).Uint64("nonce", n.Uint64()).Msgf("Executed")
 	err = client.UnsafeIncreaseNonce()
 	if err != nil {
 		return err
 	}
 	client.UnlockNonce()
-	log.Debug().Str("hash", h.Hex()).Msgf("Executed")
 	return nil
 }
 
 func (p *Proposal) Vote(client ChainClient) error {
+	log.Debug().Str("rID", hexutils.BytesToHex(p.ResourceId[:])).Uint64("depositNonce", p.DepositNonce).Msg("Voting proposal")
 	definition := "[{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"chainID\",\"type\":\"uint8\"},{\"internalType\":\"uint64\",\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"resourceID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"dataHash\",\"type\":\"bytes32\"}],\"name\":\"voteProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 	a, err := abi.JSON(strings.NewReader(definition))
 	if err != nil {
@@ -134,17 +140,21 @@ func (p *Proposal) Vote(client ChainClient) error {
 	if err != nil {
 		return err
 	}
-	tx := evmtransaction.NewTransaction(n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
-	h, err := client.SignAndSendTransaction(context.TODO(), tx)
+	cid, err := client.ChainID(context.Background())
 	if err != nil {
 		return err
 	}
+	tx := evmtransaction.NewTransaction(cid, n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
+	_, err = client.SignAndSendTransaction(context.TODO(), tx)
+	if err != nil {
+		return err
+	}
+	log.Debug().Str("hash", tx.Hash().String()).Uint64("nonce", n.Uint64()).Str("chainID", cid.String()).Msgf("Voted")
 	err = client.UnsafeIncreaseNonce()
 	if err != nil {
 		return err
 	}
 	client.UnlockNonce()
-	log.Debug().Str("hash", h.Hex()).Msgf("Voted")
 	return nil
 }
 

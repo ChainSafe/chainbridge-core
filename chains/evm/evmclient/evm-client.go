@@ -42,7 +42,6 @@ func NewEVMClient() *EVMClient {
 	return &EVMClient{}
 }
 
-// TO implement interface Configurable
 func (c *EVMClient) Configurate(path string, name string) error {
 	rawCfg, err := GetConfig(path, name)
 	if err != nil {
@@ -164,6 +163,8 @@ func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string
 	return hex, nil
 }
 
+//func (c *EVMClient) ChainID()
+
 func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransaction) (common.Hash, error) {
 	id, err := c.ChainID(ctx)
 	if err != nil {
@@ -202,7 +203,8 @@ func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
 				time.Sleep(1)
 				continue
 			}
-			return big.NewInt(0).SetUint64(nonce), nil
+			c.nonce = big.NewInt(0).SetUint64(nonce)
+			return c.nonce, nil
 		}
 		return c.nonce, nil
 	}

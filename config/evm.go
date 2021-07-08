@@ -19,7 +19,6 @@ type SharedEVMConfig struct {
 	MaxGasPrice        *big.Int
 	GasMultiplier      *big.Float
 	GasLimit           *big.Int
-	Http               bool
 	StartBlock         *big.Int
 	BlockConfirmations *big.Int
 }
@@ -33,7 +32,6 @@ type RawSharedEVMConfig struct {
 	MaxGasPrice        int64   `mapstructure:"maxGasPrice"`
 	GasMultiplier      float64 `mapstructure:"gasMultiplier"`
 	GasLimit           int64   `mapstructure:"gasLimit"`
-	Http               bool    `mapstructure:"http"`
 	StartBlock         int64   `mapstructure:"startBlock"`
 	BlockConfirmations int64   `mapstructure:"blockConfirmations"`
 }
@@ -60,7 +58,6 @@ func (c *RawSharedEVMConfig) ParseConfig() (*SharedEVMConfig, error) {
 		GasLimit:           big.NewInt(DefaultGasLimit),
 		MaxGasPrice:        big.NewInt(DefaultGasPrice),
 		GasMultiplier:      big.NewFloat(DefaultGasMultiplier),
-		Http:               c.Http,
 		StartBlock:         big.NewInt(c.StartBlock),
 		BlockConfirmations: big.NewInt(DefaultBlockConfirmations),
 	}
