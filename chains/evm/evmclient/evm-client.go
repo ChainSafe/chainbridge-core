@@ -129,7 +129,7 @@ func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common
 	}
 	depositLogs := make([]*listener.DepositLogs, 0)
 	for _, l := range logs {
-		//log.Info().Msgf("Log Topics: %v", l.Topics)
+		// Parse logs by using Unpack rather than Topics as all the event types are no longer indexed
 		// dl := &listener.DepositLogs{
 		// 	DestinationID: uint8(l.Topics[1].Big().Uint64()),
 		// 	ResourceID:    l.Topics[2],
@@ -242,9 +242,6 @@ func (c *EVMClient) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
 
 	gasPrice := multiplyGasPrice(suggestedGasPrice, c.config.SharedEVMConfig.GasMultiplier)
 
-	// Check we aren't exceeding our limit
-	log.Info().Msgf("Estimated gas: %v", gasPrice)
-	log.Info().Msgf("Max gas price: %v", c.config.SharedEVMConfig.MaxGasPrice)
 	if gasPrice.Cmp(c.config.SharedEVMConfig.MaxGasPrice) == 1 {
 		return c.config.SharedEVMConfig.MaxGasPrice, nil
 	} else {
