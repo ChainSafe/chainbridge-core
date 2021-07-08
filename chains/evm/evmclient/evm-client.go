@@ -192,7 +192,8 @@ func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
 				time.Sleep(1)
 				continue
 			}
-			return big.NewInt(0).SetUint64(nonce), nil
+			c.nonce = big.NewInt(0).SetUint64(nonce)
+			return c.nonce, nil
 		}
 		return c.nonce, nil
 	}

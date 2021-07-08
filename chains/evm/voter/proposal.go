@@ -3,7 +3,6 @@ package voter
 import (
 	"context"
 	"math/big"
-	"strconv"
 	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
@@ -13,7 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
-	"github.com/status-im/keycard-go/hexutils"
 )
 
 type Proposal struct {
@@ -37,11 +35,9 @@ func (p *Proposal) Status(evmCaller ChainClient) (relayer.ProposalStatus, error)
 	if err != nil {
 		return relayer.ProposalStatusInactive, err
 	}
-	log.Debug().Msg(hexutils.BytesToHex(input))
 
 	msg := ethereum.CallMsg{From: common.Address{}, To: &p.BridgeAddress, Data: input}
 	out, err := evmCaller.CallContract(context.TODO(), toCallArg(msg), nil)
-	log.Debug().Msg(strconv.Itoa(len(out)))
 	if err != nil {
 		return relayer.ProposalStatusInactive, err
 	}
