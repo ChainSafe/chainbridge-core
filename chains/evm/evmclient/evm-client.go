@@ -154,6 +154,8 @@ func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string
 	return hex, nil
 }
 
+//func (c *EVMClient) ChainID()
+
 func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransaction) (common.Hash, error) {
 	id, err := c.ChainID(ctx)
 	if err != nil {

@@ -102,12 +102,12 @@ func (p *Proposal) Execute(client ChainClient) error {
 	if err != nil {
 		return err
 	}
+	log.Debug().Str("hash", h.Hex()).Uint64("nonce", n.Uint64()).Msgf("Executed")
 	err = client.UnsafeIncreaseNonce()
 	if err != nil {
 		return err
 	}
 	client.UnlockNonce()
-	log.Debug().Str("hash", h.Hex()).Uint64("nonce", n.Uint64()).Msgf("Executed")
 	return nil
 }
 
@@ -132,17 +132,21 @@ func (p *Proposal) Vote(client ChainClient) error {
 	if err != nil {
 		return err
 	}
-	tx := evmtransaction.NewTransaction(n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
-	h, err := client.SignAndSendTransaction(context.TODO(), tx)
+	cid, err := client.ChainID(context.Background())
 	if err != nil {
 		return err
 	}
+	tx := evmtransaction.NewTransaction(cid, n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
+	_, err = client.SignAndSendTransaction(context.TODO(), tx)
+	if err != nil {
+		return err
+	}
+	log.Debug().Str("hash", tx.Hash().String()).Uint64("nonce", n.Uint64()).Str("chainID", cid.String()).Msgf("Voted")
 	err = client.UnsafeIncreaseNonce()
 	if err != nil {
 		return err
 	}
 	client.UnlockNonce()
-	log.Debug().Str("hash", h.Hex()).Uint64("nonce", n.Uint64()).Msgf("Voted")
 	return nil
 }
 
