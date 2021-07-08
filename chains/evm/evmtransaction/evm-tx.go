@@ -12,7 +12,7 @@ import (
 )
 
 type TX struct {
-	*types.Transaction
+	tx *types.Transaction
 }
 
 // RawWithSignature mostly copies WithSignature interface of type.Transaction from go-ethereum,
@@ -24,10 +24,11 @@ func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, 
 	if err != nil {
 		return nil, err
 	}
-	tx, err := opts.Signer(crypto.PubkeyToAddress(key.PublicKey), a.Transaction)
+	tx, err := opts.Signer(crypto.PubkeyToAddress(key.PublicKey), a.tx)
 	if err != nil {
 		return nil, err
 	}
+	a.tx = tx
 	rawTX, err := rlp.EncodeToBytes(tx)
 	if err != nil {
 		return nil, err
@@ -36,18 +37,10 @@ func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, 
 }
 
 func NewTransaction(chainID *big.Int, nonce uint64, to common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *TX {
-	tx := types.NewTx(&types.AccessListTx{
-		ChainID:    chainID,
-		Nonce:      nonce,
-		To:         &to,
-		Value:      amount,
-		Gas:        gasLimit,
-		GasPrice:   gasPrice,
-		Data:       data,
-		AccessList: types.AccessList{}})
+	tx := types.NewTransaction(nonce, to, amount, gasLimit, gasPrice, data)
 	return &TX{tx}
 }
 
 func (a *TX) Hash() common.Hash {
-	return a.Transaction.Hash()
+	return a.tx.Hash()
 }
