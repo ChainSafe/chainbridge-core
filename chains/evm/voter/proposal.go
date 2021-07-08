@@ -5,6 +5,8 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/status-im/keycard-go/hexutils"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"
@@ -75,6 +77,7 @@ func (p *Proposal) VotedBy(evmCaller ChainClient, by common.Address) (bool, erro
 }
 
 func (p *Proposal) Execute(client ChainClient) error {
+	log.Debug().Str("rID", hexutils.BytesToHex(p.ResourceId[:])).Uint64("depositNonce", p.DepositNonce).Msg("Executing proposal")
 	definition := "[{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"chainID\",\"type\":\"uint8\"},{\"internalType\":\"uint64\",\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"resourceID\",\"type\":\"bytes32\"}],\"name\":\"executeProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 	a, err := abi.JSON(strings.NewReader(definition))
 	if err != nil {
@@ -104,11 +107,12 @@ func (p *Proposal) Execute(client ChainClient) error {
 		return err
 	}
 	client.UnlockNonce()
-	log.Debug().Str("hash", h.Hex()).Msgf("Executed")
+	log.Debug().Str("hash", h.Hex()).Uint64("nonce", n.Uint64()).Msgf("Executed")
 	return nil
 }
 
 func (p *Proposal) Vote(client ChainClient) error {
+	log.Debug().Str("rID", hexutils.BytesToHex(p.ResourceId[:])).Uint64("depositNonce", p.DepositNonce).Msg("Voting proposal")
 	definition := "[{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"chainID\",\"type\":\"uint8\"},{\"internalType\":\"uint64\",\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"resourceID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"dataHash\",\"type\":\"bytes32\"}],\"name\":\"voteProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 	a, err := abi.JSON(strings.NewReader(definition))
 	if err != nil {
@@ -138,7 +142,7 @@ func (p *Proposal) Vote(client ChainClient) error {
 		return err
 	}
 	client.UnlockNonce()
-	log.Debug().Str("hash", h.Hex()).Msgf("Voted")
+	log.Debug().Str("hash", h.Hex()).Uint64("nonce", n.Uint64()).Msgf("Voted")
 	return nil
 }
 
