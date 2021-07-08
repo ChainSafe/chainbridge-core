@@ -37,14 +37,14 @@ func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, 
 
 func NewTransaction(chainID *big.Int, nonce uint64, to common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *TX {
 	tx := types.NewTx(&types.AccessListTx{
-		ChainID:  chainID,
-		Nonce:    nonce,
-		To:       &to,
-		Value:    amount,
-		Gas:      gasLimit,
-		GasPrice: gasPrice,
-		Data:     data})
-	//_ = types.NewTransaction(nonce, to, amount, gasLimit, gasPrice, data)
+		ChainID:    chainID,
+		Nonce:      nonce,
+		To:         &to,
+		Value:      amount,
+		Gas:        gasLimit,
+		GasPrice:   gasPrice,
+		Data:       data,
+		AccessList: types.AccessList{}})
 	return &TX{tx}
 }
 

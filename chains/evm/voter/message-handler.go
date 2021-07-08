@@ -14,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/rs/zerolog/log"
-	"golang.org/x/crypto/sha3"
 )
 
 type MessageHandlerFunc func(m *relayer.Message, handlerAddr, bridgeAddress common.Address) (Proposer, error)
@@ -194,21 +193,4 @@ func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
 		arg["gasPrice"] = (*hexutil.Big)(msg.GasPrice)
 	}
 	return arg
-}
-
-func buildDataUnsafe(method []byte, params ...[]byte) ([]byte, error) {
-	hash := sha3.NewLegacyKeccak256()
-	_, err := hash.Write(method)
-	if err != nil {
-		return nil, err
-	}
-	methodID := hash.Sum(nil)[:4]
-
-	var data []byte
-	data = append(data, methodID...)
-	for _, v := range params {
-		paddedParam := common.LeftPadBytes(v, 32)
-		data = append(data, paddedParam...)
-	}
-	return data, nil
 }
