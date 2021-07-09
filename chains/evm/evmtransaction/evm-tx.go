@@ -36,9 +36,9 @@ func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, 
 	return rawTX, nil
 }
 
-func NewTransaction(chainID *big.Int, nonce uint64, to common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *TX {
+func NewTransaction(nonce uint64, to common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *TX {
 	tx := types.NewTransaction(nonce, to, amount, gasLimit, gasPrice, data)
-	return &TX{tx}
+	return &TX{tx: tx}
 }
 
 func (a *TX) Hash() common.Hash {
