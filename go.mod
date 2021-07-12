@@ -7,6 +7,7 @@ require (
 	github.com/ethereum/go-ethereum v1.10.4
 	github.com/pierrec/xxHash v0.1.5 // indirect
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus/client_golang v1.0.0
 	github.com/rs/zerolog v1.23.0
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.8.0

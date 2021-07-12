@@ -3,6 +3,11 @@
 
 package relayer
 
+import (
+	"errors"
+	"math/big"
+)
+
 type TransferType string
 
 const (
@@ -14,11 +19,11 @@ const (
 type ProposalStatus uint8
 
 const (
-	ProposalStatusInactive ProposalStatus = 0
-	ProposalStatusActive   ProposalStatus = 1
-	ProposalStatusPassed   ProposalStatus = 2 // Ready to be executed
-	ProposalStatusExecuted ProposalStatus = 3
-	ProposalStatusCanceled ProposalStatus = 4
+	ProposalStatusInactive ProposalStatus = iota
+	ProposalStatusActive
+	ProposalStatusPassed // Ready to be executed
+	ProposalStatusExecuted
+	ProposalStatusCanceled
 )
 
 var (
@@ -32,4 +37,29 @@ type Message struct {
 	ResourceId   [32]byte
 	Payload      []interface{} // data associated with event sequence
 	Type         TransferType
+}
+
+// extractAmountTransferred is a private method to extract and transform the transfer amount
+// from the Payload field within the Message struct
+func (m *Message) extractAmountTransferred() (float64, error) {
+	// parse payload field from event log message to obtain transfer amount
+	// payload slice of interfaces includes..
+	// index 0: amount ([]byte)
+	// index 1: destination recipient address ([]byte)
+
+	// declare new float64 as return value
+	var payloadAmountFloat float64
+
+	// cast interface to byte slice
+	amountByteSlice, ok := m.Payload[0].([]byte)
+	if !ok {
+		err := errors.New("could not cast interface to byte slice")
+		return payloadAmountFloat, err
+	}
+
+	// convert big int => float64
+	// ignore accuracy (rounding)
+	payloadAmountFloat, _ = new(big.Float).SetInt(big.NewInt(0).SetBytes(amountByteSlice)).Float64()
+
+	return payloadAmountFloat, nil
 }
