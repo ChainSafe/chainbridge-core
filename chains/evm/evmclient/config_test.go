@@ -39,7 +39,6 @@ func TestParseChainConfig(t *testing.T) {
 			MaxGasPrice:        20,
 			GasMultiplier:      1,
 			GasLimit:           10,
-			Http:               true,
 			StartBlock:         9999,
 			BlockConfirmations: 10,
 		},
@@ -84,7 +83,6 @@ func TestParseChainConfigWithNoBlockConfirmations(t *testing.T) {
 			MaxGasPrice:        20,
 			GasMultiplier:      1,
 			GasLimit:           10,
-			Http:               true,
 			StartBlock:         9999,
 		},
 	}
@@ -128,7 +126,6 @@ func TestChainConfigOneContract(t *testing.T) {
 			MaxGasPrice:        20,
 			GasMultiplier:      1,
 			GasLimit:           10,
-			Http:               true,
 		},
 	}
 
