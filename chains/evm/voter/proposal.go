@@ -107,7 +107,7 @@ func (p *Proposal) Execute(client ChainClient) error {
 	if err != nil {
 		return err
 	}
-	log.Debug().Str("hash", hash.Hex()).Uint64("nonce", n.Uint64()).Msgf("Executed")
+	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msgf("Executed")
 	err = client.UnsafeIncreaseNonce()
 	if err != nil {
 		return err
