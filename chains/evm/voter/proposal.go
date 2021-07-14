@@ -29,6 +29,7 @@ type Proposal struct {
 }
 
 func (p *Proposal) Status(evmCaller ChainClient) (relayer.ProposalStatus, error) {
+	log.Debug().Str("rID", hexutils.BytesToHex(p.ResourceId[:])).Uint64("depositNonce", p.DepositNonce).Msg("Checking proposal status")
 	definition := "[{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"originChainID\",\"type\":\"uint8\"},{\"internalType\":\"uint64\",\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"dataHash\",\"type\":\"bytes32\"}],\"name\":\"getProposal\",\"outputs\":[{\"components\":[{\"internalType\":\"enum Bridge.ProposalStatus\",\"name\":\"_status\",\"type\":\"uint8\"},{\"internalType\":\"uint200\",\"name\":\"_yesVotes\",\"type\":\"uint200\"},{\"internalType\":\"uint8\",\"name\":\"_yesVotesTotal\",\"type\":\"uint8\"},{\"internalType\":\"uint40\",\"name\":\"_proposedBlock\",\"type\":\"uint40\"}],\"internalType\":\"struct Bridge.Proposal\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
 	a, err := abi.JSON(strings.NewReader(definition))
 	if err != nil {
@@ -57,11 +58,13 @@ func (p *Proposal) Status(evmCaller ChainClient) (relayer.ProposalStatus, error)
 }
 
 func (p *Proposal) VotedBy(evmCaller ChainClient, by common.Address) (bool, error) {
+	log.Debug().Str("rID", hexutils.BytesToHex(p.ResourceId[:])).Uint64("depositNonce", p.DepositNonce).Msg("Checking has voted on proposal")
 	definition := "[{\"inputs\":[{\"internalType\":\"uint72\",\"name\":\"\",\"type\":\"uint72\"},{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"_hasVotedOnProposal\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
 	a, err := abi.JSON(strings.NewReader(definition))
 	if err != nil {
 		return false, err // Not sure what status to use here
 	}
+	log.Debug().Msgf("Id: %v   depositNonce: %v   dataHash: %v   from: %v", p.Source, p.DepositNonce, p.GetDataHash(), by)
 	input, err := a.Pack("_hasVotedOnProposal", idAndNonce(p.Source, p.DepositNonce), p.GetDataHash(), by)
 	if err != nil {
 		return false, err
@@ -87,7 +90,8 @@ func (p *Proposal) Execute(client ChainClient) error {
 	if err != nil {
 		return err
 	}
-	gasLimit := uint64(2000000)
+	msg := ethereum.CallMsg{From: client.RelayerAddress(), To: &p.BridgeAddress, Data: input}
+	gasLimit := client.GasLimit(msg).Uint64()
 	gp, err := client.GasPrice()
 	if err != nil {
 		return err
@@ -101,6 +105,8 @@ func (p *Proposal) Execute(client ChainClient) error {
 	if err != nil {
 		return err
 	}
+	log.Debug().Msgf("gasLimit: %v", gasLimit)
+	log.Debug().Msgf("gasPrice: %v", gp)
 	tx := evmtransaction.NewTransaction(cid, n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
 	h, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
@@ -126,7 +132,8 @@ func (p *Proposal) Vote(client ChainClient) error {
 	if err != nil {
 		return err
 	}
-	gasLimit := uint64(1000000)
+	msg := ethereum.CallMsg{From: client.RelayerAddress(), To: &p.BridgeAddress, Data: input}
+	gasLimit := client.GasLimit(msg).Uint64()
 	gp, err := client.GasPrice()
 	if err != nil {
 		return err
@@ -140,6 +147,8 @@ func (p *Proposal) Vote(client ChainClient) error {
 	if err != nil {
 		return err
 	}
+	log.Debug().Msgf("gasLimit: %v", gasLimit)
+	log.Debug().Msgf("gasPrice: %v", gp)
 	tx := evmtransaction.NewTransaction(cid, n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
 	_, err = client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
