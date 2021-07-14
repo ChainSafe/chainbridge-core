@@ -3,12 +3,13 @@
   <img alt="discord" src="https://img.shields.io/discord/593655374469660673?label=Discord&logo=discord&style=flat" />
 </a>
 
-Chainbridge-core is the project that was born from existing version of [Chainbridge](https://github.com/ChainSafe/chainbridge). It was built to improve maintainability and modularity of current solution. Fundamental distinctive is that chainbridge-core is more the framework rather than application.
+Chainbridge-core is the project that was born from the existing version of [Chainbridge](https://github.com/ChainSafe/chainbridge). It was built to improve the maintainability and modularity of the current solution. The fundamental distinction is that chainbridge-core is more of a framework rather than a stand-alone application.
+
 *Project still in deep beta*
 - Chat with us on [discord](https://discord.gg/ykXsJKfhgq).
 
 ## Usage
-Since chainbridge-core is the modular framework it will require to write some code to get it running. Here you can find some examples
+Since chainbridge-core is the modular framework it will require writing some code to get it running. Here you can find some examples
 [Example](https://github.com/ChainSafe/chainbridge-core-example)
 
 # ChainSafe Security Policy

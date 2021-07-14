@@ -100,7 +100,8 @@ func (p *Proposal) Execute(client ChainClient) error {
 	if err != nil {
 		return err
 	}
-	cid, err := client.ChainID(context.Background())
+	tx := evmtransaction.NewTransaction(n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
+	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return err
 	}
@@ -153,7 +154,7 @@ func (p *Proposal) Vote(client ChainClient) error {
 	if err != nil {
 		return err
 	}
-	log.Debug().Str("hash", tx.Hash().String()).Uint64("nonce", n.Uint64()).Str("chainID", cid.String()).Msgf("Voted")
+	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msgf("Voted")
 	err = client.UnsafeIncreaseNonce()
 	if err != nil {
 		return err
