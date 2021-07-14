@@ -251,7 +251,6 @@ func (c *EVMClient) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Info().Msgf("Price from eth_gasPrice: %v", suggestedGasPrice)
 
 	gasPrice := multiplyGasPrice(suggestedGasPrice, c.config.SharedEVMConfig.GasMultiplier)
 
