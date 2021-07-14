@@ -64,7 +64,6 @@ func (p *Proposal) VotedBy(evmCaller ChainClient, by common.Address) (bool, erro
 	if err != nil {
 		return false, err // Not sure what status to use here
 	}
-	log.Debug().Msgf("Id: %v   depositNonce: %v   dataHash: %v   from: %v", p.Source, p.DepositNonce, p.GetDataHash(), by)
 	input, err := a.Pack("_hasVotedOnProposal", idAndNonce(p.Source, p.DepositNonce), p.GetDataHash(), by)
 	if err != nil {
 		return false, err
