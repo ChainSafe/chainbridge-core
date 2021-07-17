@@ -2,7 +2,6 @@ package optimismclient
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
@@ -99,13 +99,6 @@ type OptimismClient struct {
 	rollupClient *resty.Client
 }
 
-type CommonTransaction interface {
-	// Hash returns the transaction hash.
-	Hash() common.Hash
-	// Returns signed transaction by provided private key
-	RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
-}
-
 func NewEVMClient() *OptimismClient {
 	return &OptimismClient{}
 }
@@ -136,22 +129,10 @@ func (c *OptimismClient) Configurate(path string, name string) error {
 	}
 	c.Client = ethclient.NewClient(rpcClient)
 	c.rpClient = rpcClient
-	c.rollupClient = c.NewRollupClient(c.config.rollupEndpoint)
-
-	// Wait until the remote service is done syncing
-	tStatus := time.NewTicker(10 * time.Second)
-	for ; true; <-tStatus.C {
-		status, err := c.SyncStatus()
-		if err != nil {
-			log.Error().Msg("Cannot get sync status")
-			continue
-		}
-		if !status.Syncing {
-			tStatus.Stop()
-			break
-		}
-		log.Info().Msgf("Still syncing", "index", status.CurrentTransactionIndex, "tip", status.HighestKnownTransactionIndex)
-	}
+	c.rollupClient = c.NewRollupClient(c.config.RollupEndpoint)
+	log.Info().Msgf("rollup endpoint: %v", c.config.RollupEndpoint)
+	status := c.syncRollup()
+	log.Error().Msgf("status; %v", status)
 
 	if generalConfig.LatestBlock {
 		curr, err := c.LatestBlock()
@@ -207,6 +188,26 @@ func (c *OptimismClient) GetLatestTransactionBatch() (*Batch, error) {
 	return txBatch.Batch, nil
 }
 
+func (c *OptimismClient) syncRollup() *SyncStatus {
+	// Wait until the remote service is done syncing
+	tStatus := time.NewTicker(10 * time.Second)
+	var status *SyncStatus
+	for ; true; <-tStatus.C {
+		queriedStatus, err := c.SyncStatus()
+		if err != nil {
+			log.Error().Msg("Cannot get sync status")
+			continue
+		}
+		if !queriedStatus.Syncing {
+			tStatus.Stop()
+			status = queriedStatus
+			break
+		}
+		log.Info().Msgf("Still syncing", "index", queriedStatus.CurrentTransactionIndex, "tip", queriedStatus.HighestKnownTransactionIndex)
+	}
+	return status
+}
+
 // SyncStatus will query the remote server to determine if it is still syncing
 func (c *OptimismClient) SyncStatus() (*SyncStatus, error) {
 	response, err := c.rollupClient.R().
@@ -216,6 +217,7 @@ func (c *OptimismClient) SyncStatus() (*SyncStatus, error) {
 		}).
 		Get("/eth/syncing")
 
+	log.Info().Msgf("response sync status: %v", response)
 	if err != nil {
 		return nil, fmt.Errorf("Cannot fetch sync status: %w", err)
 	}
@@ -228,20 +230,14 @@ func (c *OptimismClient) SyncStatus() (*SyncStatus, error) {
 	return status, nil
 }
 
-func (c *OptimismClient) RollupIsVerified() (bool, error) {
-	status, err := c.SyncStatus()
-	if err != nil {
-		return false, err
-	}
+// TODO: WRONG LOGIC, also need to deicde best method to place this in. I am thinking inside the FetchDepositLogs after determining there has been a deposit event
+func (c *OptimismClient) IsRollupVerified(blockNumber uint64) bool {
+	status := c.syncRollup()
 
-	if !status.Syncing {
-		return false, nil
-	}
-	index, err := c.GetLatestTransactionBatchIndex()
-	if *index <= status.CurrentTransactionIndex {
-		return true, nil
+	if blockNumber <= status.CurrentTransactionIndex {
+		return true
 	} else {
-		return false, nil
+		return false
 	}
 }
 
@@ -292,6 +288,8 @@ func (c *OptimismClient) FetchDepositLogs(ctx context.Context, contractAddress c
 	}
 	depositLogs := make([]*listener.DepositLogs, 0)
 	for _, l := range logs {
+		log.Info().Msgf("deposit log block number: %v", l.BlockNumber)
+		log.Info().Msgf("is rollup and batch verified: %v", c.IsRollupVerified(l.BlockNumber))
 		var dl listener.DepositLogs
 		err := contractAbi.UnpackIntoInterface(&dl, "Deposit", l.Data)
 		if err != nil {
@@ -329,7 +327,7 @@ func (c *OptimismClient) PendingCallContract(ctx context.Context, callArgs map[s
 
 //func (c *EVMClient) ChainID()
 
-func (c *OptimismClient) SignAndSendTransaction(ctx context.Context, tx CommonTransaction) (common.Hash, error) {
+func (c *OptimismClient) SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error) {
 	id, err := c.ChainID(ctx)
 	if err != nil {
 		panic(err)

@@ -18,12 +18,12 @@ const DefaultBlockConfirmations = 10
 type OptimismConfig struct {
 	SharedEVMConfig config.SharedEVMConfig
 	kp              *secp256k1.Keypair
-	rollupEndpoint  string // This is the endpoint for an Optimism verifier node
+	RollupEndpoint  string // This is the endpoint for an Optimism data-transport layer. l2geth must use this to have access to L1 data from L2
 }
 
 type RawOptimismConfig struct {
 	config.RawSharedEVMConfig `mapstructure:",squash"`
-	rollupEndpoint            string `mapstructure:"rollupEndpoint"`
+	RollupEndpoint            string `mapstructure:"rollupEndpoint"`
 }
 
 func NewConfig() *OptimismConfig {
@@ -61,7 +61,7 @@ func ParseConfig(rawConfig *RawOptimismConfig) (*OptimismConfig, error) {
 
 	config := &OptimismConfig{
 		SharedEVMConfig: *cfg,
-		rollupEndpoint:  rawConfig.rollupEndpoint,
+		RollupEndpoint:  rawConfig.RollupEndpoint,
 	}
 
 	return config, nil
