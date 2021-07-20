@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
+	"github.com/ChainSafe/chainbridge-core/chains/optimism/listener"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum"
@@ -132,7 +132,7 @@ func (c *OptimismClient) Configurate(path string, name string) error {
 	c.rollupClient = c.NewRollupClient(c.config.RollupEndpoint)
 	log.Info().Msgf("rollup endpoint: %v", c.config.RollupEndpoint)
 	status := c.syncRollup()
-	log.Error().Msgf("status; %v", status)
+	log.Error().Msgf("status: %v", status)
 
 	if generalConfig.LatestBlock {
 		curr, err := c.LatestBlock()
@@ -232,8 +232,12 @@ func (c *OptimismClient) SyncStatus() (*SyncStatus, error) {
 
 // TODO: WRONG LOGIC, also need to deicde best method to place this in. I am thinking inside the FetchDepositLogs after determining there has been a deposit event
 func (c *OptimismClient) IsRollupVerified(blockNumber uint64) bool {
+	log.Debug().Msg("Just got inside method IsRollupVerified")
+
 	status := c.syncRollup()
 
+	log.Debug().Msgf("Block number to check against index: %v", blockNumber)
+	log.Debug().Msgf("current transaction index: %v", status.CurrentTransactionIndex)
 	if blockNumber <= status.CurrentTransactionIndex {
 		return true
 	} else {
