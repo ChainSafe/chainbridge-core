@@ -389,22 +389,20 @@ func (c *OptimismClient) UnsafeIncreaseNonce() error {
 }
 
 func (c *OptimismClient) GasLimit(msg ethereum.CallMsg) *big.Int {
-	if c.config.SharedEVMConfig.GeneralChainConfig.Name == "optimism" {
-		gas, err := c.EstimateGas(context.TODO(), msg)
-		if err != nil {
-			log.Fatal().Msgf("could not estimate gas when transacting with optimism: %v", err)
-		}
-		return big.NewInt(int64(gas))
+	gas, err := c.EstimateGas(context.TODO(), msg)
+	if err != nil {
+		log.Fatal().Msgf("could not estimate gas when transacting with optimism: %v", err)
 	}
-
-	return c.config.SharedEVMConfig.GasLimit
+	return big.NewInt(int64(gas))
 }
 
 func (c *OptimismClient) GasPrice() (*big.Int, error) {
+	// Kovan Optimism requires this gas price at the moment
 	if c.config.SharedEVMConfig.GeneralChainConfig.Name == "optimism" {
 		return big.NewInt(15000000), nil
 	}
 
+	// Local optimism needs gas price of 0, set maxGasPrice to 0 in config
 	gasPrice, err := c.SafeEstimateGas(context.TODO())
 	if err != nil {
 		return nil, err

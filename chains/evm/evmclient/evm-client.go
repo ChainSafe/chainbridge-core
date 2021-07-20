@@ -223,22 +223,10 @@ func (c *EVMClient) UnsafeIncreaseNonce() error {
 }
 
 func (c *EVMClient) GasLimit(msg ethereum.CallMsg) *big.Int {
-	if c.config.SharedEVMConfig.GeneralChainConfig.Name == "optimism" {
-		gas, err := c.EstimateGas(context.TODO(), msg)
-		if err != nil {
-			log.Fatal().Msgf("could not estimate gas when transacting with optimism: %v", err)
-		}
-		return big.NewInt(int64(gas))
-	}
-
 	return c.config.SharedEVMConfig.GasLimit
 }
 
 func (c *EVMClient) GasPrice() (*big.Int, error) {
-	if c.config.SharedEVMConfig.GeneralChainConfig.Name == "optimism" {
-		return big.NewInt(15000000), nil
-	}
-
 	gasPrice, err := c.SafeEstimateGas(context.TODO())
 	if err != nil {
 		return nil, err
