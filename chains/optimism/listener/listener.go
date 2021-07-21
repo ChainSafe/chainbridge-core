@@ -15,7 +15,9 @@ import (
 )
 
 var BlockRetryInterval = time.Second * 5
-var BlockDelay = big.NewInt(10) //TODO: move to config
+
+// Only 1 for Optimism as block confirmations check occur in the data transport layer
+var BlockDelay = big.NewInt(1) //TODO: move to config
 
 type DepositLogs struct {
 	DestinationChainID uint8
@@ -53,8 +55,10 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw bl
 			case <-stopChn:
 				return
 			default:
+				// Although L1 block confirmations are checked in the data-transport-layer,
+				// this remains here as to not infinitely loop without a bound. Our bound being the latest Optimism batch index
+				// If we wanted to do our own check we would most likely need another separate sync service for l1 which seems unnecessary
 				head, err := l.chainReader.LatestBlock()
-				log.Debug().Msgf("latest block when listening to events: %v", head)
 				if err != nil {
 					log.Error().Err(err).Msg("Unable to get latest block")
 					time.Sleep(BlockRetryInterval)
@@ -73,12 +77,13 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw bl
 					continue
 				}
 				// TODO: perhaps this would be better within `FetchDepositLogs` and then could avoid the separate listener package
-				// However, the block delay comparison is within this method and is still necessary with optimism
+				// However, the block delay comparison occurs during the indexing done by the rollup client and the functionality would be good to keep separate
 				if len(logs) != 0 && !l.chainReader.IsRollupVerified(startBlock.Uint64()) {
 					log.Error().Msgf("Block Number: %v", startBlock)
 					continue
 				}
-				log.Debug().Msgf("In listener, rollup is verified, can handle deposit event on optimism")
+
+				log.Debug().Msgf("Rollup is verified on L1, can handle deposit event on optimism")
 				for _, eventLog := range logs {
 					m, err := l.eventHandler.HandleEvent(chainID, eventLog.DestinationChainID, eventLog.DepositNonce, eventLog.ResourceID)
 					if err != nil {

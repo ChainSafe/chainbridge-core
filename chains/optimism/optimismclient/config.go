@@ -18,7 +18,7 @@ const DefaultBlockConfirmations = 10
 type OptimismConfig struct {
 	SharedEVMConfig config.SharedEVMConfig
 	kp              *secp256k1.Keypair
-	RollupEndpoint  string // This is the endpoint for an Optimism data-transport layer. l2geth must use this to have access to L1 data from L2
+	RollupEndpoint  string // This is the endpoint for an Optimism data-transport layer. l2geth must use this to have access to L1 data from the L2 client
 }
 
 type RawOptimismConfig struct {

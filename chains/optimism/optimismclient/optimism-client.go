@@ -82,6 +82,16 @@ type TransactionBatchResponse struct {
 	Transactions []*transaction `json:"transactions"`
 }
 
+// EthContext represents the L1 EVM context that is injected into
+// the OVM at runtime. It is updated with each `enqueue` transaction
+// and needs to be fetched from a remote server to be updated when
+// too much time has passed between `enqueue` transactions.
+type EthContext struct {
+	BlockNumber uint64      `json:"blockNumber"`
+	BlockHash   common.Hash `json:"blockHash"`
+	Timestamp   uint64      `json:"timestamp"`
+}
+
 // SyncStatus represents the state of the remote server. The SyncService
 // does not want to begin syncing until the remote server has fully synced.
 type SyncStatus struct {
@@ -122,15 +132,16 @@ func (c *OptimismClient) Configurate(path string, name string) error {
 	krp := kp.(*secp256k1.Keypair)
 	c.config.kp = krp
 
-	log.Info().Str("url", generalConfig.Endpoint).Msg("Connecting to evm chain...")
+	log.Info().Str("url", generalConfig.Endpoint).Msg("Connecting to optimism chain...")
 	rpcClient, err := rpc.DialContext(context.TODO(), generalConfig.Endpoint)
 	if err != nil {
 		return err
 	}
 	c.Client = ethclient.NewClient(rpcClient)
 	c.rpClient = rpcClient
+
+	log.Info().Str("url", c.config.RollupEndpoint).Msg("Connecting to optimism data transport layer...")
 	c.rollupClient = c.NewRollupClient(c.config.RollupEndpoint)
-	log.Info().Msgf("rollup endpoint: %v", c.config.RollupEndpoint)
 	status := c.syncRollup()
 	log.Error().Msgf("status: %v", status)
 
@@ -160,32 +171,6 @@ func (c *OptimismClient) NewRollupClient(endpoint string) *resty.Client {
 		return nil
 	})
 	return client
-}
-
-// GetLatestTransactionBatchIndex returns the latest transaction batch index
-func (c *OptimismClient) GetLatestTransactionBatchIndex() (*uint64, error) {
-	batch, err := c.GetLatestTransactionBatch()
-	if err != nil {
-		return nil, err
-	}
-	index := batch.Index
-	return &index, nil
-}
-
-// GetLatestTransactionBatch will return the latest transaction batch
-func (c *OptimismClient) GetLatestTransactionBatch() (*Batch, error) {
-	response, err := c.rollupClient.R().
-		SetResult(&TransactionBatchResponse{}).
-		Get("/batch/transaction/latest")
-
-	if err != nil {
-		return nil, errors.New("Cannot get latest transaction batch")
-	}
-	txBatch, ok := response.Result().(*TransactionBatchResponse)
-	if !ok {
-		return nil, fmt.Errorf("Cannot parse transaction batch response")
-	}
-	return txBatch.Batch, nil
 }
 
 func (c *OptimismClient) syncRollup() *SyncStatus {
@@ -265,6 +250,7 @@ func (h *headerNumber) UnmarshalJSON(input []byte) error {
 }
 
 // LatestBlock returns the latest block from the current chain
+// In Optimism, the latest block refers to the latest batch index
 func (c *OptimismClient) LatestBlock() (*big.Int, error) {
 	var head *headerNumber
 
@@ -273,6 +259,34 @@ func (c *OptimismClient) LatestBlock() (*big.Int, error) {
 		err = ethereum.NotFound
 	}
 	return head.Number, err
+}
+
+// TODO: perhaps we would want to rename these to more accurately reflect ethereum l1 blocks and optimism tx batches indices
+func (c *OptimismClient) LatestL1Block() (*big.Int, error) {
+	context, err := c.GetLatestEthContext()
+	if err != nil {
+		return nil, err
+	}
+
+	return big.NewInt(int64(context.BlockNumber)), nil
+}
+
+// GetLatestEthContext will return the latest EthContext
+func (c *OptimismClient) GetLatestEthContext() (*EthContext, error) {
+	response, err := c.rollupClient.R().
+		SetResult(&EthContext{}).
+		Get("/eth/context/latest")
+
+	if err != nil {
+		return nil, fmt.Errorf("Cannot fetch eth context: %w", err)
+	}
+
+	context, ok := response.Result().(*EthContext)
+	if !ok {
+		return nil, errors.New("Cannot parse EthContext")
+	}
+
+	return context, nil
 }
 
 const (
