@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/deploy"
 	"github.com/spf13/cobra"
 )
@@ -15,7 +16,7 @@ var evmRootCLI = &cobra.Command{
 	Long: "root command for starting evm cli",
 }
 
-func EVMCLI() {
+func EVMCLI(cli *cobra.Command)  *cobra.Command {
 	evmRootCLI.Flags().String("url", "ws://localhost:8545", "node url")
 	evmRootCLI.Flags().Uint64("gasLimit", 6721975, "gasLimit used in transactions")
 	evmRootCLI.Flags().Uint64("gasPrice", 20000000000, "gasPrice used for transactions")
@@ -24,5 +25,11 @@ func EVMCLI() {
 	evmRootCLI.Flags().String("jsonWallet", "ws://localhost:8545", "Encrypted JSON wallet")
 	evmRootCLI.Flags().String("jsonWalletPassword", "ws://localhost:8545", "Password for encrypted JSON wallet")
 
+
 	evmRootCLI.AddCommand(deploy.DeployEVM)
+	evmRootCLI.AddCommand(bridge.CancelProposalEVM)
+
+	cli.AddCommand(evmRootCLI)
+
+	return evmRootCLI
 }
