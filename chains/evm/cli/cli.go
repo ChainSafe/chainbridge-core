@@ -47,3 +47,22 @@ func init() {
 	// erc721
 	evmRootCLI.AddCommand(erc721.AddMinterCmd)
 }
+
+/*
+func EVMCLI(cli *cobra.Command) *cobra.Command {
+	evmRootCLI.Flags().String("url", "ws://localhost:8545", "node url")
+	evmRootCLI.Flags().Uint64("gasLimit", 6721975, "gasLimit used in transactions")
+	evmRootCLI.Flags().Uint64("gasPrice", 20000000000, "gasPrice used for transactions")
+	evmRootCLI.Flags().Uint64("networkID", 0, "networkid")
+	evmRootCLI.Flags().String("privateKey", "ws://localhost:8545", "Private key to usel")
+	evmRootCLI.Flags().String("jsonWallet", "ws://localhost:8545", "Encrypted JSON wallet")
+	evmRootCLI.Flags().String("jsonWalletPassword", "ws://localhost:8545", "Password for encrypted JSON wallet")
+
+	evmRootCLI.AddCommand(deploy.DeployEVM)
+	evmRootCLI.AddCommand(bridge.CancelProposalEVM)
+
+	cli.AddCommand(evmRootCLI)
+
+	return evmRootCLI
+}
+*/
