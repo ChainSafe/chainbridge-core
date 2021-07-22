@@ -24,6 +24,5 @@ func EVMCLI() {
 	evmRootCLI.Flags().String("jsonWallet", "ws://localhost:8545", "Encrypted JSON wallet")
 	evmRootCLI.Flags().String("jsonWalletPassword", "ws://localhost:8545", "Password for encrypted JSON wallet")
 
-
 	evmRootCLI.AddCommand(deploy.DeployEVM)
 }
