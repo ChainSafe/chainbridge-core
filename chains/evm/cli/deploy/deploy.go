@@ -7,12 +7,20 @@ import (
 )
 
 var DeployEVM = &cobra.Command{
-	Use: "deploy",
-	Short: "deploy smart contracts",
-	Long: "This command can be used to deploy all or some of the contracts required for bridging. Selection of contracts can be made by either specifying --all or a subset of flags",
-	Run: deploy,
+	Use:   "deploy",
+	Short: "Deploy smart contracts",
+	Long:  "This command can be used to deploy all or some of the contracts required for bridging. Selection of contracts can be made by either specifying --all or a subset of flags",
+	Run:   deploy,
 }
 
+func deploy(cmd *cobra.Command, args []string) {
+	url := cmd.Flag("url").Value
+	gasLimit := cmd.Flag("gasLimit").Value
+	gasPrice := cmd.Flag("gasPrice").Value
+	log.Debug().Msgf("%v %v %v", url, gasLimit, gasPrice)
+}
+
+/*
 func deploy(cmd *cobra.Command, args []string) {
 	url := cmd.Flag("url").Value
 	gasLimit := cmd.Flag("gasLimit").Value
@@ -137,3 +145,4 @@ func deploy(cmd *cobra.Command, args []string) {
 	//fmt.Printf("%+v", deployedContracts)
 	//return nil
 }
+*/
