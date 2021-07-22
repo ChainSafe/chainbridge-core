@@ -101,7 +101,6 @@ func (h *headerNumber) UnmarshalJSON(input []byte) error {
 // LatestBlock returns the latest block from the current chain
 func (c *EVMClient) LatestBlock() (*big.Int, error) {
 	var head *headerNumber
-
 	err := c.rpClient.CallContext(context.Background(), &head, "eth_getBlockByNumber", toBlockNumArg(nil), false)
 	if err == nil && head == nil {
 		err = ethereum.NotFound
