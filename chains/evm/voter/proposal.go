@@ -125,10 +125,14 @@ func (p *Proposal) Vote(client ChainClient) error {
 	if err != nil {
 		return err // Not sure what status to use here
 	}
+	log.Debug().Msg("parsed ABI to JSON")
+
 	input, err := a.Pack("voteProposal", p.Source, p.DepositNonce, p.ResourceId, p.GetDataHash())
 	if err != nil {
 		return err
 	}
+	log.Debug().Msg("packed voteProposal ABI")
+
 	// gasLimit := uint64(1000000)
 	// gp, err := client.GasPrice()
 	// if err != nil {

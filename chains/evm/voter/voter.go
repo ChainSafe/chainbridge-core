@@ -67,11 +67,13 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
 	if err != nil {
 		log.Error().Err(err).Msgf("error getting proposal status %+v", prop)
 	}
+	log.Debug().Msgf("Proposal status: %v", ps)
 
 	votedByCurrentExecutor, err := prop.VotedBy(w.client, w.client.RelayerAddress())
 	if err != nil {
 		return err
 	}
+	log.Debug().Msgf("Voted by current executor: %v", votedByCurrentExecutor)
 
 	if votedByCurrentExecutor || ps == relayer.ProposalStatusPassed || ps == relayer.ProposalStatusCanceled || ps == relayer.ProposalStatusExecuted {
 		if ps == relayer.ProposalStatusPassed {

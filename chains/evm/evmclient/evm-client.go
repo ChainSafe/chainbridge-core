@@ -37,7 +37,8 @@ type CommonTransaction interface {
 	// Hash returns the transaction hash.
 	Hash() common.Hash
 	// Returns signed transaction by provided private key
-	RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
+	//RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
+	RawWithSignature(opts *bind.TransactOpts, key *ecdsa.PrivateKey) ([]byte, error)
 }
 
 func NewEVMClient() *EVMClient {
@@ -70,6 +71,17 @@ func (c *EVMClient) Configurate(path string, name string) error {
 	}
 	c.Client = ethclient.NewClient(rpcClient)
 	c.rpClient = rpcClient
+	log.Debug().Msg("right before chain id call")
+	id, err := c.ChainID(context.TODO())
+	if err != nil {
+		return err
+	}
+	log.Debug().Msg("about to make TransactOpts")
+	opts, err := bind.NewKeyedTransactorWithChainID(krp.PrivateKey(), id)
+	if err != nil {
+		return err
+	}
+	c.opts = opts
 
 	if generalConfig.LatestBlock {
 		curr, err := c.LatestBlock()
@@ -161,11 +173,7 @@ func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string
 //func (c *EVMClient) ChainID()
 
 func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransaction) (common.Hash, error) {
-	id, err := c.ChainID(ctx)
-	if err != nil {
-		panic(err)
-	}
-	rawTX, err := tx.RawWithSignature(c.config.kp.PrivateKey(), id)
+	rawTX, err := tx.RawWithSignature(c.opts, c.config.kp.PrivateKey())
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -203,6 +211,7 @@ func (c *EVMClient) UnsafeOpts() (*bind.TransactOpts, error) {
 		return nil, err
 	}
 	c.opts.Nonce = nonce
+	log.Debug().Msgf("nonce: %v", c.opts.Nonce)
 
 	head, err := c.HeaderByNumber(context.TODO(), nil)
 	if err != nil {
