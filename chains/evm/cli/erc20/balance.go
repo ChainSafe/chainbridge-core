@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var BalanceCmd = &cobra.Command{
+var balanceCmd = &cobra.Command{
 	Use:   "balance",
 	Short: "Query balance of an account in an ERC20 contract",
 	Long:  "Query balance of an account in an ERC20 contract",
@@ -13,8 +13,8 @@ var BalanceCmd = &cobra.Command{
 }
 
 func init() {
-	BalanceCmd.Flags().String("erc20Address", "", "ERC20 contract address")
-	BalanceCmd.Flags().String("accountAddress", "", "address to receive balance of")
+	balanceCmd.Flags().String("erc20Address", "", "ERC20 contract address")
+	balanceCmd.Flags().String("accountAddress", "", "address to receive balance of")
 }
 
 func balance(cmd *cobra.Command, args []string) {

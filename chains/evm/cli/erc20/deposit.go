@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var DepositCmd = &cobra.Command{
+var depositCmd = &cobra.Command{
 	Use:   "deposit",
 	Short: "Initiate a transfer of ERC20 tokens",
 	Long:  "Initiate a transfer of ERC20 tokens",
@@ -13,14 +13,14 @@ var DepositCmd = &cobra.Command{
 }
 
 func init() {
-	DepositCmd.Flags().String("recipient", "", "address of recipient")
-	DepositCmd.Flags().String("bridge", "", "address of bridge contract")
-	DepositCmd.Flags().String("amount", "", "amount to deposit")
-	DepositCmd.Flags().String("value", "0", "value of ETH that should be sent along with deposit to cover possible fees. In ETH (decimals are allowed)")
-	DepositCmd.Flags().String("destId", "", "destination chain ID")
-	DepositCmd.Flags().String("resourceId", "", "resource ID for transfer")
-	DepositCmd.Flags().Uint64("decimals", 0, "ERC20 token decimals")
-	DepositCmd.MarkFlagRequired("decimals")
+	depositCmd.Flags().String("recipient", "", "address of recipient")
+	depositCmd.Flags().String("bridge", "", "address of bridge contract")
+	depositCmd.Flags().String("amount", "", "amount to deposit")
+	depositCmd.Flags().String("value", "0", "value of ETH that should be sent along with deposit to cover possible fees. In ETH (decimals are allowed)")
+	depositCmd.Flags().String("destId", "", "destination chain ID")
+	depositCmd.Flags().String("resourceId", "", "resource ID for transfer")
+	depositCmd.Flags().Uint64("decimals", 0, "ERC20 token decimals")
+	depositCmd.MarkFlagRequired("decimals")
 }
 
 func deposit(cmd *cobra.Command, args []string) {

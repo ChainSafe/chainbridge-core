@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var ApproveCmd = &cobra.Command{
+var approveCmd = &cobra.Command{
 	Use:   "approve",
 	Short: "Approve tokens in an ERC20 contract for transfer",
 	Long:  "Approve tokens in an ERC20 contract for transfer",
@@ -13,11 +13,11 @@ var ApproveCmd = &cobra.Command{
 }
 
 func init() {
-	ApproveCmd.Flags().String("erc20Address", "", "ERC20 contract address")
-	ApproveCmd.Flags().String("amount", "", "amount to grant allowance")
-	ApproveCmd.Flags().String("recipient", "", "address of recipient")
-	ApproveCmd.Flags().Uint64("decimals", 0, "ERC20 token decimals")
-	ApproveCmd.MarkFlagRequired("decimals")
+	approveCmd.Flags().String("erc20Address", "", "ERC20 contract address")
+	approveCmd.Flags().String("amount", "", "amount to grant allowance")
+	approveCmd.Flags().String("recipient", "", "address of recipient")
+	approveCmd.Flags().Uint64("decimals", 0, "ERC20 token decimals")
+	approveCmd.MarkFlagRequired("decimals")
 }
 
 func approve(cmd *cobra.Command, args []string) {

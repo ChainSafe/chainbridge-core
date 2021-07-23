@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var PauseCmd = &cobra.Command{
+var pauseCmd = &cobra.Command{
 	Use:   "pause",
 	Short: "Pause deposits and proposals",
 	Long:  "Pause deposits and proposals",
@@ -13,7 +13,7 @@ var PauseCmd = &cobra.Command{
 }
 
 func init() {
-	PauseCmd.Flags().String("bridge", "", "bridge contract address")
+	pauseCmd.Flags().String("bridge", "", "bridge contract address")
 }
 
 func pause(cmd *cobra.Command, args []string) {

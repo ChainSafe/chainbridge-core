@@ -36,32 +36,13 @@ func init() {
 	evmRootCLI.AddCommand(deploy.DeployEVM)
 
 	// admin
-	evmRootCLI.AddCommand(admin.AddAdminCmd)
-	evmRootCLI.AddCommand(admin.AddRelayerCmd)
-	evmRootCLI.AddCommand(admin.IsRelayerCmd)
-	evmRootCLI.AddCommand(admin.PauseCmd)
-	evmRootCLI.AddCommand(admin.RemoveAdminCmd)
-	evmRootCLI.AddCommand(admin.RemoveRelayerCmd)
-	evmRootCLI.AddCommand(admin.SetFeeCmd)
-	evmRootCLI.AddCommand(admin.SetThresholdCmd)
-	evmRootCLI.AddCommand(admin.UnpauseCmd)
-	evmRootCLI.AddCommand(admin.WithdrawCmd)
+	evmRootCLI.AddCommand(admin.AdminCmd)
 
 	// bridge
-	evmRootCLI.AddCommand(bridge.CancelProposalCmd)
-	evmRootCLI.AddCommand(bridge.QueryProposalCmd)
-	evmRootCLI.AddCommand(bridge.QueryResourceCmd)
-	evmRootCLI.AddCommand(bridge.RegisterGenericResourceCmd)
-	evmRootCLI.AddCommand(bridge.RegisterResourceCmd)
-	evmRootCLI.AddCommand(bridge.SetBurnCmd)
+	evmRootCLI.AddCommand(bridge.BridgeCmd)
 
 	// erc20
-	evmRootCLI.AddCommand(erc20.AddMinterCmd)
-	evmRootCLI.AddCommand(erc20.AllowanceCmd)
-	evmRootCLI.AddCommand(erc20.ApproveCmd)
-	evmRootCLI.AddCommand(erc20.BalanceCmd)
-	evmRootCLI.AddCommand(erc20.DepositCmd)
-	evmRootCLI.AddCommand(erc20.MintCmd)
+	evmRootCLI.AddCommand(erc20.ERC20Cmd)
 
 	// erc721
 	evmRootCLI.AddCommand(erc721.AddMinterCmd)

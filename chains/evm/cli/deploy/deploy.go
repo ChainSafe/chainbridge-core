@@ -12,6 +12,23 @@ var DeployEVM = &cobra.Command{
 	Run:   deploy,
 }
 
+func init() {
+	DeployEVM.Flags().Bool("bridge", false, "deploy bridge")
+	DeployEVM.Flags().Bool("erc20Handler", false, "deploy ERC20 handler")
+	DeployEVM.Flags().Bool("erc721Handler", false, "deploy ERC721 handler")
+	DeployEVM.Flags().Bool("genericHandler", false, "deploy generic handler")
+	DeployEVM.Flags().Bool("erc20", false, "deploy ERC20")
+	DeployEVM.Flags().Bool("erc721", false, "deploy ERC721")
+	DeployEVM.Flags().Bool("all", false, "deploy all")
+	DeployEVM.Flags().Int64("relayerThreshold", 1, "number of votes required for a proposal to pass")
+	DeployEVM.Flags().String("chainId", "1", "chain ID for the instance")
+	DeployEVM.Flags().StringSlice("relayers", []string{}, "list of initial relayers")
+	DeployEVM.Flags().String("fee", "0", "fee to be taken when making a deposit (in ETH, decimas are allowed)")
+	DeployEVM.Flags().String("bridgeAddress", "", "bridge contract address. Should be provided if handlers are deployed separately")
+	DeployEVM.Flags().String("erc20Symbol", "", "ERC20 contract symbol")
+	DeployEVM.Flags().String("erc20Name", "", "ERC20 contract name")
+}
+
 func deploy(cmd *cobra.Command, args []string) {
 	url := cmd.Flag("url").Value
 	gasLimit := cmd.Flag("gasLimit").Value

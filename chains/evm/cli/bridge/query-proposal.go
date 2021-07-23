@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var QueryProposalCmd = &cobra.Command{
+var queryProposalCmd = &cobra.Command{
 	Use:   "query-proposal",
 	Short: "Query an inbound proposal",
 	Long:  "Query an inbound proposal",
@@ -13,10 +13,10 @@ var QueryProposalCmd = &cobra.Command{
 }
 
 func init() {
-	QueryProposalCmd.Flags().String("bridge", "", "bridge contract address")
-	QueryProposalCmd.Flags().String("dataHash", "", "hash of proposal metadata")
-	QueryProposalCmd.Flags().Uint64("chainId", 0, "source chain ID of proposal")
-	QueryProposalCmd.Flags().Uint64("depositNonce", 0, "deposit nonce of proposal")
+	queryProposalCmd.Flags().String("bridge", "", "bridge contract address")
+	queryProposalCmd.Flags().String("dataHash", "", "hash of proposal metadata")
+	queryProposalCmd.Flags().Uint64("chainId", 0, "source chain ID of proposal")
+	queryProposalCmd.Flags().Uint64("depositNonce", 0, "deposit nonce of proposal")
 }
 
 func queryProposal(cmd *cobra.Command, args []string) {

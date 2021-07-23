@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var CancelProposalCmd = &cobra.Command{
+var cancelProposalCmd = &cobra.Command{
 	Use:   "cancel-proposal",
 	Short: "Cancel an expired proposal",
 	Long:  "Cancel an expired proposal",
@@ -13,10 +13,10 @@ var CancelProposalCmd = &cobra.Command{
 }
 
 func init() {
-	CancelProposalCmd.Flags().String("bridge", "", "bridge contract address")
-	CancelProposalCmd.Flags().String("dataHash", "", "hash of proposal metadata")
-	CancelProposalCmd.Flags().Uint64("chainId", 0, "chain ID of proposal to cancel")
-	CancelProposalCmd.Flags().Uint64("depositNonce", 0, "deposit nonce of proposal to cancel")
+	cancelProposalCmd.Flags().String("bridge", "", "bridge contract address")
+	cancelProposalCmd.Flags().String("dataHash", "", "hash of proposal metadata")
+	cancelProposalCmd.Flags().Uint64("chainId", 0, "chain ID of proposal to cancel")
+	cancelProposalCmd.Flags().Uint64("depositNonce", 0, "deposit nonce of proposal to cancel")
 }
 
 func cancelProposal(cmd *cobra.Command, args []string) {

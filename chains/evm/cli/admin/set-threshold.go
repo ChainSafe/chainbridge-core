@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var SetThresholdCmd = &cobra.Command{
+var setThresholdCmd = &cobra.Command{
 	Use:   "set-threshold",
 	Short: "Set a new relayer vote threshold",
 	Long:  "Set a new relayer vote threshold",
@@ -13,8 +13,8 @@ var SetThresholdCmd = &cobra.Command{
 }
 
 func init() {
-	SetThresholdCmd.Flags().Uint64("threshold", 0, "new relayer threshold")
-	SetThresholdCmd.Flags().String("bridge", "", "bridge contract address")
+	setThresholdCmd.Flags().Uint64("threshold", 0, "new relayer threshold")
+	setThresholdCmd.Flags().String("bridge", "", "bridge contract address")
 }
 
 func setThreshold(cmd *cobra.Command, args []string) {

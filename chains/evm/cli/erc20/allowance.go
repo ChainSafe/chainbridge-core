@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var AllowanceCmd = &cobra.Command{
+var allowanceCmd = &cobra.Command{
 	Use:   "allowance",
 	Short: "Get the allowance of a spender for an address",
 	Long:  "Get the allowance of a spender for an address",
@@ -13,9 +13,9 @@ var AllowanceCmd = &cobra.Command{
 }
 
 func init() {
-	AllowanceCmd.Flags().String("erc20Address", "", "ERC20 contract address")
-	AllowanceCmd.Flags().String("owner", "", "address of token owner")
-	AllowanceCmd.Flags().String("spender", "", "address of spender")
+	allowanceCmd.Flags().String("erc20Address", "", "ERC20 contract address")
+	allowanceCmd.Flags().String("owner", "", "address of token owner")
+	allowanceCmd.Flags().String("spender", "", "address of spender")
 }
 
 func allowance(cmd *cobra.Command, args []string) {

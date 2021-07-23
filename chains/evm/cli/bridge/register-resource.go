@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var RegisterResourceCmd = &cobra.Command{
+var registerResourceCmd = &cobra.Command{
 	Use:   "register-resource",
 	Short: "Register a resource ID",
 	Long:  "Register a resource ID with a contract address for a handler",
@@ -13,10 +13,10 @@ var RegisterResourceCmd = &cobra.Command{
 }
 
 func init() {
-	RegisterResourceCmd.Flags().String("handler", "", "handler contract address")
-	RegisterResourceCmd.Flags().String("bridge", "", "bridge contract address")
-	RegisterResourceCmd.Flags().String("target", "", "contract address to be registered")
-	RegisterResourceCmd.Flags().String("resourceId", "", "resource ID to be registered")
+	registerResourceCmd.Flags().String("handler", "", "handler contract address")
+	registerResourceCmd.Flags().String("bridge", "", "bridge contract address")
+	registerResourceCmd.Flags().String("target", "", "contract address to be registered")
+	registerResourceCmd.Flags().String("resourceId", "", "resource ID to be registered")
 }
 
 func registerResource(cmd *cobra.Command, args []string) {

@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var MintCmd = &cobra.Command{
+var mintCmd = &cobra.Command{
 	Use:   "mint",
 	Short: "Mint tokens on an ERC20 mintable contract",
 	Long:  "Mint tokens on an ERC20 mintable contract",
@@ -13,18 +13,17 @@ var MintCmd = &cobra.Command{
 }
 
 func init() {
-	MintCmd.Flags().String("amount", "", "amount to mint fee (in wei)")
-	MintCmd.Flags().String("bridge", "", "bridge contract address")
-
+	mintCmd.Flags().String("amount", "", "amount to mint fee (in wei)")
+	mintCmd.Flags().String("erc20Address", "", "ERC20 contract address")
 }
 
 func mint(cmd *cobra.Command, args []string) {
 	amount := cmd.Flag("amount").Value
-	bridgeAddress := cmd.Flag("bridge").Value
+	erc20Address := cmd.Flag("erc20Address").Value
 	log.Debug().Msgf(`
 Minting token
 Amount: %s
-Bridge address: %s`, amount, bridgeAddress)
+ERC20 address: %s`, amount, erc20Address)
 }
 
 /*

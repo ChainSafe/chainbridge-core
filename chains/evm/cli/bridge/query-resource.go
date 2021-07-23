@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var QueryResourceCmd = &cobra.Command{
+var queryResourceCmd = &cobra.Command{
 	Use:   "query-resource",
 	Short: "Query the contract address",
 	Long:  "Query the contract address with the provided resource ID for a specific handler contract",
@@ -13,8 +13,8 @@ var QueryResourceCmd = &cobra.Command{
 }
 
 func init() {
-	QueryResourceCmd.Flags().String("handler", "", "handler contract address")
-	QueryResourceCmd.Flags().String("resourceId", "", "resource ID to query")
+	queryResourceCmd.Flags().String("handler", "", "handler contract address")
+	queryResourceCmd.Flags().String("resourceId", "", "resource ID to query")
 }
 
 func queryResource(cmd *cobra.Command, args []string) {

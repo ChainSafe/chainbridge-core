@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var WithdrawCmd = &cobra.Command{
+var withdrawCmd = &cobra.Command{
 	Use:   "withdraw",
 	Short: "Withdraw tokens from the handler contract",
 	Long:  "Withdraw tokens from the handler contract",
@@ -13,13 +13,13 @@ var WithdrawCmd = &cobra.Command{
 }
 
 func init() {
-	WithdrawCmd.Flags().String("amount", "", "token amount to withdraw. Should be set or ID or amount if both set error will occur")
-	WithdrawCmd.Flags().String("id", "", "token ID to withdraw. Should be set or ID or amount if both set error will occur")
-	WithdrawCmd.Flags().String("bridge", "", "bridge contract address")
-	WithdrawCmd.Flags().String("handler", "", "handler contract address")
-	WithdrawCmd.Flags().String("token", "", "ERC20 or ERC721 token contract address")
-	WithdrawCmd.Flags().String("recipient", "", "address to withdraw to")
-	WithdrawCmd.Flags().Uint64("decimals", 0, "ERC20 token decimals")
+	withdrawCmd.Flags().String("amount", "", "token amount to withdraw. Should be set or ID or amount if both set error will occur")
+	withdrawCmd.Flags().String("id", "", "token ID to withdraw. Should be set or ID or amount if both set error will occur")
+	withdrawCmd.Flags().String("bridge", "", "bridge contract address")
+	withdrawCmd.Flags().String("handler", "", "handler contract address")
+	withdrawCmd.Flags().String("token", "", "ERC20 or ERC721 token contract address")
+	withdrawCmd.Flags().String("recipient", "", "address to withdraw to")
+	withdrawCmd.Flags().Uint64("decimals", 0, "ERC20 token decimals")
 }
 
 func withdraw(cmd *cobra.Command, args []string) {

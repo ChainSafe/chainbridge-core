@@ -5,21 +5,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var RegisterGenericResourceCmd = &cobra.Command{
+var registerGenericResourceCmd = &cobra.Command{
 	Use:   "register-generic-resource",
-	Short: "Register a resource ID",
+	Short: "Register a generic resource ID",
 	Long:  "Register a resource ID with a contract address for a generic handler",
 	Run:   registerGenericResource,
 }
 
 func init() {
-	RegisterGenericResourceCmd.Flags().String("handler", "", "handler contract address")
-	RegisterGenericResourceCmd.Flags().String("resourceId", "", "resource ID to query")
-	RegisterGenericResourceCmd.Flags().String("bridge", "", "bridge contract address")
-	RegisterGenericResourceCmd.Flags().String("target", "", "contract address to be registered")
-	RegisterGenericResourceCmd.Flags().String("deposit", "0x00000000", "deposit function signature")
-	RegisterGenericResourceCmd.Flags().String("execute", "0x00000000", "execute proposal function signature")
-	RegisterGenericResourceCmd.Flags().Bool("hash", false, "treat signature inputs as function prototype strings, hash and take the first 4 bytes")
+	registerGenericResourceCmd.Flags().String("handler", "", "handler contract address")
+	registerGenericResourceCmd.Flags().String("resourceId", "", "resource ID to query")
+	registerGenericResourceCmd.Flags().String("bridge", "", "bridge contract address")
+	registerGenericResourceCmd.Flags().String("target", "", "contract address to be registered")
+	registerGenericResourceCmd.Flags().String("deposit", "0x00000000", "deposit function signature")
+	registerGenericResourceCmd.Flags().String("execute", "0x00000000", "execute proposal function signature")
+	registerGenericResourceCmd.Flags().Bool("hash", false, "treat signature inputs as function prototype strings, hash and take the first 4 bytes")
 }
 
 func registerGenericResource(cmd *cobra.Command, args []string) {

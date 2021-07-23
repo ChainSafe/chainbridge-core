@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var RemoveRelayerCmd = &cobra.Command{
+var removeRelayerCmd = &cobra.Command{
 	Use:   "remove-relayer",
 	Short: "Remove a relayer",
 	Long:  "Remove a relayer",
@@ -13,8 +13,8 @@ var RemoveRelayerCmd = &cobra.Command{
 }
 
 func init() {
-	RemoveRelayerCmd.Flags().String("relayer", "", "address to remove")
-	RemoveRelayerCmd.Flags().String("bridge", "", "bridge contract address")
+	removeRelayerCmd.Flags().String("relayer", "", "address to remove")
+	removeRelayerCmd.Flags().String("bridge", "", "bridge contract address")
 }
 
 func removeRelayer(cmd *cobra.Command, args []string) {

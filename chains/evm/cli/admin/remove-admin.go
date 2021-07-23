@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var RemoveAdminCmd = &cobra.Command{
+var removeAdminCmd = &cobra.Command{
 	Use:   "remove-admin",
 	Short: "Remove an existing admin",
 	Long:  "Remove an existing admin",
@@ -13,8 +13,8 @@ var RemoveAdminCmd = &cobra.Command{
 }
 
 func init() {
-	RemoveAdminCmd.Flags().String("admin", "", "address to remove")
-	RemoveAdminCmd.Flags().String("bridge", "", "bridge contract address")
+	removeAdminCmd.Flags().String("admin", "", "address to remove")
+	removeAdminCmd.Flags().String("bridge", "", "bridge contract address")
 }
 
 func removeAdmin(cmd *cobra.Command, args []string) {

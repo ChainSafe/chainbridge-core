@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var SetBurnCmd = &cobra.Command{
+var setBurnCmd = &cobra.Command{
 	Use:   "set-burn",
 	Short: "Set a token contract as mintable/burnable",
 	Long:  "Set a token contract as mintable/burnable in a handler",
@@ -13,9 +13,9 @@ var SetBurnCmd = &cobra.Command{
 }
 
 func init() {
-	SetBurnCmd.Flags().String("handler", "", "ERC20 handler contract address")
-	SetBurnCmd.Flags().String("bridge", "", "bridge contract address")
-	SetBurnCmd.Flags().String("tokenContract", "", "token contract to be registered")
+	setBurnCmd.Flags().String("handler", "", "ERC20 handler contract address")
+	setBurnCmd.Flags().String("bridge", "", "bridge contract address")
+	setBurnCmd.Flags().String("tokenContract", "", "token contract to be registered")
 }
 
 func setBurn(cmd *cobra.Command, args []string) {

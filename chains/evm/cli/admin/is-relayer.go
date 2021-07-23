@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var IsRelayerCmd = &cobra.Command{
+var isRelayerCmd = &cobra.Command{
 	Use:   "is-relayer",
 	Short: "Check if an address is registered as a relayer",
 	Long:  "Check if an address is registered as a relayer",
@@ -13,8 +13,8 @@ var IsRelayerCmd = &cobra.Command{
 }
 
 func init() {
-	IsRelayerCmd.Flags().String("relayer", "", "address to check")
-	IsRelayerCmd.Flags().String("bridge", "", "bridge contract address")
+	isRelayerCmd.Flags().String("relayer", "", "address to check")
+	isRelayerCmd.Flags().String("bridge", "", "bridge contract address")
 }
 
 func isRelayer(cmd *cobra.Command, args []string) {

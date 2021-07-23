@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var SetFeeCmd = &cobra.Command{
+var setFeeCmd = &cobra.Command{
 	Use:   "set-fee",
 	Short: "Set a new fee for deposits",
 	Long:  "Set a new fee for deposits",
@@ -13,8 +13,8 @@ var SetFeeCmd = &cobra.Command{
 }
 
 func init() {
-	SetFeeCmd.Flags().String("fee", "", "New fee (in ether)")
-	SetFeeCmd.Flags().String("bridge", "", "bridge contract address")
+	setFeeCmd.Flags().String("fee", "", "New fee (in ether)")
+	setFeeCmd.Flags().String("bridge", "", "bridge contract address")
 }
 
 func setFee(cmd *cobra.Command, args []string) {

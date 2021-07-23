@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var AddAdminCmd = &cobra.Command{
+var addAdminCmd = &cobra.Command{
 	Use:   "add-admin",
 	Short: "Add a new admin",
 	Long:  "Add a new admin",
@@ -13,8 +13,8 @@ var AddAdminCmd = &cobra.Command{
 }
 
 func init() {
-	AddAdminCmd.Flags().String("admin", "", "address to add")
-	AddAdminCmd.Flags().String("bridge", "", "bridge contract address")
+	addAdminCmd.Flags().String("admin", "", "address to add")
+	addAdminCmd.Flags().String("bridge", "", "bridge contract address")
 }
 
 func addAdmin(cmd *cobra.Command, args []string) {

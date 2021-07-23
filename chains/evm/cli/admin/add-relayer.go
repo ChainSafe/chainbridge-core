@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var AddRelayerCmd = &cobra.Command{
+var addRelayerCmd = &cobra.Command{
 	Use:   "add-relayer",
 	Short: "Add a new relayer",
 	Long:  "Add a new relayer",
@@ -13,8 +13,8 @@ var AddRelayerCmd = &cobra.Command{
 }
 
 func init() {
-	AddRelayerCmd.Flags().String("relayer", "", "address to add")
-	AddRelayerCmd.Flags().String("bridge", "", "bridge contract address")
+	addRelayerCmd.Flags().String("relayer", "", "address to add")
+	addRelayerCmd.Flags().String("bridge", "", "bridge contract address")
 }
 
 func addRelayer(cmd *cobra.Command, args []string) {
