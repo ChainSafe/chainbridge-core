@@ -16,7 +16,11 @@ func deploy(cmd *cobra.Command, args []string) {
 	url := cmd.Flag("url").Value
 	gasLimit := cmd.Flag("gasLimit").Value
 	gasPrice := cmd.Flag("gasPrice").Value
-	log.Debug().Msgf("%v %v %v", url, gasLimit, gasPrice)
+	log.Debug().Msgf(`
+Deploying
+URL: %s 
+Gas limit: %d
+Gas price: %d`, url, gasLimit, gasPrice)
 }
 
 /*
