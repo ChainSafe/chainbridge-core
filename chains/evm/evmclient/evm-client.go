@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 	"sync"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -27,6 +29,8 @@ type EVMClient struct {
 	nonceLock sync.Mutex
 	config    *EVMConfig
 	nonce     *big.Int
+	optsLock  sync.Mutex
+	opts      *bind.TransactOpts
 }
 
 type CommonTransaction interface {
@@ -183,6 +187,53 @@ func (c *EVMClient) LockNonce() {
 
 func (c *EVMClient) UnlockNonce() {
 	c.nonceLock.Unlock()
+}
+
+func (c *EVMClient) LockOpts() {
+	c.optsLock.Lock()
+}
+
+func (c *EVMClient) UnlockOpts() {
+	c.optsLock.Unlock()
+}
+
+func (c *EVMClient) UnsafeOpts() (*bind.TransactOpts, error) {
+	nonce, err := c.UnsafeNonce()
+	if err != nil {
+		return nil, err
+	}
+	c.opts.Nonce = nonce
+
+	head, err := c.HeaderByNumber(context.TODO(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if head.BaseFee != nil {
+		if c.opts.GasTipCap == nil {
+			tip, err := c.SuggestGasTipCap(context.TODO())
+			if err != nil {
+				return nil, err
+			}
+			c.opts.GasTipCap = tip
+		}
+		if c.opts.GasFeeCap == nil {
+			gasFeeCap := new(big.Int).Add(
+				c.opts.GasTipCap,
+				new(big.Int).Mul(head.BaseFee, big.NewInt(2)),
+			)
+			c.opts.GasFeeCap = gasFeeCap
+		}
+		if c.opts.GasFeeCap.Cmp(c.opts.GasTipCap) < 0 {
+			return nil, fmt.Errorf("maxFeePerGas (%v) < maxPriorityFeePerGas (%v)", c.opts.GasFeeCap, c.opts.GasTipCap)
+		}
+	} else {
+		c.opts.GasPrice, err = c.GasPrice()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.opts, nil
 }
 
 func (c *EVMClient) UnsafeNonce() (*big.Int, error) {

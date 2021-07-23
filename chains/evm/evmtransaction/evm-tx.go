@@ -36,8 +36,33 @@ func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, 
 	return rawTX, nil
 }
 
-func NewTransaction(nonce uint64, to common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *TX {
-	tx := types.NewTransaction(nonce, to, amount, gasLimit, gasPrice, data)
+func NewTransaction(opts *bind.TransactOpts, to common.Address, amount *big.Int, data []byte) *TX {
+	var tx *types.Transaction
+	if opts.GasFeeCap != nil {
+		tx = types.NewTx(&types.DynamicFeeTx{
+			Nonce:     opts.Nonce.Uint64(),
+			To:        &to,
+			GasFeeCap: opts.GasFeeCap,
+			GasTipCap: opts.GasTipCap,
+			Gas:       opts.GasLimit,
+			Value:     amount,
+			Data:      data,
+		})
+	} else {
+		tx = types.NewTransaction(opts.Nonce.Uint64(), to, amount, opts.GasLimit, opts.GasPrice, data)
+	}
+	return &TX{tx: tx}
+}
+
+func NewDynamicTransaction(opts *bind.TransactOpts, amount *big.Int, data []byte) *TX {
+	tx := types.NewTx(&types.DynamicFeeTx{
+		Nonce:     opts.Nonce.Uint64(),
+		GasFeeCap: opts.GasFeeCap,
+		GasTipCap: opts.GasTipCap,
+		Gas:       opts.GasLimit,
+		Value:     amount,
+		Data:      data,
+	})
 	return &TX{tx: tx}
 }
 

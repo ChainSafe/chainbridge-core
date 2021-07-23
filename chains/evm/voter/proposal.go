@@ -87,27 +87,34 @@ func (p *Proposal) Execute(client ChainClient) error {
 	if err != nil {
 		return err
 	}
-	gasLimit := uint64(2000000)
-	gp, err := client.GasPrice()
+	// gasLimit := uint64(2000000)
+	// gp, err := client.GasPrice()
+	// if err != nil {
+	// 	return err
+	// }
+	// client.LockNonce()
+	// n, err := client.UnsafeNonce()
+	// if err != nil {
+	// 	return err
+	// }
+	client.LockOpts()
+	opts, err := client.UnsafeOpts()
 	if err != nil {
 		return err
 	}
-	client.LockNonce()
-	n, err := client.UnsafeNonce()
-	if err != nil {
-		return err
-	}
-	tx := evmtransaction.NewTransaction(n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
+	tx := evmtransaction.NewTransaction(opts, p.BridgeAddress, big.NewInt(0), input)
+	//tx := evmtransaction.NewTransaction(n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return err
 	}
-	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msgf("Executed")
+	log.Debug().Str("hash", hash.String()).Uint64("nonce", opts.Nonce.Uint64()).Msgf("Executed")
 	err = client.UnsafeIncreaseNonce()
 	if err != nil {
 		return err
 	}
-	client.UnlockNonce()
+	//client.UnlockNonce()
+	client.UnlockOpts()
 	return nil
 }
 
@@ -122,27 +129,34 @@ func (p *Proposal) Vote(client ChainClient) error {
 	if err != nil {
 		return err
 	}
-	gasLimit := uint64(1000000)
-	gp, err := client.GasPrice()
+	// gasLimit := uint64(1000000)
+	// gp, err := client.GasPrice()
+	// if err != nil {
+	// 	return err
+	// }
+	// client.LockNonce()
+	// n, err := client.UnsafeNonce()
+	// if err != nil {
+	// 	return err
+	// }
+	client.LockOpts()
+	opts, err := client.UnsafeOpts()
 	if err != nil {
 		return err
 	}
-	client.LockNonce()
-	n, err := client.UnsafeNonce()
-	if err != nil {
-		return err
-	}
-	tx := evmtransaction.NewTransaction(n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
+	tx := evmtransaction.NewTransaction(opts, p.BridgeAddress, big.NewInt(0), input)
+	//tx := evmtransaction.NewTransaction(n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return err
 	}
-	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msgf("Voted")
+	log.Debug().Str("hash", hash.String()).Uint64("nonce", opts.Nonce.Uint64()).Msgf("Voted")
 	err = client.UnsafeIncreaseNonce()
 	if err != nil {
 		return err
 	}
-	client.UnlockNonce()
+	//client.UnlockNonce()
+	client.UnlockOpts()
 	return nil
 }
 

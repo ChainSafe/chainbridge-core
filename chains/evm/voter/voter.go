@@ -11,6 +11,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 
 	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
@@ -25,6 +26,9 @@ type ChainClient interface {
 	UnsafeNonce() (*big.Int, error)
 	LockNonce()
 	UnlockNonce()
+	LockOpts()
+	UnlockOpts()
+	UnsafeOpts() (*bind.TransactOpts, error)
 	UnsafeIncreaseNonce() error
 	GasPrice() (*big.Int, error)
 	ChainID(ctx context.Context) (*big.Int, error)
