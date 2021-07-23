@@ -52,6 +52,8 @@ func init() {
 	evmRootCLI.AddCommand(bridge.QueryProposalCmd)
 	evmRootCLI.AddCommand(bridge.QueryResourceCmd)
 	evmRootCLI.AddCommand(bridge.RegisterGenericResourceCmd)
+	evmRootCLI.AddCommand(bridge.RegisterResourceCmd)
+	evmRootCLI.AddCommand(bridge.SetBurnCmd)
 
 	// erc20
 	evmRootCLI.AddCommand(erc20.AddMinterCmd)
