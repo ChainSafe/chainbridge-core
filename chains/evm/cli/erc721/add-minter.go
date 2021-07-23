@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var AddMinterCmd = &cobra.Command{
+var addMinterCmd = &cobra.Command{
 	Use:   "add-minter",
 	Short: "Add a minter to an ERC721 mintable contract",
 	Long:  "Add a minter to an ERC721 mintable contract",
@@ -13,8 +13,8 @@ var AddMinterCmd = &cobra.Command{
 }
 
 func init() {
-	AddMinterCmd.Flags().String("erc721Address", "", "ERC721 contract address")
-	AddMinterCmd.Flags().String("minter", "", "address of minter")
+	addMinterCmd.Flags().String("erc721Address", "", "ERC721 contract address")
+	addMinterCmd.Flags().String("minter", "", "address of minter")
 }
 
 func addMinter(cmd *cobra.Command, args []string) {
