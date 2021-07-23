@@ -16,7 +16,7 @@ import (
 
 var BlockRetryInterval = time.Second * 5
 
-// Only 1 for Optimism as block confirmations check occur in the data transport layer
+// Only 1 for Optimism as block confirmations check occur when events are indexed in the data transport layer
 var BlockDelay = big.NewInt(1) //TODO: move to config
 
 type DepositLogs struct {
@@ -56,8 +56,8 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw bl
 				return
 			default:
 				// Although L1 block confirmations are checked in the data-transport-layer,
-				// this remains here as to not infinitely loop without a bound. Our bound being the latest Optimism batch index
-				// If we wanted to do our own check we would most likely need another separate sync service for l1 which seems unnecessary
+				// this check is needed as to not infinitely loop without a bound if a continue statement below is hit. Our bound is the latest Optimism batch index
+				// NOTE: If we wanted to do our own check we would most likely need another separate sync service for l1 which seems unnecessary
 				head, err := l.chainReader.LatestBlock()
 				if err != nil {
 					log.Error().Err(err).Msg("Unable to get latest block")

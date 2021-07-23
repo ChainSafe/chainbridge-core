@@ -135,6 +135,7 @@ func (c *OptimismClient) Configurate(path string, name string) error {
 	log.Info().Str("url", generalConfig.Endpoint).Msg("Connecting to optimism chain...")
 	rpcClient, err := rpc.DialContext(context.TODO(), generalConfig.Endpoint)
 	if err != nil {
+		log.Debug().Msgf("dial context err: %v", err)
 		return err
 	}
 	c.Client = ethclient.NewClient(rpcClient)
