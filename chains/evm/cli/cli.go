@@ -37,9 +37,21 @@ func init() {
 
 	// admin
 	evmRootCLI.AddCommand(admin.AddAdminCmd)
+	evmRootCLI.AddCommand(admin.AddRelayerCmd)
+	evmRootCLI.AddCommand(admin.IsRelayerCmd)
+	evmRootCLI.AddCommand(admin.PauseCmd)
+	evmRootCLI.AddCommand(admin.RemoveAdminCmd)
+	evmRootCLI.AddCommand(admin.RemoveRelayerCmd)
+	evmRootCLI.AddCommand(admin.SetFeeCmd)
+	evmRootCLI.AddCommand(admin.SetThresholdCmd)
+	evmRootCLI.AddCommand(admin.UnpauseCmd)
+	evmRootCLI.AddCommand(admin.WithdrawCmd)
 
 	// bridge
 	evmRootCLI.AddCommand(bridge.CancelProposalCmd)
+	evmRootCLI.AddCommand(bridge.QueryProposalCmd)
+	evmRootCLI.AddCommand(bridge.QueryResourceCmd)
+	evmRootCLI.AddCommand(bridge.RegisterGenericResourceCmd)
 
 	// erc20
 	evmRootCLI.AddCommand(erc20.AddMinterCmd)
