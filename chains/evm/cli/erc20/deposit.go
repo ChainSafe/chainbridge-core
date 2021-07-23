@@ -16,10 +16,11 @@ func init() {
 	DepositCmd.Flags().String("recipient", "", "address of recipient")
 	DepositCmd.Flags().String("bridge", "", "address of bridge contract")
 	DepositCmd.Flags().String("amount", "", "amount to deposit")
-	DepositCmd.Flags().String("value", "", "value of ETH that should be sent along with deposit to cover possible fees. In ETH (decimals are allowed)")
+	DepositCmd.Flags().String("value", "0", "value of ETH that should be sent along with deposit to cover possible fees. In ETH (decimals are allowed)")
 	DepositCmd.Flags().String("destId", "", "destination chain ID")
 	DepositCmd.Flags().String("resourceId", "", "resource ID for transfer")
 	DepositCmd.Flags().Uint64("decimals", 0, "ERC20 token decimals")
+	DepositCmd.MarkFlagRequired("decimals")
 }
 
 func deposit(cmd *cobra.Command, args []string) {

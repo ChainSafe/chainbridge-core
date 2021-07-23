@@ -17,8 +17,8 @@ func init() {
 	RegisterGenericResourceCmd.Flags().String("resourceId", "", "resource ID to query")
 	RegisterGenericResourceCmd.Flags().String("bridge", "", "bridge contract address")
 	RegisterGenericResourceCmd.Flags().String("target", "", "contract address to be registered")
-	RegisterGenericResourceCmd.Flags().String("deposit", "", "deposit function signature")
-	RegisterGenericResourceCmd.Flags().String("execute", "", "execute proposal function signature")
+	RegisterGenericResourceCmd.Flags().String("deposit", "0x00000000", "deposit function signature")
+	RegisterGenericResourceCmd.Flags().String("execute", "0x00000000", "execute proposal function signature")
 	RegisterGenericResourceCmd.Flags().Bool("hash", false, "treat signature inputs as function prototype strings, hash and take the first 4 bytes")
 }
 

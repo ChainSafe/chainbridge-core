@@ -17,6 +17,7 @@ func init() {
 	ApproveCmd.Flags().String("amount", "", "amount to grant allowance")
 	ApproveCmd.Flags().String("recipient", "", "address of recipient")
 	ApproveCmd.Flags().Uint64("decimals", 0, "ERC20 token decimals")
+	ApproveCmd.MarkFlagRequired("decimals")
 }
 
 func approve(cmd *cobra.Command, args []string) {
