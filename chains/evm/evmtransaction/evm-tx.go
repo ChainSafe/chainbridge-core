@@ -54,18 +54,6 @@ func NewTransaction(opts *bind.TransactOpts, to common.Address, amount *big.Int,
 	return &TX{tx: tx}
 }
 
-func NewDynamicTransaction(opts *bind.TransactOpts, amount *big.Int, data []byte) *TX {
-	tx := types.NewTx(&types.DynamicFeeTx{
-		Nonce:     opts.Nonce.Uint64(),
-		GasFeeCap: opts.GasFeeCap,
-		GasTipCap: opts.GasTipCap,
-		Gas:       opts.GasLimit,
-		Value:     amount,
-		Data:      data,
-	})
-	return &TX{tx: tx}
-}
-
 func (a *TX) Hash() common.Hash {
 	return a.tx.Hash()
 }
