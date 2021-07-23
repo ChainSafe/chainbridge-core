@@ -20,7 +20,10 @@ func init() {
 func removeRelayer(cmd *cobra.Command, args []string) {
 	relayerAddress := cmd.Flag("relayer").Value
 	bridgeAddress := cmd.Flag("bridge").Value
-	log.Debug().Msgf("Removing relayer: %s from bridge with address: %s", relayerAddress, bridgeAddress)
+	log.Debug().Msgf(`
+Removing relayer 
+Relayer address: %s
+Bridge address: %s`, relayerAddress, bridgeAddress)
 }
 
 /*

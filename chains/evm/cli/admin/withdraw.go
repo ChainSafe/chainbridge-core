@@ -31,15 +31,14 @@ func withdraw(cmd *cobra.Command, args []string) {
 	recipient := cmd.Flag("recipient").Value
 	decimals := cmd.Flag("decimals").Value
 	log.Debug().Msgf(`
-Withdraw initiated
+Withdrawing
 Amount: %s
 ID: %s
 Bridge address: %s
 Handler: %s
 Token: %s
 Recipient: %s
-Decimals: %v
-`, amount, id, bridgeAddress, handler, token, recipient, decimals)
+Decimals: %v`, amount, id, bridgeAddress, handler, token, recipient, decimals)
 }
 
 /*

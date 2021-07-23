@@ -20,7 +20,10 @@ func init() {
 func setFee(cmd *cobra.Command, args []string) {
 	feeAmount := cmd.Flag("fee").Value
 	bridgeAddress := cmd.Flag("bridge").Value
-	log.Debug().Msgf("Setting new fee: %s for bridge address: %s", feeAmount, bridgeAddress)
+	log.Debug().Msgf(`
+Setting new fee
+Fee amount: %s
+Bridge address: %s`, feeAmount, bridgeAddress)
 }
 
 /*

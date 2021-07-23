@@ -7,20 +7,23 @@ import (
 
 var AddMinterCmd = &cobra.Command{
 	Use:   "add-minter",
-	Short: "Adds a minter to an Erc20 mintable contract",
-	Long:  "Adds a minter to an Erc20 mintable contract",
+	Short: "Add a minter to an Erc20 mintable contract",
+	Long:  "Add a minter to an Erc20 mintable contract",
 	Run:   addMinter,
 }
 
 func init() {
-	AddMinterCmd.Flags().String("erc20Address", "", "bridge contract address")
+	AddMinterCmd.Flags().String("erc20Address", "", "ERC20 contract address")
 	AddMinterCmd.Flags().String("minter", "", "address of minter")
 }
 
 func addMinter(cmd *cobra.Command, args []string) {
 	erc20Address := cmd.Flag("erc20Address").Value
 	minterAddress := cmd.Flag("minter").Value
-	log.Debug().Msgf("Adding minter: %s to erc20 address: %s", minterAddress, erc20Address)
+	log.Debug().Msgf(`
+Adding minter
+Minter address: %s 
+ERC20 address: %s`, minterAddress, erc20Address)
 }
 
 /*

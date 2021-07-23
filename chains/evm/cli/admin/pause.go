@@ -18,7 +18,9 @@ func init() {
 
 func pause(cmd *cobra.Command, args []string) {
 	bridgeAddress := cmd.Flag("bridge").Value
-	log.Debug().Msgf("Pausing: bridge address: %s", bridgeAddress)
+	log.Debug().Msgf(`
+Pausing
+Bridge address: %s`, bridgeAddress)
 }
 
 /*

@@ -7,8 +7,8 @@ import (
 
 var AddAdminCmd = &cobra.Command{
 	Use:   "add-admin",
-	Short: "Adds a new admin",
-	Long:  "Adds a new admin",
+	Short: "Add a new admin",
+	Long:  "Add a new admin",
 	Run:   addAdmin,
 }
 
@@ -20,7 +20,10 @@ func init() {
 func addAdmin(cmd *cobra.Command, args []string) {
 	adminAddress := cmd.Flag("admin").Value
 	bridgeAddress := cmd.Flag("bridge").Value
-	log.Debug().Msgf("Adding admin: %s to bridge address: %s", adminAddress, bridgeAddress)
+	log.Debug().Msgf(`
+Adding admin
+Admin address: %s
+Bridge address: %s`, adminAddress, bridgeAddress)
 }
 
 /*

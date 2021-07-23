@@ -57,6 +57,11 @@ func init() {
 
 	// erc20
 	evmRootCLI.AddCommand(erc20.AddMinterCmd)
+	evmRootCLI.AddCommand(erc20.AllowanceCmd)
+	evmRootCLI.AddCommand(erc20.ApproveCmd)
+	evmRootCLI.AddCommand(erc20.BalanceCmd)
+	evmRootCLI.AddCommand(erc20.DepositCmd)
+	evmRootCLI.AddCommand(erc20.MintCmd)
 
 	// erc721
 	evmRootCLI.AddCommand(erc721.AddMinterCmd)

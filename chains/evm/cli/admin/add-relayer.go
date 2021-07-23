@@ -7,8 +7,8 @@ import (
 
 var AddRelayerCmd = &cobra.Command{
 	Use:   "add-relayer",
-	Short: "Adds a new relayer",
-	Long:  "Adds a new relayer",
+	Short: "Add a new relayer",
+	Long:  "Add a new relayer",
 	Run:   addRelayer,
 }
 
@@ -20,7 +20,10 @@ func init() {
 func addRelayer(cmd *cobra.Command, args []string) {
 	relayerAddress := cmd.Flag("relayer").Value
 	bridgeAddress := cmd.Flag("bridge").Value
-	log.Debug().Msgf("Adding relayer: %s to bridge address: %s", relayerAddress, bridgeAddress)
+	log.Debug().Msgf(`
+Adding relayer 
+Relayer address: %s
+Bridge address: %s`, relayerAddress, bridgeAddress)
 }
 
 /*

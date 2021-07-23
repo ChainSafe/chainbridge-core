@@ -7,8 +7,8 @@ import (
 
 var RemoveAdminCmd = &cobra.Command{
 	Use:   "remove-admin",
-	Short: "Removes an existing admin",
-	Long:  "Removes an existing admin",
+	Short: "Remove an existing admin",
+	Long:  "Remove an existing admin",
 	Run:   removeAdmin,
 }
 
@@ -20,7 +20,10 @@ func init() {
 func removeAdmin(cmd *cobra.Command, args []string) {
 	adminAddress := cmd.Flag("admin").Value
 	bridgeAddress := cmd.Flag("bridge").Value
-	log.Debug().Msgf("Removing admin: %s on bridge with address: %s", adminAddress, bridgeAddress)
+	log.Debug().Msgf(`
+Removing admin
+Admin address: %s
+Bridge address: %s`, adminAddress, bridgeAddress)
 }
 
 /*

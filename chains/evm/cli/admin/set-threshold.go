@@ -20,7 +20,10 @@ func init() {
 func setThreshold(cmd *cobra.Command, args []string) {
 	threshold := cmd.Flag("threshold").Value
 	bridgeAddress := cmd.Flag("bridge").Value
-	log.Debug().Msgf("Setting new threshold: %v for bridge address: %s", threshold, bridgeAddress)
+	log.Debug().Msgf(`
+Setting new threshold
+Threshold: %d
+Bridge address: %s`, threshold, bridgeAddress)
 }
 
 /*

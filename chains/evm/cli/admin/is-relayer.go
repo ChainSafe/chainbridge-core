@@ -7,8 +7,8 @@ import (
 
 var IsRelayerCmd = &cobra.Command{
 	Use:   "is-relayer",
-	Short: "Checks if an address is registered as a relayer",
-	Long:  "Checks if an address is registered as a relayer",
+	Short: "Check if an address is registered as a relayer",
+	Long:  "Check if an address is registered as a relayer",
 	Run:   isRelayer,
 }
 
@@ -20,7 +20,10 @@ func init() {
 func isRelayer(cmd *cobra.Command, args []string) {
 	relayerAddress := cmd.Flag("relayer").Value
 	bridgeAddress := cmd.Flag("bridge").Value
-	log.Debug().Msgf("Adding relayer: %s to bridge address: %s", relayerAddress, bridgeAddress)
+	log.Debug().Msgf(`
+Checking relayer
+Relayer address: %s
+Bridge address: %s`, relayerAddress, bridgeAddress)
 }
 
 /*
