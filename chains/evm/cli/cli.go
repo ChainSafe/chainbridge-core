@@ -27,9 +27,9 @@ func init() {
 	evmRootCLI.PersistentFlags().Uint64("gasLimit", 6721975, "gasLimit used in transactions")
 	evmRootCLI.PersistentFlags().Uint64("gasPrice", 20000000000, "gasPrice used for transactions")
 	evmRootCLI.PersistentFlags().Uint64("networkID", 0, "networkid")
-	evmRootCLI.PersistentFlags().String("privateKey", "ws://localhost:8545", "Private key to use")
-	evmRootCLI.PersistentFlags().String("jsonWallet", "ws://localhost:8545", "Encrypted JSON wallet")
-	evmRootCLI.PersistentFlags().String("jsonWalletPassword", "ws://localhost:8545", "Password for encrypted JSON wallet")
+	evmRootCLI.PersistentFlags().String("privateKey", "", "Private key to use")
+	evmRootCLI.PersistentFlags().String("jsonWallet", "", "Encrypted JSON wallet")
+	evmRootCLI.PersistentFlags().String("jsonWalletPassword", "", "Password for encrypted JSON wallet")
 
 	// add commands to evm-cli root
 	// deploy
