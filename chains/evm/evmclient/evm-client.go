@@ -40,6 +40,35 @@ func NewEVMClient() *EVMClient {
 	return &EVMClient{}
 }
 
+func (c *EVMClient) ConfigureNoFile(endpoint string, http bool, kp *secp256k1.Keypair, gasLimit, gasPrice *big.Int, gasMultiplier *big.Float) error {
+	config := c.config
+
+	config.kp = kp
+	config.SharedEVMConfig.GeneralChainConfig.Insecure = http
+	config.SharedEVMConfig.GeneralChainConfig.Endpoint = endpoint
+	config.SharedEVMConfig.GasMultiplier = gasMultiplier
+	config.SharedEVMConfig.MaxGasPrice = gasPrice
+	config.SharedEVMConfig.GasLimit = gasLimit
+
+	log.Info().Str("url", config.SharedEVMConfig.GeneralChainConfig.Endpoint).Msg("Connecting to evm chain...")
+	rpcClient, err := rpc.DialContext(context.TODO(), config.SharedEVMConfig.GeneralChainConfig.Endpoint)
+	if err != nil {
+		return err
+	}
+	c.Client = ethclient.NewClient(rpcClient)
+	c.rpClient = rpcClient
+
+	if config.SharedEVMConfig.GeneralChainConfig.LatestBlock {
+		curr, err := c.LatestBlock()
+		if err != nil {
+			return err
+		}
+		config.SharedEVMConfig.StartBlock = curr
+	}
+
+	return nil
+}
+
 func (c *EVMClient) Configurate(path string, name string) error {
 	rawCfg, err := GetConfig(path, name)
 	if err != nil {
