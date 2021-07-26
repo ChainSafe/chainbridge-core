@@ -87,23 +87,19 @@ func (p *Proposal) Execute(client ChainClient) error {
 	if err != nil {
 		return err
 	}
-	// gasLimit := uint64(2000000)
-	// gp, err := client.GasPrice()
-	// if err != nil {
-	// 	return err
-	// }
-	// client.LockNonce()
-	// n, err := client.UnsafeNonce()
-	// if err != nil {
-	// 	return err
-	// }
+
+	cId, err := client.ChainID(context.TODO())
+	if err != nil {
+		return err
+	}
 	client.LockOpts()
 	opts, err := client.UnsafeOpts()
 	if err != nil {
 		return err
 	}
-	tx := evmtransaction.NewTransaction(opts, p.BridgeAddress, big.NewInt(0), input)
-	//tx := evmtransaction.NewTransaction(n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
+	opts.GasLimit = uint64(2000000)
+	tx := evmtransaction.NewTransaction(opts, p.BridgeAddress, big.NewInt(0), cId, input)
+
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return err
@@ -111,9 +107,9 @@ func (p *Proposal) Execute(client ChainClient) error {
 	log.Debug().Str("hash", hash.String()).Uint64("nonce", opts.Nonce.Uint64()).Msgf("Executed")
 	err = client.UnsafeIncreaseNonce()
 	if err != nil {
+		client.UnlockOpts()
 		return err
 	}
-	//client.UnlockNonce()
 	client.UnlockOpts()
 	return nil
 }
@@ -125,31 +121,24 @@ func (p *Proposal) Vote(client ChainClient) error {
 	if err != nil {
 		return err // Not sure what status to use here
 	}
-	log.Debug().Msg("parsed ABI to JSON")
 
 	input, err := a.Pack("voteProposal", p.Source, p.DepositNonce, p.ResourceId, p.GetDataHash())
 	if err != nil {
 		return err
 	}
-	log.Debug().Msg("packed voteProposal ABI")
 
-	// gasLimit := uint64(1000000)
-	// gp, err := client.GasPrice()
-	// if err != nil {
-	// 	return err
-	// }
-	// client.LockNonce()
-	// n, err := client.UnsafeNonce()
-	// if err != nil {
-	// 	return err
-	// }
+	cId, err := client.ChainID(context.TODO())
+	if err != nil {
+		return err
+	}
 	client.LockOpts()
 	opts, err := client.UnsafeOpts()
 	if err != nil {
 		return err
 	}
-	tx := evmtransaction.NewTransaction(opts, p.BridgeAddress, big.NewInt(0), input)
-	//tx := evmtransaction.NewTransaction(n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
+	opts.GasLimit = uint64(2000000)
+	tx := evmtransaction.NewTransaction(opts, p.BridgeAddress, big.NewInt(0), cId, input)
+
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return err
@@ -157,9 +146,9 @@ func (p *Proposal) Vote(client ChainClient) error {
 	log.Debug().Str("hash", hash.String()).Uint64("nonce", opts.Nonce.Uint64()).Msgf("Voted")
 	err = client.UnsafeIncreaseNonce()
 	if err != nil {
+		client.UnlockOpts()
 		return err
 	}
-	//client.UnlockNonce()
 	client.UnlockOpts()
 	return nil
 }

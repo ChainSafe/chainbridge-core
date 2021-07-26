@@ -23,9 +23,6 @@ type ChainClient interface {
 	SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error)
 	RelayerAddress() common.Address
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
-	UnsafeNonce() (*big.Int, error)
-	LockNonce()
-	UnlockNonce()
 	LockOpts()
 	UnlockOpts()
 	UnsafeOpts() (*bind.TransactOpts, error)

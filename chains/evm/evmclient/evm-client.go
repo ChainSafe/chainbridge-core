@@ -25,12 +25,11 @@ import (
 
 type EVMClient struct {
 	*ethclient.Client
-	rpClient  *rpc.Client
-	nonceLock sync.Mutex
-	config    *EVMConfig
-	nonce     *big.Int
-	optsLock  sync.Mutex
-	opts      *bind.TransactOpts
+	rpClient *rpc.Client
+	config   *EVMConfig
+	nonce    *big.Int
+	optsLock sync.Mutex
+	opts     *bind.TransactOpts
 }
 
 type CommonTransaction interface {
@@ -71,17 +70,18 @@ func (c *EVMClient) Configurate(path string, name string) error {
 	}
 	c.Client = ethclient.NewClient(rpcClient)
 	c.rpClient = rpcClient
-	log.Debug().Msg("right before chain id call")
+
 	id, err := c.ChainID(context.TODO())
 	if err != nil {
 		return err
 	}
-	log.Debug().Msg("about to make TransactOpts")
+
 	opts, err := bind.NewKeyedTransactorWithChainID(krp.PrivateKey(), id)
 	if err != nil {
 		return err
 	}
 	c.opts = opts
+	c.opts.Context = context.Background()
 
 	if generalConfig.LatestBlock {
 		curr, err := c.LatestBlock()
@@ -149,6 +149,10 @@ func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common
 
 // SendRawTransaction accepts rlp-encode of signed transaction and sends it via RPC call
 func (c *EVMClient) SendRawTransaction(ctx context.Context, tx []byte) error {
+	// data, err := tx.MarshalBinary()
+	// if err != nil {
+	// 	return err
+	// }
 	return c.rpClient.CallContext(ctx, nil, "eth_sendRawTransaction", hexutil.Encode(tx))
 }
 
@@ -173,12 +177,12 @@ func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string
 //func (c *EVMClient) ChainID()
 
 func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransaction) (common.Hash, error) {
-	rawTX, err := tx.RawWithSignature(c.opts, c.config.kp.PrivateKey())
+	rawTx, err := tx.RawWithSignature(c.opts, c.config.kp.PrivateKey())
 	if err != nil {
 		return common.Hash{}, err
 	}
 
-	err = c.SendRawTransaction(ctx, rawTX)
+	err = c.SendRawTransaction(ctx, rawTx)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -187,14 +191,6 @@ func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransac
 
 func (c *EVMClient) RelayerAddress() common.Address {
 	return c.config.kp.CommonAddress()
-}
-
-func (c *EVMClient) LockNonce() {
-	c.nonceLock.Lock()
-}
-
-func (c *EVMClient) UnlockNonce() {
-	c.nonceLock.Unlock()
 }
 
 func (c *EVMClient) LockOpts() {
@@ -206,25 +202,28 @@ func (c *EVMClient) UnlockOpts() {
 }
 
 func (c *EVMClient) UnsafeOpts() (*bind.TransactOpts, error) {
-	nonce, err := c.UnsafeNonce()
+	nonce, err := c.unsafeNonce()
 	if err != nil {
 		return nil, err
 	}
 	c.opts.Nonce = nonce
-	log.Debug().Msgf("nonce: %v", c.opts.Nonce)
 
 	head, err := c.HeaderByNumber(context.TODO(), nil)
 	if err != nil {
+		c.UnlockOpts()
 		return nil, err
 	}
 
+	log.Debug().Msgf("head.BaseFee: %v", head.BaseFee)
 	if head.BaseFee != nil {
 		if c.opts.GasTipCap == nil {
 			tip, err := c.SuggestGasTipCap(context.TODO())
 			if err != nil {
+				c.UnlockOpts()
 				return nil, err
 			}
 			c.opts.GasTipCap = tip
+			log.Debug().Msgf("Gas tip cap: %v", c.opts.GasTipCap)
 		}
 		if c.opts.GasFeeCap == nil {
 			gasFeeCap := new(big.Int).Add(
@@ -232,20 +231,23 @@ func (c *EVMClient) UnsafeOpts() (*bind.TransactOpts, error) {
 				new(big.Int).Mul(head.BaseFee, big.NewInt(2)),
 			)
 			c.opts.GasFeeCap = gasFeeCap
+			log.Debug().Msgf("Gas fee cap: %v", c.opts.GasFeeCap)
 		}
 		if c.opts.GasFeeCap.Cmp(c.opts.GasTipCap) < 0 {
+			c.UnlockOpts()
 			return nil, fmt.Errorf("maxFeePerGas (%v) < maxPriorityFeePerGas (%v)", c.opts.GasFeeCap, c.opts.GasTipCap)
 		}
 	} else {
 		c.opts.GasPrice, err = c.GasPrice()
 		if err != nil {
+			c.UnlockOpts()
 			return nil, err
 		}
 	}
 	return c.opts, nil
 }
 
-func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
+func (c *EVMClient) unsafeNonce() (*big.Int, error) {
 	var err error
 	for i := 0; i <= 10; i++ {
 		if c.nonce == nil {
@@ -263,7 +265,7 @@ func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
 }
 
 func (c *EVMClient) UnsafeIncreaseNonce() error {
-	nonce, err := c.UnsafeNonce()
+	nonce, err := c.unsafeNonce()
 	log.Debug().Str("nonce", nonce.String()).Msg("Before increase")
 	if err != nil {
 		return err

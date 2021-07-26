@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/rs/zerolog/log"
 )
 
@@ -26,27 +25,30 @@ func (a *TX) RawWithSignature(opts *bind.TransactOpts, key *ecdsa.PrivateKey) ([
 		return nil, err
 	}
 	a.tx = tx
-	rawTX, err := rlp.EncodeToBytes(tx)
+
+	data, err := tx.MarshalBinary()
 	if err != nil {
 		return nil, err
 	}
-	return rawTX, nil
+
+	return data, nil
 }
 
-func NewTransaction(opts *bind.TransactOpts, to common.Address, amount *big.Int, data []byte) *TX {
+func NewTransaction(opts *bind.TransactOpts, to common.Address, amount *big.Int, chainId *big.Int, data []byte) *TX {
 	var tx *types.Transaction
 	log.Info().Msgf("gas fee cap: %v", opts.GasFeeCap)
+	log.Info().Msgf("opts: %v", opts)
 	if opts.GasFeeCap != nil {
 		log.Debug().Msgf("Using DynamicFeeTx, nonce: %v", opts.Nonce)
 		tx = types.NewTx(&types.DynamicFeeTx{
-			Nonce:      opts.Nonce.Uint64(),
-			To:         &to,
-			GasFeeCap:  opts.GasFeeCap,
-			GasTipCap:  opts.GasTipCap,
-			Gas:        opts.GasLimit,
-			Value:      amount,
-			Data:       data,
-			AccessList: types.AccessList{},
+			ChainID:   chainId,
+			Nonce:     opts.Nonce.Uint64(),
+			To:        &to,
+			GasFeeCap: opts.GasFeeCap,
+			GasTipCap: opts.GasTipCap,
+			Gas:       opts.GasLimit,
+			Value:     amount,
+			Data:      data,
 		})
 	} else {
 		log.Debug().Msgf("Using LegacyTx, nonce: %v", opts.Nonce)
