@@ -216,23 +216,21 @@ func (c *EVMClient) UnsafeOpts() (*bind.TransactOpts, error) {
 
 	log.Debug().Msgf("head.BaseFee: %v", head.BaseFee)
 	if head.BaseFee != nil {
-		if c.opts.GasTipCap == nil {
-			tip, err := c.SuggestGasTipCap(context.TODO())
-			if err != nil {
-				c.UnlockOpts()
-				return nil, err
-			}
-			c.opts.GasTipCap = tip
-			log.Debug().Msgf("Gas tip cap: %v", c.opts.GasTipCap)
+		tip, err := c.SuggestGasTipCap(context.TODO())
+		if err != nil {
+			c.UnlockOpts()
+			return nil, err
 		}
-		if c.opts.GasFeeCap == nil {
-			gasFeeCap := new(big.Int).Add(
-				c.opts.GasTipCap,
-				new(big.Int).Mul(head.BaseFee, big.NewInt(2)),
-			)
-			c.opts.GasFeeCap = gasFeeCap
-			log.Debug().Msgf("Gas fee cap: %v", c.opts.GasFeeCap)
-		}
+		c.opts.GasTipCap = tip
+		log.Debug().Msgf("Gas tip cap: %v", c.opts.GasTipCap)
+
+		gasFeeCap := new(big.Int).Add(
+			c.opts.GasTipCap,
+			new(big.Int).Mul(head.BaseFee, big.NewInt(2)),
+		)
+		c.opts.GasFeeCap = gasFeeCap
+		log.Debug().Msgf("Gas fee cap: %v", c.opts.GasFeeCap)
+
 		if c.opts.GasFeeCap.Cmp(c.opts.GasTipCap) < 0 {
 			c.UnlockOpts()
 			return nil, fmt.Errorf("maxFeePerGas (%v) < maxPriorityFeePerGas (%v)", c.opts.GasFeeCap, c.opts.GasTipCap)
