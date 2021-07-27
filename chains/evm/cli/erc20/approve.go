@@ -1,6 +1,8 @@
 package erc20
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -32,6 +34,13 @@ Recipient address: %s
 Amount: %s
 Decimals: %d`,
 		erc20Address, recipientAddress, amount, decimals)
+
+	client := evmclient.NewEVMClientFromParams(url, privateKey)
+	i, err := calls.PrepareErc20ApproveInput(target, amount)
+	if err != nil {
+		panic(err)
+	}
+	err := calls.SendInput(client, dest, i)
 }
 
 /*

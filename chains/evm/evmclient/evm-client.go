@@ -42,20 +42,18 @@ func NewEVMClient() *EVMClient {
 	return &EVMClient{}
 }
 
-func (c *EVMClient) Configure(endpoint string, auth *bind.TransactOpts, kp *secp256k1.Keypair) error {
-	log.Info().Str("url", endpoint).Msg("Connecting to evm chain...")
-	rpcClient, err := rpc.DialContext(context.TODO(), endpoint)
+func NewEVMClientFromParams(url string, privatKey *ecdsa.PrivateKey) (*EVMClient, error) {
+	rpcClient, err := rpc.DialContext(context.TODO(), url)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	// segmentation fault occurs here
-	c.config.kp = kp
-	c.opts = auth
+	kp := secp256k1.NewKeypair(*privatKey)
+	c := &EVMClient{}
 	c.Client = ethclient.NewClient(rpcClient)
 	c.rpClient = rpcClient
-
-	return nil
+	c.config = &EVMConfig{}
+	c.config.kp = kp
+	return c, nil
 }
 
 func (c *EVMClient) Configurate(path string, name string) error {
@@ -243,16 +241,20 @@ func (c *EVMClient) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	gasPrice := multiplyGasPrice(suggestedGasPrice, c.config.SharedEVMConfig.GasMultiplier)
-
+	var gasPrice *big.Int
+	if  c.config.SharedEVMConfig.GasMultiplier != nil {
+		gasPrice = multiplyGasPrice(suggestedGasPrice, c.config.SharedEVMConfig.GasMultiplier)
+	}
 	// Check we aren't exceeding our limit
-
 	if gasPrice.Cmp(c.config.SharedEVMConfig.MaxGasPrice) == 1 {
 		return c.config.SharedEVMConfig.MaxGasPrice, nil
 	} else {
 		return gasPrice, nil
 	}
+}
+
+func (c *EVMClient) From() common.Address {
+	return c.config.kp.CommonAddress()
 }
 
 func multiplyGasPrice(gasEstimate *big.Int, gasMultiplier *big.Float) *big.Int {

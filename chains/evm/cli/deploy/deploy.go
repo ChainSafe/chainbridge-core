@@ -22,7 +22,7 @@ var DeployEVM = &cobra.Command{
 	Use:   "deploy",
 	Short: "Deploy smart contracts",
 	Long:  "This command can be used to deploy all or some of the contracts required for bridging. Selection of contracts can be made by either specifying --all or a subset of flags",
-	Run:   deploy,
+	Run:  deploy,
 }
 
 func init() {
@@ -41,6 +41,7 @@ func init() {
 	DeployEVM.Flags().String("erc20Symbol", "", "ERC20 contract symbol")
 	DeployEVM.Flags().String("erc20Name", "", "ERC20 contract name")
 }
+
 
 func deploy(cmd *cobra.Command, args []string) {
 	url := cmd.Flag("url").Value.String()
