@@ -1,7 +1,6 @@
 package cliutils
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	gomath "math"
@@ -12,9 +11,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/rlp"
 )
 
 var (
@@ -47,23 +44,6 @@ func IsPassed(status uint8) bool {
 
 func IsExecuted(status uint8) bool {
 	return ProposalStatus(status) == Executed
-}
-
-func SliceTo32Bytes(in []byte) [32]byte {
-	var res [32]byte
-	copy(res[:], in)
-	return res
-}
-
-func SliceTo4Bytes(in []byte) [4]byte {
-	var res [4]byte
-	copy(res[:], in)
-	return res
-}
-
-func GetSolidityFunctionSig(in string) [4]byte {
-	res := crypto.Keccak256(bytes.NewBufferString(in).Bytes())
-	return SliceTo4Bytes(res)
 }
 
 // UserAmountToWei converts decimal user friendly representation of token amount to 'Wei' representation with provided amount of decimal places
@@ -115,21 +95,6 @@ func ConstructGenericDepositData(metadata []byte) []byte {
 	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(metadata))), 32)...)
 	data = append(data, metadata...)
 	return data
-}
-
-// RlpEncodeHeader is method to RLP encode data stored in a block header
-func RlpEncodeHeader(header *types.Header) ([]byte, error) {
-	// deep copy of header
-	newHeader := types.CopyHeader(header)
-
-	// encode copied header into byte slice
-	rlpEncodedHeader, err := rlp.EncodeToBytes(newHeader)
-	if err != nil {
-		// return empty byte slice, error
-		return []byte{}, fmt.Errorf("error encoding header: %w", err)
-	}
-
-	return rlpEncodedHeader, nil
 }
 
 func DefineSender(privateKey string) (*secp256k1.Keypair, error) {

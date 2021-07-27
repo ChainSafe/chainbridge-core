@@ -13,6 +13,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -27,6 +28,7 @@ type EVMClient struct {
 	nonceLock sync.Mutex
 	config    *EVMConfig
 	nonce     *big.Int
+	opts      *bind.TransactOpts
 }
 
 type CommonTransaction interface {
@@ -40,31 +42,18 @@ func NewEVMClient() *EVMClient {
 	return &EVMClient{}
 }
 
-func (c *EVMClient) ConfigureNoFile(endpoint string, http bool, kp *secp256k1.Keypair, gasLimit, gasPrice *big.Int, gasMultiplier *big.Float) error {
-	config := c.config
-
-	config.kp = kp
-	config.SharedEVMConfig.GeneralChainConfig.Insecure = http
-	config.SharedEVMConfig.GeneralChainConfig.Endpoint = endpoint
-	config.SharedEVMConfig.GasMultiplier = gasMultiplier
-	config.SharedEVMConfig.MaxGasPrice = gasPrice
-	config.SharedEVMConfig.GasLimit = gasLimit
-
-	log.Info().Str("url", config.SharedEVMConfig.GeneralChainConfig.Endpoint).Msg("Connecting to evm chain...")
-	rpcClient, err := rpc.DialContext(context.TODO(), config.SharedEVMConfig.GeneralChainConfig.Endpoint)
+func (c *EVMClient) Configure(endpoint string, auth *bind.TransactOpts, kp *secp256k1.Keypair) error {
+	log.Info().Str("url", endpoint).Msg("Connecting to evm chain...")
+	rpcClient, err := rpc.DialContext(context.TODO(), endpoint)
 	if err != nil {
 		return err
 	}
+
+	// segmentation fault occurs here
+	c.config.kp = kp
+	c.opts = auth
 	c.Client = ethclient.NewClient(rpcClient)
 	c.rpClient = rpcClient
-
-	if config.SharedEVMConfig.GeneralChainConfig.LatestBlock {
-		curr, err := c.LatestBlock()
-		if err != nil {
-			return err
-		}
-		config.SharedEVMConfig.StartBlock = curr
-	}
 
 	return nil
 }

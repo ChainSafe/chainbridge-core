@@ -9,6 +9,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
@@ -42,7 +43,7 @@ func init() {
 }
 
 func deploy(cmd *cobra.Command, args []string) {
-	url := cmd.Flag("url").Value
+	url := cmd.Flag("url").Value.String()
 	// gasLimit := cmd.Flag("gasLimit").Value
 	gasLimit, err := cmd.Flags().GetUint64("gasLimit")
 	if err != nil {
@@ -63,13 +64,12 @@ func deploy(cmd *cobra.Command, args []string) {
 		log.Fatal().Err(err)
 	}
 
-	chainId := cmd.Flag("chainId").Value
-	relayerThreshold := cmd.Flag("relayerThreshold").Value
+	relayerThreshold := cmd.Flag("relayerThreshold").Value.String()
 
 	var relayerAddresses []common.Address
-	relayerAddressesString := cmd.Flag("relayers").Value
+	relayerAddressesString := cmd.Flag("relayers").Value.String()
 
-	relayerAddressesSlice := strings.Split(relayerAddressesString.String(), "")
+	relayerAddressesSlice := strings.Split(relayerAddressesString, "")
 
 	if len(relayerAddresses) == 0 {
 		relayerAddresses = cliutils.DefaultRelayerAddresses
@@ -79,28 +79,10 @@ func deploy(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	log.Debug().Msgf(`
-	Deploying
-	URL: %s
-	Gas limit: %d
-	Gas price: %d
-	Sender: %s
-	Chain ID: %s
-	Relayer threshold: %s
-	Relayer addresses: %v`, url, gasLimit, gasPrice, sender.Address(), chainId, relayerThreshold, relayerAddresses)
-
 	var bridgeAddress common.Address
 	bridgeAddressString := cmd.Flag("bridgeAddress").Value.String()
 	if common.IsHexAddress(bridgeAddressString) {
 		bridgeAddress = common.HexToAddress(bridgeAddressString)
-	}
-
-	fee := cmd.Flag("fee").Value
-
-	realFee, err := cliutils.UserAmountToWei(fee.String(), big.NewInt(18))
-	if err != nil {
-		// log.Err(err)
-		log.Fatal().Err(err)
 	}
 
 	deployments := make([]string, 0)
@@ -175,26 +157,45 @@ func deploy(cmd *cobra.Command, args []string) {
 		log.Fatal().Err(ErrNoDeploymentFalgsProvided)
 	}
 	ethClient := evmclient.NewEVMClient()
-	// err = ethClient.ConfigureNoFile(url.String(), false, sender, big.NewInt(int64(gasLimit)), big.NewInt(int64(gasPrice)), big.NewFloat(1))
-	// if err != nil {
-	// 	log.Fatal().Err(err)
-	// }
+
+	log.Debug().Msgf("ethClient: %v", ethClient)
+
+	chainIdString := cmd.Flag("chainId").Value.String()
+
+	chainIdBigInt := big.NewInt(0)
+
+	log.Debug().Msgf(`
+	Deploying
+	URL: %s
+	Gas limit: %d
+	Gas price: %d
+	Sender: %s
+	Chain ID: %s
+	Relayer threshold: %s
+	Relayer addresses: %v`, url, gasLimit, gasPrice, sender.Address(), chainIdBigInt, relayerThreshold, relayerAddresses)
+
+	auth, err := bind.NewKeyedTransactorWithChainID(sender.PrivateKey(), big.NewInt(0))
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
+	ethClient.Configure(url, auth, sender)
 
 	deployedContracts := make(map[string]string)
 	for _, v := range deployments {
 		switch v {
 		case "bridge":
-			chainIdInt, err := strconv.Atoi(chainId.String())
+			chainIdInt, err := strconv.Atoi(chainIdString)
 			if err != nil {
 				log.Fatal().Err(err)
 			}
 
-			relayerThresholdInt, err := strconv.Atoi(relayerThreshold.String())
+			relayerThresholdInt, err := strconv.Atoi(relayerThreshold)
 			if err != nil {
 				log.Fatal().Err(err)
 			}
 
-			bridgeAddress, err = cliutils.DeployBridge(ethClient, uint8(chainIdInt), relayerAddresses, big.NewInt(int64(relayerThresholdInt)), realFee)
+			bridgeAddress, err = cliutils.DeployBridge(ethClient, auth, uint8(chainIdInt), relayerAddresses, big.NewInt(int64(relayerThresholdInt)))
 			if err != nil {
 				log.Fatal().Err(err)
 			}
@@ -203,7 +204,7 @@ func deploy(cmd *cobra.Command, args []string) {
 			if bridgeAddress.String() == "" {
 				log.Fatal().Err(errors.New("bridge flag or bridgeAddress param should be set for contracts deployments"))
 			}
-			erc20HandlerAddr, err := cliutils.DeployERC20Handler(ethClient, bridgeAddress)
+			erc20HandlerAddr, err := cliutils.DeployERC20Handler(ethClient, auth, bridgeAddress)
 			deployedContracts["erc20Handler"] = erc20HandlerAddr.String()
 			if err != nil {
 				log.Fatal().Err(err)
@@ -232,10 +233,13 @@ func deploy(cmd *cobra.Command, args []string) {
 			if name == "" || symbol == "" {
 				log.Fatal().Err(errors.New("erc20Name and erc20Symbol flags should be provided"))
 			}
-			erc20Token, err := cliutils.DeployERC20Token(ethClient, name, symbol)
+			erc20Token, err := cliutils.DeployERC20Token(ethClient, auth, name, symbol)
 			deployedContracts["erc20Token"] = erc20Token.String()
 			if err != nil {
 				log.Fatal().Err(err)
+			}
+			if name == "" || symbol == "" {
+				log.Fatal().Err(errors.New("erc20Name and erc20Symbol flags should be provided"))
 			}
 		case "erc721":
 			erc721Token, err := cliutils.DeployERC721Token(ethClient)
@@ -247,130 +251,3 @@ func deploy(cmd *cobra.Command, args []string) {
 	}
 	fmt.Printf("%+v", deployedContracts)
 }
-
-/*
-func deploy(cmd *cobra.Command, args []string) {
-	url := cmd.Flag("url").Value
-	gasLimit := cmd.Flag("gasLimit").Value
-	gasPrice := cmd.Flag("gasPrice").Value
-	log.Debug().Msgf("%v %v %v", url, gasLimit, gasPrice)
-
-	sender, err := cliutils.DefineSender(cctx)
-	if err != nil {
-		return err
-	}
-	chainID := cctx.Uint64("chainId")
-	relayerThreshold := cctx.Int64("relayerThreshold")
-
-	var relayerAddresses []common.Address
-	relayerAddressesString := cctx.StringSlice("relayers")
-	if len(relayerAddresses) == 0 {
-		relayerAddresses = utils.DefaultRelayerAddresses
-	} else {
-		relayerAddresses = make([]common.Address, len(relayerAddresses))
-		for i, addr := range relayerAddressesString {
-			relayerAddresses[i] = common.HexToAddress(addr)
-		}
-	}
-	var bridgeAddress common.Address
-	bridgeAddressString := cctx.String("bridgeAddress")
-	if common.IsHexAddress(bridgeAddressString) {
-		bridgeAddress = common.HexToAddress(bridgeAddressString)
-	}
-
-	fee := cctx.String("fee")
-
-	realFee, err := utils.UserAmountToWei(fee, big.NewInt(18))
-	if err != nil {
-		return err
-	}
-
-	deployments := make([]string, 0)
-	if cctx.Bool("all") {
-		deployments = append(deployments, []string{"bridge", "erc20Handler", "erc721Handler", "genericHandler", "erc20", "erc721"}...)
-	} else {
-		if cctx.Bool("bridge") {
-			deployments = append(deployments, "bridge")
-		}
-		if cctx.Bool("erc20Handler") {
-			deployments = append(deployments, "erc20Handler")
-		}
-		if cctx.Bool("erc721Handler") {
-			deployments = append(deployments, "erc721Handler")
-		}
-		if cctx.Bool("genericHandler") {
-			deployments = append(deployments, "genericHandler")
-		}
-		if cctx.Bool("erc20") {
-			deployments = append(deployments, "erc20")
-		}
-		if cctx.Bool("erc721") {
-			deployments = append(deployments, "erc721")
-		}
-	}
-	if len(deployments) == 0 {
-		return ErrNoDeploymentFalgsProvided
-	}
-	ethClient, err := client.NewClient(url, false, sender, big.NewInt(gasLimit), big.NewInt(gasPrice), big.NewFloat(1))
-	if err != nil {
-		return err
-	}
-	deployedContracts := make(map[string]string)
-	for _, v := range deployments {
-		switch v {
-		case "bridge":
-			bridgeAddress, err = utils.DeployBridge(ethClient, uint8(chainID), relayerAddresses, big.NewInt(relayerThreshold), realFee)
-			if err != nil {
-				return err
-			}
-			deployedContracts["bridge"] = bridgeAddress.String()
-		case "erc20Handler":
-			if bridgeAddress.String() == "" {
-				return errors.New("bridge flag or bridgeAddress param should be set for contracts deployments")
-			}
-			erc20HandlerAddr, err := utils.DeployERC20Handler(ethClient, bridgeAddress)
-			deployedContracts["erc20Handler"] = erc20HandlerAddr.String()
-			if err != nil {
-				return err
-			}
-		case "erc721Handler":
-			if bridgeAddress.String() == "" {
-				return errors.New("bridge flag or bridgeAddress param should be set for contracts deployments")
-			}
-			erc721HandlerAddr, err := utils.DeployERC721Handler(ethClient, bridgeAddress)
-			deployedContracts["erc721Handler"] = erc721HandlerAddr.String()
-			if err != nil {
-				return err
-			}
-		case "genericHandler":
-			if bridgeAddress.String() == "" {
-				return errors.New("bridge flag or bridgeAddress param should be set for contracts deployments")
-			}
-			genericHandlerAddr, err := utils.DeployGenericHandler(ethClient, bridgeAddress)
-			deployedContracts["genericHandler"] = genericHandlerAddr.String()
-			if err != nil {
-				return err
-			}
-		case "erc20":
-			name := cctx.String("erc20Name")
-			symbol := cctx.String("erc20Symbol")
-			if name == "" || symbol == "" {
-				return errors.New("erc20Name and erc20Symbol flags should be provided")
-			}
-			erc20Token, err := utils.DeployERC20Token(ethClient, name, symbol)
-			deployedContracts["erc20Token"] = erc20Token.String()
-			if err != nil {
-				return err
-			}
-		case "erc721":
-			erc721Token, err := utils.DeployERC721Token(ethClient)
-			deployedContracts["erc721Token"] = erc721Token.String()
-			if err != nil {
-				return err
-			}
-		}
-	}
-	fmt.Printf("%+v", deployedContracts)
-	return nil
-}
-*/
