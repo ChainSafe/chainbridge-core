@@ -6,10 +6,10 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
+	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
