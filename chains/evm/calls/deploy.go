@@ -3,19 +3,17 @@ package calls
 import (
 	"context"
 	"fmt"
-	"github.com/ethereum/go-ethereum/crypto"
 	"math/big"
 	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
-	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
 )
 
@@ -57,60 +55,84 @@ type ChainClient interface {
 	From() common.Address
 }
 
+/*
 func DeployAndPrepareEnv(ethClient *evmclient.EVMClient, chainID uint8) (common.Address, common.Address, common.Address, error) {
 	bridgeAddr, erc20Addr, erc20HandlerAddr, err := Deploy(ethClient, chainID)
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
-	resourceID := SliceTo32Bytes(append(common.LeftPadBytes(erc20Addr.Bytes(), 31), chainID))
-	err = RegisterResource(ethClient, bridgeAddr, erc20HandlerAddr, resourceID, erc20Addr)
+	resourceID := sliceTo32Bytes(append(common.LeftPadBytes(erc20Addr.Bytes(), 31), chainID))
+	registerResourceInput, err := PrepareRegisterResourceInput(ethClient, bridgeAddr, erc20HandlerAddr, resourceID, erc20Addr)
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
 	tenTokens := big.NewInt(0).Mul(big.NewInt(10), big.NewInt(0).Exp(big.NewInt(10), big.NewInt(18), nil))
-	err = MintTokens(ethClient, erc20Addr, tenTokens)
+	mintTokensInput, err := PrepareMintTokensInput(ethClient, erc20Addr, tenTokens)
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
-	err = Erc20Approve(ethClient, erc20Addr, erc20HandlerAddr, tenTokens)
-	if err != nil {
-		return common.Address{}, common.Address{}, common.Address{}, err
-	}
-
-	err = Erc20AddMinter(ethClient, erc20Addr, erc20HandlerAddr)
+	erc20ApproveInput, err := PrepareErc20ApproveInput(ethClient, erc20Addr, erc20HandlerAddr, tenTokens)
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
 
-	err = SetBurnable(ethClient, bridgeAddr, erc20HandlerAddr, erc20Addr)
+	erc20AddMinterInput, err := PrepareErc20AddMinterInput(ethClient, erc20Addr, erc20HandlerAddr)
+	if err != nil {
+		return common.Address{}, common.Address{}, common.Address{}, err
+	}
+
+	setBurnableInput, err := PrepareSetBurnableInput(ethClient, bridgeAddr, erc20HandlerAddr, erc20Addr)
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
 	log.Debug().Msgf("All deployments and preparations are done")
 	return bridgeAddr, erc20Addr, erc20HandlerAddr, nil
 }
+*/
 
 func Deploy(c *evmclient.EVMClient, chainID uint8) (common.Address, common.Address, common.Address, error) {
-	erc20Addr, err := deployErc20(c, "Test", "TST")
+	erc20Addr, err := DeployContract(c, ERC20PresetMinterPauserABI, ERC20PresetMinterPauserBin, "Test", "TST")
 	if err != nil {
-		return common.Address{}, common.Address{}, common.Address{}, fmt.Errorf("ERC20 deploy failed: %w", err)
+		return common.Address{}, common.Address{}, common.Address{}, fmt.Errorf("erc 20 deploy failed: %w", err)
 	}
 
-	bridgeAdrr, err := deployBridge(c, chainID, DefaultRelayerAddresses, big.NewInt(1))
+	bridgeAddr, err := DeployContract(c, BridgeABI, BridgeBin, chainID, DefaultRelayerAddresses, big.NewInt(1), big.NewInt(0), big.NewInt(100))
 	if err != nil {
-		return common.Address{}, common.Address{}, common.Address{}, fmt.Errorf("Bridge deploy failed: %w", err)
+		return common.Address{}, common.Address{}, common.Address{}, fmt.Errorf("bridge deploy failed: %w", err)
 	}
 
-	erc20HandlerAddr, err := deployErc20Handler(c, bridgeAdrr)
+	erc20HandlerAddr, err := DeployContract(c, ERC20HandlerABI, ERC20HandlerBin, bridgeAddr, [][32]byte{}, []common.Address{}, []common.Address{})
 	if err != nil {
-		return common.Address{}, common.Address{}, common.Address{}, fmt.Errorf("Bridge deploy failed: %w", err)
+		return common.Address{}, common.Address{}, common.Address{}, fmt.Errorf("erc 20 Handler deploy failed: %w", err)
 	}
 
-	log.Debug().Msgf("Smart contracts deployed.\n Bridge: %s; \n ERC20: %s;\n ERC20Handler: %s;\n", bridgeAdrr, erc20Addr, erc20HandlerAddr)
-	return bridgeAdrr, erc20Addr, erc20HandlerAddr, nil
+	log.Debug().Msgf("Smart contracts deployed.\n Bridge: %s; \n ERC20: %s;\n ERC20 Handler: %s;\n", bridgeAddr, erc20Addr, erc20HandlerAddr)
+
+	return bridgeAddr, erc20Addr, erc20HandlerAddr, nil
 }
 
-func DeployContract(client ChainClient, abi abi.ABI, bytecode []byte, params ...interface{}) (common.Address, error) {
+// COMMANDS
+
+func DeployContract(c *evmclient.EVMClient, abiString, binString string, params ...interface{}) (common.Address, error) {
+	parsed, err := abi.JSON(strings.NewReader(abiString))
+	if err != nil {
+		return common.Address{}, err
+	}
+	input, err := PrepareDeployContractInput(c, parsed, common.FromHex(binString), params...)
+	if err != nil {
+		return common.Address{}, err
+	}
+	address, err := SendInputContract(c, input)
+	if err != nil {
+		return common.Address{}, err
+	}
+	return address, nil
+}
+
+// INPUT FACTORIES
+
+func SendInputContract(client ChainClient, input []byte) (common.Address, error) {
+	gasLimit := uint64(2000000)
 	gp, err := client.GasPrice()
 	if err != nil {
 		return common.Address{}, err
@@ -120,62 +142,139 @@ func DeployContract(client ChainClient, abi abi.ABI, bytecode []byte, params ...
 	if err != nil {
 		return common.Address{}, err
 	}
-	input, err := abi.Pack("", params...)
-	if err != nil {
-		return common.Address{}, err
-	}
-	tx := transaction.NewCeloTransaction(n.Uint64(), nil, big.NewInt(0), DefaultGasLimit, gp, nil, nil, nil, append(bytecode, input...))
+	tx := evmtransaction.NewContractTransaction(n.Uint64(), big.NewInt(0), gasLimit, gp, input)
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return common.Address{}, err
 	}
-	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msgf("Contract deployed")
+	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msg("contract tx success")
 	err = client.UnsafeIncreaseNonce()
 	if err != nil {
 		return common.Address{}, err
 	}
 	client.UnlockNonce()
 	address := crypto.CreateAddress(client.From(), n.Uint64())
+
 	return address, nil
 }
 
-func deployErc20(c *evmclient.EVMClient, name, symbol string) (common.Address, error) {
-	parsed, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
+func SendInput(client ChainClient, dest common.Address, input []byte) (common.Hash, error) {
+	gasLimit := uint64(2000000)
+	gp, err := client.GasPrice()
 	if err != nil {
-		return common.Address{}, err
+		return common.Hash{}, err
 	}
-	address, err := DeployContract(c, parsed, common.FromHex(ERC20PresetMinterPauserBin), name, symbol)
+	client.LockNonce()
+	n, err := client.UnsafeNonce()
 	if err != nil {
-		return common.Address{}, err
+		return common.Hash{}, err
 	}
-	return address, nil
+	tx := evmtransaction.NewTransaction(n.Uint64(), dest, big.NewInt(0), gasLimit, gp, input)
+	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msg("tx success")
+	err = client.UnsafeIncreaseNonce()
+	if err != nil {
+		return common.Hash{}, err
+	}
+	client.UnlockNonce()
+	return tx.Hash(), nil
 }
 
-func deployBridge(c *evmclient.EVMClient, chainID uint8, relayerAddrs []common.Address, initialRelayerThreshold *big.Int) (common.Address, error) {
-	parsed, err := abi.JSON(strings.NewReader(BridgeABI))
+// PREPARED INPUTS
+
+func PrepareDeployContractInput(client ChainClient, abi abi.ABI, bytecode []byte, params ...interface{}) ([]byte, error) {
+	input, err := abi.Pack("", params...)
 	if err != nil {
-		return common.Address{}, err
+		return []byte{}, err
 	}
-	address, err := DeployContract(c, parsed, common.FromHex(BridgeBin), chainID, relayerAddrs, initialRelayerThreshold, big.NewInt(0), big.NewInt(100))
-	if err != nil {
-		return common.Address{}, err
-	}
-	return address, nil
+	return input, nil
 }
 
-func deployErc20Handler(c *evmclient.EVMClient, bridgeAddress common.Address) (common.Address, error) {
-	parsed, err := abi.JSON(strings.NewReader(ERC20HandlerABI))
+func PrepareRegisterResourceInput(target common.Address, amount *big.Int) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
 	if err != nil {
-		return common.Address{}, err
+		return []byte{}, err // Not sure what status to use here
 	}
-	address, err := DeployContract(c, parsed, common.FromHex(ERC20HandlerBin), bridgeAddress, [][32]byte{}, []common.Address{}, []common.Address{})
+	input, err := a.Pack("approve", target, amount)
 	if err != nil {
-		return common.Address{}, err
+		return []byte{}, err
 	}
-	return address, nil
+	return input, nil
 }
 
-func SliceTo32Bytes(in []byte) [32]byte {
+func PrepareSetResourceInput(handler common.Address, rId [32]byte, addr common.Address) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(BridgeABI))
+	if err != nil {
+		return []byte{}, err // Not sure what status to use here
+	}
+	input, err := a.Pack("adminSetResource", handler, rId, addr)
+	if err != nil {
+		return []byte{}, err
+	}
+	// log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msg("resource registered")
+
+	return input, nil
+}
+
+func PrepareMintTokensInput(erc20Addr common.Address, amount *big.Int) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
+	if err != nil {
+		return []byte{}, err // Not sure what status to use here
+	}
+	input, err := a.Pack("mint", AliceKp.CommonAddress(), amount)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
+}
+
+func PrepareErc20ApproveInput(target common.Address, amount *big.Int) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
+	if err != nil {
+		return []byte{}, err // Not sure what status to use here
+	}
+	input, err := a.Pack("approve", target, amount)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
+}
+
+func PrepareErc20AddMinterInput(client ChainClient, erc20Contract, handler common.Address) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
+	if err != nil {
+		return []byte{}, err // Not sure what status to use here
+	}
+	role, err := mintRole(client, erc20Contract)
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("grantRole", role, handler)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
+}
+
+func PrepareSetBurnableInput(client ChainClient, bridge, handler, tokenAddress common.Address) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(BridgeABI))
+	if err != nil {
+		return []byte{}, err // Not sure what status to use here
+	}
+	input, err := a.Pack("adminSetBurnable", handler, tokenAddress)
+	if err != nil {
+		return []byte{}, err
+	}
+	// log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msgf("burnable set")
+	return input, nil
+}
+
+// UTILS
+
+func sliceTo32Bytes(in []byte) [32]byte {
 	var res [32]byte
 	copy(res[:], in)
 	return res
@@ -201,149 +300,7 @@ func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
 	return arg
 }
 
-func RegisterResource(client ChainClient, bridge, handler common.Address, rId [32]byte, addr common.Address) error {
-	a, err := abi.JSON(strings.NewReader(BridgeABI))
-	if err != nil {
-		return err // Not sure what status to use here
-	}
-	input, err := a.Pack("adminSetResource", handler, rId, addr)
-	if err != nil {
-		return err
-	}
-	gasLimit := uint64(2000000)
-	gp, err := client.GasPrice()
-	if err != nil {
-		return err
-	}
-	client.LockNonce()
-	n, err := client.UnsafeNonce()
-	if err != nil {
-		return err
-	}
-	tx := transaction.NewCeloTransaction(n.Uint64(), &bridge, big.NewInt(0), gasLimit, gp, nil, nil, nil, input)
-	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
-	if err != nil {
-		return err
-	}
-	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msgf("Resource registered")
-	err = client.UnsafeIncreaseNonce()
-	if err != nil {
-		return err
-	}
-	client.UnlockNonce()
-	return nil
-}
-
-func MintTokens(client ChainClient, erc20Addr common.Address, amount *big.Int) error {
-	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
-	if err != nil {
-		return err // Not sure what status to use here
-	}
-	input, err := a.Pack("mint", AliceKp.CommonAddress(), amount)
-	if err != nil {
-		return err
-	}
-	gasLimit := uint64(2000000)
-	gp, err := client.GasPrice()
-	if err != nil {
-		return err
-	}
-	client.LockNonce()
-	n, err := client.UnsafeNonce()
-	if err != nil {
-		return err
-	}
-	tx := transaction.NewCeloTransaction(n.Uint64(), &erc20Addr, big.NewInt(0), gasLimit, gp, nil, nil, nil, input)
-	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
-	if err != nil {
-		return err
-	}
-	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msgf("Tokens minted")
-	err = client.UnsafeIncreaseNonce()
-	if err != nil {
-		return err
-	}
-	client.UnlockNonce()
-	return nil
-}
-
-func PrepareErc20ApproveInput(target common.Address, amount *big.Int) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
-	if err != nil {
-		return []byte{}, err // Not sure what status to use here
-	}
-	input, err := a.Pack("approve", target, amount)
-	if err != nil {
-		return []byte{}, err
-	}
-	return input, nil
-}
-
-func SendInput(client ChainClient, dest common.Address, input []byte) (common.Hash, error) {
-	gasLimit := uint64(2000000)
-	gp, err := client.GasPrice()
-	if err != nil {
-		return common.Hash{}, err
-	}
-	client.LockNonce()
-	n, err := client.UnsafeNonce()
-	if err != nil {
-		return common.Hash{}, err
-	}
-	tx := evmtransaction.NewTransaction(n.Uint64(), dest, big.NewInt(0), gasLimit, gp, input)
-	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
-	if err != nil {
-		return common.Hash{}, err
-	}
-	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msgf("Approved")
-	err = client.UnsafeIncreaseNonce()
-	if err != nil {
-		return common.Hash{}, err
-	}
-	client.UnlockNonce()
-	return tx.Hash(), nil
-}
-
-
-func Erc20AddMinter(client ChainClient, erc20Contract, handler common.Address) error {
-	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
-	if err != nil {
-		return err // Not sure what status to use here
-	}
-	role, err := MintRole(client, erc20Contract)
-	if err != nil {
-		return err
-	}
-	input, err := a.Pack("grantRole", role, handler)
-	if err != nil {
-		return err
-	}
-	gasLimit := uint64(2000000)
-	gp, err := client.GasPrice()
-	if err != nil {
-		return err
-	}
-	client.LockNonce()
-	n, err := client.UnsafeNonce()
-	if err != nil {
-		return err
-	}
-
-	tx := transaction.NewCeloTransaction(n.Uint64(), &erc20Contract, big.NewInt(0), gasLimit, gp, nil, nil, nil, input)
-	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
-	if err != nil {
-		return err
-	}
-	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msgf("Minter added")
-	err = client.UnsafeIncreaseNonce()
-	if err != nil {
-		return err
-	}
-	client.UnlockNonce()
-	return nil
-}
-
-func MintRole(chainClient ChainClient, erc20Contract common.Address) ([32]byte, error) {
+func mintRole(chainClient ChainClient, erc20Contract common.Address) ([32]byte, error) {
 	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
 	if err != nil {
 		return [32]byte{}, err // Not sure what status to use here
@@ -358,39 +315,9 @@ func MintRole(chainClient ChainClient, erc20Contract common.Address) ([32]byte, 
 		return [32]byte{}, err
 	}
 	res, err := a.Unpack("MINTER_ROLE", out)
+	if err != nil {
+		return [32]byte{}, err
+	}
 	out0 := *abi.ConvertType(res[0], new([32]byte)).(*[32]byte)
 	return out0, nil
-}
-
-func SetBurnable(client ChainClient, bridge, handler, tokenAddress common.Address) error {
-	a, err := abi.JSON(strings.NewReader(BridgeABI))
-	if err != nil {
-		return err // Not sure what status to use here
-	}
-	input, err := a.Pack("adminSetBurnable", handler, tokenAddress)
-	if err != nil {
-		return err
-	}
-	gasLimit := uint64(2000000)
-	gp, err := client.GasPrice()
-	if err != nil {
-		return err
-	}
-	client.LockNonce()
-	n, err := client.UnsafeNonce()
-	if err != nil {
-		return err
-	}
-	tx := transaction.NewCeloTransaction(n.Uint64(), &bridge, big.NewInt(0), gasLimit, gp, nil, nil, nil, input)
-	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
-	if err != nil {
-		return err
-	}
-	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msgf("Burnable set")
-	err = client.UnsafeIncreaseNonce()
-	if err != nil {
-		return err
-	}
-	client.UnlockNonce()
-	return nil
 }

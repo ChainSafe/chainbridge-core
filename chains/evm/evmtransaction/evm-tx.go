@@ -42,6 +42,11 @@ func NewTransaction(nonce uint64, to common.Address, amount *big.Int, gasLimit u
 	return &TX{tx: tx}
 }
 
+func NewContractTransaction(nonce uint64, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *TX {
+	tx := types.NewContractCreation(nonce, amount, gasLimit, gasPrice, data)
+	return &TX{tx: tx}
+}
+
 func (a *TX) Hash() common.Hash {
 	return a.tx.Hash()
 }

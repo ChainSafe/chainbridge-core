@@ -13,7 +13,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -28,7 +27,6 @@ type EVMClient struct {
 	nonceLock sync.Mutex
 	config    *EVMConfig
 	nonce     *big.Int
-	opts      *bind.TransactOpts
 }
 
 type CommonTransaction interface {
@@ -42,18 +40,77 @@ func NewEVMClient() *EVMClient {
 	return &EVMClient{}
 }
 
-func NewEVMClientFromParams(url string, privatKey *ecdsa.PrivateKey) (*EVMClient, error) {
+func NewEVMClientFromParamsSecureWithHeaders(url string, privateKey *ecdsa.PrivateKey) (*EVMClient, error) {
+	// may need to use HTTP client instead
+	// kaleido.io uses wss (secure)
 	rpcClient, err := rpc.DialContext(context.TODO(), url)
 	if err != nil {
 		return nil, err
 	}
-	kp := secp256k1.NewKeypair(*privatKey)
+	rpcClient.SetHeader("Authentication", "Basic dTBldGdnd2UwbDp5c0ZRRkF5YlpHSThtLXVQeUNDNkVmSldfeTNPcHJvRUczbnBQb1M2VDhN")
+	kp := secp256k1.NewKeypair(*privateKey)
 	c := &EVMClient{}
 	c.Client = ethclient.NewClient(rpcClient)
 	c.rpClient = rpcClient
 	c.config = &EVMConfig{}
 	c.config.kp = kp
 	return c, nil
+}
+
+func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey) (*EVMClient, error) {
+	// may need to use HTTP client instead
+	// kaleido.io uses wss (secure)
+	rpcClient, err := rpc.DialContext(context.TODO(), url)
+	if err != nil {
+		return nil, err
+	}
+	kp := secp256k1.NewKeypair(*privateKey)
+	c := &EVMClient{}
+	c.Client = ethclient.NewClient(rpcClient)
+	c.rpClient = rpcClient
+	c.config = &EVMConfig{}
+	c.config.kp = kp
+	return c, nil
+}
+
+func (c *EVMClient) ConfigurateWithHeaders(path string, name string) error {
+	rawCfg, err := GetConfig(path, name)
+	if err != nil {
+		return err
+	}
+	cfg, err := ParseConfig(rawCfg)
+	if err != nil {
+		return err
+	}
+	c.config = cfg
+	generalConfig := cfg.SharedEVMConfig.GeneralChainConfig
+
+	kp, err := keystore.KeypairFromAddress(generalConfig.From, keystore.EthChain, generalConfig.KeystorePath, generalConfig.Insecure)
+	if err != nil {
+		panic(err)
+	}
+	krp := kp.(*secp256k1.Keypair)
+	c.config.kp = krp
+
+	log.Info().Str("url", generalConfig.Endpoint).Msg("Connecting to evm chain...")
+	rpcClient, err := rpc.DialContext(context.TODO(), generalConfig.Endpoint)
+	if err != nil {
+		return err
+	}
+	rpcClient.SetHeader("Authentication", "Basic dTBldGdnd2UwbDp5c0ZRRkF5YlpHSThtLXVQeUNDNkVmSldfeTNPcHJvRUczbnBQb1M2VDhN")
+	c.Client = ethclient.NewClient(rpcClient)
+	c.rpClient = rpcClient
+
+	if generalConfig.LatestBlock {
+		curr, err := c.LatestBlock()
+		if err != nil {
+			return err
+		}
+		cfg.SharedEVMConfig.StartBlock = curr
+	}
+
+	return nil
+
 }
 
 func (c *EVMClient) Configurate(path string, name string) error {
@@ -242,7 +299,7 @@ func (c *EVMClient) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
 		return nil, err
 	}
 	var gasPrice *big.Int
-	if  c.config.SharedEVMConfig.GasMultiplier != nil {
+	if c.config.SharedEVMConfig.GasMultiplier != nil {
 		gasPrice = multiplyGasPrice(suggestedGasPrice, c.config.SharedEVMConfig.GasMultiplier)
 	}
 	// Check we aren't exceeding our limit

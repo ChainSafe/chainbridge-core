@@ -2,16 +2,11 @@ package deploy
 
 import (
 	"errors"
-	"fmt"
-	"math/big"
 	"strconv"
-	"strings"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -22,7 +17,7 @@ var DeployEVM = &cobra.Command{
 	Use:   "deploy",
 	Short: "Deploy smart contracts",
 	Long:  "This command can be used to deploy all or some of the contracts required for bridging. Selection of contracts can be made by either specifying --all or a subset of flags",
-	Run:  deploy,
+	Run:   deploy,
 }
 
 func init() {
@@ -42,7 +37,31 @@ func init() {
 	DeployEVM.Flags().String("erc20Name", "", "ERC20 contract name")
 }
 
+func deploy(cmd *cobra.Command, args []string) {
+	url := cmd.Flag("url").Value.String()
+	chainId := cmd.Flag("chainId").Value.String()
+	privateKey := cliutils.AliceKp.PrivateKey()
 
+	client, err := evmclient.NewEVMClientFromParams(url, privateKey)
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
+	// convert chain ID to uint
+	chainIdInt, err := strconv.Atoi(chainId)
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
+	bridgeAddress, erc20Address, erc20HandlerAddress, err := calls.Deploy(client, uint8(chainIdInt))
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
+	log.Debug().Msgf("bridge address: %v erc20 address: %v erc20 handler address: %v", bridgeAddress, erc20Address, erc20HandlerAddress)
+}
+
+/*
 func deploy(cmd *cobra.Command, args []string) {
 	url := cmd.Flag("url").Value.String()
 	// gasLimit := cmd.Flag("gasLimit").Value
@@ -180,7 +199,10 @@ func deploy(cmd *cobra.Command, args []string) {
 		log.Fatal().Err(err)
 	}
 
-	ethClient.Configure(url, auth, sender)
+	client, err := evmclient.NewEVMClientFromParams(url, privateKey)
+	if err != nil {
+		log.Fatal().Err(err)
+	}
 
 	deployedContracts := make(map[string]string)
 	for _, v := range deployments {
@@ -235,6 +257,11 @@ func deploy(cmd *cobra.Command, args []string) {
 				log.Fatal().Err(errors.New("erc20Name and erc20Symbol flags should be provided"))
 			}
 			erc20Token, err := cliutils.DeployERC20Token(ethClient, auth, name, symbol)
+			i, err := calls.PrepareErc20ApproveInput(target, amount)
+			if err != nil {
+				panic(err)
+			}
+			err := calls.SendInput(client, dest, i)
 			deployedContracts["erc20Token"] = erc20Token.String()
 			if err != nil {
 				log.Fatal().Err(err)
@@ -252,3 +279,4 @@ func deploy(cmd *cobra.Command, args []string) {
 	}
 	fmt.Printf("%+v", deployedContracts)
 }
+*/

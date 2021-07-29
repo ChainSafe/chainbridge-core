@@ -1,8 +1,12 @@
 package erc20
 
 import (
+	"math/big"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -23,8 +27,8 @@ func init() {
 }
 
 func approve(cmd *cobra.Command, args []string) {
-	erc20Address := cmd.Flag("erc20Address").Value
-	recipientAddress := cmd.Flag("recipient").Value
+	erc20Address := common.HexToAddress(cmd.Flag("erc20Address").Value.String())
+	recipientAddress := common.HexToAddress(cmd.Flag("recipient").Value.String())
 	amount := cmd.Flag("amount").Value
 	decimals := cmd.Flag("decimals").Value
 	log.Debug().Msgf(`
@@ -35,12 +39,22 @@ Amount: %s
 Decimals: %d`,
 		erc20Address, recipientAddress, amount, decimals)
 
-	client := evmclient.NewEVMClientFromParams(url, privateKey)
-	i, err := calls.PrepareErc20ApproveInput(target, amount)
+	url := cmd.Flag("url").Value.String()
+	privateKey := cliutils.AliceKp.PrivateKey()
+
+	client, err := evmclient.NewEVMClientFromParams(url, privateKey)
 	if err != nil {
 		panic(err)
 	}
-	err := calls.SendInput(client, dest, i)
+	i, err := calls.PrepareErc20ApproveInput(erc20Address, big.NewInt(1))
+	if err != nil {
+		panic(err)
+	}
+	txHash, err := calls.SendInput(client, recipientAddress, i)
+	if err != nil {
+		panic(err)
+	}
+	log.Debug().Msgf("tx hash: %v", txHash.Hex())
 }
 
 /*
