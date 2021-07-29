@@ -97,7 +97,8 @@ func (c *EVMClient) ConfigurateWithHeaders(path string, name string) error {
 	if err != nil {
 		return err
 	}
-	rpcClient.SetHeader("Authentication", "Basic dTBldGdnd2UwbDp5c0ZRRkF5YlpHSThtLXVQeUNDNkVmSldfeTNPcHJvRUczbnBQb1M2VDhN")
+	// set basic auth header for kaleido.io
+	rpcClient.SetHeader("Authentication", "")
 	c.Client = ethclient.NewClient(rpcClient)
 	c.rpClient = rpcClient
 
