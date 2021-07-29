@@ -9,6 +9,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/keystore"
+	"github.com/ChainSafe/chainbridge-utils/msg"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -66,12 +67,13 @@ func DeployAndPrepareEnv(ethClient *evmclient.EVMClient, chainID uint8) (common.
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
+
 	tenTokens := big.NewInt(0).Mul(big.NewInt(10), big.NewInt(0).Exp(big.NewInt(10), big.NewInt(18), nil))
-	mintTokensInput, err := PrepareMintTokensInput(ethClient, erc20Addr, tenTokens)
+	mintTokensInput, err := PrepareMintTokensInput(erc20Addr, tenTokens)
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
-	erc20ApproveInput, err := PrepareErc20ApproveInput(ethClient, erc20Addr, erc20HandlerAddr, tenTokens)
+	erc20ApproveInput, err := PrepareErc20ApproveInput(erc20Addr, tenTokens)
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
@@ -193,19 +195,19 @@ func PrepareDeployContractInput(client ChainClient, abi abi.ABI, bytecode []byte
 	return input, nil
 }
 
-func PrepareRegisterResourceInput(target common.Address, amount *big.Int) ([]byte, error) {
+func PrepareRegisterResourceInput(handler common.Address, rId msg.ResourceId, addr common.Address, depositSig, executeSig [4]byte) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
 	if err != nil {
 		return []byte{}, err // Not sure what status to use here
 	}
-	input, err := a.Pack("approve", target, amount)
+	input, err := a.Pack("adminSetGenericResource", handler, rId, addr, depositSig, executeSig)
 	if err != nil {
 		return []byte{}, err
 	}
 	return input, nil
 }
 
-func PrepareSetResourceInput(handler common.Address, rId [32]byte, addr common.Address) ([]byte, error) {
+func PrepareAdminSetResourceInput(handler common.Address, rId [32]byte, addr common.Address) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(BridgeABI))
 	if err != nil {
 		return []byte{}, err // Not sure what status to use here
@@ -214,8 +216,6 @@ func PrepareSetResourceInput(handler common.Address, rId [32]byte, addr common.A
 	if err != nil {
 		return []byte{}, err
 	}
-	// log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msg("resource registered")
-
 	return input, nil
 }
 
@@ -268,7 +268,6 @@ func PrepareSetBurnableInput(client ChainClient, bridge, handler, tokenAddress c
 	if err != nil {
 		return []byte{}, err
 	}
-	// log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msgf("burnable set")
 	return input, nil
 }
 
