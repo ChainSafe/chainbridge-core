@@ -41,13 +41,15 @@ func NewEVMClient() *EVMClient {
 }
 
 func NewEVMClientFromParamsSecureWithHeaders(url string, privateKey *ecdsa.PrivateKey) (*EVMClient, error) {
-	// may need to use HTTP client instead
-	// kaleido.io uses wss (secure)
 	rpcClient, err := rpc.DialContext(context.TODO(), url)
 	if err != nil {
 		return nil, err
 	}
-	rpcClient.SetHeader("Authentication", "Basic dTBldGdnd2UwbDp5c0ZRRkF5YlpHSThtLXVQeUNDNkVmSldfeTNPcHJvRUczbnBQb1M2VDhN")
+
+	// set basic auth header for kaleido.io
+	// kaleidoAuthHeader := os.Getenv("KALEIDO_AUTH_HEADER")
+	// rpcClient.SetHeader("Authentication", kaleidoAuthHeader)
+
 	kp := secp256k1.NewKeypair(*privateKey)
 	c := &EVMClient{}
 	c.Client = ethclient.NewClient(rpcClient)
@@ -58,8 +60,6 @@ func NewEVMClientFromParamsSecureWithHeaders(url string, privateKey *ecdsa.Priva
 }
 
 func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey) (*EVMClient, error) {
-	// may need to use HTTP client instead
-	// kaleido.io uses wss (secure)
 	rpcClient, err := rpc.DialContext(context.TODO(), url)
 	if err != nil {
 		return nil, err
@@ -71,47 +71,6 @@ func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey) (*EVMClien
 	c.config = &EVMConfig{}
 	c.config.kp = kp
 	return c, nil
-}
-
-func (c *EVMClient) ConfigurateWithHeaders(path string, name string) error {
-	rawCfg, err := GetConfig(path, name)
-	if err != nil {
-		return err
-	}
-	cfg, err := ParseConfig(rawCfg)
-	if err != nil {
-		return err
-	}
-	c.config = cfg
-	generalConfig := cfg.SharedEVMConfig.GeneralChainConfig
-
-	kp, err := keystore.KeypairFromAddress(generalConfig.From, keystore.EthChain, generalConfig.KeystorePath, generalConfig.Insecure)
-	if err != nil {
-		panic(err)
-	}
-	krp := kp.(*secp256k1.Keypair)
-	c.config.kp = krp
-
-	log.Info().Str("url", generalConfig.Endpoint).Msg("Connecting to evm chain...")
-	rpcClient, err := rpc.DialContext(context.TODO(), generalConfig.Endpoint)
-	if err != nil {
-		return err
-	}
-	// set basic auth header for kaleido.io
-	rpcClient.SetHeader("Authentication", "")
-	c.Client = ethclient.NewClient(rpcClient)
-	c.rpClient = rpcClient
-
-	if generalConfig.LatestBlock {
-		curr, err := c.LatestBlock()
-		if err != nil {
-			return err
-		}
-		cfg.SharedEVMConfig.StartBlock = curr
-	}
-
-	return nil
-
 }
 
 func (c *EVMClient) Configurate(path string, name string) error {
