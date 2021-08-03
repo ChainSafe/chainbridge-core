@@ -1,4 +1,4 @@
-tpackage evmclient
+package evmclient
 
 import (
 	"context"
@@ -39,22 +39,6 @@ type CommonTransaction interface {
 
 func NewEVMClient() *EVMClient {
 	return &EVMClient{}
-}
-
-func NewEVMClientFromParamsSecureWithHeaders(url string, privateKey *ecdsa.PrivateKey) (*EVMClient, error) {
-	rpcClient, err := rpc.DialContext(context.TODO(), url)
-	if err != nil {
-		return nil, err
-	}
-	// set basic auth header for kaleido.io
-	rpcClient.SetHeader("Authorization", os.Getenv("KALEIDO_BASIC_AUTH_HEADER"))
-	kp := secp256k1.NewKeypair(*privateKey)
-	c := &EVMClient{}
-	c.Client = ethclient.NewClient(rpcClient)
-	c.rpClient = rpcClient
-	c.config = &EVMConfig{}
-	c.config.kp = kp
-	return c, nil
 }
 
 func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey) (*EVMClient, error) {

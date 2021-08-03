@@ -77,7 +77,7 @@ func PrepareDeployContractInput(abi abi.ABI, bytecode []byte, params ...interfac
 	return input, nil
 }
 
-func PrepareRegisterResourceInput(handler common.Address, rId msg.ResourceId, addr common.Address, depositSig, executeSig [4]byte) ([]byte, error) {
+func PrepareRegisterGenericResourceInput(handler common.Address, rId msg.ResourceId, addr common.Address, depositSig, executeSig [4]byte) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
 	if err != nil {
 		return []byte{}, err // Not sure what status to use here

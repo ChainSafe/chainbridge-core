@@ -1,6 +1,12 @@
 package bridge
 
 import (
+	"fmt"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -20,60 +26,50 @@ func init() {
 }
 
 func registerResource(cmd *cobra.Command, args []string) {
-	handlerAddress := cmd.Flag("handler").Value
-	resourceId := cmd.Flag("resourceId").Value
-	targetAddress := cmd.Flag("target").Value
-	bridgeAddress := cmd.Flag("bridge").Value
+	url := cmd.Flag("url").Value.String()
+	handlerAddressString := cmd.Flag("handler").Value.String()
+	resourceId := cmd.Flag("resourceId").Value.String()
+	targetAddress := cmd.Flag("target").Value.String()
+	bridgeAddress := cmd.Flag("bridge").Value.String()
 	log.Debug().Msgf(`
 Registering resource
 Handler address: %s
 Resource ID: %s
 Target address: %s
 Bridge address: %s
-`, handlerAddress, resourceId, targetAddress, bridgeAddress)
-}
+`, handlerAddressString, resourceId, targetAddress, bridgeAddress)
 
-/*
-func registerResource(cctx *cli.Context) error {
-	url := cctx.String("url")
-	gasLimit := cctx.Int64("gasLimit")
-	gasPrice := cctx.Int64("gasPrice")
+	if !common.IsHexAddress(handlerAddressString) {
+		log.Fatal().Err(fmt.Errorf("invalid handler address %s", handlerAddressString))
+	}
+	handlerAddress := common.HexToAddress(handlerAddressString)
 
-	sender, err := cliutils.DefineSender(cctx)
-	if err != nil {
-		return err
+	if !common.IsHexAddress(targetAddress) {
+		log.Fatal().Err(fmt.Errorf("invalid target address %s", targetAddress))
 	}
-
-	bridgeAddress, err := cliutils.DefineBridgeAddress(cctx)
-	if err != nil {
-		return err
-	}
-
-	handler := cctx.String("handler")
-	if !common.IsHexAddress(handler) {
-		return fmt.Errorf("invalid handler address %s", handler)
-	}
-	handlerAddress := common.HexToAddress(handler)
-	targetContract := cctx.String("targetContract")
-	if !common.IsHexAddress(targetContract) {
-		return fmt.Errorf("invalid targetContract address %s", targetContract)
-	}
-	targetContractAddress := common.HexToAddress(targetContract)
-	resourceId := cctx.String("resourceId")
+	targetContractAddress := common.HexToAddress(targetAddress)
 	resourceIdBytes := common.Hex2Bytes(resourceId)
-	resourceIdBytesArr := utils.SliceTo32Bytes(resourceIdBytes)
+	resourceIdBytesArr := calls.SliceTo32Bytes(resourceIdBytes)
 
-	fmt.Printf("Registering contract %s with resource ID %s on handler %s", targetContract, resourceId, handler)
-	ethClient, err := client.NewClient(url, false, sender, big.NewInt(gasLimit), big.NewInt(gasPrice), big.NewFloat(1))
+	fmt.Printf("Registering contract %s with resource ID %s on handler %s", targetAddress, resourceId, handlerAddress)
+
+	// Alice PK
+	privateKey := cliutils.AliceKp.PrivateKey()
+
+	ethClient, err := evmclient.NewEVMClientFromParams(url, privateKey)
 	if err != nil {
-		return err
+		log.Fatal().Err(err)
 	}
-	err = utils.RegisterResource(ethClient, bridgeAddress, handlerAddress, resourceIdBytesArr, targetContractAddress)
+
+	registerResourceInput, err := calls.PrepareAdminSetResourceInput(handlerAddress, resourceIdBytesArr, targetContractAddress)
 	if err != nil {
-		return err
+		log.Fatal().Err(err)
 	}
+
+	_, err = calls.SendInput(ethClient, targetContractAddress, registerResourceInput)
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
 	fmt.Println("Resource registered")
-
-	return nil
 }
-*/
