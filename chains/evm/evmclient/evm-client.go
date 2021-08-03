@@ -1,4 +1,4 @@
-package evmclient
+tpackage evmclient
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"math/big"
+	"os"
 	"sync"
 	"time"
 
@@ -45,11 +46,8 @@ func NewEVMClientFromParamsSecureWithHeaders(url string, privateKey *ecdsa.Priva
 	if err != nil {
 		return nil, err
 	}
-
 	// set basic auth header for kaleido.io
-	// kaleidoAuthHeader := os.Getenv("KALEIDO_AUTH_HEADER")
-	// rpcClient.SetHeader("Authentication", kaleidoAuthHeader)
-
+	rpcClient.SetHeader("Authorization", os.Getenv("KALEIDO_BASIC_AUTH_HEADER"))
 	kp := secp256k1.NewKeypair(*privateKey)
 	c := &EVMClient{}
 	c.Client = ethclient.NewClient(rpcClient)
@@ -64,6 +62,8 @@ func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey) (*EVMClien
 	if err != nil {
 		return nil, err
 	}
+	// set basic auth header for kaleido.io
+	rpcClient.SetHeader("Authorization", os.Getenv("KALEIDO_BASIC_AUTH_HEADER"))
 	kp := secp256k1.NewKeypair(*privateKey)
 	c := &EVMClient{}
 	c.Client = ethclient.NewClient(rpcClient)
