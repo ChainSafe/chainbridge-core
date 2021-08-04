@@ -174,6 +174,12 @@ func deploy(cmd *cobra.Command, args []string) {
 			// 	log.Fatal().Err(err)
 			// }
 
+			// bridge arguments:
+			// chainId => uint8
+			// defaultRelayerAddresses => []common.Address
+			// initialRelayerThreshold => *big.Int
+			// fee => *big.Int
+			// epiry => *big.Int
 			bridgeAddr, err := calls.DeployContract(ethClient, calls.BridgeABI, calls.BridgeBin, uint8(chainIdInt), calls.DefaultRelayerAddresses, big.NewInt(1), big.NewInt(0), big.NewInt(100))
 			if err != nil {
 				log.Fatal().Err(fmt.Errorf("bridge deploy failed: %w", err))
@@ -184,11 +190,15 @@ func deploy(cmd *cobra.Command, args []string) {
 			if bridgeAddress.String() == "" {
 				log.Fatal().Err(errors.New("bridge flag or bridgeAddress param should be set for contracts deployments"))
 			}
-			erc20HandlerAddr, err := cliutils.DeployERC20Handler(ethClient, auth, bridgeAddress)
-			deployedContracts["erc20Handler"] = erc20HandlerAddr.String()
+			// ERC20 handler arguments:
+			// initialResourceIds => [][32]byte
+			// initialContractAddresses => []common.Address
+			// burnableContractAddresses => []common.Address
+			erc20HandlerAddr, err := calls.DeployContract(ethClient, calls.ERC20HandlerABI, calls.ERC20HandlerBin, bridgeAddress, [][32]byte{}, []common.Address{}, []common.Address{})
 			if err != nil {
-				log.Fatal().Err(err)
+				log.Fatal().Err(fmt.Errorf("ERC20 handler deploy failed: %w", err))
 			}
+			deployedContracts["erc20Handler"] = erc20HandlerAddr.String()
 		case "erc721Handler":
 			log.Debug().Msgf("deploying ERC721 handler..")
 			if bridgeAddress.String() == "" {
