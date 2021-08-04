@@ -17,7 +17,7 @@ import (
 var BlockRetryInterval = time.Second * 5
 
 // Only 1 for Optimism as block confirmations check occur when events are indexed in the data transport layer
-var BlockDelay = big.NewInt(1) //TODO: move to config
+var BlockDelay = big.NewInt(5) //TODO: move to config
 
 type DepositLogs struct {
 	DestinationChainID uint8
@@ -29,7 +29,7 @@ type ChainClient interface {
 	LatestBlock() (*big.Int, error)
 	FetchDepositLogs(ctx context.Context, address common.Address, startBlock *big.Int, endBlock *big.Int) ([]*DepositLogs, error)
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
-	IsRollupVerified(blockNumber uint64) bool
+	IsRollupVerified(blockNumber uint64) (bool, error)
 }
 
 type EventHandler interface {
@@ -59,6 +59,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw bl
 				// this check is needed as to not infinitely loop without a bound if a continue statement below is hit. Our bound is the latest Optimism batch index
 				// NOTE: If we wanted to do our own check we would most likely need another separate sync service for l1 which seems unnecessary
 				head, err := l.chainReader.LatestBlock()
+				//log.Debug().Msgf("head in listener: %v", head)
 				if err != nil {
 					log.Error().Err(err).Msg("Unable to get latest block")
 					time.Sleep(BlockRetryInterval)
@@ -69,6 +70,18 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw bl
 					time.Sleep(BlockRetryInterval)
 					continue
 				}
+
+				if verified, err := l.chainReader.IsRollupVerified(startBlock.Uint64()); err != nil {
+					log.Error().Err(err).Msg("Error while checking whether chain is verified")
+					log.Error().Msgf("Block Number: %v", startBlock)
+					return
+				} else if !verified {
+					//log.Error().Msg("Chain is not verified at current batch index")
+					//log.Error().Msgf("Block Number: %v", startBlock)
+					continue
+				}
+				log.Error().Msgf("Verified batch index: %v", startBlock)
+
 				logs, err := l.chainReader.FetchDepositLogs(context.Background(), l.bridgeAddress, startBlock, startBlock)
 				if err != nil {
 					// Filtering logs error really can appear only on wrong configuration or temporary network problem
@@ -76,12 +89,17 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw bl
 					log.Error().Err(err).Str("ChainID", string(chainID)).Msgf("Unable to filter logs")
 					continue
 				}
-				// TODO: perhaps this would be better within `FetchDepositLogs` and then could avoid the separate listener package
-				// However, the block delay comparison occurs during the indexing done by the rollup client and the functionality would be good to keep separate
-				if len(logs) != 0 && !l.chainReader.IsRollupVerified(startBlock.Uint64()) {
+
+				if verified, err := l.chainReader.IsRollupVerified(startBlock.Uint64()); err != nil {
+					log.Error().Err(err).Msg("Error while checking whether chain is verified")
 					log.Error().Msgf("Block Number: %v", startBlock)
+					return
+				} else if !verified {
+					//log.Error().Msg("Chain is not verified at current batch index")
+					//log.Error().Msgf("Block Number: %v", startBlock)
 					continue
 				}
+				log.Error().Msgf("Verified batch index: %v", startBlock)
 
 				log.Debug().Msgf("Rollup is verified on L1, can handle deposit event on optimism")
 				for _, eventLog := range logs {

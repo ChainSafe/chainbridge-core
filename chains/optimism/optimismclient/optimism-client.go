@@ -25,79 +25,102 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// Batch represents the data structure that is submitted with
-// a series of transactions to layer one
-type Batch struct {
-	Index             uint64         `json:"index"`
-	Root              common.Hash    `json:"root,omitempty"`
-	Size              uint32         `json:"size,omitempty"`
-	PrevTotalElements uint32         `json:"prevTotalElements,omitempty"`
-	ExtraData         hexutil.Bytes  `json:"extraData,omitempty"`
-	BlockNumber       uint64         `json:"blockNumber"`
-	Timestamp         uint64         `json:"timestamp"`
-	Submitter         common.Address `json:"submitter"`
-}
+// // Batch represents the data structure that is submitted with
+// // a series of transactions to layer one
+// type Batch struct {
+// 	Index             uint64         `json:"index"`
+// 	Root              common.Hash    `json:"root,omitempty"`
+// 	Size              uint32         `json:"size,omitempty"`
+// 	PrevTotalElements uint32         `json:"prevTotalElements,omitempty"`
+// 	ExtraData         hexutil.Bytes  `json:"extraData,omitempty"`
+// 	BlockNumber       uint64         `json:"blockNumber"`
+// 	Timestamp         uint64         `json:"timestamp"`
+// 	Submitter         common.Address `json:"submitter"`
+// }
 
-// transaction represents the return result of the remote server.
-// It either came from a batch or was replicated from the sequencer.
-type transaction struct {
-	Index       uint64          `json:"index"`
-	BatchIndex  uint64          `json:"batchIndex"`
-	BlockNumber uint64          `json:"blockNumber"`
-	Timestamp   uint64          `json:"timestamp"`
-	Value       *hexutil.Big    `json:"value"`
-	GasLimit    uint64          `json:"gasLimit,string"`
-	Target      common.Address  `json:"target"`
-	Origin      *common.Address `json:"origin"`
-	Data        hexutil.Bytes   `json:"data"`
-	QueueOrigin string          `json:"queueOrigin"`
-	QueueIndex  *uint64         `json:"queueIndex"`
-	Decoded     *decoded        `json:"decoded"`
-}
+// // transaction represents the return result of the remote server.
+// // It either came from a batch or was replicated from the sequencer.
+// type transaction struct {
+// 	Index       uint64          `json:"index"`
+// 	BatchIndex  uint64          `json:"batchIndex"`
+// 	BlockNumber uint64          `json:"blockNumber"`
+// 	Timestamp   uint64          `json:"timestamp"`
+// 	Value       *hexutil.Big    `json:"value"`
+// 	GasLimit    uint64          `json:"gasLimit,string"`
+// 	Target      common.Address  `json:"target"`
+// 	Origin      *common.Address `json:"origin"`
+// 	Data        hexutil.Bytes   `json:"data"`
+// 	QueueOrigin string          `json:"queueOrigin"`
+// 	QueueIndex  *uint64         `json:"queueIndex"`
+// 	Decoded     *decoded        `json:"decoded"`
+// }
 
-// signature represents a secp256k1 ECDSA signature
-type signature struct {
-	R hexutil.Bytes `json:"r"`
-	S hexutil.Bytes `json:"s"`
-	V uint          `json:"v"`
-}
+// // signature represents a secp256k1 ECDSA signature
+// type signature struct {
+// 	R hexutil.Bytes `json:"r"`
+// 	S hexutil.Bytes `json:"s"`
+// 	V uint          `json:"v"`
+// }
 
-// decoded represents the decoded transaction from the batch.
-// When this struct exists in other structs and is set to `nil`,
-// it means that the decoding failed.
-type decoded struct {
-	Signature signature       `json:"sig"`
-	Value     *hexutil.Big    `json:"value"`
-	GasLimit  uint64          `json:"gasLimit,string"`
-	GasPrice  uint64          `json:"gasPrice,string"`
-	Nonce     uint64          `json:"nonce,string"`
-	Target    *common.Address `json:"target"`
-	Data      hexutil.Bytes   `json:"data"`
-}
+// // decoded represents the decoded transaction from the batch.
+// // When this struct exists in other structs and is set to `nil`,
+// // it means that the decoding failed.
+// type decoded struct {
+// 	Signature signature       `json:"sig"`
+// 	Value     *hexutil.Big    `json:"value"`
+// 	GasLimit  uint64          `json:"gasLimit,string"`
+// 	GasPrice  uint64          `json:"gasPrice,string"`
+// 	Nonce     uint64          `json:"nonce,string"`
+// 	Target    *common.Address `json:"target"`
+// 	Data      hexutil.Bytes   `json:"data"`
+// }
 
-// TransactionBatchResponse represents the response from the remote server
-// when querying batches.
-type TransactionBatchResponse struct {
-	Batch        *Batch         `json:"batch"`
-	Transactions []*transaction `json:"transactions"`
-}
+// // TransactionBatchResponse represents the response from the remote server
+// // when querying batches.
+// type TransactionBatchResponse struct {
+// 	Batch        *Batch         `json:"batch"`
+// 	Transactions []*transaction `json:"transactions"`
+// }
 
-// EthContext represents the L1 EVM context that is injected into
-// the OVM at runtime. It is updated with each `enqueue` transaction
-// and needs to be fetched from a remote server to be updated when
-// too much time has passed between `enqueue` transactions.
+// // EthContext represents the L1 EVM context that is injected into
+// // the OVM at runtime. It is updated with each `enqueue` transaction
+// // and needs to be fetched from a remote server to be updated when
+// // too much time has passed between `enqueue` transactions.
+// type EthContext struct {
+// 	BlockNumber uint64      `json:"blockNumber"`
+// 	BlockHash   common.Hash `json:"blockHash"`
+// 	Timestamp   uint64      `json:"timestamp"`
+// }
+
+// // SyncStatus represents the state of the remote server. The SyncService
+// // does not want to begin syncing until the remote server has fully synced.
+// type SyncStatus struct {
+// 	Syncing                      bool   `json:"syncing"`
+// 	HighestKnownTransactionIndex uint64 `json:"highestKnownTransactionIndex"`
+// 	CurrentTransactionIndex      uint64 `json:"currentTransactionIndex"`
+// }
+
+// TODO: deduplicate this
 type EthContext struct {
-	BlockNumber uint64      `json:"blockNumber"`
-	BlockHash   common.Hash `json:"blockHash"`
-	Timestamp   uint64      `json:"timestamp"`
+	BlockNumber uint64 `json:"blockNumber"`
+	Timestamp   uint64 `json:"timestamp"`
 }
 
-// SyncStatus represents the state of the remote server. The SyncService
-// does not want to begin syncing until the remote server has fully synced.
-type SyncStatus struct {
-	Syncing                      bool   `json:"syncing"`
-	HighestKnownTransactionIndex uint64 `json:"highestKnownTransactionIndex"`
-	CurrentTransactionIndex      uint64 `json:"currentTransactionIndex"`
+// RollupContext represents the height of the rollup.
+// Index is the last processed CanonicalTransactionChain index
+// QueueIndex is the last processed `enqueue` index
+// VerifiedIndex is the last processed CTC index that was batched
+type RollupContext struct {
+	Index         uint64 `json:"index"`
+	QueueIndex    uint64 `json:"queueIndex"`
+	VerifiedIndex uint64 `json:"verifiedIndex"`
+}
+
+type rollupInfo struct {
+	Mode          string        `json:"mode"`
+	Syncing       bool          `json:"syncing"`
+	EthContext    EthContext    `json:"ethContext"`
+	RollupContext RollupContext `json:"rollupContext"`
 }
 
 type OptimismClient struct {
@@ -141,10 +164,10 @@ func (c *OptimismClient) Configurate(path string, name string) error {
 	c.Client = ethclient.NewClient(rpcClient)
 	c.rpClient = rpcClient
 
-	log.Info().Str("url", c.config.RollupEndpoint).Msg("Connecting to optimism data transport layer...")
-	c.rollupClient = c.NewRollupClient(c.config.RollupEndpoint)
-	status := c.syncRollup()
-	log.Error().Msgf("status: %v", status)
+	//log.Info().Str("url", c.config.RollupEndpoint).Msg("Connecting to optimism data transport layer...")
+	//c.rollupClient = c.NewRollupClient(c.config.RollupEndpoint)
+	//status := c.syncRollup()
+	//log.Error().Msgf("status: %v", status)
 
 	if generalConfig.LatestBlock {
 		curr, err := c.LatestBlock()
@@ -174,60 +197,74 @@ func (c *OptimismClient) NewRollupClient(endpoint string) *resty.Client {
 	return client
 }
 
-func (c *OptimismClient) syncRollup() *SyncStatus {
-	// Wait until the remote service is done syncing
-	tStatus := time.NewTicker(10 * time.Second)
-	var status *SyncStatus
-	for ; true; <-tStatus.C {
-		queriedStatus, err := c.SyncStatus()
-		if err != nil {
-			log.Error().Msg("Cannot get sync status")
-			continue
-		}
-		if !queriedStatus.Syncing {
-			tStatus.Stop()
-			status = queriedStatus
-			break
-		}
-		log.Info().Msgf("Still syncing", "index", queriedStatus.CurrentTransactionIndex, "tip", queriedStatus.HighestKnownTransactionIndex)
+// func (c *OptimismClient) syncRollup() *SyncStatus {
+// 	// Wait until the remote service is done syncing
+// 	tStatus := time.NewTicker(10 * time.Second)
+// 	var status *SyncStatus
+// 	for ; true; <-tStatus.C {
+// 		queriedStatus, err := c.SyncStatus()
+// 		if err != nil {
+// 			log.Error().Msg("Cannot get sync status")
+// 			continue
+// 		}
+// 		if !queriedStatus.Syncing {
+// 			tStatus.Stop()
+// 			status = queriedStatus
+// 			break
+// 		}
+// 		log.Info().Msgf("Still syncing", "index", queriedStatus.CurrentTransactionIndex, "tip", queriedStatus.HighestKnownTransactionIndex)
+// 	}
+// 	return status
+// }
+
+// // SyncStatus will query the remote server to determine if it is still syncing
+// func (c *OptimismClient) SyncStatus() (*SyncStatus, error) {
+// 	response, err := c.rollupClient.R().
+// 		SetResult(&SyncStatus{}).
+// 		SetQueryParams(map[string]string{
+// 			"backend": "l1", // We are only concerned with transactions that have been batched to Layer One
+// 		}).
+// 		Get("/eth/syncing")
+
+// 	log.Info().Msgf("response sync status: %v", response)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("Cannot fetch sync status: %w", err)
+// 	}
+
+// 	status, ok := response.Result().(*SyncStatus)
+// 	if !ok {
+// 		return nil, fmt.Errorf("Cannot parse sync status")
+// 	}
+
+// 	return status, nil
+// }
+
+func (c *OptimismClient) RollupInfo() (*rollupInfo, error) {
+	var info *rollupInfo
+
+	err := c.rpClient.CallContext(context.TODO(), &info, "rollup_getInfo")
+	if err == nil && info == nil {
+		err = ethereum.NotFound
 	}
-	return status
+	return info, err
 }
 
-// SyncStatus will query the remote server to determine if it is still syncing
-func (c *OptimismClient) SyncStatus() (*SyncStatus, error) {
-	response, err := c.rollupClient.R().
-		SetResult(&SyncStatus{}).
-		SetQueryParams(map[string]string{
-			"backend": "l1", // We are only concerned with transactions that have been batched to Layer One
-		}).
-		Get("/eth/syncing")
-
-	log.Info().Msgf("response sync status: %v", response)
-	if err != nil {
-		return nil, fmt.Errorf("Cannot fetch sync status: %w", err)
-	}
-
-	status, ok := response.Result().(*SyncStatus)
-	if !ok {
-		return nil, fmt.Errorf("Cannot parse sync status")
-	}
-
-	return status, nil
-}
-
-// TODO: WRONG LOGIC, also need to deicde best method to place this in. I am thinking inside the FetchDepositLogs after determining there has been a deposit event
-func (c *OptimismClient) IsRollupVerified(blockNumber uint64) bool {
+func (c *OptimismClient) IsRollupVerified(blockNumber uint64) (bool, error) {
 	log.Debug().Msg("Just got inside method IsRollupVerified")
 
-	status := c.syncRollup()
+	//status := c.syncRollup()
+	info, err := c.RollupInfo()
+	if err != nil {
+		return false, err
+	}
 
 	log.Debug().Msgf("Block number to check against index: %v", blockNumber)
-	log.Debug().Msgf("current transaction index: %v", status.CurrentTransactionIndex)
-	if blockNumber <= status.CurrentTransactionIndex {
-		return true
+	log.Debug().Msgf("Rollup info: %v", info)
+	log.Debug().Msgf("verified transaction index: %v", info.RollupContext.VerifiedIndex)
+	if blockNumber <= info.RollupContext.VerifiedIndex {
+		return true, nil
 	} else {
-		return false
+		return false, nil
 	}
 }
 
@@ -251,7 +288,7 @@ func (h *headerNumber) UnmarshalJSON(input []byte) error {
 }
 
 // LatestBlock returns the latest block from the current chain
-// In Optimism, the latest block refers to the latest batch index
+// In Optimism, the latest block refers to the latest CTC batch index
 func (c *OptimismClient) LatestBlock() (*big.Int, error) {
 	var head *headerNumber
 
@@ -260,34 +297,6 @@ func (c *OptimismClient) LatestBlock() (*big.Int, error) {
 		err = ethereum.NotFound
 	}
 	return head.Number, err
-}
-
-// TODO: perhaps we would want to rename these to more accurately reflect ethereum l1 blocks and optimism tx batches indices
-func (c *OptimismClient) LatestL1Block() (*big.Int, error) {
-	context, err := c.GetLatestEthContext()
-	if err != nil {
-		return nil, err
-	}
-
-	return big.NewInt(int64(context.BlockNumber)), nil
-}
-
-// GetLatestEthContext will return the latest EthContext
-func (c *OptimismClient) GetLatestEthContext() (*EthContext, error) {
-	response, err := c.rollupClient.R().
-		SetResult(&EthContext{}).
-		Get("/eth/context/latest")
-
-	if err != nil {
-		return nil, fmt.Errorf("Cannot fetch eth context: %w", err)
-	}
-
-	context, ok := response.Result().(*EthContext)
-	if !ok {
-		return nil, errors.New("Cannot parse EthContext")
-	}
-
-	return context, nil
 }
 
 const (
@@ -308,7 +317,6 @@ func (c *OptimismClient) FetchDepositLogs(ctx context.Context, contractAddress c
 	depositLogs := make([]*listener.DepositLogs, 0)
 	for _, l := range logs {
 		log.Info().Msgf("deposit log block number: %v", l.BlockNumber)
-		log.Info().Msgf("is rollup and batch verified: %v", c.IsRollupVerified(l.BlockNumber))
 		var dl listener.DepositLogs
 		err := contractAbi.UnpackIntoInterface(&dl, "Deposit", l.Data)
 		if err != nil {
