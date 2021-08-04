@@ -1,6 +1,12 @@
 package erc20
 
 import (
+	"errors"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -24,38 +30,36 @@ func addMinter(cmd *cobra.Command, args []string) {
 Adding minter
 Minter address: %s 
 ERC20 address: %s`, minterAddress, erc20Address)
-}
 
-/*
-func addMinter(cctx *cli.Context) error {
-	url := cctx.String("url")
-	gasLimit := cctx.Uint64("gasLimit")
-	gasPrice := cctx.Uint64("gasPrice")
-	sender, err := cliutils.DefineSender(cctx)
-	if err != nil {
-		return err
-	}
-	erc20 := cctx.String("erc20Address")
+	url := cmd.Flag("url").Value.String()
+
+	// Alice PK
+	privateKey := cliutils.AliceKp.PrivateKey()
+
+	erc20 := cmd.Flag("erc20Address").Value.String()
 	if !common.IsHexAddress(erc20) {
-		return errors.New("invalid erc20Address address")
+		log.Fatal().Err(errors.New("invalid erc20Address address"))
 	}
-	erc20Address := common.HexToAddress(erc20)
+	erc20Addr := common.HexToAddress(erc20)
 
-	minter := cctx.String("minter")
+	minter := cmd.Flag("minter").Value.String()
 	if !common.IsHexAddress(minter) {
-		return errors.New("invalid minter address")
+		log.Fatal().Err(errors.New("invalid minter address"))
 	}
-	minterAddress := common.HexToAddress(minter)
+	minterAddr := common.HexToAddress(minter)
 
-	ethClient, err := client.NewClient(url, false, sender, big.NewInt(0).SetUint64(gasLimit), big.NewInt(0).SetUint64(gasPrice), big.NewFloat(1))
+	ethClient, err := evmclient.NewEVMClientFromParams(url, privateKey)
 	if err != nil {
-		return err
+		log.Fatal().Err(err)
 	}
-	err = utils.ERC20AddMinter(ethClient, erc20Address, minterAddress)
+	mintableInput, err := calls.PrepareErc20AddMinterInput(ethClient, erc20Addr, minterAddr)
 	if err != nil {
-		return err
+		log.Fatal().Err(err)
 	}
+	_, err = calls.SendInput(ethClient, minterAddr, mintableInput)
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
 	log.Info().Msgf("%s account granted minter roles", minterAddress.String())
-	return nil
 }
-*/

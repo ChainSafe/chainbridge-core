@@ -1,6 +1,12 @@
 package bridge
 
 import (
+	"errors"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -27,43 +33,36 @@ Setting contract as mintable/burnable
 Handler address: %s
 Bridge address: %s
 Token contract address: %s`, handlerAddress, bridgeAddress, tokenAddress)
-}
 
-/*
-func setBurn(cctx *cli.Context) error {
-	url := cctx.String("url")
-	gasLimit := cctx.Int64("gasLimit")
-	gasPrice := cctx.Int64("gasPrice")
-	bridgeAddress, err := cliutils.DefineBridgeAddress(cctx)
-	if err != nil {
-		return err
-	}
-	handler := cctx.String("handler")
+	url := cmd.Flag("url").Value.String()
+	handler := cmd.Flag("handler").Value.String()
 	if !common.IsHexAddress(handler) {
-		return errors.New("handler address is incorrect format")
+		log.Fatal().Err(errors.New("handler address is incorrect format"))
 	}
-	tokenContract := cctx.String("tokenContract")
+	tokenContract := cmd.Flag("tokenContract").Value.String()
 	if !common.IsHexAddress(tokenContract) {
-		return errors.New("tokenContract address is incorrect format")
+		log.Fatal().Err(errors.New("tokenContract address is incorrect format"))
 	}
-	handlerAddress := common.HexToAddress(handler)
-	tokenContractAddress := common.HexToAddress(tokenContract)
+	handlerAddr := common.HexToAddress(handler)
+	bridgeAddr := common.HexToAddress(bridgeAddress.String())
+	tokenContractAddr := common.HexToAddress(tokenContract)
 
-	sender, err := cliutils.DefineSender(cctx)
+	// Alice PK
+	privateKey := cliutils.AliceKp.PrivateKey()
+
+	ethClient, err := evmclient.NewEVMClientFromParams(url, privateKey)
 	if err != nil {
-		return err
+		log.Fatal().Err(err)
 	}
 
-	ethClient, err := client.NewClient(url, false, sender, big.NewInt(gasLimit), big.NewInt(gasPrice), big.NewFloat(1))
+	log.Info().Msgf("Setting contract %s as burnable on handler %s", tokenContractAddr.String(), handlerAddress.String())
+	setBurnableInput, err := calls.PrepareSetBurnableInput(ethClient, bridgeAddr, handlerAddr, tokenContractAddr)
 	if err != nil {
-		return err
+		log.Fatal().Err(err)
 	}
-	log.Info().Msgf("Setting contract %s as burnable on handler %s", tokenContractAddress.String(), handlerAddress.String())
-	err = utils.SetBurnable(ethClient, bridgeAddress, handlerAddress, tokenContractAddress)
+
+	_, err = calls.SendInput(ethClient, handlerAddr, setBurnableInput)
 	if err != nil {
-		return err
+		log.Info().Msg("Burnable set")
 	}
-	log.Info().Msg("Burnable set")
-	return nil
 }
-*/
