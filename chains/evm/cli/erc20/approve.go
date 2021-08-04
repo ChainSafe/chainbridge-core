@@ -29,72 +29,50 @@ func init() {
 func approve(cmd *cobra.Command, args []string) {
 	erc20Address := common.HexToAddress(cmd.Flag("erc20Address").Value.String())
 	recipientAddress := common.HexToAddress(cmd.Flag("recipient").Value.String())
-	amount := cmd.Flag("amount").Value
-	decimals := cmd.Flag("decimals").Value
+	amount := cmd.Flag("amount").Value.String()
+	decimals := cmd.Flag("decimals").Value.String()
 	log.Debug().Msgf(`
 Approving ERC20
 ERC20 address: %s
 Recipient address: %s
 Amount: %s
-Decimals: %d`,
+Decimals: %s`,
 		erc20Address, recipientAddress, amount, decimals)
 
 	url := cmd.Flag("url").Value.String()
+	decimalsBigInt, _ := big.NewInt(0).SetString(decimals, 10)
+
+	// erc20 := cctx.String("erc20Address")
+	// if !common.IsHexAddress(erc20) {
+	// 	return errors.New("invalid erc20Address address")
+	// }
+	// erc20Address := common.HexToAddress(erc20)
+
+	// recipient := cctx.String("recipient")
+	// if !common.IsHexAddress(recipient) {
+	// 	return errors.New("invalid minter address")
+	// }
+	// recipientAddress := common.HexToAddress(recipient)
+
+	realAmount, err := cliutils.UserAmountToWei(amount, decimalsBigInt)
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
 	privateKey := cliutils.AliceKp.PrivateKey()
 
-	client, err := evmclient.NewEVMClientFromParams(url, privateKey)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, privateKey)
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err)
 	}
-	i, err := calls.PrepareErc20ApproveInput(erc20Address, big.NewInt(1))
+
+	i, err := calls.PrepareErc20ApproveInput(erc20Address, realAmount)
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err)
 	}
-	txHash, err := calls.SendInput(client, recipientAddress, i)
+	_, err = calls.SendInput(ethClient, erc20Address, i)
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err)
 	}
-	log.Debug().Msgf("tx hash: %v", txHash.Hex())
+	log.Info().Msgf("%s account granted allowance on %v tokens of %s", recipientAddress.String(), amount, erc20Address.String())
 }
-
-/*
-func approve(cctx *cli.Context) error {
-	url := cctx.String("url")
-	gasLimit := cctx.Uint64("gasLimit")
-	gasPrice := cctx.Uint64("gasPrice")
-	decimals := big.NewInt(0).SetUint64(cctx.Uint64("decimals"))
-	sender, err := cliutils.DefineSender(cctx)
-	if err != nil {
-		return err
-	}
-	erc20 := cctx.String("erc20Address")
-	if !common.IsHexAddress(erc20) {
-		return errors.New("invalid erc20Address address")
-	}
-	erc20Address := common.HexToAddress(erc20)
-
-	recipient := cctx.String("recipient")
-	if !common.IsHexAddress(recipient) {
-		return errors.New("invalid minter address")
-	}
-	recipientAddress := common.HexToAddress(recipient)
-
-	amount := cctx.String("amount")
-
-	realAmount, err := utils.UserAmountToWei(amount, decimals)
-	if err != nil {
-		return err
-	}
-
-	ethClient, err := client.NewClient(url, false, sender, big.NewInt(0).SetUint64(gasLimit), big.NewInt(0).SetUint64(gasPrice), big.NewFloat(1))
-	if err != nil {
-		return err
-	}
-	err = utils.Erc20Approve(ethClient, erc20Address, recipientAddress, realAmount)
-	if err != nil {
-		return err
-	}
-	log.Info().Msgf("%s account granted allowance on %v tokens of %s", recipientAddress.String(), amount, sender.CommonAddress().String())
-	return nil
-}
-*/

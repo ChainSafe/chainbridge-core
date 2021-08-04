@@ -1,6 +1,13 @@
 package erc20
 
 import (
+	"errors"
+	"math/big"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -18,46 +25,43 @@ func init() {
 }
 
 func mint(cmd *cobra.Command, args []string) {
-	amount := cmd.Flag("amount").Value
-	erc20Address := cmd.Flag("erc20Address").Value
+	amount := cmd.Flag("amount").Value.String()
+	erc20Address := cmd.Flag("erc20Address").Value.String()
 	log.Debug().Msgf(`
 Minting token
 Amount: %s
 ERC20 address: %s`, amount, erc20Address)
-}
 
-/*
-func mint(cctx *cli.Context) error {
-	url := cctx.String("url")
-	gasLimit := cctx.Uint64("gasLimit")
-	gasPrice := cctx.Uint64("gasPrice")
-	decimals := big.NewInt(0).SetUint64(cctx.Uint64("decimals"))
-	sender, err := cliutils.DefineSender(cctx)
-	if err != nil {
-		return err
-	}
-	erc20 := cctx.String("erc20Address")
-	if !common.IsHexAddress(erc20) {
-		return errors.New("invalid erc20Address address")
-	}
-	erc20Address := common.HexToAddress(erc20)
+	url := cmd.Flag("url").Value.String()
+	decimals := "2"
+	decimalsBigInt, _ := big.NewInt(0).SetString(decimals, 10)
 
-	amount := cctx.String("amount")
-
-	realAmount, err := utils.UserAmountToWei(amount, decimals)
-	if err != nil {
-		return err
+	if !common.IsHexAddress(erc20Address) {
+		log.Fatal().Err(errors.New("invalid erc20Address address"))
 	}
 
-	ethClient, err := client.NewClient(url, false, sender, big.NewInt(0).SetUint64(gasLimit), big.NewInt(0).SetUint64(gasPrice), big.NewFloat(1))
+	erc20Addr := common.HexToAddress(erc20Address)
+
+	realAmount, err := cliutils.UserAmountToWei(amount, decimalsBigInt)
 	if err != nil {
-		return err
+		log.Fatal().Err(err)
 	}
-	err = utils.ERC20Mint(ethClient, realAmount, erc20Address, sender.CommonAddress())
+
+	privateKey := cliutils.AliceKp.PrivateKey()
+
+	ethClient, err := evmclient.NewEVMClientFromParams(url, privateKey)
 	if err != nil {
-		return err
+		log.Fatal().Err(err)
+	}
+
+	mintTokensInput, err := calls.PrepareMintTokensInput(erc20Addr, realAmount)
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
+	_, err = calls.SendInput(ethClient, erc20Addr, mintTokensInput)
+	if err != nil {
+		log.Fatal().Err(err)
 	}
 	log.Info().Msgf("%v tokens minted", amount)
-	return nil
 }
-*/
