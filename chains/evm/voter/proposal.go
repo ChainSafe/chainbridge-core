@@ -2,12 +2,12 @@ package voter
 
 import (
 	"context"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"math/big"
 	"strings"
 
 	"github.com/status-im/keycard-go/hexutils"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -16,9 +16,21 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type TxFabric func(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) evmclient.CommonTransaction
+
+func NewProposal(source uint8, depositNonce uint64, resourceId [32]byte, data []byte, handlerAddress, bridgeAddress common.Address) *Proposal {
+	return &Proposal{
+		Source:         source,
+		DepositNonce:   depositNonce,
+		ResourceId:     resourceId,
+		Data:           data,
+		HandlerAddress: handlerAddress,
+		BridgeAddress:  bridgeAddress,
+	}
+}
+
 type Proposal struct {
 	Source         uint8  // Source where message was initiated
-	Destination    uint8  // Destination chain of message
 	DepositNonce   uint64 // Nonce for the deposit
 	ResourceId     [32]byte
 	Payload        []interface{} // data associated with event sequence
@@ -76,7 +88,7 @@ func (p *Proposal) VotedBy(evmCaller ChainClient, by common.Address) (bool, erro
 	return out0, nil
 }
 
-func (p *Proposal) Execute(client ChainClient) error {
+func (p *Proposal) Execute(client ChainClient, fabric TxFabric) error {
 	log.Debug().Str("rID", hexutils.BytesToHex(p.ResourceId[:])).Uint64("depositNonce", p.DepositNonce).Msg("Executing proposal")
 	definition := "[{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"chainID\",\"type\":\"uint8\"},{\"internalType\":\"uint64\",\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"resourceID\",\"type\":\"bytes32\"}],\"name\":\"executeProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 	a, err := abi.JSON(strings.NewReader(definition))
@@ -97,7 +109,7 @@ func (p *Proposal) Execute(client ChainClient) error {
 	if err != nil {
 		return err
 	}
-	tx := evmtransaction.NewTransaction(n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
+	tx := fabric(n.Uint64(), &p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return err
@@ -111,8 +123,8 @@ func (p *Proposal) Execute(client ChainClient) error {
 	return nil
 }
 
-func (p *Proposal) Vote(client ChainClient) error {
-	log.Debug().Str("rID", hexutils.BytesToHex(p.ResourceId[:])).Uint64("depositNonce", p.DepositNonce).Msg("Voting proposal")
+func (p *Proposal) Vote(client ChainClient, fabric TxFabric) error {
+	log.Debug().Str("rID", hexutils.BytesToHex(p.ResourceId[:])).Uint64("depositNonce", p.DepositNonce).Uint8("chainID", p.Source).Msg("Voting proposal")
 	definition := "[{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"chainID\",\"type\":\"uint8\"},{\"internalType\":\"uint64\",\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"resourceID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"dataHash\",\"type\":\"bytes32\"}],\"name\":\"voteProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 	a, err := abi.JSON(strings.NewReader(definition))
 	if err != nil {
@@ -132,7 +144,7 @@ func (p *Proposal) Vote(client ChainClient) error {
 	if err != nil {
 		return err
 	}
-	tx := evmtransaction.NewTransaction(n.Uint64(), p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
+	tx := fabric(n.Uint64(), &p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return err
@@ -146,7 +158,7 @@ func (p *Proposal) Vote(client ChainClient) error {
 	return nil
 }
 
-// CreateProposalDataHash constructs and returns proposal data hash
+// GetDataHash constructs and returns proposal data hash
 func (p *Proposal) GetDataHash() common.Hash {
 	return crypto.Keccak256Hash(append(p.HandlerAddress.Bytes(), p.Data...))
 }
