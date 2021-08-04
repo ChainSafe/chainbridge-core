@@ -2,49 +2,36 @@ package cliutils
 
 import (
 	"errors"
-	"fmt"
+	"github.com/ChainSafe/chainbridge-core/keystore"
+	"github.com/spf13/cobra"
 	gomath "math"
 	"math/big"
 	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
-	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-var (
-	AliceKp = keystore.TestKeyRing.EthereumKeys[keystore.AliceKey]
-	BobKp   = keystore.TestKeyRing.EthereumKeys[keystore.BobKey]
-	EveKp   = keystore.TestKeyRing.EthereumKeys[keystore.EveKey]
-
-	DefaultRelayerAddresses = []common.Address{
-		common.HexToAddress(keystore.TestKeyRing.EthereumKeys[keystore.AliceKey].Address()),
-		common.HexToAddress(keystore.TestKeyRing.EthereumKeys[keystore.BobKey].Address()),
-		common.HexToAddress(keystore.TestKeyRing.EthereumKeys[keystore.CharlieKey].Address()),
-		common.HexToAddress(keystore.TestKeyRing.EthereumKeys[keystore.DaveKey].Address()),
-		common.HexToAddress(keystore.TestKeyRing.EthereumKeys[keystore.EveKey].Address()),
-	}
-)
 
 type EventSig string
 
 func (es EventSig) GetTopic() common.Hash {
 	return crypto.Keccak256Hash([]byte(es))
 }
-
-func IsActive(status uint8) bool {
-	return ProposalStatus(status) == Active
-}
-
-func IsPassed(status uint8) bool {
-	return ProposalStatus(status) == Passed
-}
-
-func IsExecuted(status uint8) bool {
-	return ProposalStatus(status) == Executed
-}
+//
+//func IsActive(status uint8) bool {
+//	return ProposalStatus(status) == Active
+//}
+//
+//func IsPassed(status uint8) bool {
+//	return ProposalStatus(status) == Passed
+//}
+//
+//func IsExecuted(status uint8) bool {
+//	return ProposalStatus(status) == Executed
+//}
 
 // UserAmountToWei converts decimal user friendly representation of token amount to 'Wei' representation with provided amount of decimal places
 // eg UserAmountToWei(1, 5) => 100000
@@ -97,7 +84,11 @@ func ConstructGenericDepositData(metadata []byte) []byte {
 	return data
 }
 
-func DefineSender(privateKey string) (*secp256k1.Keypair, error) {
+func DefineSender(cmd *cobra.Command) (*secp256k1.Keypair, error) {
+	privateKey, err := cmd.Flags().GetString("privateKey")
+	if err != nil {
+		return nil, err
+	}
 	if privateKey != "" {
 		kp, err := secp256k1.NewKeypairFromString(privateKey)
 		if err != nil {
@@ -105,12 +96,6 @@ func DefineSender(privateKey string) (*secp256k1.Keypair, error) {
 		}
 		return kp, nil
 	}
+	var AliceKp = keystore.TestKeyRing.EthereumKeys[keystore.AliceKey]
 	return AliceKp, nil
-}
-
-func DefineBridgeAddress(bridgeAddress string) (common.Address, error) {
-	if !common.IsHexAddress(bridgeAddress) {
-		return common.Address{}, fmt.Errorf("invalid bridge address %s", bridgeAddress)
-	}
-	return common.HexToAddress(bridgeAddress), nil
 }

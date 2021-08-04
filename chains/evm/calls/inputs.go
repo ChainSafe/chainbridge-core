@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
-	"github.com/ChainSafe/chainbridge-utils/msg"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -69,15 +68,7 @@ func SendInput(client ChainClient, dest common.Address, input []byte) (common.Ha
 
 // PREPARED INPUTS
 
-func PrepareDeployContractInput(abi abi.ABI, bytecode []byte, params ...interface{}) ([]byte, error) {
-	input, err := abi.Pack("", params...)
-	if err != nil {
-		return []byte{}, err
-	}
-	return input, nil
-}
-
-func PrepareRegisterGenericResourceInput(handler common.Address, rId msg.ResourceId, addr common.Address, depositSig, executeSig [4]byte) ([]byte, error) {
+func PrepareRegisterGenericResourceInput(handler common.Address, rId [32]byte, addr common.Address, depositSig, executeSig [4]byte) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
 	if err != nil {
 		return []byte{}, err // Not sure what status to use here
@@ -101,12 +92,12 @@ func PrepareAdminSetResourceInput(handler common.Address, rId [32]byte, addr com
 	return input, nil
 }
 
-func PrepareMintTokensInput(erc20Addr common.Address, amount *big.Int) ([]byte, error) {
+func PrepareMintTokensInput(destAddr common.Address, amount *big.Int) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
 	if err != nil {
 		return []byte{}, err
 	}
-	input, err := a.Pack("mint", AliceKp.CommonAddress(), amount)
+	input, err := a.Pack("mint", destAddr, amount)
 	if err != nil {
 		return []byte{}, err
 	}

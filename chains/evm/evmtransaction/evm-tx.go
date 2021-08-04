@@ -2,6 +2,7 @@ package evmtransaction
 
 import (
 	"crypto/ecdsa"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -37,13 +38,13 @@ func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, 
 
 }
 
-func NewTransaction(nonce uint64, to common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *TX {
-	tx := types.NewTransaction(nonce, to, amount, gasLimit, gasPrice, data)
-	return &TX{tx: tx}
-}
-
-func NewContractTransaction(nonce uint64, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *TX {
-	tx := types.NewContractCreation(nonce, amount, gasLimit, gasPrice, data)
+func NewTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) evmclient.CommonTransaction {
+	var tx *types.Transaction
+	if to == nil {
+		tx = types.NewContractCreation(nonce, amount, gasLimit, gasPrice, data)
+	} else {
+		tx = types.NewTransaction(nonce, *to, amount, gasLimit, gasPrice, data)
+	}
 	return &TX{tx: tx}
 }
 

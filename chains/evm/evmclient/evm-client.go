@@ -16,11 +16,13 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/rs/zerolog/log"
 )
+
 
 type EVMClient struct {
 	*ethclient.Client
@@ -33,7 +35,8 @@ type EVMClient struct {
 type CommonTransaction interface {
 	// Hash returns the transaction hash.
 	Hash() common.Hash
-	// Returns signed transaction by provided private key
+
+	// RawWithSignature Returns signed transaction by provided private key
 	RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
 }
 
@@ -46,6 +49,7 @@ func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey) (*EVMClien
 	if err != nil {
 		return nil, err
 	}
+	// TODO: Autorization should be moved out
 	// set basic auth header for kaleido.io
 	rpcClient.SetHeader("Authorization", os.Getenv("KALEIDO_BASIC_AUTH_HEADER"))
 	kp := secp256k1.NewKeypair(*privateKey)
@@ -122,8 +126,30 @@ func (c *EVMClient) LatestBlock() (*big.Int, error) {
 	if err == nil && head == nil {
 		err = ethereum.NotFound
 	}
-	return head.Number, err
+	if err != nil {
+		return nil, err
+	}
+	return head.Number, nil
 }
+
+func (c *EVMClient) WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error) {
+	retry := 10
+	for retry > 0 {
+		receipt, err := c.Client.TransactionReceipt(context.Background(), h)
+		if err != nil {
+			log.Error().Err(err).Msgf("error getting tx receipt %s", h.String())
+			retry--
+			time.Sleep(2*time.Second)
+			continue
+		}
+		if receipt.Status != 1 {
+			return receipt, errors.New("transaction failed on chain")
+		}
+		return receipt, nil
+	}
+	return nil, errors.New("tx did not appear")
+}
+
 
 const (
 	DepositSignature string = "Deposit(uint8,bytes32,uint64)"
@@ -147,6 +173,10 @@ func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common
 	return depositLogs, nil
 }
 
+func (c *EVMClient) FetchEventLogs(ctx context.Context, contractAddress common.Address, event string, startBlock *big.Int, endBlock *big.Int) ([]types.Log, error) {
+	return c.FilterLogs(ctx, buildQuery(contractAddress, event, startBlock, endBlock))
+}
+
 // SendRawTransaction accepts rlp-encode of signed transaction and sends it via RPC call
 func (c *EVMClient) SendRawTransaction(ctx context.Context, tx []byte) error {
 	return c.rpClient.CallContext(ctx, nil, "eth_sendRawTransaction", hexutil.Encode(tx))
@@ -161,6 +191,15 @@ func (c *EVMClient) CallContract(ctx context.Context, callArgs map[string]interf
 	return hex, nil
 }
 
+func (c *EVMClient) CallContext(ctx context.Context, target interface{}, rpcMethod string, args ...interface{}) error {
+	err := c.rpClient.CallContext(ctx, target, rpcMethod, args)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+
 func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string]interface{}) ([]byte, error) {
 	var hex hexutil.Bytes
 	err := c.rpClient.CallContext(ctx, &hex, "eth_call", callArgs, "pending")
@@ -170,12 +209,16 @@ func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string
 	return hex, nil
 }
 
-//func (c *EVMClient) ChainID()
+func (c *EVMClient) From() common.Address {
+	return c.config.kp.CommonAddress()
+}
 
 func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransaction) (common.Hash, error) {
 	id, err := c.ChainID(ctx)
 	if err != nil {
-		panic(err)
+		//panic(err)
+		// Probably chain does not support ChainID eg. CELO
+		id = nil
 	}
 	rawTX, err := tx.RawWithSignature(c.config.kp.PrivateKey(), id)
 	if err != nil {
@@ -220,12 +263,10 @@ func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
 
 func (c *EVMClient) UnsafeIncreaseNonce() error {
 	nonce, err := c.UnsafeNonce()
-	log.Debug().Str("nonce", nonce.String()).Msg("Before increase")
 	if err != nil {
 		return err
 	}
 	c.nonce = nonce.Add(nonce, big.NewInt(1))
-	log.Debug().Str("nonce", c.nonce.String()).Msg("After increase")
 	return nil
 }
 
@@ -254,9 +295,6 @@ func (c *EVMClient) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
 	}
 }
 
-func (c *EVMClient) From() common.Address {
-	return c.config.kp.CommonAddress()
-}
 
 func multiplyGasPrice(gasEstimate *big.Int, gasMultiplier *big.Float) *big.Int {
 

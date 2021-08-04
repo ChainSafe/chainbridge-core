@@ -2,11 +2,11 @@ package calls
 
 import (
 	"context"
+	"github.com/ethereum/go-ethereum/core/types"
 	"math/big"
 	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -15,28 +15,11 @@ import (
 
 // UTILS
 
-const DefaultGasLimit = 6721975
-const DefaultMaxGasPrice = 20000000000
-
-const TestEndpoint = "ws://localhost:8545"
-const TestEndpoint2 = "ws://localhost:8546"
-
-var AliceKp = keystore.TestKeyRing.EthereumKeys[keystore.AliceKey]
-var BobKp = keystore.TestKeyRing.EthereumKeys[keystore.BobKey]
-var EveKp = keystore.TestKeyRing.EthereumKeys[keystore.EveKey]
-
-var (
-	DefaultRelayerAddresses = []common.Address{
-		common.HexToAddress(keystore.TestKeyRing.EthereumKeys[keystore.BobKey].Address()),
-		common.HexToAddress(keystore.TestKeyRing.EthereumKeys[keystore.CharlieKey].Address()),
-		common.HexToAddress(keystore.TestKeyRing.EthereumKeys[keystore.DaveKey].Address()),
-		common.HexToAddress(keystore.TestKeyRing.EthereumKeys[keystore.EveKey].Address()),
-	}
-)
-
 type ChainClient interface {
 	SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error)
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
+	WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error)
+	CodeAt(ctx context.Context, contract common.Address, blockNumber *big.Int) ([]byte, error)
 	UnsafeNonce() (*big.Int, error)
 	LockNonce()
 	UnlockNonce()

@@ -93,27 +93,16 @@ func ERC20MessageHandler(m *relayer.Message, handlerAddr, bridgeAddress common.A
 	if !ok {
 		return nil, errors.New("wrong payloads amount format")
 	}
-
 	recipient, ok := m.Payload[1].([]byte)
 	if !ok {
 		return nil, errors.New("wrong payloads recipient format")
-
 	}
 	var data []byte
 	data = append(data, common.LeftPadBytes(amount, 32)...) // amount (uint256)
-
 	recipientLen := big.NewInt(int64(len(recipient))).Bytes()
 	data = append(data, common.LeftPadBytes(recipientLen, 32)...) // length of recipient (uint256)
 	data = append(data, recipient...)                             // recipient ([]byte)
-
-	return &Proposal{
-		Source:         m.Source,
-		DepositNonce:   m.DepositNonce,
-		ResourceId:     m.ResourceId,
-		Data:           data,
-		HandlerAddress: handlerAddr,
-		BridgeAddress:  bridgeAddress,
-	}, nil
+	return NewProposal(m.Source, m.DepositNonce, m.ResourceId, data, handlerAddr, bridgeAddress), nil
 }
 
 func ERC721MessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress common.Address) (*Proposal, error) {
@@ -132,25 +121,15 @@ func ERC721MessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress commo
 	if !ok {
 		return nil, errors.New("wrong payloads metadata format")
 	}
-
 	data := bytes.Buffer{}
 	data.Write(common.LeftPadBytes(tokenID, 32))
-
 	recipientLen := big.NewInt(int64(len(recipient))).Bytes()
 	data.Write(common.LeftPadBytes(recipientLen, 32))
 	data.Write(recipient)
-
 	metadataLen := big.NewInt(int64(len(metadata))).Bytes()
 	data.Write(common.LeftPadBytes(metadataLen, 32))
 	data.Write(metadata)
-	return &Proposal{
-		Source:         msg.Source,
-		DepositNonce:   msg.DepositNonce,
-		ResourceId:     msg.ResourceId,
-		Data:           data.Bytes(),
-		HandlerAddress: handlerAddr,
-		BridgeAddress:  bridgeAddress,
-	}, nil
+	return NewProposal(msg.Source, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress), nil
 }
 
 func GenericMessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress common.Address) (*Proposal, error) {
@@ -165,14 +144,7 @@ func GenericMessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress comm
 	metadataLen := big.NewInt(int64(len(metadata))).Bytes()
 	data.Write(common.LeftPadBytes(metadataLen, 32)) // length of metadata (uint256)
 	data.Write(metadata)
-	return &Proposal{
-		Source:         msg.Source,
-		DepositNonce:   msg.DepositNonce,
-		ResourceId:     msg.ResourceId,
-		Data:           data.Bytes(),
-		HandlerAddress: handlerAddr,
-		BridgeAddress:  bridgeAddress,
-	}, nil
+	return NewProposal(msg.Source, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress), nil
 }
 
 func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
