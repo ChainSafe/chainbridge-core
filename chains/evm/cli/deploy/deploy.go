@@ -3,7 +3,6 @@ package deploy
 import (
 	"errors"
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"math/big"
 	"strconv"
 	"strings"
@@ -11,6 +10,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -40,6 +40,10 @@ func init() {
 	DeployEVM.Flags().String("bridgeAddress", "", "bridge contract address. Should be provided if handlers are deployed separately")
 	DeployEVM.Flags().String("erc20Symbol", "", "ERC20 contract symbol")
 	DeployEVM.Flags().String("erc20Name", "", "ERC20 contract name")
+
+	DeployEVM.Flags().String("url", "ws://localhost:8545", "node url")
+	DeployEVM.Flags().String("gasLimit", "ws://localhost:8545", "node url")
+	DeployEVM.Flags().String("gasPrice", "ws://localhost:8545", "node url")
 }
 
 func CallDeployCLI(cmd *cobra.Command, args []string) error {
@@ -48,7 +52,10 @@ func CallDeployCLI(cmd *cobra.Command, args []string) error {
 }
 
 func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	url := cmd.Flag("url").Value.String()
+	url, err := cmd.Flags().GetString("url")
+	if err != nil {
+		return err
+	}
 	gasLimit, err := cmd.Flags().GetUint64("gasLimit")
 	if err != nil {
 		log.Fatal().Err(err)

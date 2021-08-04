@@ -8,38 +8,8 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
 )
-
-// INPUT FACTORIES
-
-func SendInputContract(client ChainClient, input []byte) (common.Address, error) {
-	gasLimit := uint64(2000000)
-	gp, err := client.GasPrice()
-	if err != nil {
-		return common.Address{}, err
-	}
-	client.LockNonce()
-	n, err := client.UnsafeNonce()
-	if err != nil {
-		return common.Address{}, err
-	}
-	tx := evmtransaction.NewContractTransaction(n.Uint64(), big.NewInt(0), gasLimit, gp, input)
-	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
-	if err != nil {
-		return common.Address{}, err
-	}
-	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msg("contract tx success")
-	err = client.UnsafeIncreaseNonce()
-	if err != nil {
-		return common.Address{}, err
-	}
-	client.UnlockNonce()
-	address := crypto.CreateAddress(client.From(), n.Uint64())
-
-	return address, nil
-}
 
 func SendInput(client ChainClient, dest common.Address, input []byte) (common.Hash, error) {
 	gasLimit := uint64(2000000)
@@ -52,7 +22,7 @@ func SendInput(client ChainClient, dest common.Address, input []byte) (common.Ha
 	if err != nil {
 		return common.Hash{}, err
 	}
-	tx := evmtransaction.NewTransaction(n.Uint64(), dest, big.NewInt(0), gasLimit, gp, input)
+	tx := evmtransaction.NewTransaction(n.Uint64(), &dest, big.NewInt(0), gasLimit, gp, input)
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return common.Hash{}, err
