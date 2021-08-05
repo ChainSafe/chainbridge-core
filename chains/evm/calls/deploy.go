@@ -2,13 +2,13 @@ package calls
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/big"
 	"strings"
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/config"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -69,7 +69,7 @@ func deployContract(client ChainClient, abi abi.ABI, bytecode []byte, txFabric T
 	if err != nil {
 		return common.Address{}, err
 	}
-	tx := txFabric(n.Uint64(), nil, big.NewInt(0), DefaultGasLimit, gp, append(bytecode, input...))
+	tx := txFabric(n.Uint64(), nil, big.NewInt(0), config.DefaultGasLimit, gp, append(bytecode, input...))
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return common.Address{}, err
@@ -86,12 +86,12 @@ func deployContract(client ChainClient, abi abi.ABI, bytecode []byte, txFabric T
 		return common.Address{}, err
 	}
 	client.UnlockNonce()
+	// checks bytecode at address
+	// nil is latest block
 	if code, err := client.CodeAt(context.Background(), address, nil); err != nil {
 		return common.Address{}, err
 	} else if len(code) == 0 {
-		return common.Address{}, errors.New(fmt.Sprintf("no code at provided address %s", address.String()))
+		return common.Address{}, fmt.Errorf("no code at provided address %s", address.String())
 	}
 	return address, nil
 }
-
-

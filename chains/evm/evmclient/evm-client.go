@@ -23,7 +23,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-
 type EVMClient struct {
 	*ethclient.Client
 	rpClient  *rpc.Client
@@ -139,7 +138,7 @@ func (c *EVMClient) WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error
 		if err != nil {
 			log.Error().Err(err).Msgf("error getting tx receipt %s", h.String())
 			retry--
-			time.Sleep(2*time.Second)
+			time.Sleep(2 * time.Second)
 			continue
 		}
 		if receipt.Status != 1 {
@@ -149,7 +148,6 @@ func (c *EVMClient) WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error
 	}
 	return nil, errors.New("tx did not appear")
 }
-
 
 const (
 	DepositSignature string = "Deposit(uint8,bytes32,uint64)"
@@ -198,7 +196,6 @@ func (c *EVMClient) CallContext(ctx context.Context, target interface{}, rpcMeth
 	}
 	return nil
 }
-
 
 func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string]interface{}) ([]byte, error) {
 	var hex hexutil.Bytes
@@ -294,7 +291,6 @@ func (c *EVMClient) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
 		return gasPrice, nil
 	}
 }
-
 
 func multiplyGasPrice(gasEstimate *big.Int, gasMultiplier *big.Float) *big.Int {
 

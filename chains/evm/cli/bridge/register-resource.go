@@ -53,10 +53,12 @@ Bridge address: %s
 
 	fmt.Printf("Registering contract %s with resource ID %s on handler %s", targetAddress, resourceId, handlerAddress)
 
-	// Alice PK
-	privateKey := cliutils.AliceKp.PrivateKey()
+	senderKeyPair, err := cliutils.DefineSender(cmd)
+	if err != nil {
+		log.Fatal().Err(err)
+	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, privateKey)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Fatal().Err(err)
 	}
