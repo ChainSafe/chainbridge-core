@@ -7,13 +7,14 @@ import (
 	"strconv"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
-
+	"github.com/ChainSafe/chainbridge-core/config"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var ErrNoDeploymentFalgsProvided = errors.New("provide at least one deployment flag. For help use --help.")
@@ -26,24 +27,7 @@ var DeployEVM = &cobra.Command{
 }
 
 func init() {
-	DeployEVM.Flags().Bool("bridge", false, "deploy bridge")
-	DeployEVM.Flags().Bool("erc20Handler", false, "deploy ERC20 handler")
-	//DeployEVM.Flags().Bool("erc721Handler", false, "deploy ERC721 handler")
-	//DeployEVM.Flags().Bool("genericHandler", false, "deploy generic handler")
-	DeployEVM.Flags().Bool("erc20", false, "deploy ERC20")
-	DeployEVM.Flags().Bool("erc721", false, "deploy ERC721")
-	DeployEVM.Flags().Bool("all", false, "deploy all")
-	DeployEVM.Flags().Uint64("relayerThreshold", 1, "number of votes required for a proposal to pass")
-	DeployEVM.Flags().String("chainId", "1", "chain ID for the instance")
-	DeployEVM.Flags().StringSlice("relayers", []string{}, "list of initial relayers")
-	DeployEVM.Flags().String("fee", "0", "fee to be taken when making a deposit (in ETH, decimas are allowed)")
-	DeployEVM.Flags().String("bridgeAddress", "", "bridge contract address. Should be provided if handlers are deployed separately")
-	DeployEVM.Flags().String("erc20Symbol", "", "ERC20 contract symbol")
-	DeployEVM.Flags().String("erc20Name", "", "ERC20 contract name")
-
-	DeployEVM.Flags().String("url", "ws://localhost:8545", "node url")
-	DeployEVM.Flags().String("gasLimit", "ws://localhost:8545", "node url")
-	DeployEVM.Flags().String("gasPrice", "ws://localhost:8545", "node url")
+	config.BindDeployEVMFlags(DeployEVM)
 }
 
 func CallDeployCLI(cmd *cobra.Command, args []string) error {
@@ -56,16 +40,15 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 	if err != nil {
 		return err
 	}
+
 	gasLimit, err := cmd.Flags().GetUint64("gasLimit")
 	if err != nil {
 		log.Fatal().Err(fmt.Errorf("gas limit error: %v", err))
 	}
-
 	gasPrice, err := cmd.Flags().GetUint64("gasPrice")
 	if err != nil {
 		log.Fatal().Err(fmt.Errorf("gas price error: %v", err))
 	}
-
 	log.Debug().Msgf("url: %s gas limit: %v gas price: %v", url, gasLimit, gasPrice)
 
 	senderKeyPair, err := cliutils.DefineSender(cmd)
@@ -82,6 +65,10 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 	if err != nil {
 		log.Fatal().Err(fmt.Errorf("relayer threshold error: %v", err))
 	}
+	log.Debug().Msg("got relayer threshold")
+
+	relayerAddressesStringSlice := viper.GetStringSlice(config.RelayersFlagName)
+	log.Debug().Msgf("relayer addresses from viper: %v", relayerAddressesStringSlice)
 
 	log.Debug().Msgf("relayers: %s", relayersSlice)
 	log.Debug().Msgf("relayers count: %d", len(relayersSlice))
@@ -90,16 +77,19 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 	for _, addr := range relayersSlice {
 		relayerAddresses = append(relayerAddresses, common.HexToAddress(addr))
 	}
+	log.Debug().Msg("got relayers")
 
 	var bridgeAddress common.Address
 	bridgeAddressString := cmd.Flag("bridgeAddress").Value.String()
 	if common.IsHexAddress(bridgeAddressString) {
 		bridgeAddress = common.HexToAddress(bridgeAddressString)
 	}
+	log.Debug().Msg("got bridge address")
 
 	deployments := make([]string, 0)
 
 	// flag bools
+	log.Debug().Msgf("all bool: %v", viper.GetBool("all"))
 
 	allBool, err := cmd.Flags().GetBool("all")
 	if err != nil {
@@ -184,6 +174,8 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 				log.Fatal().Err(fmt.Errorf("bridge deploy failed: %w", err))
 			}
 			deployedContracts["bridge"] = bridgeAddr.String()
+
+			log.Debug().Msgf("bridge address; %v", bridgeAddr.String())
 		case "erc20Handler":
 			log.Debug().Msgf("deploying ERC20 handler..")
 			if bridgeAddress.String() == "" {
