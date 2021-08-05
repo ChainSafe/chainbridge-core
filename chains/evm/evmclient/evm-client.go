@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"math/big"
-	"os"
 	"sync"
 	"time"
 
@@ -48,9 +47,6 @@ func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey) (*EVMClien
 	if err != nil {
 		return nil, err
 	}
-	// TODO: Autorization should be moved out
-	// set basic auth header for kaleido.io
-	rpcClient.SetHeader("Authorization", os.Getenv("KALEIDO_BASIC_AUTH_HEADER"))
 	kp := secp256k1.NewKeypair(*privateKey)
 	c := &EVMClient{}
 	c.Client = ethclient.NewClient(rpcClient)
