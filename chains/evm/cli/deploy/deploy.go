@@ -8,7 +8,6 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/config"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
@@ -29,21 +28,6 @@ var DeployEVM = &cobra.Command{
 
 func init() {
 	config.BindDeployEVMFlags(DeployEVM)
-
-	// DeployEVM.Flags().Bool("bridge", false, "deploy bridge")
-	// DeployEVM.Flags().Bool("erc20Handler", false, "deploy ERC20 handler")
-	// //DeployEVM.Flags().Bool("erc721Handler", false, "deploy ERC721 handler")
-	// //DeployEVM.Flags().Bool("genericHandler", false, "deploy generic handler")
-	// DeployEVM.Flags().Bool("erc20", false, "deploy ERC20")
-	// DeployEVM.Flags().Bool("erc721", false, "deploy ERC721")
-	// DeployEVM.Flags().Bool("all", false, "deploy all")
-	// DeployEVM.Flags().Int64("relayerThreshold", 1, "number of votes required for a proposal to pass")
-	// DeployEVM.Flags().String("chainId", "1", "chain ID for the instance")
-	// DeployEVM.Flags().StringSlice("relayers", []string{}, "list of initial relayers")
-	// DeployEVM.Flags().String("fee", "0", "fee to be taken when making a deposit (in ETH, decimas are allowed)")
-	// DeployEVM.Flags().String("bridgeAddress", "", "bridge contract address. Should be provided if handlers are deployed separately")
-	// DeployEVM.Flags().String("erc20Symbol", "", "ERC20 contract symbol")
-	// DeployEVM.Flags().String("erc20Name", "", "ERC20 contract name")
 }
 
 func CallDeployCLI(cmd *cobra.Command, args []string) error {
@@ -52,41 +36,46 @@ func CallDeployCLI(cmd *cobra.Command, args []string) error {
 }
 
 func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	// TODO: switch to viper, was having an issue grabbing these global flags with viper for some reason
-	// so need to figure that out before entirely switching
-	url := cmd.Flag("url").Value.String()
+	url, err := cmd.Flags().GetString("url")
+	if err != nil {
+		return err
+	}
+
 	gasLimit, err := cmd.Flags().GetUint64("gasLimit")
 	if err != nil {
-		log.Fatal().Err(err)
-		return err
+		log.Fatal().Err(fmt.Errorf("gas limit error: %v", err))
 	}
-	log.Debug().Msgf("got gas limit: %v", gasLimit)
-
 	gasPrice, err := cmd.Flags().GetUint64("gasPrice")
 	if err != nil {
-		log.Fatal().Err(err)
-		return err
+		log.Fatal().Err(fmt.Errorf("gas price error: %v", err))
 	}
-	log.Debug().Msgf("got gas price: %v", gasPrice)
+	log.Debug().Msgf("url: %s gas limit: %v gas price: %v", url, gasLimit, gasPrice)
 
 	senderKeyPair, err := cliutils.DefineSender(cmd)
 	if err != nil {
-		return err
+		log.Fatal().Err(fmt.Errorf("define sender error: %v", err))
 	}
+
+	relayersSlice, err := cmd.Flags().GetStringSlice("relayers")
+	if err != nil {
+		log.Fatal().Err(fmt.Errorf("relayers error: %v", err))
+	}
+
 	relayerThreshold, err := cmd.Flags().GetUint64("relayerThreshold")
 	if err != nil {
-		log.Fatal().Err(err)
-		return err
+		log.Fatal().Err(fmt.Errorf("relayer threshold error: %v", err))
 	}
 	log.Debug().Msg("got relayer threshold")
 
 	relayerAddressesStringSlice := viper.GetStringSlice(config.RelayersFlagName)
 	log.Debug().Msgf("relayer addresses from viper: %v", relayerAddressesStringSlice)
 
-	relayerAddresses := make([]common.Address, len(relayerAddressesStringSlice))
-	for i, addr := range relayerAddressesStringSlice {
-		log.Debug().Msgf("relayer address %v: %v", i, addr)
-		relayerAddresses[i] = common.HexToAddress(addr)
+	log.Debug().Msgf("relayers: %s", relayersSlice)
+	log.Debug().Msgf("relayers count: %d", len(relayersSlice))
+
+	var relayerAddresses []common.Address
+	for _, addr := range relayersSlice {
+		relayerAddresses = append(relayerAddresses, common.HexToAddress(addr))
 	}
 	log.Debug().Msg("got relayers")
 
@@ -104,37 +93,37 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 
 	allBool, err := cmd.Flags().GetBool("all")
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Fatal().Err(fmt.Errorf("all flag error: %v", err))
 	}
 
 	bridgeBool, err := cmd.Flags().GetBool("bridge")
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Fatal().Err(fmt.Errorf("bridge flag error: %v", err))
 	}
 
 	erc20HandlerBool, err := cmd.Flags().GetBool("erc20Handler")
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Fatal().Err(fmt.Errorf("erc20 handler flag error: %v", err))
 	}
 
 	erc721HandlerBool, err := cmd.Flags().GetBool("erc721Handler")
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Fatal().Err(fmt.Errorf("erc721 handler flag error: %v", err))
 	}
 
 	genericHandlerBool, err := cmd.Flags().GetBool("genericHandler")
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Fatal().Err(fmt.Errorf("generic handler flag error: %v", err))
 	}
 
 	erc20Bool, err := cmd.Flags().GetBool("erc20")
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Fatal().Err(fmt.Errorf("erc20 flag error: %v", err))
 	}
 
 	erc721Bool, err := cmd.Flags().GetBool("erc721")
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Fatal().Err(fmt.Errorf("erc721 flag error: %v", err))
 	}
 
 	if allBool {
@@ -165,18 +154,9 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 
 	chainId := cmd.Flag("chainId").Value.String()
 
-	log.Debug().Msgf(`
-	Deploying
-	URL: %s
-	Gas limit: %d
-	Gas price: %d
-	Chain ID: %s
-	Relayer threshold: %s
-	Relayer addresses: %v`, url, gasLimit, gasPrice, chainId, relayerThreshold, relayerAddresses)
-
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Fatal().Err(fmt.Errorf("eth client intialization error: %v", err))
 	}
 
 	deployedContracts := make(map[string]string)
@@ -187,7 +167,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 			// convert chain ID to uint
 			chainIdInt, err := strconv.Atoi(chainId)
 			if err != nil {
-				log.Fatal().Err(err)
+				log.Fatal().Err(fmt.Errorf("chain ID flag error: %v", err))
 			}
 			bridgeAddr, err := calls.DeployBridge(ethClient, txFabric, uint8(chainIdInt), relayerAddresses, big.NewInt(0).SetUint64(relayerThreshold))
 			if err != nil {

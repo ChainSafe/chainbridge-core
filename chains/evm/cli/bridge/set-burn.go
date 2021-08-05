@@ -47,10 +47,12 @@ Token contract address: %s`, handlerAddress, bridgeAddress, tokenAddress)
 	bridgeAddr := common.HexToAddress(bridgeAddress.String())
 	tokenContractAddr := common.HexToAddress(tokenContract)
 
-	// Alice PK
-	privateKey := cliutils.AliceKp.PrivateKey()
+	senderKeyPair, err := cliutils.DefineSender(cmd)
+	if err != nil {
+		log.Fatal().Err(err)
+	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, privateKey)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Fatal().Err(err)
 	}

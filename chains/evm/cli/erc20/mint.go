@@ -47,9 +47,12 @@ ERC20 address: %s`, amount, erc20Address)
 		log.Fatal().Err(err)
 	}
 
-	privateKey := cliutils.AliceKp.PrivateKey()
+	senderKeyPair, err := cliutils.DefineSender(cmd)
+	if err != nil {
+		log.Fatal().Err(err)
+	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, privateKey)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Fatal().Err(err)
 	}
