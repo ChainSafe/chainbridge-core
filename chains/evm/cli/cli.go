@@ -6,6 +6,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/deploy"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/erc721"
+	"github.com/ChainSafe/chainbridge-core/config"
 	"github.com/spf13/cobra"
 )
 
@@ -24,8 +25,8 @@ func init() {
 	// persistent flags
 	// to be used across all evm-cli commands (i.e. global)
 	evmRootCLI.PersistentFlags().String("url", "ws://localhost:8545", "node url")
-	evmRootCLI.PersistentFlags().Uint64("gasLimit", 6721975, "gasLimit used in transactions")
-	evmRootCLI.PersistentFlags().Uint64("gasPrice", 20000000000, "gasPrice used for transactions")
+	evmRootCLI.PersistentFlags().Uint64("gasLimit", config.DefaultGasLimit, "gasLimit used in transactions")
+	evmRootCLI.PersistentFlags().Uint64("gasPrice", config.DefaultGasPrice, "gasPrice used for transactions")
 	evmRootCLI.PersistentFlags().Uint64("networkID", 0, "networkid")
 	evmRootCLI.PersistentFlags().String("privateKey", "", "Private key to use")
 	evmRootCLI.PersistentFlags().String("jsonWallet", "", "Encrypted JSON wallet")

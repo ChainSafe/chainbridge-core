@@ -93,5 +93,3 @@ func deployContract(client ChainClient, abi abi.ABI, bytecode []byte, txFabric T
 	}
 	return address, nil
 }
-
-

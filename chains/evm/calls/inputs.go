@@ -25,7 +25,8 @@ func SendInputContract(client ChainClient, input []byte) (common.Address, error)
 	if err != nil {
 		return common.Address{}, err
 	}
-	tx := evmtransaction.NewContractTransaction(n.Uint64(), big.NewInt(0), gasLimit, gp, input)
+	// pass nil as "to" param since we are submitting a contract deployment
+	tx := evmtransaction.NewTransaction(n.Uint64(), nil, big.NewInt(0), gasLimit, gp, input)
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return common.Address{}, err
@@ -52,7 +53,7 @@ func SendInput(client ChainClient, dest common.Address, input []byte) (common.Ha
 	if err != nil {
 		return common.Hash{}, err
 	}
-	tx := evmtransaction.NewTransaction(n.Uint64(), dest, big.NewInt(0), gasLimit, gp, input)
+	tx := evmtransaction.NewTransaction(n.Uint64(), &dest, big.NewInt(0), gasLimit, gp, input)
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return common.Hash{}, err

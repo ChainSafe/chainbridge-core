@@ -2,11 +2,12 @@ package cliutils
 
 import (
 	"errors"
-	"github.com/ChainSafe/chainbridge-core/keystore"
-	"github.com/spf13/cobra"
 	gomath "math"
 	"math/big"
 	"strings"
+
+	"github.com/ChainSafe/chainbridge-core/keystore"
+	"github.com/spf13/cobra"
 
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/common"
@@ -14,12 +15,12 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-
 type EventSig string
 
 func (es EventSig) GetTopic() common.Hash {
 	return crypto.Keccak256Hash([]byte(es))
 }
+
 //
 //func IsActive(status uint8) bool {
 //	return ProposalStatus(status) == Active

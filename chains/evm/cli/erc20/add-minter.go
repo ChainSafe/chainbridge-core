@@ -33,9 +33,6 @@ ERC20 address: %s`, minterAddress, erc20Address)
 
 	url := cmd.Flag("url").Value.String()
 
-	// Alice PK
-	privateKey := cliutils.AliceKp.PrivateKey()
-
 	erc20 := cmd.Flag("erc20Address").Value.String()
 	if !common.IsHexAddress(erc20) {
 		log.Fatal().Err(errors.New("invalid erc20Address address"))
@@ -48,7 +45,12 @@ ERC20 address: %s`, minterAddress, erc20Address)
 	}
 	minterAddr := common.HexToAddress(minter)
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, privateKey)
+	senderKeyPair, err := cliutils.DefineSender(cmd)
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Fatal().Err(err)
 	}
