@@ -49,15 +49,17 @@ func CallDeployCLI(cmd *cobra.Command, args []string) error {
 
 func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	url := cmd.Flag("url").Value.String()
-	// gasLimit, err := cmd.Flags().GetUint64("gasLimit")
-	// if err != nil {
-	// 	log.Fatal().Err(fmt.Errorf("gas limit error: %v", err))
-	// }
+	gasLimit, err := cmd.Flags().GetUint64("gasLimit")
+	if err != nil {
+		log.Fatal().Err(fmt.Errorf("gas limit error: %v", err))
+	}
 
-	// gasPrice, err := cmd.Flags().GetUint64("gasPrice")
-	// if err != nil {
-	// 	log.Fatal().Err(fmt.Errorf("gas price error: %v", err))
-	// }
+	gasPrice, err := cmd.Flags().GetUint64("gasPrice")
+	if err != nil {
+		log.Fatal().Err(fmt.Errorf("gas price error: %v", err))
+	}
+
+	log.Debug().Msgf("url: %s gas limit: %v gas price: %v", url, gasLimit, gasPrice)
 
 	senderKeyPair, err := cliutils.DefineSender(cmd)
 	if err != nil {
