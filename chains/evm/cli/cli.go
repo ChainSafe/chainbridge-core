@@ -6,15 +6,16 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/deploy"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/erc721"
+	"github.com/ChainSafe/chainbridge-core/config"
 	"github.com/spf13/cobra"
 )
 
 // BindCLI is public function to be invoked in example-app's cobra command
 func BindCLI(cli *cobra.Command) {
-	cli.AddCommand(evmRootCLI)
+	cli.AddCommand(EvmRootCLI)
 }
 
-var evmRootCLI = &cobra.Command{
+var EvmRootCLI = &cobra.Command{
 	Use:   "evm-cli",
 	Short: "EVM CLI",
 	Long:  "Root command for starting EVM CLI",
@@ -23,29 +24,23 @@ var evmRootCLI = &cobra.Command{
 func init() {
 	// persistent flags
 	// to be used across all evm-cli commands (i.e. global)
-	evmRootCLI.PersistentFlags().String("url", "ws://localhost:8545", "node url")
-	evmRootCLI.PersistentFlags().Uint64("gasLimit", 6721975, "gasLimit used in transactions")
-	evmRootCLI.PersistentFlags().Uint64("gasPrice", 20000000000, "gasPrice used for transactions")
-	evmRootCLI.PersistentFlags().Uint64("networkID", 0, "networkid")
-	evmRootCLI.PersistentFlags().String("privateKey", "", "Private key to use")
-	evmRootCLI.PersistentFlags().String("jsonWallet", "", "Encrypted JSON wallet")
-	evmRootCLI.PersistentFlags().String("jsonWalletPassword", "", "Password for encrypted JSON wallet")
+	config.BindEVMCLIFlags(EvmRootCLI)
 
 	// add commands to evm-cli root
 	// deploy
-	evmRootCLI.AddCommand(deploy.DeployEVM)
+	EvmRootCLI.AddCommand(deploy.DeployEVM)
 
 	// admin
-	evmRootCLI.AddCommand(admin.AdminCmd)
+	EvmRootCLI.AddCommand(admin.AdminCmd)
 
 	// bridge
-	evmRootCLI.AddCommand(bridge.BridgeCmd)
+	EvmRootCLI.AddCommand(bridge.BridgeCmd)
 
 	// erc20
-	evmRootCLI.AddCommand(erc20.ERC20Cmd)
+	EvmRootCLI.AddCommand(erc20.ERC20Cmd)
 
 	// erc721
-	evmRootCLI.AddCommand(erc721.ERC721Cmd)
+	EvmRootCLI.AddCommand(erc721.ERC721Cmd)
 }
 
 /*
