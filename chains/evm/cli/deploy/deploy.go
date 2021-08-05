@@ -6,16 +6,17 @@ import (
 	"math/big"
 	"strconv"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
-	"github.com/ChainSafe/chainbridge-core/config"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
 
 var ErrNoDeploymentFalgsProvided = errors.New("provide at least one deployment flag. For help use --help.")
 
@@ -27,7 +28,7 @@ var DeployEVM = &cobra.Command{
 }
 
 func init() {
-	config.BindDeployEVMFlags(DeployEVM)
+	flags.BindDeployEVMFlags(DeployEVM)
 }
 
 func CallDeployCLI(cmd *cobra.Command, args []string) error {
@@ -67,7 +68,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 	}
 	log.Debug().Msg("got relayer threshold")
 
-	relayerAddressesStringSlice := viper.GetStringSlice(config.RelayersFlagName)
+	relayerAddressesStringSlice := viper.GetStringSlice(flags.RelayersFlagName)
 	log.Debug().Msgf("relayer addresses from viper: %v", relayerAddressesStringSlice)
 
 	log.Debug().Msgf("relayers: %s", relayersSlice)

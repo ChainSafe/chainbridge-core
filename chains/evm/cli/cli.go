@@ -6,7 +6,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/deploy"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/erc721"
-	"github.com/ChainSafe/chainbridge-core/config"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +24,7 @@ var EvmRootCLI = &cobra.Command{
 func init() {
 	// persistent flags
 	// to be used across all evm-cli commands (i.e. global)
-	config.BindEVMCLIFlags(EvmRootCLI)
+	flags.BindEVMCLIFlags(EvmRootCLI)
 
 	// add commands to evm-cli root
 	// deploy
