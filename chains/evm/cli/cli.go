@@ -6,8 +6,8 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/deploy"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/erc721"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // BindCLI is public function to be invoked in example-app's cobra command
@@ -20,11 +20,40 @@ var EvmRootCLI = &cobra.Command{
 	Short: "EVM CLI",
 	Long:  "Root command for starting EVM CLI",
 }
+var (
+	// Flags for all EVM CLI commands
+	UrlFlagName                = "url"
+	GasLimitFlagName           = "gasLimit"
+	GasPriceFlagName           = "gasPrice"
+	NetworkIdFlagName          = "networkid"
+	PrivateKeyFlagName         = "privateKey"
+	JsonWalletFlagName         = "jsonWallet"
+	JsonWalletPasswordFlagName = "jsonWalletPassword"
+)
+func BindEVMCLIFlags(evmRootCLI *cobra.Command) {
+	evmRootCLI.PersistentFlags().String(UrlFlagName, "ws://localhost:8545", "node url")
+	evmRootCLI.PersistentFlags().Uint64(GasLimitFlagName, 6721975, "gasLimit used in transactions")
+	evmRootCLI.PersistentFlags().Uint64(GasPriceFlagName, 20000000000, "gasPrice used for transactions")
+	evmRootCLI.PersistentFlags().Uint64(NetworkIdFlagName, 0, "networkid")
+	evmRootCLI.PersistentFlags().String(PrivateKeyFlagName, "", "Private key to use")
+	evmRootCLI.PersistentFlags().String(JsonWalletFlagName, "", "Encrypted JSON wallet")
+	evmRootCLI.PersistentFlags().String(JsonWalletPasswordFlagName, "", "Password for encrypted JSON wallet")
+
+	viper.BindPFlag(UrlFlagName, evmRootCLI.PersistentFlags().Lookup(UrlFlagName))
+	viper.BindPFlag(GasLimitFlagName, evmRootCLI.PersistentFlags().Lookup(GasLimitFlagName))
+	viper.BindPFlag(GasPriceFlagName, evmRootCLI.PersistentFlags().Lookup(GasPriceFlagName))
+	viper.BindPFlag(NetworkIdFlagName, evmRootCLI.PersistentFlags().Lookup(NetworkIdFlagName))
+	viper.BindPFlag(PrivateKeyFlagName, evmRootCLI.PersistentFlags().Lookup(PrivateKeyFlagName))
+	viper.BindPFlag(JsonWalletFlagName, evmRootCLI.PersistentFlags().Lookup(JsonWalletFlagName))
+	viper.BindPFlag(JsonWalletPasswordFlagName, evmRootCLI.PersistentFlags().Lookup(JsonWalletPasswordFlagName))
+
+}
+
 
 func init() {
 	// persistent flags
 	// to be used across all evm-cli commands (i.e. global)
-	flags.BindEVMCLIFlags(EvmRootCLI)
+	BindEVMCLIFlags(EvmRootCLI)
 
 	// add commands to evm-cli root
 	// deploy

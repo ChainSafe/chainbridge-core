@@ -27,8 +27,54 @@ var DeployEVM = &cobra.Command{
 	RunE:  CallDeployCLI,
 }
 
+var (
+	// Flags for all EVM Deploy CLI commands
+	BridgeFlagName           = "bridge"
+	Erc20HandlerFlagName     = "erc20Handler"
+	Erc20FlagName            = "erc20"
+	Erc721FlagName           = "erc721"
+	DeployAllFlagName        = "all"
+	RelayerThresholdFlagName = "relayerThreshold"
+	ChainIdFlagName          = "chainId"
+	RelayersFlagName         = "relayers"
+	FeeFlagName              = "fee"
+	BridgeAddressFlagName    = "bridgeAddress"
+	Erc20SymbolFlagName      = "erc20Symbol"
+	Erc20NameFlagName        = "erc20Name"
+)
+
+func BindDeployEVMFlags(deployCmd *cobra.Command) {
+	deployCmd.Flags().Bool(BridgeFlagName, false, "deploy bridge")
+	deployCmd.Flags().Bool(Erc20HandlerFlagName, false, "deploy ERC20 handler")
+	//deployCmd.Flags().Bool("erc721Handler", false, "deploy ERC721 handler")
+	//deployCmd.Flags().Bool("genericHandler", false, "deploy generic handler")
+	deployCmd.Flags().Bool(Erc20FlagName, false, "deploy ERC20")
+	deployCmd.Flags().Bool(Erc721FlagName, false, "deploy ERC721")
+	deployCmd.Flags().Bool(DeployAllFlagName, false, "deploy all")
+	deployCmd.Flags().Uint64(RelayerThresholdFlagName, 1, "number of votes required for a proposal to pass")
+	deployCmd.Flags().String(ChainIdFlagName, "1", "chain ID for the instance")
+	deployCmd.Flags().StringSlice(RelayersFlagName, []string{}, "list of initial relayers")
+	deployCmd.Flags().String(FeeFlagName, "0", "fee to be taken when making a deposit (in ETH, decimas are allowed)")
+	deployCmd.Flags().String(BridgeAddressFlagName, "", "bridge contract address. Should be provided if handlers are deployed separately")
+	deployCmd.Flags().String(Erc20SymbolFlagName, "", "ERC20 contract symbol")
+	deployCmd.Flags().String(Erc20NameFlagName, "", "ERC20 contract name")
+
+	viper.BindPFlag(BridgeFlagName, deployCmd.Flags().Lookup(BridgeFlagName))
+	viper.BindPFlag(Erc20HandlerFlagName, deployCmd.Flags().Lookup(Erc20HandlerFlagName))
+	viper.BindPFlag(Erc20FlagName, deployCmd.Flags().Lookup(Erc20FlagName))
+	viper.BindPFlag(Erc721FlagName, deployCmd.Flags().Lookup(Erc721FlagName))
+	viper.BindPFlag(DeployAllFlagName, deployCmd.Flags().Lookup(DeployAllFlagName))
+	viper.BindPFlag(RelayerThresholdFlagName, deployCmd.Flags().Lookup(RelayerThresholdFlagName))
+	viper.BindPFlag(ChainIdFlagName, deployCmd.Flags().Lookup(ChainIdFlagName))
+	viper.BindPFlag(RelayersFlagName, deployCmd.Flags().Lookup(RelayersFlagName))
+	viper.BindPFlag(FeeFlagName, deployCmd.Flags().Lookup(FeeFlagName))
+	viper.BindPFlag(BridgeAddressFlagName, deployCmd.Flags().Lookup(BridgeAddressFlagName))
+	viper.BindPFlag(Erc20SymbolFlagName, deployCmd.Flags().Lookup(Erc20SymbolFlagName))
+	viper.BindPFlag(Erc20NameFlagName, deployCmd.Flags().Lookup(Erc20NameFlagName))
+}
+
 func init() {
-	flags.BindDeployEVMFlags(DeployEVM)
+	BindDeployEVMFlags(DeployEVM)
 }
 
 func CallDeployCLI(cmd *cobra.Command, args []string) error {
@@ -53,7 +99,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 		log.Error().Err(fmt.Errorf("relayer threshold error: %v", err)).Msg("error parsing relayersTreshold")
 		return err
 	}
-	relayerAddressesStringSlice := viper.GetStringSlice(flags.RelayersFlagName)
+	relayerAddressesStringSlice := viper.GetStringSlice(RelayersFlagName)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("relayer threshold error: %v", err))
 		return err

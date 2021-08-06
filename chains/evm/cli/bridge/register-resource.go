@@ -16,22 +16,24 @@ var registerResourceCmd = &cobra.Command{
 	Use:   "register-resource",
 	Short: "Register a resource ID",
 	Long:  "Register a resource ID with a contract address for a handler",
-	RunE:  CallRegisterResource,
+	RunE:  func(cmd *cobra.Command, args []string) error {
+		txFabric := evmtransaction.NewTransaction
+		return RegisterResourceEVMCMD(cmd, args, txFabric)
+	},
+}
+
+func BindBridgeRegisterResourceCLIFlags(cli *cobra.Command) {
+	cli.Flags().String("handler", "", "handler contract address")
+	cli.Flags().String("bridge", "", "bridge contract address")
+	cli.Flags().String("target", "", "contract address to be registered")
+	cli.Flags().String("resourceId", "", "resource ID to be registered")
 }
 
 func init() {
-	registerResourceCmd.Flags().String("handler", "", "handler contract address")
-	registerResourceCmd.Flags().String("bridge", "", "bridge contract address")
-	registerResourceCmd.Flags().String("target", "", "contract address to be registered")
-	registerResourceCmd.Flags().String("resourceId", "", "resource ID to be registered")
+	BindBridgeRegisterResourceCLIFlags(registerResourceCmd)
 }
 
-func CallRegisterResource(cmd *cobra.Command, args []string) error {
-	txFabric := evmtransaction.NewTransaction
-	return registerResource(cmd, args, txFabric)
-}
-
-func registerResource(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func RegisterResourceEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	handlerAddressString := cmd.Flag("handler").Value.String()
 	resourceId := cmd.Flag("resourceId").Value.String()
 	targetAddress := cmd.Flag("target").Value.String()
