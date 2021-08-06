@@ -45,7 +45,7 @@ func deposit(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	resourceId := cmd.Flag("resourceId").Value.String()
 
 	// fetch global flag values
-	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
@@ -90,7 +90,7 @@ func deposit(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 		return err
 	}
 	// destinationId
-	txHash, err := calls.SendInput(ethClient, recipientAddr, input, txFabric)
+	txHash, err := calls.Transact(ethClient, txFabric, &recipientAddr, input, gasLimit)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit error: %v", err))
 		return err

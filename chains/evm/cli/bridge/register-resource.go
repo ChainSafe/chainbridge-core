@@ -43,10 +43,9 @@ Resource ID: %s
 Target address: %s
 Bridge address: %s
 `, handlerAddressString, resourceId, targetAddress, bridgeAddress)
-	// bridgeAddress := cmd.Flag("bridge").Value.String()
 
 	// fetch global flag values
-	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
@@ -81,7 +80,7 @@ Bridge address: %s
 		return err
 	}
 
-	_, err = calls.SendInput(ethClient, targetContractAddr, registerResourceInput, txFabric)
+	_, err = calls.Transact(ethClient,txFabric, &targetContractAddr, registerResourceInput, gasLimit)
 	if err != nil {
 		log.Error().Err(err)
 		return err

@@ -52,7 +52,7 @@ Decimals: %s`,
 		erc20Address, recipientAddress, amount, decimals)
 
 	// fetch global flag values
-	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
@@ -83,7 +83,7 @@ Decimals: %s`,
 	if err != nil {
 		log.Fatal().Err(err)
 	}
-	_, err = calls.SendInput(ethClient, erc20Addr, i, txFabric)
+	_, err = calls.Transact(ethClient, txFabric, &erc20Addr, i, gasLimit)
 	if err != nil {
 		log.Fatal().Err(err)
 	}

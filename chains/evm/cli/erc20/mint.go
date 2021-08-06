@@ -45,7 +45,7 @@ func mint(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	decimalsBigInt := big.NewInt(0).SetUint64(decimals)
 
 	// fetch global flag values
-	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
@@ -72,7 +72,7 @@ func mint(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 		return err
 	}
 
-	_, err = calls.SendInput(ethClient, erc20Addr, mintTokensInput, txFabric)
+	_, err = calls.Transact(ethClient, txFabric, &erc20Addr, mintTokensInput, gasLimit)
 	if err != nil {
 		log.Error().Err(err)
 		return err

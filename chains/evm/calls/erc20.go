@@ -1,14 +1,11 @@
 package calls
 
 import (
-	"context"
 	"math/big"
 	"strings"
 
-	"github.com/ChainSafe/chainbridge-core/config"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/rs/zerolog/log"
 )
 
 // @dev
@@ -95,30 +92,4 @@ func PrepareERC20BalanceInput(erc20Addr, accountAddr common.Address) ([]byte, er
 	input = append(input, common.FromHex(ERC20PresetMinterPauserBin)...)
 
 	return input, nil
-}
-
-// @dev
-// refactor to be reusable
-func SendInput(client ChainClient, dest common.Address, input []byte, txFabric TxFabric) (common.Hash, error) {
-	gp, err := client.GasPrice()
-	if err != nil {
-		return common.Hash{}, err
-	}
-	client.LockNonce()
-	n, err := client.UnsafeNonce()
-	if err != nil {
-		return common.Hash{}, err
-	}
-	tx := txFabric(n.Uint64(), nil, big.NewInt(0), config.DefaultGasLimit, gp, input)
-	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
-	if err != nil {
-		return common.Hash{}, err
-	}
-	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msg("tx success")
-	err = client.UnsafeIncreaseNonce()
-	if err != nil {
-		return common.Hash{}, err
-	}
-	client.UnlockNonce()
-	return tx.Hash(), nil
 }

@@ -35,7 +35,7 @@ func balance(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	accountAddress := cmd.Flag("accountAddress").Value.String()
 
 	// fetch global flag values
-	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
@@ -63,7 +63,7 @@ func balance(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 		return err
 	}
 
-	txHash, err := calls.SendInput(ethClient, erc20Addr, input, txFabric)
+	txHash, err := calls.Transact(ethClient, txFabric, &erc20Addr, input, gasLimit)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("send input error: %v", err))
 		return err

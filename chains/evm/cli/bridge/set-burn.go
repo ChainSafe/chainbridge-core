@@ -37,7 +37,7 @@ func setBurn(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	tokenAddress := cmd.Flag("tokenContract").Value.String()
 
 	// fetch global flag values
-	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
@@ -70,7 +70,7 @@ func setBurn(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 		return err
 	}
 
-	_, err = calls.SendInput(ethClient, handlerAddr, setBurnableInput, txFabric)
+	_, err = calls.Transact(ethClient, txFabric, &handlerAddr, setBurnableInput, gasLimit)
 	if err != nil {
 		log.Info().Msg("Burnable set")
 		return err

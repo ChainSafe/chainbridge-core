@@ -34,7 +34,7 @@ func addMinter(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 	minterAddress := cmd.Flag("minter").Value.String()
 
 	// fetch global flag values
-	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
@@ -61,7 +61,7 @@ func addMinter(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 		log.Error().Err(err)
 		return err
 	}
-	_, err = calls.SendInput(ethClient, minterAddr, mintableInput, txFabric)
+	_, err = calls.Transact(ethClient, txFabric, &minterAddr, mintableInput, gasLimit)
 	if err != nil {
 		log.Error().Err(err)
 		return err

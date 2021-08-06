@@ -2,6 +2,7 @@ package flags
 
 import (
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
@@ -10,25 +11,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func GlobalFlagValues(cmd *cobra.Command) (string, *big.Int, *big.Int, *secp256k1.Keypair, error) {
+func GlobalFlagValues(cmd *cobra.Command) (string, uint64, *big.Int, *secp256k1.Keypair, error) {
 	url, err := cmd.Flags().GetString("url")
 	if err != nil {
 		log.Error().Err(fmt.Errorf("url error: %v", err))
-		return "", nil, nil, nil, err
+		return "", evmclient.DefaultGasLimit, nil, nil, err
 	}
 
 	gasLimitInt, err := cmd.Flags().GetUint64("gasLimit")
 	if err != nil {
 		log.Error().Err(fmt.Errorf("gas limit error: %v", err))
-		return "", nil, nil, nil, err
+		return "", evmclient.DefaultGasLimit, nil, nil, err
 	}
-
-	gasLimit := big.NewInt(0).SetUint64(gasLimitInt)
 
 	gasPriceInt, err := cmd.Flags().GetUint64("gasPrice")
 	if err != nil {
 		log.Error().Err(fmt.Errorf("gas price error: %v", err))
-		return "", nil, nil, nil, err
+		return "", evmclient.DefaultGasLimit, nil, nil, err
 	}
 
 	gasPrice := big.NewInt(0).SetUint64(gasPriceInt)
@@ -36,8 +35,8 @@ func GlobalFlagValues(cmd *cobra.Command) (string, *big.Int, *big.Int, *secp256k
 	senderKeyPair, err := cliutils.DefineSender(cmd)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("define sender error: %v", err))
-		return "", nil, nil, nil, err
+		return "", evmclient.DefaultGasLimit, nil, nil, err
 	}
 
-	return url, gasLimit, gasPrice, senderKeyPair, nil
+	return url, gasLimitInt, gasPrice, senderKeyPair, nil
 }

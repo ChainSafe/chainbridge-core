@@ -105,3 +105,31 @@ func UserAmountToWei(amount string, decimal *big.Int) (*big.Int, error) {
 
 	return i, nil
 }
+
+
+func Transact(client ChainClient, txFabric TxFabric, to *common.Address, data []byte, gasLimit uint64) (common.Hash, error) {
+	gp, err := client.GasPrice()
+	if err != nil {
+		return common.Hash{}, err
+	}
+	client.LockNonce()
+	n, err := client.UnsafeNonce()
+	if err != nil {
+		return common.Hash{}, err
+	}
+	tx := txFabric(n.Uint64(), to, big.NewInt(0), gasLimit, gp, data)
+	_, err = client.SignAndSendTransaction(context.TODO(), tx)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	_, err = client.WaitAndReturnTxReceipt(tx.Hash())
+	if err != nil {
+		return common.Hash{}, err
+	}
+	err = client.UnsafeIncreaseNonce()
+	if err != nil {
+		return common.Hash{}, err
+	}
+	client.UnlockNonce()
+	return tx.Hash(), nil
+}
