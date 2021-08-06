@@ -35,14 +35,14 @@ func registerResource(cmd *cobra.Command, args []string, txFabric calls.TxFabric
 	handlerAddressString := cmd.Flag("handler").Value.String()
 	resourceId := cmd.Flag("resourceId").Value.String()
 	targetAddress := cmd.Flag("target").Value.String()
-	bridgeAddress := cmd.Flag("bridge").Value.String()
+	bridgeAddressStr := cmd.Flag("bridge").Value.String()
 	log.Debug().Msgf(`
 Registering resource
 Handler address: %s
 Resource ID: %s
 Target address: %s
 Bridge address: %s
-`, handlerAddressString, resourceId, targetAddress, bridgeAddress)
+`, handlerAddressString, resourceId, targetAddress, bridgeAddressStr)
 
 	// fetch global flag values
 	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
@@ -65,6 +65,7 @@ Bridge address: %s
 	targetContractAddr := common.HexToAddress(targetAddress)
 	resourceIdBytes := common.Hex2Bytes(resourceId)
 	resourceIdBytesArr := calls.SliceTo32Bytes(resourceIdBytes)
+	bridgeAddress := common.HexToAddress(bridgeAddressStr)
 
 	fmt.Printf("Registering contract %s with resource ID %s on handler %s", targetAddress, resourceId, handlerAddr)
 
@@ -80,7 +81,7 @@ Bridge address: %s
 		return err
 	}
 
-	_, err = calls.Transact(ethClient,txFabric, &targetContractAddr, registerResourceInput, gasLimit)
+	_, err = calls.Transact(ethClient,txFabric, &bridgeAddress, registerResourceInput, gasLimit)
 	if err != nil {
 		log.Error().Err(err)
 		return err
