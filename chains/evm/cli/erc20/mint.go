@@ -35,10 +35,6 @@ func CallMint(cmd *cobra.Command, args []string) error {
 func mint(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	amount := cmd.Flag("amount").Value.String()
 	erc20Address := cmd.Flag("erc20Address").Value.String()
-	log.Debug().Msgf(`
-Minting token
-Amount: %s
-ERC20 address: %s`, amount, erc20Address)
 
 	decimals := "2"
 	decimalsBigInt, _ := big.NewInt(0).SetString(decimals, 10)

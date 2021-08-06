@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
@@ -32,7 +32,6 @@ func CallRegisterResource(cmd *cobra.Command, args []string) error {
 }
 
 func registerResource(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	url := cmd.Flag("url").Value.String()
 	handlerAddressString := cmd.Flag("handler").Value.String()
 	resourceId := cmd.Flag("resourceId").Value.String()
 	targetAddress := cmd.Flag("target").Value.String()
@@ -45,38 +44,46 @@ Target address: %s
 Bridge address: %s
 `, handlerAddressString, resourceId, targetAddress, bridgeAddress)
 
-	if !common.IsHexAddress(handlerAddressString) {
-		log.Fatal().Err(fmt.Errorf("invalid handler address %s", handlerAddressString))
+	// fetch global flag values
+	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	if err != nil {
+		return fmt.Errorf("could not get global flags: %v", err)
 	}
-	handlerAddress := common.HexToAddress(handlerAddressString)
+
+	if !common.IsHexAddress(handlerAddressString) {
+		err := fmt.Errorf("invalid handler address %s", handlerAddressString)
+		log.Error().Err(err)
+		return err
+	}
+	handlerAddr := common.HexToAddress(handlerAddressString)
 
 	if !common.IsHexAddress(targetAddress) {
-		log.Fatal().Err(fmt.Errorf("invalid target address %s", targetAddress))
+		err := fmt.Errorf("invalid target address %s", targetAddress)
+		log.Error().Err(err)
+		return err
 	}
-	targetContractAddress := common.HexToAddress(targetAddress)
+	targetContractAddr := common.HexToAddress(targetAddress)
 	resourceIdBytes := common.Hex2Bytes(resourceId)
 	resourceIdBytesArr := calls.SliceTo32Bytes(resourceIdBytes)
 
-	fmt.Printf("Registering contract %s with resource ID %s on handler %s", targetAddress, resourceId, handlerAddress)
-
-	senderKeyPair, err := cliutils.DefineSender(cmd)
-	if err != nil {
-		log.Fatal().Err(err)
-	}
+	fmt.Printf("Registering contract %s with resource ID %s on handler %s", targetAddress, resourceId, handlerAddr)
 
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Error().Err(err)
+		return err
 	}
 
-	registerResourceInput, err := calls.PrepareAdminSetResourceInput(handlerAddress, resourceIdBytesArr, targetContractAddress)
+	registerResourceInput, err := calls.PrepareAdminSetResourceInput(handlerAddr, resourceIdBytesArr, targetContractAddr)
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Error().Err(err)
+		return err
 	}
 
-	_, err = calls.SendInput(ethClient, targetContractAddress, registerResourceInput, txFabric)
+	_, err = calls.SendInput(ethClient, targetContractAddr, registerResourceInput, txFabric)
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Error().Err(err)
+		return err
 	}
 
 	fmt.Println("Resource registered")

@@ -2,9 +2,10 @@ package bridge
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
@@ -31,47 +32,48 @@ func CallSetBurn(cmd *cobra.Command, args []string) error {
 }
 
 func setBurn(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	handlerAddress := cmd.Flag("handler").Value
-	bridgeAddress := cmd.Flag("bridge").Value
-	tokenAddress := cmd.Flag("tokenContract").Value
-	log.Debug().Msgf(`
-Setting contract as mintable/burnable
-Handler address: %s
-Bridge address: %s
-Token contract address: %s`, handlerAddress, bridgeAddress, tokenAddress)
+	handlerAddress := cmd.Flag("handler").Value.String()
+	bridgeAddress := cmd.Flag("bridge").Value.String()
+	tokenAddress := cmd.Flag("tokenContract").Value.String()
 
-	url := cmd.Flag("url").Value.String()
-	handler := cmd.Flag("handler").Value.String()
-	if !common.IsHexAddress(handler) {
-		log.Fatal().Err(errors.New("handler address is incorrect format"))
-	}
-	tokenContract := cmd.Flag("tokenContract").Value.String()
-	if !common.IsHexAddress(tokenContract) {
-		log.Fatal().Err(errors.New("tokenContract address is incorrect format"))
-	}
-	handlerAddr := common.HexToAddress(handler)
-	bridgeAddr := common.HexToAddress(bridgeAddress.String())
-	tokenContractAddr := common.HexToAddress(tokenContract)
-
-	senderKeyPair, err := cliutils.DefineSender(cmd)
+	// fetch global flag values
+	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
-		log.Fatal().Err(err)
+		return fmt.Errorf("could not get global flags: %v", err)
 	}
+
+	if !common.IsHexAddress(handlerAddress) {
+		err := errors.New("handler address is incorrect format")
+		log.Error().Err(err)
+		return err
+	}
+
+	if !common.IsHexAddress(tokenAddress) {
+		err := errors.New("tokenContract address is incorrect format")
+		log.Error().Err(err)
+		return err
+	}
+	handlerAddr := common.HexToAddress(handlerAddress)
+	bridgeAddr := common.HexToAddress(bridgeAddress)
+	tokenContractAddr := common.HexToAddress(tokenAddress)
 
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Error().Err(err)
+		return err
 	}
 
-	log.Info().Msgf("Setting contract %s as burnable on handler %s", tokenContractAddr.String(), handlerAddress.String())
+	log.Info().Msgf("Setting contract %s as burnable on handler %s", tokenContractAddr.String(), handlerAddr.String())
 	setBurnableInput, err := calls.PrepareSetBurnableInput(ethClient, bridgeAddr, handlerAddr, tokenContractAddr)
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Error().Err(err)
+		return err
 	}
 
 	_, err = calls.SendInput(ethClient, handlerAddr, setBurnableInput, txFabric)
 	if err != nil {
 		log.Info().Msg("Burnable set")
+		return err
 	}
 	return nil
 }
