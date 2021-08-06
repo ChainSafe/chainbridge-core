@@ -18,26 +18,28 @@ var depositCmd = &cobra.Command{
 	Use:   "deposit",
 	Short: "Initiate a transfer of ERC20 tokens",
 	Long:  "Initiate a transfer of ERC20 tokens",
-	RunE:  CallDeposit,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		txFabric := evmtransaction.NewTransaction
+		return DepositEVMCMD(cmd, args, txFabric)
+	},
+}
+
+func BindERC20DepositCLIFlags(cli *cobra.Command) {
+	cli.Flags().String("recipient", "", "address of recipient")
+	cli.Flags().String("bridge", "", "address of bridge contract")
+	cli.Flags().String("amount", "", "amount to deposit")
+	cli.Flags().String("value", "0", "value of ETH that should be sent along with deposit to cover possible fees. In ETH (decimals are allowed)")
+	cli.Flags().String("destId", "", "destination chain ID")
+	cli.Flags().String("resourceId", "", "resource ID for transfer")
+	cli.Flags().Uint64("decimals", 0, "ERC20 token decimals")
+	cli.MarkFlagRequired("decimals")
 }
 
 func init() {
-	depositCmd.Flags().String("recipient", "", "address of recipient")
-	depositCmd.Flags().String("bridge", "", "address of bridge contract")
-	depositCmd.Flags().String("amount", "", "amount to deposit")
-	depositCmd.Flags().String("value", "0", "value of ETH that should be sent along with deposit to cover possible fees. In ETH (decimals are allowed)")
-	depositCmd.Flags().String("destId", "", "destination chain ID")
-	depositCmd.Flags().String("resourceId", "", "resource ID for transfer")
-	depositCmd.Flags().Uint64("decimals", 0, "ERC20 token decimals")
-	depositCmd.MarkFlagRequired("decimals")
+	BindERC20DepositCLIFlags(depositCmd)
 }
 
-func CallDeposit(cmd *cobra.Command, args []string) error {
-	txFabric := evmtransaction.NewTransaction
-	return deposit(cmd, args, txFabric)
-}
-
-func deposit(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func DepositEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	recipientAddress := cmd.Flag("recipient").Value.String()
 	bridgeAddress := cmd.Flag("bridge").Value.String()
 	amount := cmd.Flag("amount").Value.String()

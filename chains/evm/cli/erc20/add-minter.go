@@ -17,19 +17,22 @@ var addMinterCmd = &cobra.Command{
 	Use:   "add-minter",
 	Short: "Add a minter to an Erc20 mintable contract",
 	Long:  "Add a minter to an Erc20 mintable contract",
-	RunE:  CallAddMinter,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		txFabric := evmtransaction.NewTransaction
+		return AddMinterEVMCMD(cmd, args, txFabric)
+	},
+}
+
+func BindERC20AddMinterCLIFlags(cli *cobra.Command) {
+	cli.Flags().String("erc20Address", "", "ERC20 contract address")
+	cli.Flags().String("minter", "", "address of minter")
 }
 
 func init() {
-	addMinterCmd.Flags().String("erc20Address", "", "ERC20 contract address")
-	addMinterCmd.Flags().String("minter", "", "address of minter")
+	BindERC20AddMinterCLIFlags(addMinterCmd)
 }
 
-func CallAddMinter(cmd *cobra.Command, args []string) error {
-	txFabric := evmtransaction.NewTransaction
-	return addMinter(cmd, args, txFabric)
-}
-func addMinter(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func AddMinterEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	erc20Address := cmd.Flag("erc20Address").Value.String()
 	minterAddress := cmd.Flag("minter").Value.String()
 
@@ -42,12 +45,14 @@ func addMinter(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 	if !common.IsHexAddress(erc20Address) {
 		err := errors.New("invalid erc20Address address")
 		log.Error().Err(err)
+		return err
 	}
 	erc20Addr := common.HexToAddress(erc20Address)
 
 	if !common.IsHexAddress(minterAddress) {
 		err := errors.New("invalid minter address")
 		log.Error().Err(err)
+		return err
 	}
 	minterAddr := common.HexToAddress(minterAddress)
 

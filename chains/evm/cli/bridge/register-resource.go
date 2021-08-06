@@ -16,7 +16,7 @@ var registerResourceCmd = &cobra.Command{
 	Use:   "register-resource",
 	Short: "Register a resource ID",
 	Long:  "Register a resource ID with a contract address for a handler",
-	RunE:  func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
 		return RegisterResourceEVMCMD(cmd, args, txFabric)
 	},
@@ -71,7 +71,7 @@ Bridge address: %s
 
 	fmt.Printf("Registering contract %s with resource ID %s on handler %s", targetAddress, resourceId, handlerAddr)
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(),gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
 		log.Error().Err(err)
 		return err
@@ -83,7 +83,7 @@ Bridge address: %s
 		return err
 	}
 
-	_, err = calls.Transact(ethClient,txFabric, &bridgeAddress, registerResourceInput, gasLimit)
+	_, err = calls.Transact(ethClient, txFabric, &bridgeAddress, registerResourceInput, gasLimit)
 	if err != nil {
 		log.Error().Err(err)
 		return err
