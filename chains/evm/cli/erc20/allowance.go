@@ -1,6 +1,8 @@
 package erc20
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -9,7 +11,7 @@ var allowanceCmd = &cobra.Command{
 	Use:   "allowance",
 	Short: "Get the allowance of a spender for an address",
 	Long:  "Get the allowance of a spender for an address",
-	Run:   allowance,
+	RunE:  CallAllowance,
 }
 
 func init() {
@@ -18,16 +20,22 @@ func init() {
 	allowanceCmd.Flags().String("spender", "", "address of spender")
 }
 
-func allowance(cmd *cobra.Command, args []string) {
-	erc20Address := cmd.Flag("erc20Address").Value
-	ownerAddress := cmd.Flag("owner").Value
-	spenderAddress := cmd.Flag("spender").Value
+func CallAllowance(cmd *cobra.Command, args []string) error {
+	txFabric := evmtransaction.NewTransaction
+	return allowance(cmd, args, txFabric)
+}
+
+func allowance(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+	erc20Address := cmd.Flag("erc20Address").Value.String()
+	ownerAddress := cmd.Flag("owner").Value.String()
+	spenderAddress := cmd.Flag("spender").Value.String()
 	log.Debug().Msgf(`
 Determing allowance
 ERC20 address: %s
 Owner address: %s
 Spender address: %s`,
 		erc20Address, ownerAddress, spenderAddress)
+	return nil
 }
 
 /*

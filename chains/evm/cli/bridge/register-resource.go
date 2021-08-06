@@ -2,11 +2,11 @@ package bridge
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -16,7 +16,7 @@ var registerResourceCmd = &cobra.Command{
 	Use:   "register-resource",
 	Short: "Register a resource ID",
 	Long:  "Register a resource ID with a contract address for a handler",
-	Run:   registerResource,
+	RunE:  CallRegisterResource,
 }
 
 func init() {
@@ -26,16 +26,16 @@ func init() {
 	registerResourceCmd.Flags().String("resourceId", "", "resource ID to be registered")
 }
 
-func registerResource(cmd *cobra.Command, args []string) {
-	url := cmd.Flag("url").Value.String()
+func CallRegisterResource(cmd *cobra.Command, args []string) error {
+	txFabric := evmtransaction.NewTransaction
+	return registerResource(cmd, args, txFabric)
+}
+
+func registerResource(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	handlerAddressString := cmd.Flag("handler").Value.String()
 	resourceId := cmd.Flag("resourceId").Value.String()
 	targetAddress := cmd.Flag("target").Value.String()
 	bridgeAddress := cmd.Flag("bridge").Value.String()
-	gasPrice, err := cmd.Flags().GetUint64("gasPrice")
-	if err != nil {
-		log.Fatal().Err(fmt.Errorf("gas price error: %v", err))
-	}
 	log.Debug().Msgf(`
 Registering resource
 Handler address: %s
@@ -43,40 +43,50 @@ Resource ID: %s
 Target address: %s
 Bridge address: %s
 `, handlerAddressString, resourceId, targetAddress, bridgeAddress)
+	// bridgeAddress := cmd.Flag("bridge").Value.String()
+
+	// fetch global flag values
+	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	if err != nil {
+		return fmt.Errorf("could not get global flags: %v", err)
+	}
 
 	if !common.IsHexAddress(handlerAddressString) {
-		log.Fatal().Err(fmt.Errorf("invalid handler address %s", handlerAddressString))
+		err := fmt.Errorf("invalid handler address %s", handlerAddressString)
+		log.Error().Err(err)
+		return err
 	}
-	handlerAddress := common.HexToAddress(handlerAddressString)
+	handlerAddr := common.HexToAddress(handlerAddressString)
 
 	if !common.IsHexAddress(targetAddress) {
-		log.Fatal().Err(fmt.Errorf("invalid target address %s", targetAddress))
+		err := fmt.Errorf("invalid target address %s", targetAddress)
+		log.Error().Err(err)
+		return err
 	}
-	targetContractAddress := common.HexToAddress(targetAddress)
+	targetContractAddr := common.HexToAddress(targetAddress)
 	resourceIdBytes := common.Hex2Bytes(resourceId)
 	resourceIdBytesArr := calls.SliceTo32Bytes(resourceIdBytes)
 
-	fmt.Printf("Registering contract %s with resource ID %s on handler %s", targetAddress, resourceId, handlerAddress)
+	fmt.Printf("Registering contract %s with resource ID %s on handler %s", targetAddress, resourceId, handlerAddr)
 
-	senderKeyPair, err := cliutils.DefineSender(cmd)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(),gasPrice)
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Error().Err(err)
+		return err
 	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), big.NewInt(0).SetUint64(gasPrice))
+	registerResourceInput, err := calls.PrepareAdminSetResourceInput(handlerAddr, resourceIdBytesArr, targetContractAddr)
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Error().Err(err)
+		return err
 	}
 
-	registerResourceInput, err := calls.PrepareAdminSetResourceInput(handlerAddress, resourceIdBytesArr, targetContractAddress)
+	_, err = calls.SendInput(ethClient, targetContractAddr, registerResourceInput, txFabric)
 	if err != nil {
-		log.Fatal().Err(err)
-	}
-
-	_, err = calls.SendInput(ethClient, targetContractAddress, registerResourceInput)
-	if err != nil {
-		log.Fatal().Err(err)
+		log.Error().Err(err)
+		return err
 	}
 
 	fmt.Println("Resource registered")
+	return nil
 }
