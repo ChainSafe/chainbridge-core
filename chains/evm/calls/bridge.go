@@ -1,6 +1,7 @@
 package calls
 
 import (
+	"math/big"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -31,5 +32,18 @@ func PrepareAdminSetResourceInput(handler common.Address, rId [32]byte, addr com
 	if err != nil {
 		return []byte{}, err
 	}
+	return input, nil
+}
+
+func PrepareErc20DepositInput(bridgeAddress, recipientAddress common.Address, amount *big.Int, rId [32]byte, destChainId uint8) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("deposit", bridgeAddress, recipientAddress, amount, rId, destChainId)
+	if err != nil {
+		return []byte{}, err
+	}
+	input = append(input, common.FromHex(ERC20PresetMinterPauserBin)...)
 	return input, nil
 }
