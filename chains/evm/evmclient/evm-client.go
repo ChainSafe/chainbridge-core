@@ -22,13 +22,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-
 type EVMClient struct {
 	*ethclient.Client
 	rpClient  *rpc.Client
 	nonceLock sync.Mutex
 	config    *EVMConfig
 	nonce     *big.Int
+	gasPrice *big.Int
 }
 
 type CommonTransaction interface {
@@ -39,22 +39,23 @@ type CommonTransaction interface {
 	RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
 }
 
-func NewEVMClientFromParams(url string, privatKey *ecdsa.PrivateKey) (*EVMClient, error) {
+func NewEVMClient() *EVMClient {
+	return &EVMClient{}
+}
+
+func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey, gasPrice *big.Int) (*EVMClient, error) {
 	rpcClient, err := rpc.DialContext(context.TODO(), url)
 	if err != nil {
 		return nil, err
 	}
-	kp := secp256k1.NewKeypair(*privatKey)
+	kp := secp256k1.NewKeypair(*privateKey)
 	c := &EVMClient{}
 	c.Client = ethclient.NewClient(rpcClient)
 	c.rpClient = rpcClient
 	c.config = &EVMConfig{}
 	c.config.kp = kp
+	c.gasPrice = gasPrice
 	return c, nil
-}
-
-func NewEVMClient() *EVMClient {
-	return &EVMClient{}
 }
 
 func (c *EVMClient) Configurate(path string, name string) error {
@@ -118,7 +119,6 @@ func (h *headerNumber) UnmarshalJSON(input []byte) error {
 // LatestBlock returns the latest block from the current chain
 func (c *EVMClient) LatestBlock() (*big.Int, error) {
 	var head *headerNumber
-
 	err := c.rpClient.CallContext(context.Background(), &head, "eth_getBlockByNumber", toBlockNumArg(nil), false)
 	if err == nil && head == nil {
 		err = ethereum.NotFound
@@ -130,13 +130,13 @@ func (c *EVMClient) LatestBlock() (*big.Int, error) {
 }
 
 func (c *EVMClient) WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error) {
-	retry := 10
+	retry := 50
 	for retry > 0 {
 		receipt, err := c.Client.TransactionReceipt(context.Background(), h)
 		if err != nil {
 			log.Error().Err(err).Msgf("error getting tx receipt %s", h.String())
 			retry--
-			time.Sleep(2*time.Second)
+			time.Sleep(5 * time.Second)
 			continue
 		}
 		if receipt.Status != 1 {
@@ -146,7 +146,6 @@ func (c *EVMClient) WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error
 	}
 	return nil, errors.New("tx did not appear")
 }
-
 
 const (
 	DepositSignature string = "Deposit(uint8,bytes32,uint64)"
@@ -195,7 +194,6 @@ func (c *EVMClient) CallContext(ctx context.Context, target interface{}, rpcMeth
 	}
 	return nil
 }
-
 
 func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string]interface{}) ([]byte, error) {
 	var hex hexutil.Bytes
@@ -268,6 +266,9 @@ func (c *EVMClient) UnsafeIncreaseNonce() error {
 }
 
 func (c *EVMClient) GasPrice() (*big.Int, error) {
+	if c.gasPrice != nil {
+		return c.gasPrice, nil
+	}
 	gasPrice, err := c.SafeEstimateGas(context.TODO())
 	if err != nil {
 		return nil, err
@@ -280,30 +281,25 @@ func (c *EVMClient) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Debug().Msgf("Suggested GP %s", suggestedGasPrice.String())
 	var gasPrice *big.Int
 	if c.config.SharedEVMConfig.GasMultiplier != nil {
 		gasPrice = multiplyGasPrice(suggestedGasPrice, c.config.SharedEVMConfig.GasMultiplier)
 	}
-
 	// Check we aren't exceeding our limit
-
-	if gasPrice.Cmp(c.config.SharedEVMConfig.MaxGasPrice) == 1 {
-		return c.config.SharedEVMConfig.MaxGasPrice, nil
-	} else {
-		return gasPrice, nil
+	if c.config.SharedEVMConfig.MaxGasPrice != nil {
+		if gasPrice.Cmp(c.config.SharedEVMConfig.MaxGasPrice) == 1 {
+			return c.config.SharedEVMConfig.MaxGasPrice, nil
+		}
 	}
+	return gasPrice, nil
 }
 
 func multiplyGasPrice(gasEstimate *big.Int, gasMultiplier *big.Float) *big.Int {
-
 	gasEstimateFloat := new(big.Float).SetInt(gasEstimate)
-
 	result := gasEstimateFloat.Mul(gasEstimateFloat, gasMultiplier)
-
 	gasPrice := new(big.Int)
-
 	result.Int(gasPrice)
-
 	return gasPrice
 }
 
