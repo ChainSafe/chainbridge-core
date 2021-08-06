@@ -6,6 +6,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -15,7 +16,7 @@ var approveCmd = &cobra.Command{
 	Use:   "approve",
 	Short: "Approve tokens in an ERC20 contract for transfer",
 	Long:  "Approve tokens in an ERC20 contract for transfer",
-	Run:   approve,
+	RunE:  CallApprove,
 }
 
 func init() {
@@ -26,7 +27,12 @@ func init() {
 	approveCmd.MarkFlagRequired("decimals")
 }
 
-func approve(cmd *cobra.Command, args []string) {
+func CallApprove(cmd *cobra.Command, args []string) error {
+	txFabric := evmtransaction.NewTransaction
+	return approve(cmd, args, txFabric)
+}
+
+func approve(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	erc20Address := common.HexToAddress(cmd.Flag("erc20Address").Value.String())
 	recipientAddress := common.HexToAddress(cmd.Flag("recipient").Value.String())
 	amount := cmd.Flag("amount").Value.String()
@@ -73,9 +79,10 @@ Decimals: %s`,
 	if err != nil {
 		log.Fatal().Err(err)
 	}
-	_, err = calls.SendInput(ethClient, erc20Address, i)
+	_, err = calls.SendInput(ethClient, erc20Address, i, txFabric)
 	if err != nil {
 		log.Fatal().Err(err)
 	}
 	log.Info().Msgf("%s account granted allowance on %v tokens of %s", recipientAddress.String(), amount, erc20Address.String())
+	return nil
 }

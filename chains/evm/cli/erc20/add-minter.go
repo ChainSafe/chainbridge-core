@@ -6,6 +6,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -15,7 +16,7 @@ var addMinterCmd = &cobra.Command{
 	Use:   "add-minter",
 	Short: "Add a minter to an Erc20 mintable contract",
 	Long:  "Add a minter to an Erc20 mintable contract",
-	Run:   addMinter,
+	RunE:  CallAddMinter,
 }
 
 func init() {
@@ -23,7 +24,12 @@ func init() {
 	addMinterCmd.Flags().String("minter", "", "address of minter")
 }
 
-func addMinter(cmd *cobra.Command, args []string) {
+func CallAddMinter(cmd *cobra.Command, args []string) error {
+	txFabric := evmtransaction.NewTransaction
+	return addMinter(cmd, args, txFabric)
+}
+
+func addMinter(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	erc20Address := cmd.Flag("erc20Address").Value
 	minterAddress := cmd.Flag("minter").Value
 	log.Debug().Msgf(`
@@ -58,10 +64,11 @@ ERC20 address: %s`, minterAddress, erc20Address)
 	if err != nil {
 		log.Fatal().Err(err)
 	}
-	_, err = calls.SendInput(ethClient, minterAddr, mintableInput)
+	_, err = calls.SendInput(ethClient, minterAddr, mintableInput, txFabric)
 	if err != nil {
 		log.Fatal().Err(err)
 	}
 
 	log.Info().Msgf("%s account granted minter roles", minterAddress.String())
+	return nil
 }

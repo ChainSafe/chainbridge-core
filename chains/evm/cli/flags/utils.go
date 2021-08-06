@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func Globals(cmd *cobra.Command) (string, *big.Int, *big.Int, *secp256k1.Keypair, error) {
+func GlobalFlagValues(cmd *cobra.Command) (string, *big.Int, *big.Int, *secp256k1.Keypair, error) {
 	url, err := cmd.Flags().GetString("url")
 	if err != nil {
 		log.Error().Err(fmt.Errorf("url error: %v", err))

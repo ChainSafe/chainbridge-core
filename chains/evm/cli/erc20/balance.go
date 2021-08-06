@@ -1,6 +1,14 @@
 package erc20
 
 import (
+	"errors"
+	"fmt"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -9,7 +17,7 @@ var balanceCmd = &cobra.Command{
 	Use:   "balance",
 	Short: "Query balance of an account in an ERC20 contract",
 	Long:  "Query balance of an account in an ERC20 contract",
-	Run:   balance,
+	RunE:  CallBalance,
 }
 
 func init() {
@@ -17,46 +25,53 @@ func init() {
 	balanceCmd.Flags().String("accountAddress", "", "address to receive balance of")
 }
 
-func balance(cmd *cobra.Command, args []string) {
-	erc20Address := cmd.Flag("erc20Address").Value
-	accountAddress := cmd.Flag("account").Value
-	log.Debug().Msgf(`
-Account balance of ERC20
-ERC20 address: %s
-Account address: %s
-		`, erc20Address, accountAddress)
+func CallBalance(cmd *cobra.Command, args []string) error {
+	txFabric := evmtransaction.NewTransaction
+	return balance(cmd, args, txFabric)
 }
 
-/*
-func balanceOf(cctx *cli.Context) error {
-	url := cctx.String("url")
-	gasLimit := cctx.Uint64("gasLimit")
-	gasPrice := cctx.Uint64("gasPrice")
-	sender, err := cliutils.DefineSender(cctx)
+func balance(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+	erc20Address := cmd.Flag("erc20Address").Value.String()
+	accountAddress := cmd.Flag("accountAddress").Value.String()
+
+	// fetch global flag values
+	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not get global flags: %v", err)
 	}
-	erc20 := cctx.String("erc20Address")
-	if !common.IsHexAddress(erc20) {
+
+	if !common.IsHexAddress(erc20Address) {
 		return errors.New("invalid erc20Address address")
 	}
-	erc20Address := common.HexToAddress(erc20)
+	erc20Addr := common.HexToAddress(erc20Address)
 
-	address := cctx.String("address")
-	if !common.IsHexAddress(address) {
-		return errors.New("invalid target address")
+	if !common.IsHexAddress(accountAddress) {
+		return errors.New("invalid account address")
 	}
-	targetAddress := common.HexToAddress(address)
+	accountAddr := common.HexToAddress(accountAddress)
 
-	ethClient, err := client.NewClient(url, false, sender, big.NewInt(0).SetUint64(gasLimit), big.NewInt(0).SetUint64(gasPrice), big.NewFloat(1))
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
+		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
-	balance, err := utils.ERC20BalanceOf(ethClient, erc20Address, targetAddress)
+
+	// erc20Addr, accountAddr
+	input, err := calls.PrepareERC20BalanceInput(erc20Addr, accountAddr)
 	if err != nil {
+		log.Error().Err(fmt.Errorf("prepare input error: %v", err))
 		return err
 	}
-	log.Info().Msgf("balance of %s is %s", targetAddress.String(), balance.String())
+
+	txHash, err := calls.SendInput(ethClient, erc20Addr, input, txFabric)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("send input error: %v", err))
+		return err
+	}
+	log.Debug().Msgf("tx hash: %v", txHash.Hex())
+
+	// determine balance
+
+	// log.Info().Msgf("balance of %s is %s", accountAddr.String(), balance.String())
 	return nil
 }
-*/

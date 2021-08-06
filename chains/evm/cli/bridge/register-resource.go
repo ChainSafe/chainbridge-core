@@ -6,6 +6,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -15,7 +16,7 @@ var registerResourceCmd = &cobra.Command{
 	Use:   "register-resource",
 	Short: "Register a resource ID",
 	Long:  "Register a resource ID with a contract address for a handler",
-	Run:   registerResource,
+	RunE:  CallRegisterResource,
 }
 
 func init() {
@@ -25,7 +26,12 @@ func init() {
 	registerResourceCmd.Flags().String("resourceId", "", "resource ID to be registered")
 }
 
-func registerResource(cmd *cobra.Command, args []string) {
+func CallRegisterResource(cmd *cobra.Command, args []string) error {
+	txFabric := evmtransaction.NewTransaction
+	return registerResource(cmd, args, txFabric)
+}
+
+func registerResource(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	url := cmd.Flag("url").Value.String()
 	handlerAddressString := cmd.Flag("handler").Value.String()
 	resourceId := cmd.Flag("resourceId").Value.String()
@@ -68,10 +74,11 @@ Bridge address: %s
 		log.Fatal().Err(err)
 	}
 
-	_, err = calls.SendInput(ethClient, targetContractAddress, registerResourceInput)
+	_, err = calls.SendInput(ethClient, targetContractAddress, registerResourceInput, txFabric)
 	if err != nil {
 		log.Fatal().Err(err)
 	}
 
 	fmt.Println("Resource registered")
+	return nil
 }

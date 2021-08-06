@@ -1,6 +1,15 @@
 package erc20
 
 import (
+	"fmt"
+	"math/big"
+	"strconv"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -9,7 +18,7 @@ var depositCmd = &cobra.Command{
 	Use:   "deposit",
 	Short: "Initiate a transfer of ERC20 tokens",
 	Long:  "Initiate a transfer of ERC20 tokens",
-	Run:   deposit,
+	RunE:  CallDeposit,
 }
 
 func init() {
@@ -23,78 +32,72 @@ func init() {
 	depositCmd.MarkFlagRequired("decimals")
 }
 
-func deposit(cmd *cobra.Command, args []string) {
-	recipientAddress := cmd.Flag("recipient").Value
-	bridgeAddress := cmd.Flag("bridge").Value
-	amount := cmd.Flag("amount").Value
-	value := cmd.Flag("value").Value
-	destinationId := cmd.Flag("destId").Value
-	resourceId := cmd.Flag("resourceId").Value
-	decimals := cmd.Flag("decimals").Value
-	log.Debug().Msgf(`
-Initiating deposit of ERC20
-Recipient address: %s
-Bridge address: %s
-Amount: %s
-Value: %s
-Destination chain ID: %s
-Resource ID: %s
-Decimals: %d
-		`, recipientAddress, bridgeAddress, amount, value, destinationId, resourceId, decimals)
+func CallDeposit(cmd *cobra.Command, args []string) error {
+	txFabric := evmtransaction.NewTransaction
+	return deposit(cmd, args, txFabric)
 }
 
-/*
-func deposit(cctx *cli.Context) error {
-	url := cctx.String("url")
-	gasLimit := cctx.Uint64("gasLimit")
-	gasPrice := cctx.Uint64("gasPrice")
-	decimals := big.NewInt(0).SetUint64(cctx.Uint64("decimals"))
+func deposit(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+	recipientAddress := cmd.Flag("recipient").Value.String()
+	bridgeAddress := cmd.Flag("bridge").Value.String()
+	amount := cmd.Flag("amount").Value.String()
+	destinationId := cmd.Flag("destId").Value.String()
+	resourceId := cmd.Flag("resourceId").Value.String()
 
-	sender, err := cliutils.DefineSender(cctx)
+	// fetch global flag values
+	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
-		return err
-	}
-	bridgeAddress, err := cliutils.DefineBridgeAddress(cctx)
-	if err != nil {
-		return err
+		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	recipient := cctx.String("recipient")
-	if !common.IsHexAddress(recipient) {
-		return fmt.Errorf("invalid recipient address %s", recipient)
-	}
-	recipientAddress := common.HexToAddress(recipient)
+	// ignore success bool
+	decimals, _ := big.NewInt(0).SetString(cmd.Flag("decimals").Value.String(), 10)
 
-	amount := cctx.String("amount")
-
-	realAmount, err := utils.UserAmountToWei(amount, decimals)
-	if err != nil {
-		return err
+	if !common.IsHexAddress(bridgeAddress) {
+		return fmt.Errorf("invalid bridge address %s", bridgeAddress)
 	}
 
-	value := cctx.String("value")
+	bridgeAddr := common.HexToAddress(bridgeAddress)
 
-	realValue, err := utils.UserAmountToWei(value, big.NewInt(18))
-	if err != nil {
-		return err
+	if !common.IsHexAddress(recipientAddress) {
+		return fmt.Errorf("invalid recipient address %s", recipientAddress)
 	}
-	dest := cctx.Uint64("dest")
+	recipientAddr := common.HexToAddress(recipientAddress)
 
-	resourceId := cctx.String("resourceId")
-	resourceIDBytes := utils.SliceTo32Bytes(common.Hex2Bytes(resourceId))
-
-	ethClient, err := client.NewClient(url, false, sender, big.NewInt(0).SetUint64(gasLimit), big.NewInt(0).SetUint64(gasPrice), big.NewFloat(1))
+	realAmount, err := calls.UserAmountToWei(amount, decimals)
 	if err != nil {
 		return err
 	}
 
-	ethClient.ClientWithArgs(client.ClientWithValue(realValue))
+	resourceIDBytes := calls.SliceTo32Bytes(common.Hex2Bytes(resourceId))
 
-	err = utils.MakeAndSendERC20Deposit(ethClient, bridgeAddress, recipientAddress, realAmount, resourceIDBytes, uint8(dest))
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
+		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
-	log.Info().Msgf("%s tokens were transferred to %s from %s", amount, recipientAddress.String(), sender.CommonAddress().String())
+
+	destinationIdInt, err := strconv.Atoi(destinationId)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("destination ID conversion error: %v", err))
+		return err
+	}
+
+	// TODO: confirm correct arguments
+	input, err := calls.PrepareErc20DepositInput(bridgeAddr, recipientAddr, realAmount, resourceIDBytes, uint8(destinationIdInt))
+	if err != nil {
+		log.Error().Err(fmt.Errorf("erc20 deposit input error: %v", err))
+		return err
+	}
+	// destinationId
+	txHash, err := calls.SendInput(ethClient, recipientAddr, input, txFabric)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("erc20 deposit error: %v", err))
+		return err
+	}
+
+	log.Debug().Msgf("erc20 deposit hash: %s", txHash.Hex())
+
+	log.Info().Msgf("%s tokens were transferred to %s from %s", amount, recipientAddr.Hex(), senderKeyPair.CommonAddress().String())
 	return nil
 }
-*/
