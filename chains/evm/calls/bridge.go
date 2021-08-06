@@ -10,7 +10,7 @@ import (
 // @dev
 // inputs here and in erc20.go could get consolidated into something similar to txFabric in deploy.go
 
-func PrepareSetBurnableInput(client ChainClient, bridge, handler, tokenAddress common.Address) ([]byte, error) {
+func PrepareSetBurnableInput(client ChainClient, handler, tokenAddress common.Address) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(BridgeABI))
 	if err != nil {
 		return []byte{}, err

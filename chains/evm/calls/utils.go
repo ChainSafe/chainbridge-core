@@ -11,7 +11,6 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
@@ -66,28 +65,6 @@ func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
 	return arg
 }
 
-func mintRole(chainClient ChainClient, erc20Contract common.Address) ([32]byte, error) {
-	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
-	if err != nil {
-		return [32]byte{}, err
-	}
-	input, err := a.Pack("MINTER_ROLE")
-	if err != nil {
-		return [32]byte{}, err
-	}
-	msg := ethereum.CallMsg{From: common.Address{}, To: &erc20Contract, Data: input}
-	out, err := chainClient.CallContract(context.TODO(), toCallArg(msg), nil)
-	if err != nil {
-		return [32]byte{}, err
-	}
-	res, err := a.Unpack("MINTER_ROLE", out)
-	if err != nil {
-		return [32]byte{}, err
-	}
-	out0 := *abi.ConvertType(res[0], new([32]byte)).(*[32]byte)
-	return out0, nil
-}
-
 // UserAmountToWei converts decimal user friendly representation of token amount to 'Wei' representation with provided amount of decimal places
 // eg UserAmountToWei(1, 5) => 100000
 func UserAmountToWei(amount string, decimal *big.Int) (*big.Int, error) {
@@ -105,7 +82,6 @@ func UserAmountToWei(amount string, decimal *big.Int) (*big.Int, error) {
 
 	return i, nil
 }
-
 
 func Transact(client ChainClient, txFabric TxFabric, to *common.Address, data []byte, gasLimit uint64) (common.Hash, error) {
 	gp, err := client.GasPrice()

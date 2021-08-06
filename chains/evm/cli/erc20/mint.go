@@ -23,9 +23,10 @@ var mintCmd = &cobra.Command{
 }
 
 func init() {
-	mintCmd.Flags().String("amount", "", "amount to mint fee (in wei)")
+	mintCmd.Flags().String("amount", "", "amount to mint fee (in ETH)")
 	mintCmd.Flags().String("erc20Address", "", "ERC20 contract address")
 	mintCmd.Flags().Uint64("decimal", 18, "ERC20 token decimals")
+	mintCmd.Flags().String("dstAddress", "", "Where tokens should be minted. Defaults to TX sender")
 }
 
 func CallMint(cmd *cobra.Command, args []string) error {
@@ -36,7 +37,8 @@ func CallMint(cmd *cobra.Command, args []string) error {
 func mint(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	amount := cmd.Flag("amount").Value.String()
 	erc20Address := cmd.Flag("erc20Address").Value.String()
-
+	dstAddressStr := cmd.Flag("dstAddress").Value.String()
+	var dstAddress common.Address
 
 	decimals, err := cmd.Flags().GetUint64("decimal")
 	if err != nil {
@@ -52,6 +54,9 @@ func mint(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	if !common.IsHexAddress(erc20Address) {
 		log.Error().Err(errors.New("invalid erc20Address address"))
 	}
+	if !common.IsHexAddress(dstAddressStr) {
+		dstAddress = senderKeyPair.CommonAddress()
+	}
 
 	erc20Addr := common.HexToAddress(erc20Address)
 
@@ -66,7 +71,7 @@ func mint(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 		return err
 	}
 
-	mintTokensInput, err := calls.PrepareMintTokensInput(erc20Addr, realAmount)
+	mintTokensInput, err := calls.PrepareMintTokensInput(dstAddress, realAmount)
 	if err != nil {
 		log.Error().Err(err)
 		return err

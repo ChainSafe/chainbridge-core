@@ -61,7 +61,7 @@ func addMinter(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 		log.Error().Err(err)
 		return err
 	}
-	_, err = calls.Transact(ethClient, txFabric, &minterAddr, mintableInput, gasLimit)
+	_, err = calls.Transact(ethClient, txFabric, &erc20Addr, mintableInput, gasLimit)
 	if err != nil {
 		log.Error().Err(err)
 		return err

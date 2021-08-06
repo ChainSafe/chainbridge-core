@@ -64,13 +64,13 @@ func setBurn(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	}
 
 	log.Info().Msgf("Setting contract %s as burnable on handler %s", tokenContractAddr.String(), handlerAddr.String())
-	setBurnableInput, err := calls.PrepareSetBurnableInput(ethClient, bridgeAddr, handlerAddr, tokenContractAddr)
+	setBurnableInput, err := calls.PrepareSetBurnableInput(ethClient, handlerAddr, tokenContractAddr)
 	if err != nil {
 		log.Error().Err(err)
 		return err
 	}
 
-	_, err = calls.Transact(ethClient, txFabric, &handlerAddr, setBurnableInput, gasLimit)
+	_, err = calls.Transact(ethClient, txFabric, &bridgeAddr, setBurnableInput, gasLimit)
 	if err != nil {
 		log.Info().Msg("Burnable set")
 		return err

@@ -44,6 +44,7 @@ func DeployBridge(c *evmclient.EVMClient, txFabric TxFabric, chainID uint8, rela
 }
 
 func DeployErc20Handler(c *evmclient.EVMClient, txFabric TxFabric, bridgeAddress common.Address) (common.Address, error) {
+	log.Debug().Msgf("Deployng ERC20 Handler with params: %s", bridgeAddress.String())
 	parsed, err := abi.JSON(strings.NewReader(ERC20HandlerABI))
 	if err != nil {
 		return common.Address{}, err

@@ -63,10 +63,10 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 		relayerAddresses = append(relayerAddresses, common.HexToAddress(addr))
 	}
 
-	var bridgeAddress common.Address
+	var bridgeAddr common.Address
 	bridgeAddressString := cmd.Flag("bridgeAddress").Value.String()
 	if common.IsHexAddress(bridgeAddressString) {
-		bridgeAddress = common.HexToAddress(bridgeAddressString)
+		bridgeAddr = common.HexToAddress(bridgeAddressString)
 	}
 
 	deployments := make([]string, 0)
@@ -123,7 +123,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 				log.Error().Err(fmt.Errorf("chain ID flag error: %v", err))
 				return err
 			}
-			bridgeAddr, err := calls.DeployBridge(ethClient, txFabric, uint8(chainIdInt), relayerAddresses, big.NewInt(0).SetUint64(relayerThreshold))
+			bridgeAddr, err = calls.DeployBridge(ethClient, txFabric, uint8(chainIdInt), relayerAddresses, big.NewInt(0).SetUint64(relayerThreshold))
 			if err != nil {
 				log.Error().Err(fmt.Errorf("bridge deploy failed: %w", err))
 				return err
@@ -133,11 +133,13 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 			log.Debug().Msgf("bridge address; %v", bridgeAddr.String())
 		case "erc20Handler":
 			log.Debug().Msgf("deploying ERC20 handler..")
-			if bridgeAddress.String() == "" {
+			emptyAddr := common.Address{}
+			if bridgeAddr == emptyAddr {
 				log.Error().Err(errors.New("bridge flag or bridgeAddress param should be set for contracts deployments"))
 				return err
 			}
-			erc20HandlerAddr, err := calls.DeployErc20Handler(ethClient, txFabric, bridgeAddress)
+
+			erc20HandlerAddr, err := calls.DeployErc20Handler(ethClient, txFabric, bridgeAddr)
 			if err != nil {
 				log.Error().Err(fmt.Errorf("ERC20 handler deploy failed: %w", err))
 				return err
