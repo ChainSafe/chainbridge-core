@@ -35,14 +35,7 @@ func registerResource(cmd *cobra.Command, args []string, txFabric calls.TxFabric
 	handlerAddressString := cmd.Flag("handler").Value.String()
 	resourceId := cmd.Flag("resourceId").Value.String()
 	targetAddress := cmd.Flag("target").Value.String()
-	bridgeAddress := cmd.Flag("bridge").Value.String()
-	log.Debug().Msgf(`
-Registering resource
-Handler address: %s
-Resource ID: %s
-Target address: %s
-Bridge address: %s
-`, handlerAddressString, resourceId, targetAddress, bridgeAddress)
+	// bridgeAddress := cmd.Flag("bridge").Value.String()
 
 	// fetch global flag values
 	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
