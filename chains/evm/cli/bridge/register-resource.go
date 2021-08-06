@@ -2,6 +2,7 @@ package bridge
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
@@ -31,6 +32,10 @@ func registerResource(cmd *cobra.Command, args []string) {
 	resourceId := cmd.Flag("resourceId").Value.String()
 	targetAddress := cmd.Flag("target").Value.String()
 	bridgeAddress := cmd.Flag("bridge").Value.String()
+	gasPrice, err := cmd.Flags().GetUint64("gasPrice")
+	if err != nil {
+		log.Fatal().Err(fmt.Errorf("gas price error: %v", err))
+	}
 	log.Debug().Msgf(`
 Registering resource
 Handler address: %s
@@ -58,7 +63,7 @@ Bridge address: %s
 		log.Fatal().Err(err)
 	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), big.NewInt(0).SetUint64(gasPrice))
 	if err != nil {
 		log.Fatal().Err(err)
 	}

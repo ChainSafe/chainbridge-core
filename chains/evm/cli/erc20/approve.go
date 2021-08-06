@@ -1,6 +1,7 @@
 package erc20
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
@@ -38,7 +39,10 @@ Recipient address: %s
 Amount: %s
 Decimals: %s`,
 		erc20Address, recipientAddress, amount, decimals)
-
+	gasPrice, err := cmd.Flags().GetUint64("gasPrice")
+	if err != nil {
+		log.Fatal().Err(fmt.Errorf("gas price error: %v", err))
+	}
 	url := cmd.Flag("url").Value.String()
 	decimalsBigInt, _ := big.NewInt(0).SetString(decimals, 10)
 
@@ -64,7 +68,7 @@ Decimals: %s`,
 		log.Fatal().Err(err)
 	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), big.NewInt(0).SetUint64(gasPrice))
 	if err != nil {
 		log.Fatal().Err(err)
 	}

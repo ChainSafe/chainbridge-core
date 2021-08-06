@@ -29,6 +29,7 @@ type EVMClient struct {
 	nonceLock sync.Mutex
 	config    *EVMConfig
 	nonce     *big.Int
+	gasPrice *big.Int
 }
 
 type CommonTransaction interface {
@@ -43,7 +44,7 @@ func NewEVMClient() *EVMClient {
 	return &EVMClient{}
 }
 
-func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey) (*EVMClient, error) {
+func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey, gasPrice *big.Int) (*EVMClient, error) {
 	rpcClient, err := rpc.DialContext(context.TODO(), url)
 	if err != nil {
 		return nil, err
@@ -57,6 +58,7 @@ func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey) (*EVMClien
 	c.rpClient = rpcClient
 	c.config = &EVMConfig{}
 	c.config.kp = kp
+	c.gasPrice = gasPrice
 	return c, nil
 }
 
@@ -268,6 +270,9 @@ func (c *EVMClient) UnsafeIncreaseNonce() error {
 }
 
 func (c *EVMClient) GasPrice() (*big.Int, error) {
+	if c.gasPrice != nil {
+		return c.gasPrice, nil
+	}
 	gasPrice, err := c.SafeEstimateGas(context.TODO())
 	if err != nil {
 		return nil, err
@@ -280,28 +285,25 @@ func (c *EVMClient) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Debug().Msgf("Suggested GP %s", suggestedGasPrice.String())
 	var gasPrice *big.Int
 	if c.config.SharedEVMConfig.GasMultiplier != nil {
 		gasPrice = multiplyGasPrice(suggestedGasPrice, c.config.SharedEVMConfig.GasMultiplier)
 	}
 	// Check we aren't exceeding our limit
-	if gasPrice.Cmp(c.config.SharedEVMConfig.MaxGasPrice) == 1 {
-		return c.config.SharedEVMConfig.MaxGasPrice, nil
-	} else {
-		return gasPrice, nil
+	if c.config.SharedEVMConfig.MaxGasPrice != nil {
+		if gasPrice.Cmp(c.config.SharedEVMConfig.MaxGasPrice) == 1 {
+			return c.config.SharedEVMConfig.MaxGasPrice, nil
+		}
 	}
+	return gasPrice, nil
 }
 
 func multiplyGasPrice(gasEstimate *big.Int, gasMultiplier *big.Float) *big.Int {
-
 	gasEstimateFloat := new(big.Float).SetInt(gasEstimate)
-
 	result := gasEstimateFloat.Mul(gasEstimateFloat, gasMultiplier)
-
 	gasPrice := new(big.Int)
-
 	result.Int(gasPrice)
-
 	return gasPrice
 }
 

@@ -2,6 +2,8 @@ package erc20
 
 import (
 	"errors"
+	"fmt"
+	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
@@ -31,6 +33,10 @@ Adding minter
 Minter address: %s 
 ERC20 address: %s`, minterAddress, erc20Address)
 
+	gasPrice, err := cmd.Flags().GetUint64("gasPrice")
+	if err != nil {
+		log.Fatal().Err(fmt.Errorf("gas price error: %v", err))
+	}
 	url := cmd.Flag("url").Value.String()
 
 	erc20 := cmd.Flag("erc20Address").Value.String()
@@ -50,7 +56,7 @@ ERC20 address: %s`, minterAddress, erc20Address)
 		log.Fatal().Err(err)
 	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), big.NewInt(0).SetUint64(gasPrice))
 	if err != nil {
 		log.Fatal().Err(err)
 	}

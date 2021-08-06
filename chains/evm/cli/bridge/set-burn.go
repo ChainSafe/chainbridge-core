@@ -2,6 +2,8 @@ package bridge
 
 import (
 	"errors"
+	"fmt"
+	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
@@ -28,6 +30,10 @@ func setBurn(cmd *cobra.Command, args []string) {
 	handlerAddress := cmd.Flag("handler").Value
 	bridgeAddress := cmd.Flag("bridge").Value
 	tokenAddress := cmd.Flag("tokenContract").Value
+	gasPrice, err := cmd.Flags().GetUint64("gasPrice")
+	if err != nil {
+		log.Fatal().Err(fmt.Errorf("gas price error: %v", err))
+	}
 	log.Debug().Msgf(`
 Setting contract as mintable/burnable
 Handler address: %s
@@ -52,7 +58,7 @@ Token contract address: %s`, handlerAddress, bridgeAddress, tokenAddress)
 		log.Fatal().Err(err)
 	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), big.NewInt(0).SetUint64(gasPrice))
 	if err != nil {
 		log.Fatal().Err(err)
 	}

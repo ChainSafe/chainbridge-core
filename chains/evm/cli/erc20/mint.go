@@ -2,6 +2,7 @@ package erc20
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
@@ -35,7 +36,10 @@ ERC20 address: %s`, amount, erc20Address)
 	url := cmd.Flag("url").Value.String()
 	decimals := "2"
 	decimalsBigInt, _ := big.NewInt(0).SetString(decimals, 10)
-
+	gasPrice, err := cmd.Flags().GetUint64("gasPrice")
+	if err != nil {
+		log.Fatal().Err(fmt.Errorf("gas price error: %v", err))
+	}
 	if !common.IsHexAddress(erc20Address) {
 		log.Fatal().Err(errors.New("invalid erc20Address address"))
 	}
@@ -52,7 +56,7 @@ ERC20 address: %s`, amount, erc20Address)
 		log.Fatal().Err(err)
 	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), big.NewInt(0).SetUint64(gasPrice))
 	if err != nil {
 		log.Fatal().Err(err)
 	}
