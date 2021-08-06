@@ -45,7 +45,7 @@ func deposit(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	resourceId := cmd.Flag("resourceId").Value.String()
 
 	// fetch global flag values
-	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
@@ -71,7 +71,7 @@ func deposit(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 
 	resourceIDBytes := calls.SliceTo32Bytes(common.Hex2Bytes(resourceId))
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
