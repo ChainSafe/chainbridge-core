@@ -2,9 +2,12 @@ package calls
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum/core/types"
+	"errors"
+	gomath "math"
 	"math/big"
 	"strings"
+
+	"github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ethereum/go-ethereum"
@@ -83,4 +86,22 @@ func mintRole(chainClient ChainClient, erc20Contract common.Address) ([32]byte, 
 	}
 	out0 := *abi.ConvertType(res[0], new([32]byte)).(*[32]byte)
 	return out0, nil
+}
+
+// UserAmountToWei converts decimal user friendly representation of token amount to 'Wei' representation with provided amount of decimal places
+// eg UserAmountToWei(1, 5) => 100000
+func UserAmountToWei(amount string, decimal *big.Int) (*big.Int, error) {
+	amountFloat, ok := big.NewFloat(0).SetString(amount)
+	if !ok {
+		return nil, errors.New("wrong amount format")
+	}
+	ethValueFloat := new(big.Float).Mul(amountFloat, big.NewFloat(gomath.Pow10(int(decimal.Int64()))))
+	ethValueFloatString := strings.Split(ethValueFloat.Text('f', int(decimal.Int64())), ".")
+
+	i, ok := big.NewInt(0).SetString(ethValueFloatString[0], 10)
+	if !ok {
+		return nil, errors.New(ethValueFloat.Text('f', int(decimal.Int64())))
+	}
+
+	return i, nil
 }
