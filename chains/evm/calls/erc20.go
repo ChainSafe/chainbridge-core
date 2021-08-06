@@ -55,18 +55,6 @@ func PrepareErc20AddMinterInput(client ChainClient, erc20Contract, handler commo
 	return input, nil
 }
 
-func PrepareErc20DepositInput(bridgeAddress, recipientAddress common.Address, amount *big.Int, rId [32]byte, destChainId uint8) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
-	if err != nil {
-		return []byte{}, err
-	}
-	input, err := a.Pack("deposit", bridgeAddress, recipientAddress, amount, rId, destChainId)
-	if err != nil {
-		return []byte{}, err
-	}
-	return input, nil
-}
-
 func PrepareRegisterGenericResourceInput(handler common.Address, rId [32]byte, addr common.Address, depositSig, executeSig [4]byte) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
 	if err != nil {
