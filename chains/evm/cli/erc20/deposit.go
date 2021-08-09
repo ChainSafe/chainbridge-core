@@ -2,6 +2,7 @@ package erc20
 
 import (
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
 	"math/big"
 	"strconv"
 
@@ -18,32 +19,36 @@ var depositCmd = &cobra.Command{
 	Use:   "deposit",
 	Short: "Initiate a transfer of ERC20 tokens",
 	Long:  "Initiate a transfer of ERC20 tokens",
-	RunE:  CallDeposit,
+	RunE:  func(cmd *cobra.Command, args []string) error {
+		txFabric := evmtransaction.NewTransaction
+		return DepositCMD(cmd, args, txFabric)
+	},
+}
+
+func BindDepositCMDFlags(cli *cobra.Command) {
+	cli.Flags().String("recipient", "", "address of recipient")
+	cli.Flags().String("bridge", "", "address of bridge contract")
+	cli.Flags().String("amount", "", "amount to deposit")
+	cli.Flags().String("destId", "", "destination chain ID")
+	cli.Flags().String("resourceId", "", "resource ID for transfer")
+	cli.Flags().Uint64("decimals", 0, "ERC20 token decimals")
+	cli.MarkFlagRequired("decimals")
 }
 
 func init() {
-	depositCmd.Flags().String("recipient", "", "address of recipient")
-	depositCmd.Flags().String("bridge", "", "address of bridge contract")
-	depositCmd.Flags().String("amount", "", "amount to deposit")
-	depositCmd.Flags().String("value", "0", "value of ETH that should be sent along with deposit to cover possible fees. In ETH (decimals are allowed)")
-	depositCmd.Flags().String("destId", "", "destination chain ID")
-	depositCmd.Flags().String("resourceId", "", "resource ID for transfer")
-	depositCmd.Flags().Uint64("decimals", 0, "ERC20 token decimals")
-	depositCmd.MarkFlagRequired("decimals")
+	BindDepositCMDFlags(depositCmd)
 }
 
-func CallDeposit(cmd *cobra.Command, args []string) error {
-	txFabric := evmtransaction.NewTransaction
-	return deposit(cmd, args, txFabric)
-}
-
-func deposit(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	recipientAddress := cmd.Flag("recipient").Value.String()
+func DepositCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+	recipient := cmd.Flag("recipient").Value.String()
 	bridgeAddress := cmd.Flag("bridge").Value.String()
 	amount := cmd.Flag("amount").Value.String()
 	destinationId := cmd.Flag("destId").Value.String()
 	resourceId := cmd.Flag("resourceId").Value.String()
-
+	if !common.IsHexAddress(recipient) {
+		return fmt.Errorf("invalid recipient address %s", recipient)
+	}
+	recipientAddress := common.HexToAddress(recipient)
 	// fetch global flag values
 	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
@@ -59,10 +64,9 @@ func deposit(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 
 	bridgeAddr := common.HexToAddress(bridgeAddress)
 
-	if !common.IsHexAddress(recipientAddress) {
+	if !common.IsHexAddress(recipient) {
 		return fmt.Errorf("invalid recipient address %s", recipientAddress)
 	}
-	recipientAddr := common.HexToAddress(recipientAddress)
 
 	realAmount, err := calls.UserAmountToWei(amount, decimals)
 	if err != nil {
@@ -82,15 +86,15 @@ func deposit(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 		log.Error().Err(fmt.Errorf("destination ID conversion error: %v", err))
 		return err
 	}
-
+	data := cliutils.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
 	// TODO: confirm correct arguments
-	input, err := calls.PrepareErc20DepositInput(bridgeAddr, recipientAddr, realAmount, resourceIDBytes, uint8(destinationIdInt))
+	input, err := calls.PrepareErc20DepositInput(uint8(destinationIdInt), resourceIDBytes, data)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit input error: %v", err))
 		return err
 	}
 	// destinationId
-	txHash, err := calls.Transact(ethClient, txFabric, &recipientAddr, input, gasLimit)
+	txHash, err := calls.Transact(ethClient, txFabric, &bridgeAddr, input, gasLimit)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit error: %v", err))
 		return err
@@ -98,6 +102,6 @@ func deposit(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 
 	log.Debug().Msgf("erc20 deposit hash: %s", txHash.Hex())
 
-	log.Info().Msgf("%s tokens were transferred to %s from %s", amount, recipientAddr.Hex(), senderKeyPair.CommonAddress().String())
+	log.Info().Msgf("%s tokens were transferred to %s from %s", amount, recipientAddress.Hex(), senderKeyPair.CommonAddress().String())
 	return nil
 }

@@ -27,7 +27,7 @@ func GlobalFlagValues(cmd *cobra.Command) (string, uint64, *big.Int, *secp256k1.
 	gasPriceInt, err := cmd.Flags().GetUint64("gasPrice")
 	if err != nil {
 		log.Error().Err(fmt.Errorf("gas price error: %v", err))
-		return "", evmclient.DefaultGasLimit, nil, nil, err
+		return "", evmclient.DefaultGasPrice, nil, nil, err
 	}
 
 	gasPrice := big.NewInt(0).SetUint64(gasPriceInt)
