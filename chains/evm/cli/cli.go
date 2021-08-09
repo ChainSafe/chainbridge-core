@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/account"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/admin"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/deploy"
@@ -70,6 +71,8 @@ func init() {
 
 	// erc721
 	EvmRootCLI.AddCommand(erc721.ERC721Cmd)
+
+	EvmRootCLI.AddCommand(account.AccountRootCMD)
 }
 
 /*
