@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 	"sync"
@@ -21,7 +20,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 )
 
@@ -92,14 +90,6 @@ import (
 // 	Timestamp   uint64      `json:"timestamp"`
 // }
 
-// // SyncStatus represents the state of the remote server. The SyncService
-// // does not want to begin syncing until the remote server has fully synced.
-// type SyncStatus struct {
-// 	Syncing                      bool   `json:"syncing"`
-// 	HighestKnownTransactionIndex uint64 `json:"highestKnownTransactionIndex"`
-// 	CurrentTransactionIndex      uint64 `json:"currentTransactionIndex"`
-// }
-
 // TODO: deduplicate this
 type EthContext struct {
 	BlockNumber uint64 `json:"blockNumber"`
@@ -125,11 +115,11 @@ type rollupInfo struct {
 
 type OptimismClient struct {
 	*ethclient.Client
-	rpClient     *rpc.Client
-	nonceLock    sync.Mutex
-	config       *OptimismConfig
-	nonce        *big.Int
-	rollupClient *resty.Client
+	rpClient          *rpc.Client
+	nonceLock         sync.Mutex
+	config            *OptimismConfig
+	nonce             *big.Int
+	sequencerRpClient *rpc.Client
 }
 
 func NewEVMClient() *OptimismClient {
@@ -164,10 +154,17 @@ func (c *OptimismClient) Configurate(path string, name string) error {
 	c.Client = ethclient.NewClient(rpcClient)
 	c.rpClient = rpcClient
 
-	//log.Info().Str("url", c.config.RollupEndpoint).Msg("Connecting to optimism data transport layer...")
-	//c.rollupClient = c.NewRollupClient(c.config.RollupEndpoint)
-	//status := c.syncRollup()
-	//log.Error().Msgf("status: %v", status)
+	// TODO: currently declaring an l2geth sequencer rpc client for all sending of transactions
+	// Thhe generalConfig.Endpoint that is currently used is purely for the verifier replica and is read-only.
+	// Thus, an actual transaction send requires a sequencer endpoint for writing to the node, and will only be called within `SendRawTransaction`
+	// We can consider switching this so that the generalConfig.Endpoint remains the sequencer node and
+	// this second rpc client is the verifier which is called only within `RollupInfo`
+	sequencerRpcClient, err := rpc.DialContext(context.TODO(), c.config.SequencerEndpoint)
+	if err != nil {
+		log.Debug().Msgf("dial context err: %v", err)
+		return err
+	}
+	c.sequencerRpClient = sequencerRpcClient
 
 	if generalConfig.LatestBlock {
 		curr, err := c.LatestBlock()
@@ -180,64 +177,6 @@ func (c *OptimismClient) Configurate(path string, name string) error {
 	return nil
 
 }
-
-func (c *OptimismClient) NewRollupClient(endpoint string) *resty.Client {
-	client := resty.New()
-	client.SetHostURL(endpoint)
-	client.SetHeader("User-Agent", "verifier")
-	client.OnAfterResponse(func(c *resty.Client, r *resty.Response) error {
-		statusCode := r.StatusCode()
-		if statusCode >= 400 {
-			method := r.Request.Method
-			url := r.Request.URL
-			return fmt.Errorf("%d cannot %s %s: %v", statusCode, method, url, "http error")
-		}
-		return nil
-	})
-	return client
-}
-
-// func (c *OptimismClient) syncRollup() *SyncStatus {
-// 	// Wait until the remote service is done syncing
-// 	tStatus := time.NewTicker(10 * time.Second)
-// 	var status *SyncStatus
-// 	for ; true; <-tStatus.C {
-// 		queriedStatus, err := c.SyncStatus()
-// 		if err != nil {
-// 			log.Error().Msg("Cannot get sync status")
-// 			continue
-// 		}
-// 		if !queriedStatus.Syncing {
-// 			tStatus.Stop()
-// 			status = queriedStatus
-// 			break
-// 		}
-// 		log.Info().Msgf("Still syncing", "index", queriedStatus.CurrentTransactionIndex, "tip", queriedStatus.HighestKnownTransactionIndex)
-// 	}
-// 	return status
-// }
-
-// // SyncStatus will query the remote server to determine if it is still syncing
-// func (c *OptimismClient) SyncStatus() (*SyncStatus, error) {
-// 	response, err := c.rollupClient.R().
-// 		SetResult(&SyncStatus{}).
-// 		SetQueryParams(map[string]string{
-// 			"backend": "l1", // We are only concerned with transactions that have been batched to Layer One
-// 		}).
-// 		Get("/eth/syncing")
-
-// 	log.Info().Msgf("response sync status: %v", response)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("Cannot fetch sync status: %w", err)
-// 	}
-
-// 	status, ok := response.Result().(*SyncStatus)
-// 	if !ok {
-// 		return nil, fmt.Errorf("Cannot parse sync status")
-// 	}
-
-// 	return status, nil
-// }
 
 func (c *OptimismClient) RollupInfo() (*rollupInfo, error) {
 	var info *rollupInfo

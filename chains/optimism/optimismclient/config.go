@@ -16,14 +16,14 @@ const DefaultGasMultiplier = 1
 const DefaultBlockConfirmations = 10
 
 type OptimismConfig struct {
-	SharedEVMConfig config.SharedEVMConfig
-	kp              *secp256k1.Keypair
-	RollupEndpoint  string // This is the endpoint for an Optimism data-transport layer. l2geth must use this to have access to L1 data from the L2 client
+	SharedEVMConfig   config.SharedEVMConfig // Pass an Optimism verifier replica for the endpoint to handle all chain listening and reads
+	kp                *secp256k1.Keypair
+	SequencerEndpoint string // This is the endpoint for the Optimism sequencer and is purely used for the actual sending of transactions
 }
 
 type RawOptimismConfig struct {
 	config.RawSharedEVMConfig `mapstructure:",squash"`
-	RollupEndpoint            string `mapstructure:"rollupEndpoint"`
+	SequencerEndpoint         string `mapstructure:"sequencerEndpoint"`
 }
 
 func NewConfig() *OptimismConfig {
@@ -60,8 +60,8 @@ func ParseConfig(rawConfig *RawOptimismConfig) (*OptimismConfig, error) {
 	}
 
 	config := &OptimismConfig{
-		SharedEVMConfig: *cfg,
-		RollupEndpoint:  rawConfig.RollupEndpoint,
+		SharedEVMConfig:   *cfg,
+		SequencerEndpoint: rawConfig.SequencerEndpoint,
 	}
 
 	return config, nil
