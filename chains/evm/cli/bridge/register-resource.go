@@ -18,11 +18,11 @@ var registerResourceCmd = &cobra.Command{
 	Long:  "Register a resource ID with a contract address for a handler",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return RegisterResourceEVMCMD(cmd, args, txFabric)
+		return RegisterResourceCmd(cmd, args, txFabric)
 	},
 }
 
-func BindBridgeRegisterResourceCLIFlags(cli *cobra.Command) {
+func BindBridgeRegisterResourceCmdFlags(cli *cobra.Command) {
 	cli.Flags().String("handler", "", "handler contract address")
 	cli.Flags().String("bridge", "", "bridge contract address")
 	cli.Flags().String("target", "", "contract address to be registered")
@@ -30,10 +30,10 @@ func BindBridgeRegisterResourceCLIFlags(cli *cobra.Command) {
 }
 
 func init() {
-	BindBridgeRegisterResourceCLIFlags(registerResourceCmd)
+	BindBridgeRegisterResourceCmdFlags(registerResourceCmd)
 }
 
-func RegisterResourceEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func RegisterResourceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	handlerAddressString := cmd.Flag("handler").Value.String()
 	resourceId := cmd.Flag("resourceId").Value.String()
 	targetAddress := cmd.Flag("target").Value.String()
