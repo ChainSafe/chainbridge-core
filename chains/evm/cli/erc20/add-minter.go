@@ -19,20 +19,20 @@ var addMinterCmd = &cobra.Command{
 	Long:  "Add a minter to an Erc20 mintable contract",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return AddMinterEVMCMD(cmd, args, txFabric)
+		return AddMinterCmd(cmd, args, txFabric)
 	},
 }
 
-func BindERC20AddMinterCLIFlags(cli *cobra.Command) {
+func BindAddMinterCmdFlags(cli *cobra.Command) {
 	cli.Flags().String("erc20Address", "", "ERC20 contract address")
 	cli.Flags().String("minter", "", "address of minter")
 }
 
 func init() {
-	BindERC20AddMinterCLIFlags(addMinterCmd)
+	BindAddMinterCmdFlags(addMinterCmd)
 }
 
-func AddMinterEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func AddMinterCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	erc20Address := cmd.Flag("erc20Address").Value.String()
 	minterAddress := cmd.Flag("minter").Value.String()
 
@@ -58,7 +58,7 @@ func AddMinterEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric)
 
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
-		log.Error().Err(err)
+		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
 	mintableInput, err := calls.PrepareErc20AddMinterInput(ethClient, erc20Addr, minterAddr)

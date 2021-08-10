@@ -19,13 +19,13 @@ var approveCmd = &cobra.Command{
 	Use:   "approve",
 	Short: "Approve tokens in an ERC20 contract for transfer",
 	Long:  "Approve tokens in an ERC20 contract for transfer",
-	RunE:  func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return Approve(cmd, args, txFabric)
+		return ApproveCmd(cmd, args, txFabric)
 	},
 }
 
-func BindApproveCLIFlags(cli *cobra.Command) {
+func BindApproveCmdFlags(cli *cobra.Command) {
 	cli.Flags().String("erc20address", "", "ERC20 contract address")
 	cli.Flags().String("amount", "", "amount to grant allowance")
 	cli.Flags().String("recipient", "", "address of recipient")
@@ -37,10 +37,10 @@ func BindApproveCLIFlags(cli *cobra.Command) {
 
 }
 func init() {
-	BindApproveCLIFlags(approveCmd)
+	BindApproveCmdFlags(approveCmd)
 }
 
-func Approve(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func ApproveCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	erc20Address := cmd.Flag("erc20address").Value.String()
 	recipientAddress := cmd.Flag("recipient").Value.String()
 	amount := cmd.Flag("amount").Value.String()
@@ -82,7 +82,7 @@ Decimals: %v`,
 
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
 	i, err := calls.PrepareErc20ApproveInput(recipientAddr, realAmount)

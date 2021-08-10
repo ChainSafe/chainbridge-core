@@ -22,11 +22,11 @@ var depositCmd = &cobra.Command{
 	Long:  "Initiate a transfer of ERC20 tokens",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return DepositCMD(cmd, args, txFabric)
+		return DepositCmd(cmd, args, txFabric)
 	},
 }
 
-func BindDepositCMDFlags(cli *cobra.Command) {
+func BindDepositCmdFlags(cli *cobra.Command) {
 	cli.Flags().String("recipient", "", "address of recipient")
 	cli.Flags().String("bridge", "", "address of bridge contract")
 	cli.Flags().String("amount", "", "amount to deposit")
@@ -37,10 +37,10 @@ func BindDepositCMDFlags(cli *cobra.Command) {
 }
 
 func init() {
-	BindDepositCMDFlags(depositCmd)
+	BindDepositCmdFlags(depositCmd)
 }
 
-func DepositCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	recipient := cmd.Flag("recipient").Value.String()
 	bridgeAddress := cmd.Flag("bridge").Value.String()
 	amount := cmd.Flag("amount").Value.String()
