@@ -2,6 +2,7 @@ package erc20
 
 import (
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
 	"math/big"
 	"strconv"
 
