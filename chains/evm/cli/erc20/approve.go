@@ -19,24 +19,29 @@ var approveCmd = &cobra.Command{
 	Use:   "approve",
 	Short: "Approve tokens in an ERC20 contract for transfer",
 	Long:  "Approve tokens in an ERC20 contract for transfer",
-	RunE:  CallApprove,
+	RunE:  func(cmd *cobra.Command, args []string) error {
+		txFabric := evmtransaction.NewTransaction
+		return Approve(cmd, args, txFabric)
+	},
 }
 
+func BindApproveCLIFlags(cli *cobra.Command) {
+	cli.Flags().String("erc20address", "", "ERC20 contract address")
+	cli.Flags().String("amount", "", "amount to grant allowance")
+	cli.Flags().String("recipient", "", "address of recipient")
+	cli.Flags().Uint64("decimals", 18, "ERC20 token decimals")
+	err := cli.MarkFlagRequired("decimals")
+	if err != nil {
+		panic(err)
+	}
+
+}
 func init() {
-	approveCmd.Flags().String("erc20Address", "", "ERC20 contract address")
-	approveCmd.Flags().String("amount", "", "amount to grant allowance")
-	approveCmd.Flags().String("recipient", "", "address of recipient")
-	approveCmd.Flags().Uint64("decimals", 0, "ERC20 token decimals")
-	approveCmd.MarkFlagRequired("decimals")
+	BindApproveCLIFlags(approveCmd)
 }
 
-func CallApprove(cmd *cobra.Command, args []string) error {
-	txFabric := evmtransaction.NewTransaction
-	return approve(cmd, args, txFabric)
-}
-
-func approve(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	erc20Address := cmd.Flag("erc20Address").Value.String()
+func Approve(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+	erc20Address := cmd.Flag("erc20address").Value.String()
 	recipientAddress := cmd.Flag("recipient").Value.String()
 	amount := cmd.Flag("amount").Value.String()
 	decimals, err := cmd.Flags().GetUint64("decimals")
@@ -48,7 +53,7 @@ Approving ERC20
 ERC20 address: %s
 Recipient address: %s
 Amount: %s
-Decimals: %s`,
+Decimals: %v`,
 		erc20Address, recipientAddress, amount, decimals)
 
 	// fetch global flag values
@@ -72,21 +77,24 @@ Decimals: %s`,
 	realAmount, err := cliutils.UserAmountToWei(amount, decimalsBigInt)
 	if err != nil {
 		log.Fatal().Err(err)
+		return err
 	}
 
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
 		log.Fatal().Err(err)
+		return err
 	}
-
-	i, err := calls.PrepareErc20ApproveInput(erc20Addr, realAmount)
+	i, err := calls.PrepareErc20ApproveInput(recipientAddr, realAmount)
 	if err != nil {
 		log.Fatal().Err(err)
+		return err
 	}
 	_, err = calls.Transact(ethClient, txFabric, &erc20Addr, i, gasLimit)
 	if err != nil {
 		log.Fatal().Err(err)
+		return err
 	}
-	log.Info().Msgf("%s account granted allowance on %v tokens of %s", recipientAddr.String(), amount, erc20Addr.String())
+	log.Info().Msgf("%s account granted allowance on %v tokens of %s", recipientAddr.String(), amount, recipientAddr.String())
 	return nil
 }

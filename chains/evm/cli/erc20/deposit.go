@@ -5,6 +5,8 @@ import (
 	"math/big"
 	"strconv"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
@@ -20,15 +22,14 @@ var depositCmd = &cobra.Command{
 	Long:  "Initiate a transfer of ERC20 tokens",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return DepositEVMCMD(cmd, args, txFabric)
+		return DepositCMD(cmd, args, txFabric)
 	},
 }
 
-func BindERC20DepositCLIFlags(cli *cobra.Command) {
+func BindDepositCMDFlags(cli *cobra.Command) {
 	cli.Flags().String("recipient", "", "address of recipient")
 	cli.Flags().String("bridge", "", "address of bridge contract")
 	cli.Flags().String("amount", "", "amount to deposit")
-	cli.Flags().String("value", "0", "value of ETH that should be sent along with deposit to cover possible fees. In ETH (decimals are allowed)")
 	cli.Flags().String("destId", "", "destination chain ID")
 	cli.Flags().String("resourceId", "", "resource ID for transfer")
 	cli.Flags().Uint64("decimals", 0, "ERC20 token decimals")
@@ -36,16 +37,19 @@ func BindERC20DepositCLIFlags(cli *cobra.Command) {
 }
 
 func init() {
-	BindERC20DepositCLIFlags(depositCmd)
+	BindDepositCMDFlags(depositCmd)
 }
 
-func DepositEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	recipientAddress := cmd.Flag("recipient").Value.String()
+func DepositCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+	recipient := cmd.Flag("recipient").Value.String()
 	bridgeAddress := cmd.Flag("bridge").Value.String()
 	amount := cmd.Flag("amount").Value.String()
 	destinationId := cmd.Flag("destId").Value.String()
 	resourceId := cmd.Flag("resourceId").Value.String()
-
+	if !common.IsHexAddress(recipient) {
+		return fmt.Errorf("invalid recipient address %s", recipient)
+	}
+	recipientAddress := common.HexToAddress(recipient)
 	// fetch global flag values
 	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
@@ -61,10 +65,9 @@ func DepositEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) e
 
 	bridgeAddr := common.HexToAddress(bridgeAddress)
 
-	if !common.IsHexAddress(recipientAddress) {
+	if !common.IsHexAddress(recipient) {
 		return fmt.Errorf("invalid recipient address %s", recipientAddress)
 	}
-	recipientAddr := common.HexToAddress(recipientAddress)
 
 	realAmount, err := calls.UserAmountToWei(amount, decimals)
 	if err != nil {
@@ -84,15 +87,15 @@ func DepositEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) e
 		log.Error().Err(fmt.Errorf("destination ID conversion error: %v", err))
 		return err
 	}
-
+	data := cliutils.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
 	// TODO: confirm correct arguments
-	input, err := calls.PrepareErc20DepositInput(bridgeAddr, recipientAddr, realAmount, resourceIDBytes, uint8(destinationIdInt))
+	input, err := calls.PrepareErc20DepositInput(uint8(destinationIdInt), resourceIDBytes, data)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit input error: %v", err))
 		return err
 	}
 	// destinationId
-	txHash, err := calls.Transact(ethClient, txFabric, &recipientAddr, input, gasLimit)
+	txHash, err := calls.Transact(ethClient, txFabric, &bridgeAddr, input, gasLimit)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit error: %v", err))
 		return err
@@ -100,6 +103,6 @@ func DepositEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) e
 
 	log.Debug().Msgf("erc20 deposit hash: %s", txHash.Hex())
 
-	log.Info().Msgf("%s tokens were transferred to %s from %s", amount, recipientAddr.Hex(), senderKeyPair.CommonAddress().String())
+	log.Info().Msgf("%s tokens were transferred to %s from %s", amount, recipientAddress.Hex(), senderKeyPair.CommonAddress().String())
 	return nil
 }

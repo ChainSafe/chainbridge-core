@@ -15,7 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-var AliceKp = keystore.TestKeyRing.EthereumKeys[keystore.AliceKey]
 
 type EventSig string
 
