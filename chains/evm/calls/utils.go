@@ -45,7 +45,7 @@ func SliceTo32Bytes(in []byte) [32]byte {
 	return res
 }
 
-func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
+func ToCallArg(msg ethereum.CallMsg) map[string]interface{} {
 	arg := map[string]interface{}{
 		"from": msg.From,
 		"to":   msg.To,

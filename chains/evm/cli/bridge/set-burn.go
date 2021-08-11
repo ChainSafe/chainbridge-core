@@ -74,8 +74,9 @@ func SetBurnCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 
 	_, err = calls.Transact(ethClient, txFabric, &bridgeAddr, setBurnableInput, gasLimit)
 	if err != nil {
-		log.Info().Msg("Burnable set")
+		log.Error().Err(err)
 		return err
 	}
+	log.Info().Msg("Burnable set")
 	return nil
 }
