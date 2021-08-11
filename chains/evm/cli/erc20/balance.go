@@ -4,14 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -90,13 +88,11 @@ func BalanceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 		}
 	}
 
-	res, err := calls.PrepareERC20BalanceOutput(out)
+	balance, err := calls.ParseERC20BalanceOutput(out)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("prepare output error: %v", err))
 		return err
 	}
-
-	balance := *abi.ConvertType(res[0], new(big.Int)).(*big.Int)
 
 	log.Info().Msgf("balance of %s is %s", accountAddr.String(), balance.String())
 	return nil

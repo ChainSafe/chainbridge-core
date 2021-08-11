@@ -80,19 +80,21 @@ func PrepareERC20BalanceInput(accountAddr common.Address) ([]byte, error) {
 	return input, nil
 }
 
-func PrepareERC20BalanceOutput(output []byte) ([]interface{}, error) {
+func ParseERC20BalanceOutput(output []byte) (*big.Int, error) {
 	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
 	if err != nil {
-		return []interface{}{}, err
+		return new(big.Int), err
 	}
 
 	res, err := a.Unpack("balanceOf", output)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("unpack output error: %v", err))
-		return []interface{}{}, err
+		return new(big.Int), err
 	}
 
-	return res, nil
+	balance := abi.ConvertType(res[0], new(big.Int)).(*big.Int)
+
+	return balance, nil
 }
 
 func MinterRole(chainClient ChainClient, erc20Contract common.Address) ([32]byte, error) {
