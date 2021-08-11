@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 
 	"github.com/ChainSafe/chainbridge-core/relayer"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
@@ -25,7 +25,8 @@ type ChainClient interface {
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
 	LockOpts()
 	UnlockOpts()
-	UnsafeOpts() (*bind.TransactOpts, error)
+	// NOTE: We could possibly change this around to an update opts where a CommonTransaction is passed in and we only return an error
+	UnsafeOpts() (*evmtransaction.TransactOpts, error)
 	UnsafeIncreaseNonce() error
 	GasPrice() (*big.Int, error)
 	ChainID(ctx context.Context) (*big.Int, error)

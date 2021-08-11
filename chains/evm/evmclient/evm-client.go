@@ -10,11 +10,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
+	"github.com/ChainSafe/chainbridge-core/config"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -29,7 +30,7 @@ type EVMClient struct {
 	config   *EVMConfig
 	nonce    *big.Int
 	optsLock sync.Mutex
-	opts     *bind.TransactOpts
+	opts     *evmtransaction.TransactOpts
 }
 
 type CommonTransaction interface {
@@ -37,7 +38,7 @@ type CommonTransaction interface {
 	Hash() common.Hash
 	// Returns signed transaction by provided private key
 	//RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
-	RawWithSignature(opts *bind.TransactOpts, key *ecdsa.PrivateKey) ([]byte, error)
+	RawWithSignature(opts evmtransaction.CommonTransactOpts, key *ecdsa.PrivateKey) ([]byte, error)
 }
 
 func NewEVMClient() *EVMClient {
@@ -76,12 +77,14 @@ func (c *EVMClient) Configurate(path string, name string) error {
 		return err
 	}
 
-	opts, err := bind.NewKeyedTransactorWithChainID(krp.PrivateKey(), id)
+	//opts, err := bind.NewKeyedTransactorWithChainID(krp.PrivateKey(), id)
+	opts, err := evmtransaction.NewOpts(krp.PrivateKey(), id)
 	if err != nil {
 		return err
 	}
 	c.opts = opts
-	c.opts.Context = context.Background()
+	// TODO: check if we need to set context
+	//c.opts.Context = context.Background()
 
 	if generalConfig.LatestBlock {
 		curr, err := c.LatestBlock()
@@ -149,10 +152,6 @@ func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common
 
 // SendRawTransaction accepts rlp-encode of signed transaction and sends it via RPC call
 func (c *EVMClient) SendRawTransaction(ctx context.Context, tx []byte) error {
-	// data, err := tx.MarshalBinary()
-	// if err != nil {
-	// 	return err
-	// }
 	return c.rpClient.CallContext(ctx, nil, "eth_sendRawTransaction", hexutil.Encode(tx))
 }
 
@@ -201,12 +200,12 @@ func (c *EVMClient) UnlockOpts() {
 	c.optsLock.Unlock()
 }
 
-func (c *EVMClient) UnsafeOpts() (*bind.TransactOpts, error) {
+func (c *EVMClient) UnsafeOpts() (*evmtransaction.TransactOpts, error) {
 	nonce, err := c.unsafeNonce()
 	if err != nil {
 		return nil, err
 	}
-	c.opts.Nonce = nonce
+	c.opts.SetNonce(nonce)
 
 	head, err := c.HeaderByNumber(context.TODO(), nil)
 	if err != nil {
@@ -216,32 +215,41 @@ func (c *EVMClient) UnsafeOpts() (*bind.TransactOpts, error) {
 
 	log.Debug().Msgf("head.BaseFee: %v", head.BaseFee)
 	if head.BaseFee != nil {
-		tip, err := c.SuggestGasTipCap(context.TODO())
+		// tip, err := c.SuggestGasTipCap(context.TODO())
+		// if err != nil {
+		// 	c.UnlockOpts()
+		// 	return nil, err
+		// }
+		// c.opts.GasTipCap = tip
+		// log.Debug().Msgf("Gas tip cap: %v", c.opts.GasTipCap)
+
+		// gasFeeCap := new(big.Int).Add(
+		// 	c.opts.GasTipCap,
+		// 	new(big.Int).Mul(head.BaseFee, big.NewInt(2)),
+		// )
+		// c.opts.GasFeeCap = gasFeeCap
+		// log.Debug().Msgf("Gas fee cap: %v", c.opts.GasFeeCap)
+
+		// if c.opts.GasFeeCap.Cmp(c.opts.GasTipCap) < 0 {
+		// 	c.UnlockOpts()
+		// 	return nil, fmt.Errorf("maxFeePerGas (%v) < maxPriorityFeePerGas (%v)", c.opts.GasFeeCap, c.opts.GasTipCap)
+		// }
+		gasTipCap, gasFeeCap, err := c.EstimateGasLondon(context.TODO(), head.BaseFee)
 		if err != nil {
-			c.UnlockOpts()
 			return nil, err
 		}
-		c.opts.GasTipCap = tip
-		log.Debug().Msgf("Gas tip cap: %v", c.opts.GasTipCap)
-
-		gasFeeCap := new(big.Int).Add(
-			c.opts.GasTipCap,
-			new(big.Int).Mul(head.BaseFee, big.NewInt(2)),
-		)
-		c.opts.GasFeeCap = gasFeeCap
-		log.Debug().Msgf("Gas fee cap: %v", c.opts.GasFeeCap)
-
-		if c.opts.GasFeeCap.Cmp(c.opts.GasTipCap) < 0 {
-			c.UnlockOpts()
-			return nil, fmt.Errorf("maxFeePerGas (%v) < maxPriorityFeePerGas (%v)", c.opts.GasFeeCap, c.opts.GasTipCap)
-		}
+		c.opts.SetGasPrices(nil, gasTipCap, gasFeeCap)
 	} else {
-		c.opts.GasPrice, err = c.GasPrice()
+		gasPrice, err := c.GasPrice()
 		if err != nil {
 			c.UnlockOpts()
 			return nil, err
 		}
+		c.opts.SetGasPrices(gasPrice, nil, nil)
 	}
+
+	c.opts.SetGasLimit(uint64(2000000))
+
 	return c.opts, nil
 }
 
@@ -281,6 +289,39 @@ func (c *EVMClient) GasPrice() (*big.Int, error) {
 	return gasPrice, nil
 }
 
+func (c *EVMClient) EstimateGasLondon(ctx context.Context, baseFee *big.Int) (*big.Int, *big.Int, error) {
+	var maxPriorityFeePerGas *big.Int
+	var maxFeePerGas *big.Int
+
+	var sharedEVMConfig config.SharedEVMConfig = c.config.SharedEVMConfig
+	if sharedEVMConfig.MaxGasPrice.Cmp(baseFee) < 0 {
+		maxPriorityFeePerGas = big.NewInt(1)
+		maxFeePerGas = new(big.Int).Add(baseFee, maxPriorityFeePerGas)
+		return maxPriorityFeePerGas, maxFeePerGas, nil
+	}
+
+	maxPriorityFeePerGas, err := c.SuggestGasTipCap(context.TODO())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	maxFeePerGas = new(big.Int).Add(
+		maxPriorityFeePerGas,
+		new(big.Int).Mul(baseFee, big.NewInt(2)),
+	)
+
+	if maxFeePerGas.Cmp(maxPriorityFeePerGas) < 0 {
+		return nil, nil, fmt.Errorf("maxFeePerGas (%v) < maxPriorityFeePerGas (%v)", maxFeePerGas, maxPriorityFeePerGas)
+	}
+
+	// Check we aren't exceeding our limit
+	if maxFeePerGas.Cmp(sharedEVMConfig.MaxGasPrice) == 1 {
+		maxPriorityFeePerGas.Sub(sharedEVMConfig.MaxGasPrice, baseFee)
+		maxFeePerGas = sharedEVMConfig.MaxGasPrice
+	}
+	return maxPriorityFeePerGas, maxFeePerGas, nil
+}
+
 func (c *EVMClient) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
 	suggestedGasPrice, err := c.SuggestGasPrice(context.TODO())
 	if err != nil {
@@ -290,7 +331,6 @@ func (c *EVMClient) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
 	gasPrice := multiplyGasPrice(suggestedGasPrice, c.config.SharedEVMConfig.GasMultiplier)
 
 	// Check we aren't exceeding our limit
-
 	if gasPrice.Cmp(c.config.SharedEVMConfig.MaxGasPrice) == 1 {
 		return c.config.SharedEVMConfig.MaxGasPrice, nil
 	} else {
