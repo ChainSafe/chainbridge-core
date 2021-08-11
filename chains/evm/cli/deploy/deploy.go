@@ -19,6 +19,7 @@ import (
 )
 
 var ErrNoDeploymentFalgsProvided = errors.New("provide at least one deployment flag. For help use --help.")
+var ErrErc20TokenAndSymbolNotProvided = errors.New("erc20Name and erc20Symbol flags should be provided")
 
 var DeployEVM = &cobra.Command{
 	Use:   "deploy",
@@ -197,8 +198,8 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 			name := cmd.Flag("erc20Name").Value.String()
 			symbol := cmd.Flag("erc20Symbol").Value.String()
 			if name == "" || symbol == "" {
-				log.Error().Err(errors.New("erc20Name and erc20Symbol flags should be provided"))
-				return err
+				log.Error().Err(ErrErc20TokenAndSymbolNotProvided)
+				return ErrErc20TokenAndSymbolNotProvided
 			}
 
 			erc20Addr, err := calls.DeployErc20(ethClient, txFabric, name, symbol)
@@ -212,8 +213,8 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 				return err
 			}
 			if name == "" || symbol == "" {
-				log.Error().Err(errors.New("erc20Name and erc20Symbol flags should be provided"))
-				return err
+				log.Error().Err(ErrErc20TokenAndSymbolNotProvided)
+				return ErrErc20TokenAndSymbolNotProvided
 			}
 		}
 	}
