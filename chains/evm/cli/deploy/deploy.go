@@ -92,6 +92,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 	log.Debug().Msgf("SENDER Private key 0x%s", hex.EncodeToString(crypto.FromECDSA(senderKeyPair.PrivateKey())))
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
+		log.Error().Err(fmt.Errorf("ethereum client error: %v", err)).Msg("error initializing new EVM client")
 		return err
 	}
 	relayerThreshold, err := cmd.Flags().GetUint64("relayerThreshold")
@@ -101,7 +102,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 	}
 	relayerAddressesStringSlice := viper.GetStringSlice(RelayersFlagName)
 	if err != nil {
-		log.Error().Err(fmt.Errorf("relayer threshold error: %v", err))
+		log.Error().Err(fmt.Errorf("relayer addresses error: %v", err))
 		return err
 	}
 	var relayerAddresses []common.Address
