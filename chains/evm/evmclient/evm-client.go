@@ -215,25 +215,6 @@ func (c *EVMClient) UnsafeOpts() (*evmtransaction.TransactOpts, error) {
 
 	log.Debug().Msgf("head.BaseFee: %v", head.BaseFee)
 	if head.BaseFee != nil {
-		// tip, err := c.SuggestGasTipCap(context.TODO())
-		// if err != nil {
-		// 	c.UnlockOpts()
-		// 	return nil, err
-		// }
-		// c.opts.GasTipCap = tip
-		// log.Debug().Msgf("Gas tip cap: %v", c.opts.GasTipCap)
-
-		// gasFeeCap := new(big.Int).Add(
-		// 	c.opts.GasTipCap,
-		// 	new(big.Int).Mul(head.BaseFee, big.NewInt(2)),
-		// )
-		// c.opts.GasFeeCap = gasFeeCap
-		// log.Debug().Msgf("Gas fee cap: %v", c.opts.GasFeeCap)
-
-		// if c.opts.GasFeeCap.Cmp(c.opts.GasTipCap) < 0 {
-		// 	c.UnlockOpts()
-		// 	return nil, fmt.Errorf("maxFeePerGas (%v) < maxPriorityFeePerGas (%v)", c.opts.GasFeeCap, c.opts.GasTipCap)
-		// }
 		gasTipCap, gasFeeCap, err := c.EstimateGasLondon(context.TODO(), head.BaseFee)
 		if err != nil {
 			return nil, err
@@ -247,8 +228,6 @@ func (c *EVMClient) UnsafeOpts() (*evmtransaction.TransactOpts, error) {
 		}
 		c.opts.SetGasPrices(gasPrice, nil, nil)
 	}
-
-	c.opts.SetGasLimit(uint64(2000000))
 
 	return c.opts, nil
 }
