@@ -21,11 +21,11 @@ var mintCmd = &cobra.Command{
 	Long:  "Mint tokens on an ERC20 mintable contract",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return MintEVMCMD(cmd, args, txFabric)
+		return MintCmd(cmd, args, txFabric)
 	},
 }
 
-func BindERC20MintCLIFlags(cli *cobra.Command) {
+func BindMintCmdFlags(cli *cobra.Command) {
 	cli.Flags().String("amount", "", "amount to mint fee (in ETH)")
 	cli.Flags().String("erc20Address", "", "ERC20 contract address")
 	cli.Flags().Uint64("decimal", 18, "ERC20 token decimals")
@@ -33,10 +33,10 @@ func BindERC20MintCLIFlags(cli *cobra.Command) {
 }
 
 func init() {
-	BindERC20MintCLIFlags(mintCmd)
+	BindMintCmdFlags(mintCmd)
 }
 
-func MintEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func MintCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	amount := cmd.Flag("amount").Value.String()
 	erc20Address := cmd.Flag("erc20Address").Value.String()
 	dstAddressStr := cmd.Flag("dstAddress").Value.String()
@@ -44,6 +44,7 @@ func MintEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 
 	decimals, err := cmd.Flags().GetUint64("decimal")
 	if err != nil {
+		log.Error().Err(fmt.Errorf("decimal flag error: %v", err))
 		return err
 	}
 	decimalsBigInt := big.NewInt(0).SetUint64(decimals)
@@ -72,13 +73,13 @@ func MintEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
-		log.Error().Err(err)
+		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
 
 	mintTokensInput, err := calls.PrepareMintTokensInput(dstAddress, realAmount)
 	if err != nil {
-		log.Error().Err(err)
+		log.Error().Err(fmt.Errorf("erc20 mint input error: %v", err))
 		return err
 	}
 

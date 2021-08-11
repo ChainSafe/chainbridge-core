@@ -22,7 +22,7 @@ var registerResourceCmd = &cobra.Command{
 	},
 }
 
-func BindBridgeRegisterResourceCmdFlags(cli *cobra.Command) {
+func BindRegisterResourceCmdFlags(cli *cobra.Command) {
 	cli.Flags().String("handler", "", "handler contract address")
 	cli.Flags().String("bridge", "", "bridge contract address")
 	cli.Flags().String("target", "", "contract address to be registered")
@@ -30,7 +30,7 @@ func BindBridgeRegisterResourceCmdFlags(cli *cobra.Command) {
 }
 
 func init() {
-	BindBridgeRegisterResourceCmdFlags(registerResourceCmd)
+	BindRegisterResourceCmdFlags(registerResourceCmd)
 }
 
 func RegisterResourceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
@@ -73,7 +73,7 @@ Bridge address: %s
 
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
-		log.Error().Err(err)
+		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
 

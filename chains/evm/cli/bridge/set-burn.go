@@ -23,14 +23,14 @@ var setBurnCmd = &cobra.Command{
 	},
 }
 
-func BindBridgeSetBurnCmdFlags(cli *cobra.Command) {
+func BindSetBurnCmdFlags(cli *cobra.Command) {
 	cli.Flags().String("handler", "", "ERC20 handler contract address")
 	cli.Flags().String("bridge", "", "bridge contract address")
 	cli.Flags().String("tokenContract", "", "token contract to be registered")
 }
 
 func init() {
-	BindBridgeSetBurnCmdFlags(setBurnCmd)
+	BindSetBurnCmdFlags(setBurnCmd)
 }
 
 func SetBurnCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
@@ -61,7 +61,7 @@ func SetBurnCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
-		log.Error().Err(err)
+		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
 
