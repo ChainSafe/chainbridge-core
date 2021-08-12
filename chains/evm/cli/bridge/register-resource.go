@@ -1,8 +1,8 @@
 package bridge
 
 import (
+	"encoding/hex"
 	"fmt"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
@@ -65,9 +65,15 @@ Bridge address: %s
 		return err
 	}
 	targetContractAddr := common.HexToAddress(targetAddress)
-	resourceIdBytes := common.Hex2Bytes(resourceId)
-	resourceIdBytesArr := calls.SliceTo32Bytes(resourceIdBytes)
 	bridgeAddress := common.HexToAddress(bridgeAddressStr)
+	if resourceId[0:2] == "0x" {
+		resourceId = resourceId[2:]
+	}
+	resourceIdBytes, err := hex.DecodeString(resourceId)
+	if err != nil {
+		return err
+	}
+	resourceIdBytesArr := calls.SliceTo32Bytes(resourceIdBytes)
 
 	fmt.Printf("Registering contract %s with resource ID %s on handler %s", targetAddress, resourceId, handlerAddr)
 

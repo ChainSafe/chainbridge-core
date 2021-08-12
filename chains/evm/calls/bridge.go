@@ -22,6 +22,7 @@ func PrepareSetBurnableInput(client ChainClient, handler, tokenAddress common.Ad
 }
 
 func PrepareAdminSetResourceInput(handler common.Address, rId [32]byte, addr common.Address) ([]byte, error) {
+	log.Debug().Msgf("ResourceID %x", rId)
 	a, err := abi.JSON(strings.NewReader(BridgeABI))
 	if err != nil {
 		return []byte{}, err

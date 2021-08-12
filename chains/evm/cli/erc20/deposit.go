@@ -1,6 +1,7 @@
 package erc20
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -74,13 +75,21 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 		return err
 	}
 
-	resourceIDBytes := calls.SliceTo32Bytes(common.Hex2Bytes(resourceId))
 
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
+
+	if resourceId[0:2] == "0x" {
+		resourceId = resourceId[2:]
+	}
+	resourceIdBytes, err := hex.DecodeString(resourceId)
+	if err != nil {
+		return err
+	}
+	resourceIdBytesArr := calls.SliceTo32Bytes(resourceIdBytes)
 
 	destinationIdInt, err := strconv.Atoi(destinationId)
 	if err != nil {
@@ -89,7 +98,7 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 	}
 	data := cliutils.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
 	// TODO: confirm correct arguments
-	input, err := calls.PrepareErc20DepositInput(uint8(destinationIdInt), resourceIDBytes, data)
+	input, err := calls.PrepareErc20DepositInput(uint8(destinationIdInt), resourceIdBytesArr, data)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit input error: %v", err))
 		return err
