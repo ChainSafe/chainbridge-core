@@ -16,13 +16,13 @@ var registerResourceCmd = &cobra.Command{
 	Use:   "register-resource",
 	Short: "Register a resource ID",
 	Long:  "Register a resource ID with a contract address for a handler",
-	RunE:  func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return RegisterResourceEVMCMD(cmd, args, txFabric)
+		return RegisterResourceCmd(cmd, args, txFabric)
 	},
 }
 
-func BindBridgeRegisterResourceCLIFlags(cli *cobra.Command) {
+func BindRegisterResourceCmdFlags(cli *cobra.Command) {
 	cli.Flags().String("handler", "", "handler contract address")
 	cli.Flags().String("bridge", "", "bridge contract address")
 	cli.Flags().String("target", "", "contract address to be registered")
@@ -30,10 +30,10 @@ func BindBridgeRegisterResourceCLIFlags(cli *cobra.Command) {
 }
 
 func init() {
-	BindBridgeRegisterResourceCLIFlags(registerResourceCmd)
+	BindRegisterResourceCmdFlags(registerResourceCmd)
 }
 
-func RegisterResourceEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func RegisterResourceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	handlerAddressString := cmd.Flag("handler").Value.String()
 	resourceId := cmd.Flag("resourceId").Value.String()
 	targetAddress := cmd.Flag("target").Value.String()
@@ -71,9 +71,9 @@ Bridge address: %s
 
 	fmt.Printf("Registering contract %s with resource ID %s on handler %s", targetAddress, resourceId, handlerAddr)
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(),gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
-		log.Error().Err(err)
+		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
 
@@ -83,7 +83,7 @@ Bridge address: %s
 		return err
 	}
 
-	_, err = calls.Transact(ethClient,txFabric, &bridgeAddress, registerResourceInput, gasLimit)
+	_, err = calls.Transact(ethClient, txFabric, &bridgeAddress, registerResourceInput, gasLimit)
 	if err != nil {
 		log.Error().Err(err)
 		return err

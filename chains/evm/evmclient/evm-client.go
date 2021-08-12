@@ -28,7 +28,7 @@ type EVMClient struct {
 	nonceLock sync.Mutex
 	config    *EVMConfig
 	nonce     *big.Int
-	gasPrice *big.Int
+	gasPrice  *big.Int
 }
 
 type CommonTransaction interface {

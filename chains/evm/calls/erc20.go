@@ -2,6 +2,7 @@ package calls
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"strings"
 
@@ -67,16 +68,33 @@ func PrepareRegisterGenericResourceInput(handler common.Address, rId [32]byte, a
 	return input, nil
 }
 
-func PrepareERC20BalanceInput(erc20Addr, accountAddr common.Address) ([]byte, error) {
+func PrepareERC20BalanceInput(accountAddr common.Address) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
 	if err != nil {
 		return []byte{}, err
 	}
-	input, err := a.Pack("balanceOf", erc20Addr, accountAddr)
+	input, err := a.Pack("balanceOf", accountAddr)
 	if err != nil {
 		return []byte{}, err
 	}
 	return input, nil
+}
+
+func ParseERC20BalanceOutput(output []byte) (*big.Int, error) {
+	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
+	if err != nil {
+		return new(big.Int), err
+	}
+
+	res, err := a.Unpack("balanceOf", output)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("unpack output error: %v", err))
+		return new(big.Int), err
+	}
+
+	balance := abi.ConvertType(res[0], new(big.Int)).(*big.Int)
+
+	return balance, nil
 }
 
 func MinterRole(chainClient ChainClient, erc20Contract common.Address) ([32]byte, error) {
@@ -89,7 +107,7 @@ func MinterRole(chainClient ChainClient, erc20Contract common.Address) ([32]byte
 		return [32]byte{}, err
 	}
 	msg := ethereum.CallMsg{From: common.Address{}, To: &erc20Contract, Data: input}
-	out, err := chainClient.CallContract(context.TODO(), toCallArg(msg), nil)
+	out, err := chainClient.CallContract(context.TODO(), ToCallArg(msg), nil)
 	if err != nil {
 		return [32]byte{}, err
 	}

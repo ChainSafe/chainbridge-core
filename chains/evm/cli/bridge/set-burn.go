@@ -17,22 +17,23 @@ var setBurnCmd = &cobra.Command{
 	Use:   "set-burn",
 	Short: "Set a token contract as mintable/burnable",
 	Long:  "Set a token contract as mintable/burnable in a handler",
-	RunE:  func(cmd *cobra.Command, args []string) error {
-	txFabric := evmtransaction.NewTransaction
-	return SetBurnEVMCMD(cmd, args, txFabric)
-},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		txFabric := evmtransaction.NewTransaction
+		return SetBurnCmd(cmd, args, txFabric)
+	},
 }
-func BindBridgeSetBurnCLIFlags(cli *cobra.Command) {
+
+func BindSetBurnCmdFlags(cli *cobra.Command) {
 	cli.Flags().String("handler", "", "ERC20 handler contract address")
 	cli.Flags().String("bridge", "", "bridge contract address")
 	cli.Flags().String("tokenContract", "", "token contract to be registered")
 }
 
 func init() {
-	BindBridgeSetBurnCLIFlags(setBurnCmd)
+	BindSetBurnCmdFlags(setBurnCmd)
 }
 
-func SetBurnEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func SetBurnCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	handlerAddress := cmd.Flag("handler").Value.String()
 	bridgeAddress := cmd.Flag("bridge").Value.String()
 	tokenAddress := cmd.Flag("tokenContract").Value.String()
@@ -60,7 +61,7 @@ func SetBurnEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) e
 
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
-		log.Error().Err(err)
+		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
 
@@ -73,8 +74,9 @@ func SetBurnEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) e
 
 	_, err = calls.Transact(ethClient, txFabric, &bridgeAddr, setBurnableInput, gasLimit)
 	if err != nil {
-		log.Info().Msg("Burnable set")
+		log.Error().Err(err)
 		return err
 	}
+	log.Info().Msg("Burnable set")
 	return nil
 }
