@@ -42,3 +42,16 @@ func PrepareErc20DepositInput(destChainID uint8, resourceID [32]byte, data []byt
 	}
 	return input, nil
 }
+
+
+func PrepareAddRelayerInput(relayer common.Address) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("adminAddRelayer", relayer)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
+}
