@@ -98,8 +98,8 @@ func IsRelayer(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 		log.Error().Err(fmt.Errorf("prepare output error: %v", err))
 		return err
 	}
-	if b {
-		log.Info().Msgf("Address %s is not relayer", relayer.String())
+	if !b {
+		log.Info().Msgf("Address %s is NOT relayer", relayer.String())
 	} else {
 		log.Info().Msgf("Address %s is relayer", relayer.String())
 	}
