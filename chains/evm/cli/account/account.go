@@ -10,7 +10,7 @@ import (
 )
 
 var AccountRootCMD = &cobra.Command{
-	Use:   "account",
+	Use:   "accounts",
 	Short: "account instructions",
 	Long:  "account instructions",
 }
@@ -31,7 +31,7 @@ var importPrivKeyCmd = &cobra.Command{
 var generateKeyPairCmd = &cobra.Command{
 	Use:   "generate",
 	Short: "Generate bridge keystore (Secp256k1)",
-	Long:  "The generate subcommand is used to generate the bridge keystore. If no options are specified, a secp256k1 key will be made.",
+	Long:  "The generate subcommand is used to generate the bridge keystore. If no options are specified, a Secp256k1 key will be made.",
 	RunE:  generateKeyPair,
 }
 
