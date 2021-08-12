@@ -30,7 +30,7 @@ type EVMClient struct {
 	config   *EVMConfig
 	nonce    *big.Int
 	optsLock sync.Mutex
-	opts     *evmtransaction.TransactOpts
+	opts     evmtransaction.CommonTransactOpts
 }
 
 type CommonTransaction interface {
@@ -200,7 +200,7 @@ func (c *EVMClient) UnlockOpts() {
 	c.optsLock.Unlock()
 }
 
-func (c *EVMClient) UnsafeOpts() (*evmtransaction.TransactOpts, error) {
+func (c *EVMClient) UnsafeOpts() (evmtransaction.CommonTransactOpts, error) {
 	nonce, err := c.unsafeNonce()
 	if err != nil {
 		return nil, err

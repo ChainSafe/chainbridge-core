@@ -99,8 +99,9 @@ func (p *Proposal) Execute(client ChainClient) error {
 	if err != nil {
 		return err
 	}
-	tx := evmtransaction.NewTransaction(opts, p.BridgeAddress, big.NewInt(0), cId, input)
+	opts.SetGasLimit(uint64(2000000))
 
+	tx := evmtransaction.NewTransaction(opts, p.BridgeAddress, big.NewInt(0), cId, input)
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return err

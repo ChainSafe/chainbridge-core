@@ -25,8 +25,7 @@ type ChainClient interface {
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
 	LockOpts()
 	UnlockOpts()
-	// NOTE: We could possibly change this around to an update opts where a CommonTransaction is passed in and we only return an error
-	UnsafeOpts() (*evmtransaction.TransactOpts, error)
+	UnsafeOpts() (evmtransaction.EVMTransactor, error)
 	UnsafeIncreaseNonce() error
 	GasPrice() (*big.Int, error)
 	ChainID(ctx context.Context) (*big.Int, error)
