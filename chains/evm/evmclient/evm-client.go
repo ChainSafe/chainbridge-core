@@ -30,7 +30,7 @@ type EVMClient struct {
 	config   *EVMConfig
 	nonce    *big.Int
 	optsLock sync.Mutex
-	opts     evmtransaction.CommonTransactOpts
+	opts     evmtransaction.EVMTransactor
 }
 
 type CommonTransaction interface {
@@ -38,7 +38,7 @@ type CommonTransaction interface {
 	Hash() common.Hash
 	// Returns signed transaction by provided private key
 	//RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
-	RawWithSignature(opts evmtransaction.CommonTransactOpts, key *ecdsa.PrivateKey) ([]byte, error)
+	RawWithSignature(opts evmtransaction.EVMTransactor, key *ecdsa.PrivateKey) ([]byte, error)
 }
 
 func NewEVMClient() *EVMClient {
