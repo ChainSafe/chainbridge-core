@@ -19,6 +19,7 @@ import (
 )
 
 var ErrNoDeploymentFalgsProvided = errors.New("provide at least one deployment flag. For help use --help.")
+var ErrErc20TokenAndSymbolNotProvided = errors.New("erc20Name and erc20Symbol flags should be provided")
 
 var DeployEVM = &cobra.Command{
 	Use:   "deploy",
@@ -92,6 +93,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 	log.Debug().Msgf("SENDER Private key 0x%s", hex.EncodeToString(crypto.FromECDSA(senderKeyPair.PrivateKey())))
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
+		log.Error().Err(fmt.Errorf("ethereum client error: %v", err)).Msg("error initializing new EVM client")
 		return err
 	}
 	relayerThreshold, err := cmd.Flags().GetUint64("relayerThreshold")
@@ -101,7 +103,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 	}
 	relayerAddressesStringSlice := viper.GetStringSlice(RelayersFlagName)
 	if err != nil {
-		log.Error().Err(fmt.Errorf("relayer threshold error: %v", err))
+		log.Error().Err(fmt.Errorf("relayer addresses error: %v", err))
 		return err
 	}
 	var relayerAddresses []common.Address
@@ -196,8 +198,8 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 			name := cmd.Flag("erc20Name").Value.String()
 			symbol := cmd.Flag("erc20Symbol").Value.String()
 			if name == "" || symbol == "" {
-				log.Error().Err(errors.New("erc20Name and erc20Symbol flags should be provided"))
-				return err
+				log.Error().Err(ErrErc20TokenAndSymbolNotProvided)
+				return ErrErc20TokenAndSymbolNotProvided
 			}
 
 			erc20Addr, err := calls.DeployErc20(ethClient, txFabric, name, symbol)
@@ -211,8 +213,8 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 				return err
 			}
 			if name == "" || symbol == "" {
-				log.Error().Err(errors.New("erc20Name and erc20Symbol flags should be provided"))
-				return err
+				log.Error().Err(ErrErc20TokenAndSymbolNotProvided)
+				return ErrErc20TokenAndSymbolNotProvided
 			}
 		}
 	}
