@@ -125,14 +125,14 @@ func (c *EVMClient) LatestBlock() (*big.Int, error) {
 }
 
 func (c *EVMClient) IsEIP1559Activated() (bool, error) {
-	if head, err := c.HeaderByNumber(context.TODO(), nil); err != nil {
-		if head.BaseFee != nil {
-			return true, nil
-		} else {
-			return false, nil
-		}
-	} else {
+	head, err := c.HeaderByNumber(context.TODO(), nil)
+	if err != nil {
 		return false, err
+	}
+	if head.BaseFee != nil {
+		return true, nil
+	} else {
+		return false, nil
 	}
 }
 

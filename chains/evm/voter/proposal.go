@@ -103,14 +103,14 @@ func (p *Proposal) Execute(client ChainClient) error {
 	opts.GasLimit = uint64(2000000)
 
 	var tx evmclient.CommonTransaction
-	if activated, err := client.IsEIP1559Activated(); err != nil {
-		if activated {
-			tx = evmtransaction.NewDynamicFeeTransaction(cId, opts.Nonce.Uint64(), &p.BridgeAddress, big.NewInt(0), opts.GasTipCap, opts.GasFeeCap, opts.GasLimit, input)
-		} else {
-			tx = evmtransaction.NewTransaction(opts.Nonce.Uint64(), &p.BridgeAddress, big.NewInt(0), opts.GasLimit, opts.GasPrice, input)
-		}
-	} else {
+	activated, err := client.IsEIP1559Activated()
+	if err != nil {
 		return err
+	}
+	if activated {
+		tx = evmtransaction.NewDynamicFeeTransaction(cId, opts.Nonce.Uint64(), &p.BridgeAddress, big.NewInt(0), opts.GasTipCap, opts.GasFeeCap, opts.GasLimit, input)
+	} else {
+		tx = evmtransaction.NewTransaction(opts.Nonce.Uint64(), &p.BridgeAddress, big.NewInt(0), opts.GasLimit, opts.GasPrice, input)
 	}
 
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
@@ -152,14 +152,14 @@ func (p *Proposal) Vote(client ChainClient) error {
 	opts.GasLimit = uint64(2000000)
 
 	var tx evmclient.CommonTransaction
-	if activated, err := client.IsEIP1559Activated(); err != nil {
-		if activated {
-			tx = evmtransaction.NewDynamicFeeTransaction(cId, opts.Nonce.Uint64(), &p.BridgeAddress, big.NewInt(0), opts.GasTipCap, opts.GasFeeCap, opts.GasLimit, input)
-		} else {
-			tx = evmtransaction.NewTransaction(opts.Nonce.Uint64(), &p.BridgeAddress, big.NewInt(0), opts.GasLimit, opts.GasPrice, input)
-		}
-	} else {
+	activated, err := client.IsEIP1559Activated()
+	if err != nil {
 		return err
+	}
+	if activated {
+		tx = evmtransaction.NewDynamicFeeTransaction(cId, opts.Nonce.Uint64(), &p.BridgeAddress, big.NewInt(0), opts.GasTipCap, opts.GasFeeCap, opts.GasLimit, input)
+	} else {
+		tx = evmtransaction.NewTransaction(opts.Nonce.Uint64(), &p.BridgeAddress, big.NewInt(0), opts.GasLimit, opts.GasPrice, input)
 	}
 
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
