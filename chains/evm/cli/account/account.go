@@ -11,8 +11,8 @@ import (
 
 var AccountRootCMD = &cobra.Command{
 	Use:   "accounts",
-	Short: "account instructions",
-	Long:  "account instructions",
+	Short: "Account instructions",
+	Long:  "Account instructions",
 }
 
 func init() {
