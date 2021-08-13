@@ -36,8 +36,7 @@ type CommonTransaction interface {
 	// Hash returns the transaction hash.
 	Hash() common.Hash
 	// Returns signed transaction by provided private key
-	//RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
-	RawWithSignature(opts *bind.TransactOpts, key *ecdsa.PrivateKey) ([]byte, error)
+	RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
 }
 
 func NewEVMClient() *EVMClient {
@@ -125,6 +124,18 @@ func (c *EVMClient) LatestBlock() (*big.Int, error) {
 	return head.Number, err
 }
 
+func (c *EVMClient) IsEIP1559Activated() (bool, error) {
+	if head, err := c.HeaderByNumber(context.TODO(), nil); err != nil {
+		if head.BaseFee != nil {
+			return true, nil
+		} else {
+			return false, nil
+		}
+	} else {
+		return false, err
+	}
+}
+
 const (
 	DepositSignature string = "Deposit(uint8,bytes32,uint64)"
 )
@@ -149,10 +160,6 @@ func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common
 
 // SendRawTransaction accepts rlp-encode of signed transaction and sends it via RPC call
 func (c *EVMClient) SendRawTransaction(ctx context.Context, tx []byte) error {
-	// data, err := tx.MarshalBinary()
-	// if err != nil {
-	// 	return err
-	// }
 	return c.rpClient.CallContext(ctx, nil, "eth_sendRawTransaction", hexutil.Encode(tx))
 }
 
@@ -177,7 +184,11 @@ func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string
 //func (c *EVMClient) ChainID()
 
 func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransaction) (common.Hash, error) {
-	rawTx, err := tx.RawWithSignature(c.opts, c.config.kp.PrivateKey())
+	id, err := c.ChainID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	rawTx, err := tx.RawWithSignature(c.config.kp.PrivateKey(), id)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -202,7 +213,7 @@ func (c *EVMClient) UnlockOpts() {
 }
 
 func (c *EVMClient) UnsafeOpts() (*bind.TransactOpts, error) {
-	nonce, err := c.unsafeNonce()
+	nonce, err := c.UnsafeNonce()
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +256,7 @@ func (c *EVMClient) UnsafeOpts() (*bind.TransactOpts, error) {
 	return c.opts, nil
 }
 
-func (c *EVMClient) unsafeNonce() (*big.Int, error) {
+func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
 	var err error
 	for i := 0; i <= 10; i++ {
 		if c.nonce == nil {
@@ -263,7 +274,7 @@ func (c *EVMClient) unsafeNonce() (*big.Int, error) {
 }
 
 func (c *EVMClient) UnsafeIncreaseNonce() error {
-	nonce, err := c.unsafeNonce()
+	nonce, err := c.UnsafeNonce()
 	log.Debug().Str("nonce", nonce.String()).Msg("Before increase")
 	if err != nil {
 		return err

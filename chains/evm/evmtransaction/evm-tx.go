@@ -4,22 +4,53 @@ import (
 	"crypto/ecdsa"
 	"math/big"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/rs/zerolog/log"
 )
 
 type TX struct {
 	tx *types.Transaction
 }
 
+// type FeeClient interface {
+// 	// GasTipCap() *big.Int
+// 	// GasFeeCap() *big.Int
+// 	GasPrice() *big.Int
+// 	GasLimit() *big.Int
+// }
+
+// type LondonGasClient struct {
+// 	gasTipCap *big.Int
+// 	gasFeeCap *big.Int
+// }
+
+// func (gc *LondonGasClient) GasTipCap() *big.Int { return gc.gasTipCap }
+// func (gc *LondonGasClient) GasFeeCap() *big.Int { return gc.gasFeeCap }
+// func (gc *LondonGasClient) GasPrice() *big.Int  { return gc.gasPrice }
+// func (gc *LondonGasClient) GasLimit() *big.Int  { return gc.gasLimit }
+
+// type LegacyGasClient struct {
+// 	gasPrice *big.Int
+// 	gasLimit *big.Int
+// }
+
+// func (gc *LegacyGasClient) GasTipCap() *big.Int { return nil }
+// func (gc *LegacyGasClient) GasFeeCap() *big.Int { return nil }
+// func (gc *LegacyGasClient) GasPrice() *big.Int { return gc.gasPrice }
+// func (gc *LegacyGasClient) GasLimit() *big.Int { return gc.gasLimit }
+
 // RawWithSignature mostly copies WithSignature interface of type.Transaction from go-ethereum,
 // but return raw byte representation of transaction to be compatible and interchangeable between different go-ethereum forks
 // WithSignature returns a new transaction with the given signature.
 // This signature needs to be in the [R || S || V] format where V is 0 or 1.
-func (a *TX) RawWithSignature(opts *bind.TransactOpts, key *ecdsa.PrivateKey) ([]byte, error) {
+func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, chainId *big.Int) ([]byte, error) {
+	opts, err := bind.NewKeyedTransactorWithChainID(key, chainId)
+	if err != nil {
+		return nil, err
+	}
 	tx, err := opts.Signer(crypto.PubkeyToAddress(key.PublicKey), a.tx)
 	if err != nil {
 		return nil, err
@@ -34,28 +65,52 @@ func (a *TX) RawWithSignature(opts *bind.TransactOpts, key *ecdsa.PrivateKey) ([
 	return data, nil
 }
 
-func NewTransaction(opts *bind.TransactOpts, to common.Address, amount *big.Int, chainId *big.Int, data []byte) *TX {
+func NewDynamicFeeTransaction(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasTipCap *big.Int, gasFeeCap *big.Int, gasLimit uint64, data []byte) evmclient.CommonTransaction {
+	tx := types.NewTx(&types.DynamicFeeTx{
+		ChainID:   chainId,
+		Nonce:     nonce,
+		To:        to,
+		GasFeeCap: gasFeeCap,
+		GasTipCap: gasTipCap,
+		Gas:       gasLimit,
+		Value:     amount,
+		Data:      data,
+	})
+	return &TX{tx: tx}
+}
+
+func NewTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) evmclient.CommonTransaction {
 	var tx *types.Transaction
-	log.Info().Msgf("gas fee cap: %v", opts.GasFeeCap)
-	log.Info().Msgf("opts: %v", opts)
-	if opts.GasFeeCap != nil {
-		log.Debug().Msgf("Using DynamicFeeTx, nonce: %v", opts.Nonce)
-		tx = types.NewTx(&types.DynamicFeeTx{
-			ChainID:   chainId,
-			Nonce:     opts.Nonce.Uint64(),
-			To:        &to,
-			GasFeeCap: opts.GasFeeCap,
-			GasTipCap: opts.GasTipCap,
-			Gas:       opts.GasLimit,
-			Value:     amount,
-			Data:      data,
-		})
+	if to == nil {
+		tx = types.NewContractCreation(nonce, amount, gasLimit, gasPrice, data)
 	} else {
-		log.Debug().Msgf("Using LegacyTx, nonce: %v", opts.Nonce)
-		tx = types.NewTransaction(opts.Nonce.Uint64(), to, amount, opts.GasLimit, opts.GasPrice, data)
+		tx = types.NewTransaction(nonce, *to, amount, gasLimit, gasPrice, data)
 	}
 	return &TX{tx: tx}
 }
+
+// func NewTransaction(opts *bind.TransactOpts, to common.Address, amount *big.Int, chainId *big.Int, data []byte) *TX {
+// 	var tx *types.Transaction
+// 	log.Info().Msgf("gas fee cap: %v", opts.GasFeeCap)
+// 	log.Info().Msgf("opts: %v", opts)
+// 	if opts.GasFeeCap != nil {
+// 		log.Debug().Msgf("Using DynamicFeeTx, nonce: %v", opts.Nonce)
+// 		tx = types.NewTx(&types.DynamicFeeTx{
+// 			ChainID:   chainId,
+// 			Nonce:     opts.Nonce.Uint64(),
+// 			To:        &to,
+// 			GasFeeCap: opts.GasFeeCap,
+// 			GasTipCap: opts.GasTipCap,
+// 			Gas:       opts.GasLimit,
+// 			Value:     amount,
+// 			Data:      data,
+// 		})
+// 	} else {
+// 		log.Debug().Msgf("Using LegacyTx, nonce: %v", opts.Nonce)
+// 		tx = types.NewTransaction(opts.Nonce.Uint64(), to, amount, opts.GasLimit, opts.GasPrice, data)
+// 	}
+// 	return &TX{tx: tx}
+// }
 
 func (a *TX) Hash() common.Hash {
 	return a.tx.Hash()

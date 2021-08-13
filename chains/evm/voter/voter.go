@@ -25,7 +25,9 @@ type ChainClient interface {
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
 	LockOpts()
 	UnlockOpts()
+	UnsafeNonce() (*big.Int, error)
 	UnsafeOpts() (*bind.TransactOpts, error)
+	IsEIP1559Activated() (bool, error)
 	UnsafeIncreaseNonce() error
 	GasPrice() (*big.Int, error)
 	ChainID(ctx context.Context) (*big.Int, error)
