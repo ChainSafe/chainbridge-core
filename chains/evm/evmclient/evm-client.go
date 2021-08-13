@@ -16,7 +16,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -31,7 +30,6 @@ type EVMClient struct {
 	config    *EVMConfig
 	nonce     *big.Int
 	nonceLock sync.Mutex
-	opts      *bind.TransactOpts
 }
 
 type CommonTransaction interface {
@@ -71,18 +69,6 @@ func (c *EVMClient) Configurate(path string, name string) error {
 	}
 	c.Client = ethclient.NewClient(rpcClient)
 	c.rpClient = rpcClient
-
-	id, err := c.ChainID(context.TODO())
-	if err != nil {
-		return err
-	}
-
-	opts, err := bind.NewKeyedTransactorWithChainID(krp.PrivateKey(), id)
-	if err != nil {
-		return err
-	}
-	c.opts = opts
-	c.opts.Context = context.Background()
 
 	if generalConfig.LatestBlock {
 		curr, err := c.LatestBlock()
@@ -124,18 +110,6 @@ func (c *EVMClient) LatestBlock() (*big.Int, error) {
 		err = ethereum.NotFound
 	}
 	return head.Number, err
-}
-
-func (c *EVMClient) isEIP1559Activated() (bool, error) {
-	head, err := c.HeaderByNumber(context.TODO(), nil)
-	if err != nil {
-		return false, err
-	}
-	if head.BaseFee != nil {
-		return true, nil
-	} else {
-		return false, nil
-	}
 }
 
 const (
@@ -190,21 +164,25 @@ func (c *EVMClient) ConstructBridgeTransaction(nonce *big.Int, bridgeAddress *co
 	if err != nil {
 		return nil, err
 	}
-	opts, err := c.gasOpts()
-	if err != nil {
-		return nil, err
-	}
-	opts.GasLimit = uint64(2000000)
+	gasLimit := uint64(2000000)
 
 	var tx CommonTransaction
-	activated, err := c.isEIP1559Activated()
+	head, err := c.HeaderByNumber(context.TODO(), nil)
 	if err != nil {
 		return nil, err
 	}
-	if activated {
-		tx = evmtransaction.NewDynamicFeeTransaction(cId, nonce.Uint64(), bridgeAddress, big.NewInt(0), opts.GasTipCap, opts.GasFeeCap, opts.GasLimit, input)
+	if head.BaseFee != nil {
+		gasTipCap, gasFeeCap, err := c.EstimateGasLondon(context.TODO(), head.BaseFee)
+		if err != nil {
+			return nil, err
+		}
+		tx = evmtransaction.NewDynamicFeeTransaction(cId, nonce.Uint64(), bridgeAddress, big.NewInt(0), gasTipCap, gasFeeCap, gasLimit, input)
 	} else {
-		tx = evmtransaction.NewTransaction(nonce.Uint64(), bridgeAddress, big.NewInt(0), opts.GasLimit, opts.GasPrice, input)
+		gasPrice, err := c.GasPrice()
+		if err != nil {
+			return nil, err
+		}
+		tx = evmtransaction.NewTransaction(nonce.Uint64(), bridgeAddress, big.NewInt(0), gasLimit, gasPrice, input)
 	}
 	return tx, nil
 }
@@ -272,31 +250,6 @@ func (c *EVMClient) GasPrice() (*big.Int, error) {
 		return nil, err
 	}
 	return gasPrice, nil
-}
-
-// TODO: probably could change this is simply setting the opts rather than returning them
-func (c *EVMClient) gasOpts() (*bind.TransactOpts, error) {
-	head, err := c.HeaderByNumber(context.TODO(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Debug().Msgf("head.BaseFee: %v", head.BaseFee)
-	if head.BaseFee != nil {
-		gasTipCap, gasFeeCap, err := c.EstimateGasLondon(context.TODO(), head.BaseFee)
-		if err != nil {
-			return nil, err
-		}
-		c.opts.GasTipCap = gasTipCap
-		c.opts.GasFeeCap = gasFeeCap
-	} else {
-		gasPrice, err := c.GasPrice()
-		if err != nil {
-			return nil, err
-		}
-		c.opts.GasPrice = gasPrice
-	}
-	return c.opts, nil
 }
 
 func (c *EVMClient) EstimateGasLondon(ctx context.Context, baseFee *big.Int) (*big.Int, *big.Int, error) {
