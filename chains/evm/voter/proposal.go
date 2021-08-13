@@ -7,8 +7,6 @@ import (
 
 	"github.com/status-im/keycard-go/hexutils"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -89,35 +87,19 @@ func (p *Proposal) Execute(client ChainClient) error {
 		return err
 	}
 
-	cId, err := client.ChainID(context.TODO())
-	if err != nil {
-		return err
-	}
 	client.LockOpts()
 	defer client.UnlockOpts()
 
-	opts, err := client.UnsafeOpts()
+	tx, err := client.ConstructBridgeTransaction(&p.BridgeAddress, input)
 	if err != nil {
 		return err
-	}
-	opts.GasLimit = uint64(2000000)
-
-	var tx evmclient.CommonTransaction
-	activated, err := client.IsEIP1559Activated()
-	if err != nil {
-		return err
-	}
-	if activated {
-		tx = evmtransaction.NewDynamicFeeTransaction(cId, opts.Nonce.Uint64(), &p.BridgeAddress, big.NewInt(0), opts.GasTipCap, opts.GasFeeCap, opts.GasLimit, input)
-	} else {
-		tx = evmtransaction.NewTransaction(opts.Nonce.Uint64(), &p.BridgeAddress, big.NewInt(0), opts.GasLimit, opts.GasPrice, input)
 	}
 
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return err
 	}
-	log.Debug().Str("hash", hash.String()).Uint64("nonce", opts.Nonce.Uint64()).Msgf("Executed")
+	log.Debug().Str("hash", hash.String()).Msgf("Executed")
 	err = client.UnsafeIncreaseNonce()
 	if err != nil {
 		return err
@@ -138,35 +120,19 @@ func (p *Proposal) Vote(client ChainClient) error {
 		return err
 	}
 
-	cId, err := client.ChainID(context.TODO())
-	if err != nil {
-		return err
-	}
 	client.LockOpts()
 	defer client.UnlockOpts()
 
-	opts, err := client.UnsafeOpts()
+	tx, err := client.ConstructBridgeTransaction(&p.BridgeAddress, input)
 	if err != nil {
 		return err
-	}
-	opts.GasLimit = uint64(2000000)
-
-	var tx evmclient.CommonTransaction
-	activated, err := client.IsEIP1559Activated()
-	if err != nil {
-		return err
-	}
-	if activated {
-		tx = evmtransaction.NewDynamicFeeTransaction(cId, opts.Nonce.Uint64(), &p.BridgeAddress, big.NewInt(0), opts.GasTipCap, opts.GasFeeCap, opts.GasLimit, input)
-	} else {
-		tx = evmtransaction.NewTransaction(opts.Nonce.Uint64(), &p.BridgeAddress, big.NewInt(0), opts.GasLimit, opts.GasPrice, input)
 	}
 
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return err
 	}
-	log.Debug().Str("hash", hash.String()).Uint64("nonce", opts.Nonce.Uint64()).Msgf("Voted")
+	log.Debug().Str("hash", hash.String()).Msgf("Voted")
 	err = client.UnsafeIncreaseNonce()
 	if err != nil {
 		return err

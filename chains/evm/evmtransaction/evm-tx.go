@@ -4,7 +4,6 @@ import (
 	"crypto/ecdsa"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -38,7 +37,7 @@ func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, chainId *big.Int) ([]byte, 
 	return data, nil
 }
 
-func NewDynamicFeeTransaction(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasTipCap *big.Int, gasFeeCap *big.Int, gasLimit uint64, data []byte) evmclient.CommonTransaction {
+func NewDynamicFeeTransaction(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasTipCap *big.Int, gasFeeCap *big.Int, gasLimit uint64, data []byte) *TX {
 	tx := types.NewTx(&types.DynamicFeeTx{
 		ChainID:   chainId,
 		Nonce:     nonce,
@@ -52,7 +51,7 @@ func NewDynamicFeeTransaction(chainId *big.Int, nonce uint64, to *common.Address
 	return &TX{tx: tx}
 }
 
-func NewTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) evmclient.CommonTransaction {
+func NewTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *TX {
 	var tx *types.Transaction
 	if to == nil {
 		tx = types.NewContractCreation(nonce, amount, gasLimit, gasPrice, data)

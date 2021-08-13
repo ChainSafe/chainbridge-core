@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
@@ -124,7 +125,7 @@ func (c *EVMClient) LatestBlock() (*big.Int, error) {
 	return head.Number, err
 }
 
-func (c *EVMClient) IsEIP1559Activated() (bool, error) {
+func (c *EVMClient) isEIP1559Activated() (bool, error) {
 	head, err := c.HeaderByNumber(context.TODO(), nil)
 	if err != nil {
 		return false, err
@@ -182,6 +183,30 @@ func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string
 }
 
 //func (c *EVMClient) ChainID()
+
+func (c *EVMClient) ConstructBridgeTransaction(bridgeAddress *common.Address, input []byte) (CommonTransaction, error) {
+	cId, err := c.ChainID(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+	opts, err := c.UnsafeOpts()
+	if err != nil {
+		return nil, err
+	}
+	opts.GasLimit = uint64(2000000)
+
+	var tx CommonTransaction
+	activated, err := c.isEIP1559Activated()
+	if err != nil {
+		return nil, err
+	}
+	if activated {
+		tx = evmtransaction.NewDynamicFeeTransaction(cId, opts.Nonce.Uint64(), bridgeAddress, big.NewInt(0), opts.GasTipCap, opts.GasFeeCap, opts.GasLimit, input)
+	} else {
+		tx = evmtransaction.NewTransaction(opts.Nonce.Uint64(), bridgeAddress, big.NewInt(0), opts.GasLimit, opts.GasPrice, input)
+	}
+	return tx, nil
+}
 
 func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransaction) (common.Hash, error) {
 	id, err := c.ChainID(ctx)
