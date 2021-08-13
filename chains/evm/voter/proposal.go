@@ -87,10 +87,14 @@ func (p *Proposal) Execute(client ChainClient) error {
 		return err
 	}
 
-	client.LockOpts()
-	defer client.UnlockOpts()
+	client.LockNonce()
+	defer client.UnlockNonce()
 
-	tx, err := client.ConstructBridgeTransaction(&p.BridgeAddress, input)
+	n, err := client.UnsafeNonce()
+	if err != nil {
+		return err
+	}
+	tx, err := client.ConstructBridgeTransaction(n, &p.BridgeAddress, input)
 	if err != nil {
 		return err
 	}
@@ -99,7 +103,7 @@ func (p *Proposal) Execute(client ChainClient) error {
 	if err != nil {
 		return err
 	}
-	log.Debug().Str("hash", hash.String()).Msgf("Executed")
+	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msgf("Executed")
 	err = client.UnsafeIncreaseNonce()
 	if err != nil {
 		return err
@@ -120,10 +124,14 @@ func (p *Proposal) Vote(client ChainClient) error {
 		return err
 	}
 
-	client.LockOpts()
-	defer client.UnlockOpts()
+	client.LockNonce()
+	defer client.UnlockNonce()
 
-	tx, err := client.ConstructBridgeTransaction(&p.BridgeAddress, input)
+	n, err := client.UnsafeNonce()
+	if err != nil {
+		return err
+	}
+	tx, err := client.ConstructBridgeTransaction(n, &p.BridgeAddress, input)
 	if err != nil {
 		return err
 	}
@@ -132,7 +140,7 @@ func (p *Proposal) Vote(client ChainClient) error {
 	if err != nil {
 		return err
 	}
-	log.Debug().Str("hash", hash.String()).Msgf("Voted")
+	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msgf("Voted")
 	err = client.UnsafeIncreaseNonce()
 	if err != nil {
 		return err

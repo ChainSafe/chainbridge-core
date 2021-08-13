@@ -22,10 +22,10 @@ type ChainClient interface {
 	SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error)
 	RelayerAddress() common.Address
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
-	LockOpts()
-	UnlockOpts()
+	LockNonce()
+	UnlockNonce()
 	UnsafeNonce() (*big.Int, error)
-	ConstructBridgeTransaction(bridgeAddress *common.Address, input []byte) (evmclient.CommonTransaction, error)
+	ConstructBridgeTransaction(nonce *big.Int, bridgeAddress *common.Address, input []byte) (evmclient.CommonTransaction, error)
 	UnsafeIncreaseNonce() error
 	GasPrice() (*big.Int, error)
 	ChainID(ctx context.Context) (*big.Int, error)

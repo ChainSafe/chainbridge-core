@@ -12,6 +12,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
+	"github.com/ChainSafe/chainbridge-core/config"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum"
@@ -26,11 +27,11 @@ import (
 
 type EVMClient struct {
 	*ethclient.Client
-	rpClient *rpc.Client
-	config   *EVMConfig
-	nonce    *big.Int
-	optsLock sync.Mutex
-	opts     *bind.TransactOpts
+	rpClient  *rpc.Client
+	config    *EVMConfig
+	nonce     *big.Int
+	nonceLock sync.Mutex
+	opts      *bind.TransactOpts
 }
 
 type CommonTransaction interface {
@@ -184,12 +185,12 @@ func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string
 
 //func (c *EVMClient) ChainID()
 
-func (c *EVMClient) ConstructBridgeTransaction(bridgeAddress *common.Address, input []byte) (CommonTransaction, error) {
+func (c *EVMClient) ConstructBridgeTransaction(nonce *big.Int, bridgeAddress *common.Address, input []byte) (CommonTransaction, error) {
 	cId, err := c.ChainID(context.TODO())
 	if err != nil {
 		return nil, err
 	}
-	opts, err := c.UnsafeOpts()
+	opts, err := c.gasOpts()
 	if err != nil {
 		return nil, err
 	}
@@ -201,9 +202,9 @@ func (c *EVMClient) ConstructBridgeTransaction(bridgeAddress *common.Address, in
 		return nil, err
 	}
 	if activated {
-		tx = evmtransaction.NewDynamicFeeTransaction(cId, opts.Nonce.Uint64(), bridgeAddress, big.NewInt(0), opts.GasTipCap, opts.GasFeeCap, opts.GasLimit, input)
+		tx = evmtransaction.NewDynamicFeeTransaction(cId, nonce.Uint64(), bridgeAddress, big.NewInt(0), opts.GasTipCap, opts.GasFeeCap, opts.GasLimit, input)
 	} else {
-		tx = evmtransaction.NewTransaction(opts.Nonce.Uint64(), bridgeAddress, big.NewInt(0), opts.GasLimit, opts.GasPrice, input)
+		tx = evmtransaction.NewTransaction(nonce.Uint64(), bridgeAddress, big.NewInt(0), opts.GasLimit, opts.GasPrice, input)
 	}
 	return tx, nil
 }
@@ -229,56 +230,12 @@ func (c *EVMClient) RelayerAddress() common.Address {
 	return c.config.kp.CommonAddress()
 }
 
-func (c *EVMClient) LockOpts() {
-	c.optsLock.Lock()
+func (c *EVMClient) LockNonce() {
+	c.nonceLock.Lock()
 }
 
-func (c *EVMClient) UnlockOpts() {
-	c.optsLock.Unlock()
-}
-
-func (c *EVMClient) UnsafeOpts() (*bind.TransactOpts, error) {
-	nonce, err := c.UnsafeNonce()
-	if err != nil {
-		return nil, err
-	}
-	c.opts.Nonce = nonce
-
-	head, err := c.HeaderByNumber(context.TODO(), nil)
-	if err != nil {
-		c.UnlockOpts()
-		return nil, err
-	}
-
-	log.Debug().Msgf("head.BaseFee: %v", head.BaseFee)
-	if head.BaseFee != nil {
-		tip, err := c.SuggestGasTipCap(context.TODO())
-		if err != nil {
-			c.UnlockOpts()
-			return nil, err
-		}
-		c.opts.GasTipCap = tip
-		log.Debug().Msgf("Gas tip cap: %v", c.opts.GasTipCap)
-
-		gasFeeCap := new(big.Int).Add(
-			c.opts.GasTipCap,
-			new(big.Int).Mul(head.BaseFee, big.NewInt(2)),
-		)
-		c.opts.GasFeeCap = gasFeeCap
-		log.Debug().Msgf("Gas fee cap: %v", c.opts.GasFeeCap)
-
-		if c.opts.GasFeeCap.Cmp(c.opts.GasTipCap) < 0 {
-			c.UnlockOpts()
-			return nil, fmt.Errorf("maxFeePerGas (%v) < maxPriorityFeePerGas (%v)", c.opts.GasFeeCap, c.opts.GasTipCap)
-		}
-	} else {
-		c.opts.GasPrice, err = c.GasPrice()
-		if err != nil {
-			c.UnlockOpts()
-			return nil, err
-		}
-	}
-	return c.opts, nil
+func (c *EVMClient) UnlockNonce() {
+	c.nonceLock.Unlock()
 }
 
 func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
@@ -315,6 +272,64 @@ func (c *EVMClient) GasPrice() (*big.Int, error) {
 		return nil, err
 	}
 	return gasPrice, nil
+}
+
+// TODO: probably could change this is simply setting the opts rather than returning them
+func (c *EVMClient) gasOpts() (*bind.TransactOpts, error) {
+	head, err := c.HeaderByNumber(context.TODO(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Debug().Msgf("head.BaseFee: %v", head.BaseFee)
+	if head.BaseFee != nil {
+		gasTipCap, gasFeeCap, err := c.EstimateGasLondon(context.TODO(), head.BaseFee)
+		if err != nil {
+			return nil, err
+		}
+		c.opts.GasTipCap = gasTipCap
+		c.opts.GasFeeCap = gasFeeCap
+	} else {
+		gasPrice, err := c.GasPrice()
+		if err != nil {
+			return nil, err
+		}
+		c.opts.GasPrice = gasPrice
+	}
+	return c.opts, nil
+}
+
+func (c *EVMClient) EstimateGasLondon(ctx context.Context, baseFee *big.Int) (*big.Int, *big.Int, error) {
+	var maxPriorityFeePerGas *big.Int
+	var maxFeePerGas *big.Int
+
+	var sharedEVMConfig config.SharedEVMConfig = c.config.SharedEVMConfig
+	if sharedEVMConfig.MaxGasPrice.Cmp(baseFee) < 0 {
+		maxPriorityFeePerGas = big.NewInt(1)
+		maxFeePerGas = new(big.Int).Add(baseFee, maxPriorityFeePerGas)
+		return maxPriorityFeePerGas, maxFeePerGas, nil
+	}
+
+	maxPriorityFeePerGas, err := c.SuggestGasTipCap(context.TODO())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	maxFeePerGas = new(big.Int).Add(
+		maxPriorityFeePerGas,
+		new(big.Int).Mul(baseFee, big.NewInt(2)),
+	)
+
+	if maxFeePerGas.Cmp(maxPriorityFeePerGas) < 0 {
+		return nil, nil, fmt.Errorf("maxFeePerGas (%v) < maxPriorityFeePerGas (%v)", maxFeePerGas, maxPriorityFeePerGas)
+	}
+
+	// Check we aren't exceeding our limit
+	if maxFeePerGas.Cmp(sharedEVMConfig.MaxGasPrice) == 1 {
+		maxPriorityFeePerGas.Sub(sharedEVMConfig.MaxGasPrice, baseFee)
+		maxFeePerGas = sharedEVMConfig.MaxGasPrice
+	}
+	return maxPriorityFeePerGas, maxFeePerGas, nil
 }
 
 func (c *EVMClient) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
