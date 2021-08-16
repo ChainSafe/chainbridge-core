@@ -7,7 +7,6 @@ import (
 
 	"github.com/status-im/keycard-go/hexutils"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -88,29 +87,27 @@ func (p *Proposal) Execute(client ChainClient) error {
 		return err
 	}
 
-	cId, err := client.ChainID(context.TODO())
+	client.LockNonce()
+	defer client.UnlockNonce()
+
+	n, err := client.UnsafeNonce()
 	if err != nil {
 		return err
 	}
-	client.LockOpts()
-	opts, err := client.UnsafeOpts()
+	tx, err := client.ConstructBridgeTransaction(n, &p.BridgeAddress, input)
 	if err != nil {
 		return err
 	}
-	opts.GasLimit = uint64(2000000)
-	tx := evmtransaction.NewTransaction(opts, p.BridgeAddress, big.NewInt(0), cId, input)
 
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return err
 	}
-	log.Debug().Str("hash", hash.String()).Uint64("nonce", opts.Nonce.Uint64()).Msgf("Executed")
+	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msgf("Executed")
 	err = client.UnsafeIncreaseNonce()
 	if err != nil {
-		client.UnlockOpts()
 		return err
 	}
-	client.UnlockOpts()
 	return nil
 }
 
@@ -127,29 +124,27 @@ func (p *Proposal) Vote(client ChainClient) error {
 		return err
 	}
 
-	cId, err := client.ChainID(context.TODO())
+	client.LockNonce()
+	defer client.UnlockNonce()
+
+	n, err := client.UnsafeNonce()
 	if err != nil {
 		return err
 	}
-	client.LockOpts()
-	opts, err := client.UnsafeOpts()
+	tx, err := client.ConstructBridgeTransaction(n, &p.BridgeAddress, input)
 	if err != nil {
 		return err
 	}
-	opts.GasLimit = uint64(2000000)
-	tx := evmtransaction.NewTransaction(opts, p.BridgeAddress, big.NewInt(0), cId, input)
 
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return err
 	}
-	log.Debug().Str("hash", hash.String()).Uint64("nonce", opts.Nonce.Uint64()).Msgf("Voted")
+	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msgf("Voted")
 	err = client.UnsafeIncreaseNonce()
 	if err != nil {
-		client.UnlockOpts()
 		return err
 	}
-	client.UnlockOpts()
 	return nil
 }
 

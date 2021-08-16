@@ -11,7 +11,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 
 	"github.com/ChainSafe/chainbridge-core/relayer"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
@@ -23,9 +22,10 @@ type ChainClient interface {
 	SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error)
 	RelayerAddress() common.Address
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
-	LockOpts()
-	UnlockOpts()
-	UnsafeOpts() (*bind.TransactOpts, error)
+	LockNonce()
+	UnlockNonce()
+	UnsafeNonce() (*big.Int, error)
+	ConstructBridgeTransaction(nonce *big.Int, bridgeAddress *common.Address, input []byte) (evmclient.CommonTransaction, error)
 	UnsafeIncreaseNonce() error
 	GasPrice() (*big.Int, error)
 	ChainID(ctx context.Context) (*big.Int, error)
