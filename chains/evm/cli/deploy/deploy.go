@@ -15,7 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var ErrNoDeploymentFalgsProvided = errors.New("provide at least one deployment flag. For help use --help.")
@@ -59,19 +58,6 @@ func BindDeployEVMFlags(deployCmd *cobra.Command) {
 	deployCmd.Flags().String(BridgeAddressFlagName, "", "bridge contract address. Should be provided if handlers are deployed separately")
 	deployCmd.Flags().String(Erc20SymbolFlagName, "", "ERC20 contract symbol")
 	deployCmd.Flags().String(Erc20NameFlagName, "", "ERC20 contract name")
-
-	viper.BindPFlag(BridgeFlagName, deployCmd.Flags().Lookup(BridgeFlagName))
-	viper.BindPFlag(Erc20HandlerFlagName, deployCmd.Flags().Lookup(Erc20HandlerFlagName))
-	viper.BindPFlag(Erc20FlagName, deployCmd.Flags().Lookup(Erc20FlagName))
-	viper.BindPFlag(Erc721FlagName, deployCmd.Flags().Lookup(Erc721FlagName))
-	viper.BindPFlag(DeployAllFlagName, deployCmd.Flags().Lookup(DeployAllFlagName))
-	viper.BindPFlag(RelayerThresholdFlagName, deployCmd.Flags().Lookup(RelayerThresholdFlagName))
-	viper.BindPFlag(ChainIdFlagName, deployCmd.Flags().Lookup(ChainIdFlagName))
-	viper.BindPFlag(RelayersFlagName, deployCmd.Flags().Lookup(RelayersFlagName))
-	viper.BindPFlag(FeeFlagName, deployCmd.Flags().Lookup(FeeFlagName))
-	viper.BindPFlag(BridgeAddressFlagName, deployCmd.Flags().Lookup(BridgeAddressFlagName))
-	viper.BindPFlag(Erc20SymbolFlagName, deployCmd.Flags().Lookup(Erc20SymbolFlagName))
-	viper.BindPFlag(Erc20NameFlagName, deployCmd.Flags().Lookup(Erc20NameFlagName))
 }
 
 func init() {
@@ -101,16 +87,17 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 		log.Error().Err(fmt.Errorf("relayer threshold error: %v", err)).Msg("error parsing relayersTreshold")
 		return err
 	}
-	relayerAddressesStringSlice := viper.GetStringSlice(RelayersFlagName)
+	relayerAddressesStringSlice, err := cmd.Flags().GetStringSlice(RelayersFlagName)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("relayer addresses error: %v", err))
 		return err
 	}
+
 	var relayerAddresses []common.Address
 	for _, addr := range relayerAddressesStringSlice {
 		relayerAddresses = append(relayerAddresses, common.HexToAddress(addr))
 	}
-
+	log.Debug().Msgf("Relaysers for deploy %+v", relayerAddressesStringSlice)
 	var bridgeAddr common.Address
 	bridgeAddressString := cmd.Flag("bridgeAddress").Value.String()
 	if common.IsHexAddress(bridgeAddressString) {
@@ -120,12 +107,12 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 	deployments := make([]string, 0)
 
 	// flag bools
-	log.Debug().Msgf("all bool: %v", viper.GetBool("all"))
 	allBool, err := cmd.Flags().GetBool("all")
 	if err != nil {
 		log.Error().Err(fmt.Errorf("all flag error: %v", err))
 		return err
 	}
+	log.Debug().Msgf("all bool: %v", allBool)
 	bridgeBool, err := cmd.Flags().GetBool("bridge")
 	if err != nil {
 		log.Error().Err(fmt.Errorf("bridge flag error: %v", err))
