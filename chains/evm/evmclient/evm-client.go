@@ -375,38 +375,6 @@ type GasPricer interface {
 	GasPrice() ([]*big.Int, error)
 }
 
-type DynamicGasPricer struct {
-	client *EVMClient
-}
-
-func NewDynamicGasPricer(client *EVMClient) GasPricer {
-	return &DynamicGasPricer{client: client}
-}
-
-func (gasPricer *DynamicGasPricer) GasPrice() ([]*big.Int, error) {
-	baseFee, err := gasPricer.client.BaseFee()
-	if err != nil {
-		return nil, err
-	}
-
-	var gasPrices []*big.Int
-	if baseFee != nil {
-		gasTipCap, gasFeeCap, err := gasPricer.client.EstimateGasLondon(context.TODO(), baseFee)
-		if err != nil {
-			return nil, err
-		}
-		gasPrices[0] = gasTipCap
-		gasPrices[1] = gasFeeCap
-	} else {
-		gp, err := gasPricer.client.GasPrice()
-		if err != nil {
-			return nil, err
-		}
-		gasPrices[0] = gp
-	}
-	return gasPrices, nil
-}
-
 type DefaultGasPricer struct {
 	gasPrice *big.Int
 }

@@ -120,15 +120,15 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
 	}
 }
 
-type BaseGasPricer struct {
+type DynamicGasPricer struct {
 	client ChainClient
 }
 
-func NewGasPricer(client ChainClient) evmclient.GasPricer {
-	return &BaseGasPricer{client: client}
+func NewDynamicGasPricer(client ChainClient) evmclient.GasPricer {
+	return &DynamicGasPricer{client: client}
 }
 
-func (gasPricer *BaseGasPricer) GasPrice() ([]*big.Int, error) {
+func (gasPricer *DynamicGasPricer) GasPrice() ([]*big.Int, error) {
 	baseFee, err := gasPricer.client.BaseFee()
 	if err != nil {
 		return nil, err
