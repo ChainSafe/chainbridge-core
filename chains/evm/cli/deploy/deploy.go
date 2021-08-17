@@ -82,6 +82,8 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 		log.Error().Err(fmt.Errorf("ethereum client error: %v", err)).Msg("error initializing new EVM client")
 		return err
 	}
+	gasPricer := evmclient.NewDefaultGasPricer(gasPrice)
+
 	relayerThreshold, err := cmd.Flags().GetUint64("relayerThreshold")
 	if err != nil {
 		log.Error().Err(fmt.Errorf("relayer threshold error: %v", err)).Msg("error parsing relayersTreshold")
@@ -158,7 +160,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 				log.Error().Err(fmt.Errorf("chain ID flag error: %v", err))
 				return err
 			}
-			bridgeAddr, err = calls.DeployBridge(ethClient, txFabric, uint8(chainIdInt), relayerAddresses, big.NewInt(0).SetUint64(relayerThreshold))
+			bridgeAddr, err = calls.DeployBridge(ethClient, gasPricer, txFabric, uint8(chainIdInt), relayerAddresses, big.NewInt(0).SetUint64(relayerThreshold))
 			if err != nil {
 				log.Error().Err(fmt.Errorf("bridge deploy failed: %w", err))
 				return err
@@ -174,7 +176,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 				return err
 			}
 
-			erc20HandlerAddr, err := calls.DeployErc20Handler(ethClient, txFabric, bridgeAddr)
+			erc20HandlerAddr, err := calls.DeployErc20Handler(ethClient, gasPricer, txFabric, bridgeAddr)
 			if err != nil {
 				log.Error().Err(fmt.Errorf("ERC20 handler deploy failed: %w", err))
 				return err
@@ -189,7 +191,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 				return ErrErc20TokenAndSymbolNotProvided
 			}
 
-			erc20Addr, err := calls.DeployErc20(ethClient, txFabric, name, symbol)
+			erc20Addr, err := calls.DeployErc20(ethClient, gasPricer, txFabric, name, symbol)
 			if err != nil {
 				log.Error().Err(fmt.Errorf("erc 20 deploy failed: %w", err))
 				return err
