@@ -17,7 +17,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type TxFabric func(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, gasTipCap *big.Int, gasFeeCap *big.Int, data []byte) evmclient.CommonTransaction
+type TxFabric func(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPricer evmclient.GasPricer, data []byte) (evmclient.CommonTransaction, error)
 
 func NewProposal(source uint8, depositNonce uint64, resourceId [32]byte, data []byte, handlerAddress, bridgeAddress common.Address) *Proposal {
 	return &Proposal{
@@ -109,7 +109,14 @@ func (p *Proposal) Execute(client ChainClient, fabric TxFabric) error {
 		return err
 	}
 
-	tx, err := constructBridgeTransaction(client, fabric, n, &p.BridgeAddress, input)
+	cId, err := client.ChainID(context.TODO())
+	if err != nil {
+		return err
+	}
+	gasLimit := uint64(2000000)
+
+	gasPricer := NewGasPricer(client)
+	tx, err := fabric(cId, n.Uint64(), &p.BridgeAddress, big.NewInt(0), gasLimit, gasPricer, input)
 	if err != nil {
 		return err
 	}
@@ -147,7 +154,14 @@ func (p *Proposal) Vote(client ChainClient, fabric TxFabric) error {
 		return err
 	}
 
-	tx, err := constructBridgeTransaction(client, fabric, n, &p.BridgeAddress, input)
+	cId, err := client.ChainID(context.TODO())
+	if err != nil {
+		return err
+	}
+	gasLimit := uint64(2000000)
+
+	gasPricer := NewGasPricer(client)
+	tx, err := fabric(cId, n.Uint64(), &p.BridgeAddress, big.NewInt(0), gasLimit, gasPricer, input)
 	if err != nil {
 		return err
 	}
@@ -162,35 +176,6 @@ func (p *Proposal) Vote(client ChainClient, fabric TxFabric) error {
 		return err
 	}
 	return nil
-}
-
-func constructBridgeTransaction(client ChainClient, fabric TxFabric, n *big.Int, bridgeAddress *common.Address, input []byte) (evmclient.CommonTransaction, error) {
-	var tx evmclient.CommonTransaction
-	gasLimit := uint64(2000000)
-
-	baseFee, err := client.BaseFee()
-	if err != nil {
-		return nil, err
-	}
-
-	if baseFee != nil {
-		cId, err := client.ChainID(context.TODO())
-		if err != nil {
-			return nil, err
-		}
-		gasTipCap, gasFeeCap, err := client.EstimateGasLondon(context.TODO(), baseFee)
-		if err != nil {
-			return nil, err
-		}
-		tx = fabric(cId, n.Uint64(), bridgeAddress, big.NewInt(0), gasLimit, nil, gasTipCap, gasFeeCap, input)
-	} else {
-		gp, err := client.GasPrice()
-		if err != nil {
-			return nil, err
-		}
-		tx = fabric(nil, n.Uint64(), bridgeAddress, big.NewInt(0), gasLimit, gp, nil, nil, input)
-	}
-	return tx, nil
 }
 
 // GetDataHash constructs and returns proposal data hash

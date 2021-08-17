@@ -119,3 +119,35 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
 		}
 	}
 }
+
+type BaseGasPricer struct {
+	client ChainClient
+}
+
+func NewGasPricer(client ChainClient) evmclient.GasPricer {
+	return &BaseGasPricer{client: client}
+}
+
+func (gasPricer *BaseGasPricer) GasPrice() ([]*big.Int, error) {
+	baseFee, err := gasPricer.client.BaseFee()
+	if err != nil {
+		return nil, err
+	}
+
+	var gasPrices []*big.Int
+	if baseFee != nil {
+		gasTipCap, gasFeeCap, err := gasPricer.client.EstimateGasLondon(context.TODO(), baseFee)
+		if err != nil {
+			return nil, err
+		}
+		gasPrices[0] = gasTipCap
+		gasPrices[1] = gasFeeCap
+	} else {
+		gp, err := gasPricer.client.GasPrice()
+		if err != nil {
+			return nil, err
+		}
+		gasPrices[0] = gp
+	}
+	return gasPrices, nil
+}

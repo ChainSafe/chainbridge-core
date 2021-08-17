@@ -38,11 +38,16 @@ func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, chainId *big.Int) ([]byte, 
 	return data, nil
 }
 
-func NewTransaction(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, gasTipCap *big.Int, gasFeeCap *big.Int, data []byte) evmclient.CommonTransaction {
-	if gasPrice != nil {
-		return newTransaction(nonce, to, amount, gasLimit, gasPrice, data)
+func NewTransaction(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPricer evmclient.GasPricer, data []byte) (evmclient.CommonTransaction, error) {
+	gasPrices, err := gasPricer.GasPrice()
+	if err != nil {
+		return nil, err
+	}
+	// If there is more than one gas price returned we are sending with DynamicFeeTx's
+	if gasPrices[1] == nil {
+		return newTransaction(nonce, to, amount, gasLimit, gasPrices[0], data), nil
 	} else {
-		return newDynamicFeeTransaction(chainId, nonce, to, amount, gasLimit, gasTipCap, gasFeeCap, data)
+		return newDynamicFeeTransaction(chainId, nonce, to, amount, gasLimit, gasPrices[0], gasPrices[1], data), nil
 	}
 }
 

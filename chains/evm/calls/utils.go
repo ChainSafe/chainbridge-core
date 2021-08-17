@@ -93,7 +93,12 @@ func Transact(client ChainClient, txFabric TxFabric, to *common.Address, data []
 	if err != nil {
 		return common.Hash{}, err
 	}
-	tx := txFabric(nil, n.Uint64(), to, big.NewInt(0), gasLimit, gp, nil, nil, data)
+
+	gasPricer := evmclient.NewDefaultGasPricer(gp)
+	tx, err := txFabric(nil, n.Uint64(), to, big.NewInt(0), gasLimit, gasPricer, data)
+	if err != nil {
+		return common.Hash{}, err
+	}
 	_, err = client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return common.Hash{}, err
