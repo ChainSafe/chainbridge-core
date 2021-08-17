@@ -115,7 +115,7 @@ func (p *Proposal) Execute(client ChainClient, fabric TxFabric) error {
 	}
 	gasLimit := uint64(2000000)
 
-	gasPricer := NewGasPricer(client)
+	gasPricer := NewDynamicGasPricer(client)
 	tx, err := fabric(cId, n.Uint64(), &p.BridgeAddress, big.NewInt(0), gasLimit, gasPricer, input)
 	if err != nil {
 		return err
@@ -160,7 +160,7 @@ func (p *Proposal) Vote(client ChainClient, fabric TxFabric) error {
 	}
 	gasLimit := uint64(2000000)
 
-	gasPricer := NewGasPricer(client)
+	gasPricer := NewDynamicGasPricer(client)
 	tx, err := fabric(cId, n.Uint64(), &p.BridgeAddress, big.NewInt(0), gasLimit, gasPricer, input)
 	if err != nil {
 		return err
