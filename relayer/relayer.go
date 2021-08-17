@@ -85,7 +85,7 @@ func (r *Relayer) route(m *Message, chainMetrics *metrics.ChainMetrics) {
 
 	log.Debug().Msgf("Sending message %+v to destination %v", m, m.Destination)
 	if err := w.Write(m); err != nil {
-		log.Error().Err(err).Msgf("%v", m)
+		log.Error().Err(err).Msgf("writing message %+v", m)
 		return
 	}
 }

@@ -6,6 +6,7 @@ import (
 )
 
 var (
+	// Flags for running the Chainbridge app
 	ConfigFlagName      = "config"
 	KeystoreFlagName    = "keystore"
 	BlockstoreFlagName  = "blockstore"
@@ -15,21 +16,21 @@ var (
 )
 
 func BindFlags(rootCMD *cobra.Command) {
-	rootCMD.Flags().String(ConfigFlagName, ".", "Path to JSON configuration files directory")
-	viper.BindPFlag(ConfigFlagName, rootCMD.Flags().Lookup(ConfigFlagName))
+	rootCMD.PersistentFlags().String(ConfigFlagName, ".", "Path to JSON configuration files directory")
+	viper.BindPFlag(ConfigFlagName, rootCMD.PersistentFlags().Lookup(ConfigFlagName))
 
-	rootCMD.Flags().String(BlockstoreFlagName, "./lvldbdata", "Specify path for blockstore")
-	viper.BindPFlag(BlockstoreFlagName, rootCMD.Flags().Lookup(BlockstoreFlagName))
+	rootCMD.PersistentFlags().String(BlockstoreFlagName, "./lvldbdata", "Specify path for blockstore")
+	viper.BindPFlag(BlockstoreFlagName, rootCMD.PersistentFlags().Lookup(BlockstoreFlagName))
 
-	rootCMD.Flags().Bool(FreshStartFlagName, false, "Disables loading from blockstore at start. Opts will still be used if specified. (default: false)")
-	viper.BindPFlag(FreshStartFlagName, rootCMD.Flags().Lookup(FreshStartFlagName))
+	rootCMD.PersistentFlags().Bool(FreshStartFlagName, false, "Disables loading from blockstore at start. Opts will still be used if specified. (default: false)")
+	viper.BindPFlag(FreshStartFlagName, rootCMD.PersistentFlags().Lookup(FreshStartFlagName))
 
-	rootCMD.Flags().Bool(LatestBlockFlagName, false, "Overrides blockstore and start block, starts from latest block (default: false)")
-	viper.BindPFlag(LatestBlockFlagName, rootCMD.Flags().Lookup(LatestBlockFlagName))
+	rootCMD.PersistentFlags().Bool(LatestBlockFlagName, false, "Overrides blockstore and start block, starts from latest block (default: false)")
+	viper.BindPFlag(LatestBlockFlagName, rootCMD.PersistentFlags().Lookup(LatestBlockFlagName))
 
-	rootCMD.Flags().String(KeystoreFlagName, "./keys", "Path to keystore directory")
-	viper.BindPFlag(KeystoreFlagName, rootCMD.Flags().Lookup(KeystoreFlagName))
+	rootCMD.PersistentFlags().String(KeystoreFlagName, "./keys", "Path to keystore directory")
+	viper.BindPFlag(KeystoreFlagName, rootCMD.PersistentFlags().Lookup(KeystoreFlagName))
 
-	rootCMD.Flags().String(TestKeyFlagName, "", "Applies a predetermined test keystore to the chains.")
-	viper.BindPFlag(TestKeyFlagName, rootCMD.Flags().Lookup(TestKeyFlagName))
+	rootCMD.PersistentFlags().String(TestKeyFlagName, "", "Applies a predetermined test keystore to the chains.")
+	viper.BindPFlag(TestKeyFlagName, rootCMD.PersistentFlags().Lookup(TestKeyFlagName))
 }

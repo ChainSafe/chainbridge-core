@@ -25,8 +25,9 @@ type ChainClient interface {
 	LockNonce()
 	UnlockNonce()
 	UnsafeNonce() (*big.Int, error)
-	ConstructBridgeTransaction(nonce *big.Int, bridgeAddress *common.Address, input []byte) (evmclient.CommonTransaction, error)
 	UnsafeIncreaseNonce() error
+	BaseFee() (*big.Int, error)
+	EstimateGasLondon(ctx context.Context, baseFee *big.Int) (*big.Int, *big.Int, error)
 	GasPrice() (*big.Int, error)
 	ChainID(ctx context.Context) (*big.Int, error)
 }
@@ -34,8 +35,8 @@ type ChainClient interface {
 type Proposer interface {
 	Status(client ChainClient) (relayer.ProposalStatus, error)
 	VotedBy(client ChainClient, by common.Address) (bool, error)
-	Execute(client ChainClient) error
-	Vote(client ChainClient) error
+	Execute(client ChainClient, fabric TxFabric) error
+	Vote(client ChainClient, fabric TxFabric) error
 }
 
 type MessageHandler interface {
@@ -46,12 +47,14 @@ type EVMVoter struct {
 	stop   <-chan struct{}
 	mh     MessageHandler
 	client ChainClient
+	fabric TxFabric
 }
 
-func NewVoter(mh MessageHandler, client ChainClient) *EVMVoter {
+func NewVoter(mh MessageHandler, client ChainClient, fabric TxFabric) *EVMVoter {
 	return &EVMVoter{
 		mh:     mh,
 		client: client,
+		fabric: fabric,
 	}
 }
 
@@ -75,7 +78,7 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
 	if votedByCurrentExecutor || ps == relayer.ProposalStatusPassed || ps == relayer.ProposalStatusCanceled || ps == relayer.ProposalStatusExecuted {
 		if ps == relayer.ProposalStatusPassed {
 			// We should not vote for this proposal but it is ready to be executed
-			err = prop.Execute(w.client)
+			err = prop.Execute(w.client, w.fabric)
 			if err != nil {
 				log.Error().Err(err).Msgf("Executing failed")
 				return err
@@ -86,7 +89,7 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
 			return nil
 		}
 	}
-	err = prop.Vote(w.client)
+	err = prop.Vote(w.client, w.fabric)
 	if err != nil {
 		log.Error().Err(err).Msgf("Voting failed")
 		return err
@@ -102,7 +105,7 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
 				return err
 			}
 			if ps == relayer.ProposalStatusPassed {
-				err = prop.Execute(w.client)
+				err = prop.Execute(w.client, w.fabric)
 				if err != nil {
 					log.Error().Err(err).Msgf("Executing failed")
 					return err

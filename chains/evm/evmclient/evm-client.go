@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/config"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
@@ -18,6 +17,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -30,17 +30,34 @@ type EVMClient struct {
 	config    *EVMConfig
 	nonce     *big.Int
 	nonceLock sync.Mutex
+	gasPrice  *big.Int
 }
 
 type CommonTransaction interface {
 	// Hash returns the transaction hash.
 	Hash() common.Hash
-	// Returns signed transaction by provided private key
+
+	// RawWithSignature Returns signed transaction by provided private key
 	RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
 }
 
 func NewEVMClient() *EVMClient {
 	return &EVMClient{}
+}
+
+func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey, gasPrice *big.Int) (*EVMClient, error) {
+	rpcClient, err := rpc.DialContext(context.TODO(), url)
+	if err != nil {
+		return nil, err
+	}
+	kp := secp256k1.NewKeypair(*privateKey)
+	c := &EVMClient{}
+	c.Client = ethclient.NewClient(rpcClient)
+	c.rpClient = rpcClient
+	c.config = &EVMConfig{}
+	c.config.kp = kp
+	c.gasPrice = gasPrice
+	return c, nil
 }
 
 func (c *EVMClient) Configurate(path string, name string) error {
@@ -104,12 +121,32 @@ func (h *headerNumber) UnmarshalJSON(input []byte) error {
 // LatestBlock returns the latest block from the current chain
 func (c *EVMClient) LatestBlock() (*big.Int, error) {
 	var head *headerNumber
-
 	err := c.rpClient.CallContext(context.Background(), &head, "eth_getBlockByNumber", toBlockNumArg(nil), false)
 	if err == nil && head == nil {
 		err = ethereum.NotFound
 	}
-	return head.Number, err
+	if err != nil {
+		return nil, err
+	}
+	return head.Number, nil
+}
+
+func (c *EVMClient) WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error) {
+	retry := 50
+	for retry > 0 {
+		receipt, err := c.Client.TransactionReceipt(context.Background(), h)
+		if err != nil {
+			log.Error().Err(err).Msgf("error getting tx receipt %s", h.String())
+			retry--
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		if receipt.Status != 1 {
+			return receipt, errors.New("transaction failed on chain")
+		}
+		return receipt, nil
+	}
+	return nil, errors.New("tx did not appear")
 }
 
 const (
@@ -134,6 +171,10 @@ func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common
 	return depositLogs, nil
 }
 
+func (c *EVMClient) FetchEventLogs(ctx context.Context, contractAddress common.Address, event string, startBlock *big.Int, endBlock *big.Int) ([]types.Log, error) {
+	return c.FilterLogs(ctx, buildQuery(contractAddress, event, startBlock, endBlock))
+}
+
 // SendRawTransaction accepts rlp-encode of signed transaction and sends it via RPC call
 func (c *EVMClient) SendRawTransaction(ctx context.Context, tx []byte) error {
 	return c.rpClient.CallContext(ctx, nil, "eth_sendRawTransaction", hexutil.Encode(tx))
@@ -148,6 +189,14 @@ func (c *EVMClient) CallContract(ctx context.Context, callArgs map[string]interf
 	return hex, nil
 }
 
+func (c *EVMClient) CallContext(ctx context.Context, target interface{}, rpcMethod string, args ...interface{}) error {
+	err := c.rpClient.CallContext(ctx, target, rpcMethod, args)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string]interface{}) ([]byte, error) {
 	var hex hexutil.Bytes
 	err := c.rpClient.CallContext(ctx, &hex, "eth_call", callArgs, "pending")
@@ -157,40 +206,16 @@ func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string
 	return hex, nil
 }
 
-//func (c *EVMClient) ChainID()
-
-func (c *EVMClient) ConstructBridgeTransaction(nonce *big.Int, bridgeAddress *common.Address, input []byte) (CommonTransaction, error) {
-	cId, err := c.ChainID(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-	gasLimit := uint64(2000000)
-
-	var tx CommonTransaction
-	head, err := c.HeaderByNumber(context.TODO(), nil)
-	if err != nil {
-		return nil, err
-	}
-	if head.BaseFee != nil {
-		gasTipCap, gasFeeCap, err := c.EstimateGasLondon(context.TODO(), head.BaseFee)
-		if err != nil {
-			return nil, err
-		}
-		tx = evmtransaction.NewDynamicFeeTransaction(cId, nonce.Uint64(), bridgeAddress, big.NewInt(0), gasTipCap, gasFeeCap, gasLimit, input)
-	} else {
-		gasPrice, err := c.GasPrice()
-		if err != nil {
-			return nil, err
-		}
-		tx = evmtransaction.NewTransaction(nonce.Uint64(), bridgeAddress, big.NewInt(0), gasLimit, gasPrice, input)
-	}
-	return tx, nil
+func (c *EVMClient) From() common.Address {
+	return c.config.kp.CommonAddress()
 }
 
 func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransaction) (common.Hash, error) {
 	id, err := c.ChainID(ctx)
 	if err != nil {
-		panic(err)
+		//panic(err)
+		// Probably chain does not support ChainID eg. CELO
+		id = nil
 	}
 	rawTx, err := tx.RawWithSignature(c.config.kp.PrivateKey(), id)
 	if err != nil {
@@ -235,16 +260,25 @@ func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
 
 func (c *EVMClient) UnsafeIncreaseNonce() error {
 	nonce, err := c.UnsafeNonce()
-	log.Debug().Str("nonce", nonce.String()).Msg("Before increase")
 	if err != nil {
 		return err
 	}
 	c.nonce = nonce.Add(nonce, big.NewInt(1))
-	log.Debug().Str("nonce", c.nonce.String()).Msg("After increase")
 	return nil
 }
 
+func (c *EVMClient) BaseFee() (*big.Int, error) {
+	head, err := c.HeaderByNumber(context.TODO(), nil)
+	if err != nil {
+		return nil, err
+	}
+	return head.BaseFee, nil
+}
+
 func (c *EVMClient) GasPrice() (*big.Int, error) {
+	if c.gasPrice != nil {
+		return c.gasPrice, nil
+	}
 	gasPrice, err := c.SafeEstimateGas(context.TODO())
 	if err != nil {
 		return nil, err
@@ -290,28 +324,25 @@ func (c *EVMClient) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	gasPrice := multiplyGasPrice(suggestedGasPrice, c.config.SharedEVMConfig.GasMultiplier)
-
-	// Check we aren't exceeding our limit
-
-	if gasPrice.Cmp(c.config.SharedEVMConfig.MaxGasPrice) == 1 {
-		return c.config.SharedEVMConfig.MaxGasPrice, nil
-	} else {
-		return gasPrice, nil
+	log.Debug().Msgf("Suggested GP %s", suggestedGasPrice.String())
+	var gasPrice *big.Int
+	if c.config.SharedEVMConfig.GasMultiplier != nil {
+		gasPrice = multiplyGasPrice(suggestedGasPrice, c.config.SharedEVMConfig.GasMultiplier)
 	}
+	// Check we aren't exceeding our limit
+	if c.config.SharedEVMConfig.MaxGasPrice != nil {
+		if gasPrice.Cmp(c.config.SharedEVMConfig.MaxGasPrice) == 1 {
+			return c.config.SharedEVMConfig.MaxGasPrice, nil
+		}
+	}
+	return gasPrice, nil
 }
 
 func multiplyGasPrice(gasEstimate *big.Int, gasMultiplier *big.Float) *big.Int {
-
 	gasEstimateFloat := new(big.Float).SetInt(gasEstimate)
-
 	result := gasEstimateFloat.Mul(gasEstimateFloat, gasMultiplier)
-
 	gasPrice := new(big.Int)
-
 	result.Int(gasPrice)
-
 	return gasPrice
 }
 
