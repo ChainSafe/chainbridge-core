@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/config"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -18,7 +19,7 @@ import (
 const DefaultGasLimit = 2000000
 
 //type TxFabric func(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) evmclient.CommonTransaction
-type TxFabric func(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPricer evmclient.GasPricer, data []byte) (evmclient.CommonTransaction, error)
+type TxFabric func(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPricer evmgaspricer.GasPricer, data []byte) (evmclient.CommonTransaction, error)
 
 func DeployErc20(c *evmclient.EVMClient, txFabric TxFabric, name, symbol string) (common.Address, error) {
 	parsed, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
@@ -68,7 +69,7 @@ func deployContract(client ChainClient, abi abi.ABI, bytecode []byte, txFabric T
 		return common.Address{}, err
 	}
 
-	gasPricer := NewDefaultGasPricer(client)
+	gasPricer := evmgaspricer.NewDefaultGasPricer(client)
 	tx, err := txFabric(nil, n.Uint64(), nil, big.NewInt(0), config.DefaultGasLimit, gasPricer, append(bytecode, input...))
 	if err != nil {
 		return common.Address{}, err

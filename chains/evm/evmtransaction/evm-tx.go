@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -38,7 +39,7 @@ func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, chainId *big.Int) ([]byte, 
 	return data, nil
 }
 
-func NewTransaction(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPricer evmclient.GasPricer, data []byte) (evmclient.CommonTransaction, error) {
+func NewTransaction(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPricer evmgaspricer.GasPricer, data []byte) (evmclient.CommonTransaction, error) {
 	gasPrices, err := gasPricer.GasPrice()
 	if err != nil {
 		return nil, err

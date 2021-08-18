@@ -370,22 +370,3 @@ func buildQuery(contract common.Address, sig string, startBlock *big.Int, endBlo
 func (c *EVMClient) GetConfig() *EVMConfig {
 	return c.config
 }
-
-type GasPricer interface {
-	GasPrice() ([]*big.Int, error)
-}
-
-type DefaultGasPricer struct {
-	gasPrice *big.Int
-}
-
-func NewDefaultGasPricer(defaultGasPrice *big.Int) GasPricer {
-	return &DefaultGasPricer{gasPrice: defaultGasPrice}
-}
-
-func (gasPricer *DefaultGasPricer) GasPrice() ([]*big.Int, error) {
-	var gasPrices []*big.Int
-	gasPrices[0] = gasPricer.gasPrice
-
-	return gasPrices, nil
-}

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 
 	"github.com/status-im/keycard-go/hexutils"
 
@@ -17,7 +18,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type TxFabric func(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPricer evmclient.GasPricer, data []byte) (evmclient.CommonTransaction, error)
+type TxFabric func(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPricer evmgaspricer.GasPricer, data []byte) (evmclient.CommonTransaction, error)
 
 func NewProposal(source uint8, depositNonce uint64, resourceId [32]byte, data []byte, handlerAddress, bridgeAddress common.Address) *Proposal {
 	return &Proposal{
@@ -115,7 +116,7 @@ func (p *Proposal) Execute(client ChainClient, fabric TxFabric) error {
 	}
 	gasLimit := uint64(2000000)
 
-	gasPricer := NewDynamicGasPricer(client)
+	gasPricer := evmgaspricer.NewDynamicGasPricer(client)
 	tx, err := fabric(cId, n.Uint64(), &p.BridgeAddress, big.NewInt(0), gasLimit, gasPricer, input)
 	if err != nil {
 		return err
@@ -160,7 +161,7 @@ func (p *Proposal) Vote(client ChainClient, fabric TxFabric) error {
 	}
 	gasLimit := uint64(2000000)
 
-	gasPricer := NewDynamicGasPricer(client)
+	gasPricer := evmgaspricer.NewDynamicGasPricer(client)
 	tx, err := fabric(cId, n.Uint64(), &p.BridgeAddress, big.NewInt(0), gasLimit, gasPricer, input)
 	if err != nil {
 		return err
