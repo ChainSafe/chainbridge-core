@@ -69,8 +69,13 @@ func deployContract(client ChainClient, abi abi.ABI, bytecode []byte, txFabric T
 		return common.Address{}, err
 	}
 
+	cId, err := client.ChainID(context.TODO())
+	if err != nil {
+		return common.Address{}, err
+	}
+
 	gasPricer := evmgaspricer.NewDefaultGasPricer(client)
-	tx, err := txFabric(nil, n.Uint64(), nil, big.NewInt(0), config.DefaultGasLimit, gasPricer, append(bytecode, input...))
+	tx, err := txFabric(cId, n.Uint64(), nil, big.NewInt(0), config.DefaultGasLimit, gasPricer, append(bytecode, input...))
 	if err != nil {
 		return common.Address{}, err
 	}
