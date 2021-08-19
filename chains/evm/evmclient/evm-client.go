@@ -294,7 +294,7 @@ func (c *EVMClient) EstimateGasLondon(ctx context.Context, baseFee *big.Int) (*b
 	var sharedEVMConfig config.SharedEVMConfig = c.config.SharedEVMConfig
 	if sharedEVMConfig.MaxGasPrice.Cmp(baseFee) < 0 {
 		maxPriorityFeePerGas = big.NewInt(1)
-		maxFeePerGas = new(big.Int).Add(baseFee, maxPriorityFeePerGas)
+		maxFeePerGas = new(big.Int).Add(sharedEVMConfig.MaxGasPrice, maxPriorityFeePerGas)
 		return maxPriorityFeePerGas, maxFeePerGas, nil
 	}
 
