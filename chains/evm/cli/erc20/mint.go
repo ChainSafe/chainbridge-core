@@ -61,6 +61,8 @@ func MintCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	}
 	if !common.IsHexAddress(dstAddressStr) {
 		dstAddress = senderKeyPair.CommonAddress()
+	} else {
+		dstAddress = common.HexToAddress(dstAddressStr)
 	}
 
 	erc20Addr := common.HexToAddress(erc20Address)
