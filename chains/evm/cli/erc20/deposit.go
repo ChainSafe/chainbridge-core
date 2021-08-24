@@ -48,11 +48,6 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 	destinationId := cmd.Flag("destId").Value.String()
 	resourceId := cmd.Flag("resourceId").Value.String()
 
-	simulateBool, err := cmd.Flags().GetBool("simulate")
-	if err != nil {
-		return fmt.Errorf("could not get simulate bool flag: %v", err)
-	}
-
 	if !common.IsHexAddress(recipient) {
 		return fmt.Errorf("invalid recipient address %s", recipient)
 	}
@@ -109,24 +104,15 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 		return err
 	}
 
-	if simulateBool {
-		block, err := ethClient.BlockNumber(context.Background())
-		if err != nil {
-			log.Error().Err(fmt.Errorf("block fetch error: %v", err))
-			return err
-		}
-
-		blockNumBigInt := new(big.Int).SetUint64(block)
-
-		simulationData, err := calls.SimulateTransact(ethClient, txFabric, &bridgeAddr, input, gasLimit, blockNumBigInt)
-		if err != nil {
-			log.Error().Err(fmt.Errorf("simulate transact error: %v", err))
-			return err
-		}
-		log.Debug().Msgf("simulate transaction data: %v", string(simulationData))
-
-		return nil
+	block, err := ethClient.BlockNumber(context.Background())
+	if err != nil {
+		log.Error().Err(fmt.Errorf("block fetch error: %v", err))
+		return err
 	}
+
+	blockNumBigInt := new(big.Int).SetUint64(block)
+
+	log.Debug().Msgf("block: %v blockBigInt: %v", block, blockNumBigInt)
 
 	// destinationId
 	txHash, err := calls.Transact(ethClient, txFabric, &bridgeAddr, input, gasLimit)

@@ -6,10 +6,8 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/spf13/cobra"
 
-	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -93,20 +91,4 @@ func ConstructGenericDepositData(metadata []byte) []byte {
 	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(metadata))), 32)...)
 	data = append(data, metadata...)
 	return data
-}
-
-func DefineSender(cmd *cobra.Command) (*secp256k1.Keypair, error) {
-	privateKey, err := cmd.Flags().GetString("privateKey")
-	if err != nil {
-		return nil, err
-	}
-	if privateKey != "" {
-		kp, err := secp256k1.NewKeypairFromString(privateKey)
-		if err != nil {
-			return nil, err
-		}
-		return kp, nil
-	}
-	var AliceKp = keystore.TestKeyRing.EthereumKeys[keystore.AliceKey]
-	return AliceKp, nil
 }

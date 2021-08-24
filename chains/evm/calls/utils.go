@@ -96,6 +96,7 @@ func Transact(client ChainClient, txFabric TxFabric, to *common.Address, data []
 		return common.Hash{}, err
 	}
 	tx := txFabric(n.Uint64(), to, big.NewInt(0), gasLimit, gp, data)
+	log.Debug().Msgf("hash: %v from: %s", tx.Hash(), client.From())
 	_, err = client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return common.Hash{}, err
@@ -112,29 +113,13 @@ func Transact(client ChainClient, txFabric TxFabric, to *common.Address, data []
 	return tx.Hash(), nil
 }
 
-func SimulateTransact(client ChainClient, txFabric TxFabric, to *common.Address, data []byte, gasLimit uint64, block *big.Int) ([]byte, error) {
-	gp, err := client.GasPrice()
-	if err != nil {
-		return nil, err
-	}
-	client.LockNonce()
-	n, err := client.UnsafeNonce()
-	if err != nil {
-		return nil, err
-	}
-	tx := txFabric(n.Uint64(), to, big.NewInt(0), gasLimit, gp, data)
+func SimulateTransact(client ChainClient, block *big.Int, txHash common.Hash) ([]byte, error) {
+	log.Debug().Msgf("block: %v hash: %v from: %s", block, txHash, client.From())
 
-	log.Debug().Msgf("block: %v hash: %v from: %s", block, tx.Hash(), client.From())
-
-	data, err = client.Simulate(block, tx.Hash(), client.From())
+	data, err := client.Simulate(block, txHash, client.From())
 	if err != nil {
 		return nil, err
 	}
 
-	err = client.UnsafeIncreaseNonce()
-	if err != nil {
-		return nil, err
-	}
-	client.UnlockNonce()
 	return data, nil
 }
