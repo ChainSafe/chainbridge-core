@@ -1,6 +1,7 @@
 package erc20
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -34,6 +35,7 @@ func BindDepositCmdFlags(cli *cobra.Command) {
 	cli.Flags().String("destId", "", "destination chain ID")
 	cli.Flags().String("resourceId", "", "resource ID for transfer")
 	cli.Flags().Uint64("decimals", 0, "ERC20 token decimals")
+	cli.Flags().Bool("simulate", false, "simulate transaction invocation")
 	cli.MarkFlagRequired("decimals")
 }
 
@@ -47,6 +49,12 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 	amount := cmd.Flag("amount").Value.String()
 	destinationId := cmd.Flag("destId").Value.String()
 	resourceId := cmd.Flag("resourceId").Value.String()
+
+	simulateBool, err := cmd.Flags().GetBool("simulate")
+	if err != nil {
+		return fmt.Errorf("could not get simulate bool flag: %v", err)
+	}
+
 	if !common.IsHexAddress(recipient) {
 		return fmt.Errorf("invalid recipient address %s", recipient)
 	}
@@ -75,7 +83,6 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 		return err
 	}
 
-
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
@@ -103,6 +110,26 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 		log.Error().Err(fmt.Errorf("erc20 deposit input error: %v", err))
 		return err
 	}
+
+	if simulateBool {
+		block, err := ethClient.BlockNumber(context.Background())
+		if err != nil {
+			log.Error().Err(fmt.Errorf("block fetch error: %v", err))
+			return err
+		}
+
+		blockNumBigInt := new(big.Int).SetUint64(block)
+
+		simulationData, err := calls.SimulateTransact(ethClient, txFabric, &bridgeAddr, input, gasLimit, blockNumBigInt)
+		if err != nil {
+			log.Error().Err(fmt.Errorf("erc20 deposit error: %v", err))
+			return err
+		}
+		log.Debug().Msgf("Simulate Transaction Data: %v", string(simulationData))
+
+		return nil
+	}
+
 	// destinationId
 	txHash, err := calls.Transact(ethClient, txFabric, &bridgeAddr, input, gasLimit)
 	if err != nil {
