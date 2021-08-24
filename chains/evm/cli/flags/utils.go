@@ -2,10 +2,11 @@ package flags
 
 import (
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -32,7 +33,7 @@ func GlobalFlagValues(cmd *cobra.Command) (string, uint64, *big.Int, *secp256k1.
 
 	gasPrice := big.NewInt(0).SetUint64(gasPriceInt)
 
-	senderKeyPair, err := cliutils.DefineSender(cmd)
+	senderKeyPair, err := utils.DefineSender(cmd)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("define sender error: %v", err))
 		return "", evmclient.DefaultGasLimit, nil, nil, err

@@ -1,4 +1,4 @@
-package cliutils
+package utils
 
 import (
 	"errors"
@@ -15,6 +15,15 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+var UtilsCmd = &cobra.Command{
+	Use:   "utils",
+	Short: "Utils-related instructions",
+	Long:  "Utils-related instructions",
+}
+
+func init() {
+	UtilsCmd.AddCommand(simulateCmd)
+}
 
 type EventSig string
 
