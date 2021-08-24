@@ -122,10 +122,10 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 
 		simulationData, err := calls.SimulateTransact(ethClient, txFabric, &bridgeAddr, input, gasLimit, blockNumBigInt)
 		if err != nil {
-			log.Error().Err(fmt.Errorf("erc20 deposit error: %v", err))
+			log.Error().Err(fmt.Errorf("simulate transact error: %v", err))
 			return err
 		}
-		log.Debug().Msgf("Simulate Transaction Data: %v", string(simulationData))
+		log.Debug().Msgf("simulate transaction data: %v", string(simulationData))
 
 		return nil
 	}
