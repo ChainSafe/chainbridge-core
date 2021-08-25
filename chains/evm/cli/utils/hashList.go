@@ -33,24 +33,16 @@ func HashListCmd(cmd *cobra.Command, args []string) error {
 	blockNumber := cmd.Flag("blockNumber").Value.String()
 
 	// fetch global flag values
-	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), big.NewInt(0))
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
-
-	clientBlockNum, err := ethClient.BlockNumber(context.Background())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("block fetch error: %v", err))
-		return err
-	}
-
-	log.Debug().Msgf("eth client actual block num: %v", clientBlockNum)
 
 	blockNum, err := strconv.Atoi(blockNumber)
 	if err != nil {
