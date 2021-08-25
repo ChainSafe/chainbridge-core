@@ -1,6 +1,7 @@
 package erc20
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
@@ -90,11 +91,20 @@ Decimals: %v`,
 		log.Fatal().Err(err)
 		return err
 	}
-	_, err = calls.Transact(ethClient, txFabric, &erc20Addr, i, gasLimit)
+	block, err := ethClient.BlockNumber(context.Background())
+	if err != nil {
+		log.Error().Err(fmt.Errorf("block fetch error: %v", err))
+		return err
+	}
+
+	blockNumBigInt := new(big.Int).SetUint64(block)
+
+	txHash, err := calls.Transact(ethClient, txFabric, &erc20Addr, i, gasLimit)
 	if err != nil {
 		log.Fatal().Err(err)
 		return err
 	}
+	log.Debug().Msgf("block: %v blockBigInt: %v txHash: %v", block, blockNumBigInt, txHash)
 	log.Info().Msgf("%s account granted allowance on %v tokens of %s", recipientAddr.String(), amount, recipientAddr.String())
 	return nil
 }

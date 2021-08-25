@@ -21,6 +21,7 @@ var UtilsCmd = &cobra.Command{
 
 func init() {
 	UtilsCmd.AddCommand(simulateCmd)
+	UtilsCmd.AddCommand(hashListCmd)
 }
 
 type EventSig string

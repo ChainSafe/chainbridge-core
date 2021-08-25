@@ -334,6 +334,7 @@ func (c *EVMClient) GetConfig() *EVMConfig {
 func (c *EVMClient) Simulate(block *big.Int, txHash common.Hash, from common.Address) ([]byte, error) {
 	tx, _, err := c.Client.TransactionByHash(context.TODO(), txHash)
 	if err != nil {
+		log.Debug().Msgf("[client] tx by hash error: %v", err)
 		return nil, err
 	}
 	msg := ethereum.CallMsg{
@@ -346,10 +347,12 @@ func (c *EVMClient) Simulate(block *big.Int, txHash common.Hash, from common.Add
 	}
 	res, err := c.Client.CallContract(context.TODO(), msg, block)
 	if err != nil {
+		log.Debug().Msgf("[client] call contract error: %v", err)
 		return nil, err
 	}
 	bs, err := hex.DecodeString(common.Bytes2Hex(res))
 	if err != nil {
+		log.Debug().Msgf("[client] decode string error: %v", err)
 		return nil, err
 	}
 	log.Debug().Msg(string(bs))

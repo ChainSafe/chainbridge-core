@@ -118,6 +118,7 @@ func SimulateTransact(client ChainClient, block *big.Int, txHash common.Hash) ([
 
 	data, err := client.Simulate(block, txHash, client.From())
 	if err != nil {
+		log.Debug().Msgf("err: %v", err)
 		return nil, err
 	}
 
