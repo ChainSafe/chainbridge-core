@@ -96,11 +96,12 @@ func Transact(client ChainClient, txFabric TxFabric, to *common.Address, data []
 		return common.Hash{}, err
 	}
 	tx := txFabric(n.Uint64(), to, big.NewInt(0), gasLimit, gp, data)
-	log.Debug().Msgf("hash: %v from: %s", tx.Hash(), client.From())
 	_, err = client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return common.Hash{}, err
 	}
+
+	log.Debug().Msgf("hash: %v from: %s", tx.Hash(), client.From())
 	_, err = client.WaitAndReturnTxReceipt(tx.Hash())
 	if err != nil {
 		return common.Hash{}, err
