@@ -47,7 +47,6 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 	amount := cmd.Flag("amount").Value.String()
 	destinationId := cmd.Flag("destId").Value.String()
 	resourceId := cmd.Flag("resourceId").Value.String()
-
 	if !common.IsHexAddress(recipient) {
 		return fmt.Errorf("invalid recipient address %s", recipient)
 	}
@@ -104,15 +103,13 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 		return err
 	}
 
-	block, err := ethClient.BlockNumber(context.Background())
+	blockNum, err := ethClient.BlockNumber(context.Background())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("block fetch error: %v", err))
 		return err
 	}
 
-	blockNumBigInt := new(big.Int).SetUint64(block)
-
-	log.Debug().Msgf("block: %v blockBigInt: %v", block, blockNumBigInt)
+	log.Debug().Msgf("blockNum: %v", blockNum)
 
 	// destinationId
 	txHash, err := calls.Transact(ethClient, txFabric, &bridgeAddr, input, gasLimit)

@@ -33,16 +33,24 @@ func HashListCmd(cmd *cobra.Command, args []string) error {
 	blockNumber := cmd.Flag("blockNumber").Value.String()
 
 	// fetch global flag values
-	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), big.NewInt(0))
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
+
+	clientBlockNum, err := ethClient.BlockNumber(context.Background())
+	if err != nil {
+		log.Error().Err(fmt.Errorf("block fetch error: %v", err))
+		return err
+	}
+
+	log.Debug().Msgf("eth client actual block num: %v", clientBlockNum)
 
 	blockNum, err := strconv.Atoi(blockNumber)
 	if err != nil {
@@ -50,23 +58,27 @@ func HashListCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	blockNumStr := strconv.Itoa(blockNum)
+	blockNumberBigInt, _ := new(big.Int).SetString(blockNumStr, 10)
+
 	// check block by hash
 	// see if transaction block data is there
 	for i := 0; i < 50; i++ {
-		log.Debug().Msgf("blockNum: %v", blockNum)
-
-		blockNumStr := strconv.Itoa(blockNum)
-
-		blockNum = blockNum + i
+		log.Debug().Msgf("blockNum: %v", blockNumberBigInt)
 
 		// convert string block number to big.Int
 		// ignore success bool
-		blockNumberBigInt, _ := new(big.Int).SetString(blockNumStr, 10)
+
+		blockNumberBigInt.Add(blockNumberBigInt, big.NewInt(1))
 
 		block, err := ethClient.BlockByNumber(context.Background(), blockNumberBigInt)
 		if err != nil {
 			log.Error().Err(fmt.Errorf("block by hash error: %v", err))
-			// continue
+
+			// will return early and not print debug log if block not found
+			// Error: not found
+
+			// return err
 		}
 
 		log.Debug().Msgf("block: %v", block)
