@@ -3,6 +3,7 @@ package evmclient
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"math/big"
@@ -139,6 +140,7 @@ func (c *EVMClient) WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error
 			time.Sleep(5 * time.Second)
 			continue
 		}
+		log.Debug().Msgf("Receipt Logs: %v", receipt.Logs)
 		if receipt.Status != 1 {
 			return receipt, errors.New("transaction failed on chain")
 		}
@@ -245,7 +247,7 @@ func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
 		if c.nonce == nil {
 			nonce, err := c.PendingNonceAt(context.Background(), c.config.kp.CommonAddress())
 			if err != nil {
-				time.Sleep(1)
+				time.Sleep(1 * time.Second)
 				continue
 			}
 			c.nonce = big.NewInt(0).SetUint64(nonce)
@@ -325,4 +327,37 @@ func buildQuery(contract common.Address, sig string, startBlock *big.Int, endBlo
 
 func (c *EVMClient) GetConfig() *EVMConfig {
 	return c.config
+}
+
+// Simulate function gets transaction info by hash and then executes a message call transaction, which is directly executed in the VM
+// of the node, but never mined into the blockchain. Execution happens against provided block.
+func (c *EVMClient) Simulate(block *big.Int, txHash common.Hash, from common.Address) ([]byte, error) {
+	tx, _, err := c.Client.TransactionByHash(context.TODO(), txHash)
+	if err != nil {
+		log.Debug().Msgf("[client] tx by hash error: %v", err)
+		return nil, err
+	}
+
+	log.Debug().Msgf("from: %v to: %v gas: %v gasPrice: %v value: %v data: %v", from, tx.To(), tx.Gas(), tx.GasPrice(), tx.Value(), tx.Data())
+
+	msg := ethereum.CallMsg{
+		From:     from,
+		To:       tx.To(),
+		Gas:      tx.Gas(),
+		GasPrice: tx.GasPrice(),
+		Value:    tx.Value(),
+		Data:     tx.Data(),
+	}
+	res, err := c.Client.CallContract(context.TODO(), msg, block)
+	if err != nil {
+		log.Debug().Msgf("[client] call contract error: %v", err)
+		return nil, err
+	}
+	bs, err := hex.DecodeString(common.Bytes2Hex(res))
+	if err != nil {
+		log.Debug().Msgf("[client] decode string error: %v", err)
+		return nil, err
+	}
+	log.Debug().Msg(string(bs))
+	return bs, nil
 }
