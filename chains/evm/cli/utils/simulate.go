@@ -61,7 +61,7 @@ From address: %s`,
 		return err
 	}
 
-	data, err := calls.SimulateTransact(ethClient, blockNumberBigInt, common.HexToHash(txHash))
+	data, err := ethClient.Simulate(blockNumberBigInt, common.HexToHash(txHash), common.HexToAddress(fromAddress))
 	if err != nil {
 		log.Error().Err(fmt.Errorf("[utils] simulate transact error: %v", err))
 		return err

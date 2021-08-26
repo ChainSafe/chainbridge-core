@@ -113,15 +113,3 @@ func Transact(client ChainClient, txFabric TxFabric, to *common.Address, data []
 	client.UnlockNonce()
 	return tx.Hash(), nil
 }
-
-func SimulateTransact(client ChainClient, block *big.Int, txHash common.Hash) ([]byte, error) {
-	log.Debug().Msgf("block: %v hash: %v from: %s", block, txHash, client.From())
-
-	data, err := client.Simulate(block, txHash, client.From())
-	if err != nil {
-		log.Debug().Msgf("err: %v", err)
-		return nil, err
-	}
-
-	return data, nil
-}

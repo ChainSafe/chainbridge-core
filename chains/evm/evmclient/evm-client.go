@@ -337,6 +337,9 @@ func (c *EVMClient) Simulate(block *big.Int, txHash common.Hash, from common.Add
 		log.Debug().Msgf("[client] tx by hash error: %v", err)
 		return nil, err
 	}
+
+	log.Debug().Msgf("from: %v to: %v gas: %v gasPrice: %v value: %v data: %v", from, tx.To(), tx.Gas(), tx.GasPrice(), tx.Value(), tx.Data())
+
 	msg := ethereum.CallMsg{
 		From:     from,
 		To:       tx.To(),
