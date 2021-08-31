@@ -18,8 +18,6 @@ const DefaultBlockConfirmations = 10
 type EVMConfig struct {
 	SharedEVMConfig config.SharedEVMConfig
 	kp              *secp256k1.Keypair
-	EgsApiKey       string // API key for ethgasstation to query gas prices
-	EgsSpeed        string // The speed which a transaction should be processed: average, fast, fastest. Default: fast
 }
 
 type RawEVMConfig struct {
@@ -63,8 +61,6 @@ func ParseConfig(rawConfig *RawEVMConfig) (*EVMConfig, error) {
 
 	config := &EVMConfig{
 		SharedEVMConfig: *cfg,
-		EgsApiKey:       "",
-		EgsSpeed:        "",
 	}
 
 	return config, nil

@@ -9,6 +9,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -34,7 +35,7 @@ func init() {
 	BindBalanceCmdFlags(balanceCmd)
 }
 
-func BalanceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func BalanceCmd(cmd *cobra.Command, args []string, txFabric evmtypes.TxFabric) error {
 	erc20Address := cmd.Flag("erc20Address").Value.String()
 	accountAddress := cmd.Flag("accountAddress").Value.String()
 

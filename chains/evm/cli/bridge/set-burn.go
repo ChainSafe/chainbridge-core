@@ -8,6 +8,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -33,7 +34,7 @@ func init() {
 	BindSetBurnCmdFlags(setBurnCmd)
 }
 
-func SetBurnCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func SetBurnCmd(cmd *cobra.Command, args []string, txFabric evmtypes.TxFabric) error {
 	handlerAddress := cmd.Flag("handler").Value.String()
 	bridgeAddress := cmd.Flag("bridge").Value.String()
 	tokenAddress := cmd.Flag("tokenContract").Value.String()
@@ -66,7 +67,7 @@ func SetBurnCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 	}
 
 	log.Info().Msgf("Setting contract %s as burnable on handler %s", tokenContractAddr.String(), handlerAddr.String())
-	setBurnableInput, err := calls.PrepareSetBurnableInput(ethClient, handlerAddr, tokenContractAddr)
+	setBurnableInput, err := calls.PrepareSetBurnableInput(handlerAddr, tokenContractAddr)
 	if err != nil {
 		log.Error().Err(err)
 		return err

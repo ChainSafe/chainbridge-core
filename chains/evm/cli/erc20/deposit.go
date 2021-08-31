@@ -6,6 +6,8 @@ import (
 	"math/big"
 	"strconv"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
@@ -41,7 +43,7 @@ func init() {
 	BindDepositCmdFlags(depositCmd)
 }
 
-func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func DepositCmd(cmd *cobra.Command, args []string, txFabric evmtypes.TxFabric) error {
 	recipient := cmd.Flag("recipient").Value.String()
 	bridgeAddress := cmd.Flag("bridge").Value.String()
 	amount := cmd.Flag("amount").Value.String()
@@ -74,7 +76,6 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 	if err != nil {
 		return err
 	}
-
 
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {

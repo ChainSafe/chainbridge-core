@@ -4,8 +4,8 @@ import (
 	"crypto/ecdsa"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -39,7 +39,8 @@ func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, chainId *big.Int) ([]byte, 
 	return data, nil
 }
 
-func NewTransaction(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPricer evmgaspricer.GasPricer, data []byte) (evmclient.CommonTransaction, error) {
+// NewTransaction is the
+func NewTransaction(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPricer evmtypes.GasPricer, data []byte) (evmtypes.CommonTransaction, error) {
 	gasPrices, err := gasPricer.GasPrice()
 	if err != nil {
 		return nil, err
@@ -52,7 +53,7 @@ func NewTransaction(chainId *big.Int, nonce uint64, to *common.Address, amount *
 	}
 }
 
-func newDynamicFeeTransaction(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasTipCap *big.Int, gasFeeCap *big.Int, data []byte) evmclient.CommonTransaction {
+func newDynamicFeeTransaction(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasTipCap *big.Int, gasFeeCap *big.Int, data []byte) *TX {
 	tx := types.NewTx(&types.DynamicFeeTx{
 		ChainID:   chainId,
 		Nonce:     nonce,
@@ -66,7 +67,7 @@ func newDynamicFeeTransaction(chainId *big.Int, nonce uint64, to *common.Address
 	return &TX{tx: tx}
 }
 
-func newTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) evmclient.CommonTransaction {
+func newTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *TX {
 	var tx *types.Transaction
 	if to == nil {
 		tx = types.NewContractCreation(nonce, amount, gasLimit, gasPrice, data)

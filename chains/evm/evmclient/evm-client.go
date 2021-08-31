@@ -10,8 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
+
 	"github.com/ChainSafe/chainbridge-core/config"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum"
@@ -33,14 +36,6 @@ type EVMClient struct {
 	gasPrice  *big.Int
 }
 
-type CommonTransaction interface {
-	// Hash returns the transaction hash.
-	Hash() common.Hash
-
-	// RawWithSignature Returns signed transaction by provided private key
-	RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
-}
-
 func NewEVMClient() *EVMClient {
 	return &EVMClient{}
 }
@@ -56,7 +51,8 @@ func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey, gasPrice *
 	c.rpClient = rpcClient
 	c.config = &EVMConfig{}
 	c.config.kp = kp
-	c.gasPrice = gasPrice
+	c.config.SharedEVMConfig = config.SharedEVMConfig{}
+	c.config.SharedEVMConfig.MaxGasPrice = gasPrice
 	return c, nil
 }
 
@@ -210,7 +206,7 @@ func (c *EVMClient) From() common.Address {
 	return c.config.kp.CommonAddress()
 }
 
-func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransaction) (common.Hash, error) {
+func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx evmtypes.CommonTransaction) (common.Hash, error) {
 	id, err := c.ChainID(ctx)
 	if err != nil {
 		//panic(err)
@@ -276,7 +272,6 @@ func (c *EVMClient) BaseFee() (*big.Int, error) {
 }
 
 func (c *EVMClient) GasPrice() (*big.Int, error) {
-	// NOTE: do we want this? Is this gas price method meant to have the gas price stay the same once it is set?
 	if c.gasPrice != nil {
 		return c.gasPrice, nil
 	}
@@ -291,7 +286,7 @@ func (c *EVMClient) EstimateGasLondon(ctx context.Context, baseFee *big.Int) (*b
 	var maxPriorityFeePerGas *big.Int
 	var maxFeePerGas *big.Int
 
-	var sharedEVMConfig config.SharedEVMConfig = c.config.SharedEVMConfig
+	sharedEVMConfig := c.config.SharedEVMConfig
 	if sharedEVMConfig.MaxGasPrice.Cmp(baseFee) < 0 {
 		maxPriorityFeePerGas = big.NewInt(1)
 		maxFeePerGas = new(big.Int).Add(sharedEVMConfig.MaxGasPrice, maxPriorityFeePerGas)
@@ -311,7 +306,6 @@ func (c *EVMClient) EstimateGasLondon(ctx context.Context, baseFee *big.Int) (*b
 	if maxFeePerGas.Cmp(maxPriorityFeePerGas) < 0 {
 		return nil, nil, fmt.Errorf("maxFeePerGas (%v) < maxPriorityFeePerGas (%v)", maxFeePerGas, maxPriorityFeePerGas)
 	}
-
 	// Check we aren't exceeding our limit
 	if maxFeePerGas.Cmp(sharedEVMConfig.MaxGasPrice) == 1 {
 		maxPriorityFeePerGas.Sub(sharedEVMConfig.MaxGasPrice, baseFee)

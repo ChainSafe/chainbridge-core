@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
@@ -36,7 +38,7 @@ func init() {
 	BindMintCmdFlags(mintCmd)
 }
 
-func MintCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func MintCmd(cmd *cobra.Command, args []string, txFabric evmtypes.TxFabric) error {
 	amount := cmd.Flag("amount").Value.String()
 	erc20Address := cmd.Flag("erc20Address").Value.String()
 	dstAddressStr := cmd.Flag("dstAddress").Value.String()
