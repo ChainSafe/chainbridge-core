@@ -118,3 +118,39 @@ func MinterRole(chainClient ChainClient, erc20Contract common.Address) ([32]byte
 	out0 := *abi.ConvertType(res[0], new([32]byte)).(*[32]byte)
 	return out0, nil
 }
+
+func GetERC20Balance(ethClient ChainClient, erc20Addr, address common.Address) (*big.Int, error) {
+	input, err := PrepareERC20BalanceInput(address)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("prepare input error: %v", err))
+		return nil, err
+	}
+
+	msg := ethereum.CallMsg{
+		From: common.Address{},
+		To:   &erc20Addr,
+		Data: input,
+	}
+
+	out, err := ethClient.CallContract(context.TODO(), ToCallArg(msg), nil)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("call contract error: %v", err))
+		return nil, err
+	}
+
+	if len(out) == 0 {
+		// Make sure we have a contract to operate on, and bail out otherwise.
+		if code, err := ethClient.CodeAt(context.Background(), erc20Addr, nil); err != nil {
+			return nil, err
+		} else if len(code) == 0 {
+			return nil, fmt.Errorf("no code at provided address %s", erc20Addr.String())
+		}
+	}
+
+	balance, err := ParseERC20BalanceOutput(out)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("prepare output error: %v", err))
+		return nil, err
+	}
+	return balance, nil
+}

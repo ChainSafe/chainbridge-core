@@ -69,14 +69,6 @@ func WeiAmountToUser(amount *big.Int, decimals *big.Int) (*big.Float, error) {
 	return new(big.Float).Quo(amountFloat, big.NewFloat(gomath.Pow10(int(decimals.Int64())))), nil
 }
 
-func ConstructErc20DepositData(destRecipient []byte, amount *big.Int) []byte {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(amount, 32)...)
-	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(destRecipient))), 32)...)
-	data = append(data, destRecipient...)
-	return data
-}
-
 // constructErc20Data constructs the data field to be passed into an erc721 deposit call
 func ConstructErc721DepositData(tokenId *big.Int, destRecipient []byte) []byte {
 	var data []byte

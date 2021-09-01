@@ -3,12 +3,9 @@ package config
 import (
 	"fmt"
 	"math/big"
-)
 
-const DefaultGasLimit = 6721975
-const DefaultGasPrice = 20000000000
-const DefaultGasMultiplier = 1
-const DefaultBlockConfirmations = 10
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+)
 
 type SharedEVMConfig struct {
 	GeneralChainConfig GeneralChainConfig
@@ -55,11 +52,11 @@ func (c *RawSharedEVMConfig) ParseConfig() (*SharedEVMConfig, error) {
 		Erc20Handler:       c.Erc20Handler,
 		Erc721Handler:      c.Erc721Handler,
 		GenericHandler:     c.GenericHandler,
-		GasLimit:           big.NewInt(DefaultGasLimit),
-		MaxGasPrice:        big.NewInt(DefaultGasPrice),
-		GasMultiplier:      big.NewFloat(DefaultGasMultiplier),
+		GasLimit:           big.NewInt(calls.DefaultGasLimit),
+		MaxGasPrice:        big.NewInt(calls.DefaultGasPrice),
+		GasMultiplier:      big.NewFloat(calls.DefaultGasMultiplier),
 		StartBlock:         big.NewInt(c.StartBlock),
-		BlockConfirmations: big.NewInt(DefaultBlockConfirmations),
+		BlockConfirmations: big.NewInt(calls.DefaultBlockConfirmations),
 	}
 
 	if c.Bridge != "" {

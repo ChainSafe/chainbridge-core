@@ -2,6 +2,7 @@ package calls
 
 import (
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -9,7 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func PrepareSetBurnableInput(client ChainClient, handler, tokenAddress common.Address) ([]byte, error) {
+func PrepareSetBurnableInput(handler, tokenAddress common.Address) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(BridgeABI))
 	if err != nil {
 		return []byte{}, err
@@ -46,7 +47,6 @@ func PrepareErc20DepositInput(destChainID uint8, resourceID [32]byte, data []byt
 	return input, nil
 }
 
-
 func PrepareAddRelayerInput(relayer common.Address) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(BridgeABI))
 	if err != nil {
@@ -58,32 +58,47 @@ func PrepareAddRelayerInput(relayer common.Address) ([]byte, error) {
 	}
 	return input, nil
 }
- func PrepareIsRelayerInput(address common.Address) ([]byte, error) {
-	 a, err := abi.JSON(strings.NewReader(BridgeABI))
-	 if err != nil {
-		 return nil, err
-	 }
+func PrepareIsRelayerInput(address common.Address) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(BridgeABI))
+	if err != nil {
+		return nil, err
+	}
 
-	 data, err := a.Pack("isRelayer", address)
-	 if err != nil {
-		 log.Error().Err(fmt.Errorf("unpack output error: %v", err))
-		 return nil, err
-	 }
-	 return data, nil
- }
+	data, err := a.Pack("isRelayer", address)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("unpack output error: %v", err))
+		return nil, err
+	}
+	return data, nil
+}
 
- func ParseIsRelayerOutput(output []byte) (bool, error) {
-	 a, err := abi.JSON(strings.NewReader(BridgeABI))
-	 if err != nil {
-		 return false, err
-	 }
+func ParseIsRelayerOutput(output []byte) (bool, error) {
+	a, err := abi.JSON(strings.NewReader(BridgeABI))
+	if err != nil {
+		return false, err
+	}
 
-	 res, err := a.Unpack("isRelayer", output)
-	 if err != nil {
-		 log.Error().Err(fmt.Errorf("unpack output error: %v", err))
-		 return false, err
-	 }
+	res, err := a.Unpack("isRelayer", output)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("unpack output error: %v", err))
+		return false, err
+	}
 
-	 b := abi.ConvertType(res[0], new(bool)).(*bool)
-	 return *b, nil
- }
+	b := abi.ConvertType(res[0], new(bool)).(*bool)
+	return *b, nil
+}
+
+func Deposit(client ChainClient, fabric TxFabric, bridgeAddress, recipient common.Address, amount *big.Int, resourceID [32]byte, destChainID uint8) error {
+	data := ConstructErc20DepositData(recipient.Bytes(), amount)
+	input, err := PrepareErc20DepositInput(destChainID, resourceID, data)
+	if err != nil {
+		return err
+	}
+	gasLimit := uint64(2000000)
+	h, err := Transact(client, fabric, &bridgeAddress, input, gasLimit)
+	if err != nil {
+		return fmt.Errorf("deposit failed %w", err)
+	}
+	log.Debug().Str("hash", h.String()).Msgf("Deposit sent")
+	return nil
+}
