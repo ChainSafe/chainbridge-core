@@ -34,6 +34,9 @@ type EVMMessageHandler struct {
 func (mh *EVMMessageHandler) HandleMessage(m *relayer.Message) (Proposer, error) {
 	// Matching resource ID with handler.
 	addr, err := mh.matchResourceIDToHandlerAddress(m.ResourceId)
+	if err != nil {
+		return nil, err
+	}
 	// Based on handler that registered on BridgeContract
 	handleMessage, err := mh.MatchAddressWithHandlerFunc(addr)
 	if err != nil {
