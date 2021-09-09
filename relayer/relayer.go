@@ -15,7 +15,7 @@ import (
 type RelayedChain interface {
 	PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *Message)
 	Write(message *Message) error
-	ChainID() uint8
+	DomainID() uint8
 }
 
 func NewRelayer(chains []RelayedChain) *Relayer {
@@ -49,7 +49,7 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 	log.Debug().Msg("listening on: http://localhost:2112/metrics")
 
 	for _, c := range r.relayedChains {
-		log.Debug().Msgf("Starting chain %v", c.ChainID())
+		log.Debug().Msgf("Starting chain %v", c.DomainID())
 		r.addRelayedChain(c)
 		go c.PollEvents(stop, sysErr, messagesChannel)
 	}
@@ -94,6 +94,6 @@ func (r *Relayer) addRelayedChain(c RelayedChain) {
 	if r.registry == nil {
 		r.registry = make(map[uint8]RelayedChain)
 	}
-	chainID := c.ChainID()
-	r.registry[chainID] = c
+	domainID := c.DomainID()
+	r.registry[domainID] = c
 }

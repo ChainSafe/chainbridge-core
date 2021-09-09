@@ -46,7 +46,7 @@ func cancelProposal(cctx *cli.Context) error {
 		return err
 	}
 
-	chainID := cctx.Uint64("chainId")
+	domainID := cctx.Uint64("chainId")
 	depositNonce := cctx.Uint64("depositNonce")
 	dataHash := cctx.String("dataHash")
 	dataHashBytes := utils.SliceTo32Bytes(common.Hex2Bytes(dataHash))
@@ -55,11 +55,11 @@ func cancelProposal(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	err = utils.CancelProposal(ethClient, bridgeAddress, uint8(chainID), depositNonce, dataHashBytes)
+	err = utils.CancelProposal(ethClient, bridgeAddress, uint8(domainID), depositNonce, dataHashBytes)
 	if err != nil {
 		return err
 	}
-	log.Info().Msgf("Setting proposal with chain ID %v and deposit nonce %v status to 'Cancelled", chainID, depositNonce)
+	log.Info().Msgf("Setting proposal with chain ID %v and deposit nonce %v status to 'Cancelled", domainID, depositNonce)
 	return nil
 }
 */

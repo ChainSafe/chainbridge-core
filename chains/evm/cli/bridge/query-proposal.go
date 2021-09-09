@@ -46,7 +46,7 @@ func queryProposal(cctx *cli.Context) error {
 		return err
 	}
 
-	chainID := cctx.Uint64("chainId")
+	domainID := cctx.Uint64("chainId")
 	depositNonce := cctx.Uint64("depositNonce")
 	dataHash := cctx.String("dataHash")
 	dataHashBytes := utils.SliceTo32Bytes(common.Hex2Bytes(dataHash))
@@ -56,11 +56,11 @@ func queryProposal(cctx *cli.Context) error {
 		return err
 	}
 
-	prop, err := utils.QueryProposal(ethClient, bridgeAddress, uint8(chainID), depositNonce, dataHashBytes)
+	prop, err := utils.QueryProposal(ethClient, bridgeAddress, uint8(domainID), depositNonce, dataHashBytes)
 	if err != nil {
 		return err
 	}
-	log.Info().Msgf("proposal with chainID %v and depositNonce %v queried. %+v", chainID, depositNonce, prop)
+	log.Info().Msgf("proposal with domainID %v and depositNonce %v queried. %+v", domainID, depositNonce, prop)
 	return nil
 }
 */
