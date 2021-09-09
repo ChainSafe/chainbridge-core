@@ -15,21 +15,21 @@ var cancelProposalCmd = &cobra.Command{
 func init() {
 	cancelProposalCmd.Flags().String("bridge", "", "bridge contract address")
 	cancelProposalCmd.Flags().String("dataHash", "", "hash of proposal metadata")
-	cancelProposalCmd.Flags().Uint64("chainId", 0, "chain ID of proposal to cancel")
+	cancelProposalCmd.Flags().Uint64("domainId", 0, "chain ID of proposal to cancel")
 	cancelProposalCmd.Flags().Uint64("depositNonce", 0, "deposit nonce of proposal to cancel")
 }
 
 func cancelProposal(cmd *cobra.Command, args []string) {
 	adminAddress := cmd.Flag("admin").Value
 	bridgeAddress := cmd.Flag("bridge").Value
-	chainId := cmd.Flag("chainId").Value
+	domainId := cmd.Flag("domainId").Value
 	depositNonce := cmd.Flag("depositNonce").Value
 	log.Debug().Msgf(`
 Cancel propsal
 Admin address: %s
 Bridge address: %s
 Chain ID: %d
-Deposit nonce: %d`, adminAddress, bridgeAddress, chainId, depositNonce)
+Deposit nonce: %d`, adminAddress, bridgeAddress, domainId, depositNonce)
 }
 
 /*
@@ -46,7 +46,7 @@ func cancelProposal(cctx *cli.Context) error {
 		return err
 	}
 
-	domainID := cctx.Uint64("chainId")
+	domainID := cctx.Uint64("domainId")
 	depositNonce := cctx.Uint64("depositNonce")
 	dataHash := cctx.String("dataHash")
 	dataHashBytes := utils.SliceTo32Bytes(common.Hex2Bytes(dataHash))

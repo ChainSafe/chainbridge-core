@@ -35,7 +35,7 @@ var (
 	Erc721FlagName           = "erc721"
 	DeployAllFlagName        = "all"
 	RelayerThresholdFlagName = "relayerThreshold"
-	ChainIdFlagName          = "chainId"
+	ChainIdFlagName          = "domainId"
 	RelayersFlagName         = "relayers"
 	FeeFlagName              = "fee"
 	BridgeAddressFlagName    = "bridgeAddress"
@@ -146,19 +146,19 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 		log.Error().Err(ErrNoDeploymentFalgsProvided)
 		return err
 	}
-	chainId := cmd.Flag("chainId").Value.String()
+	domainId := cmd.Flag("domainId").Value.String()
 	deployedContracts := make(map[string]string)
 	for _, v := range deployments {
 		switch v {
 		case "bridge":
 			log.Debug().Msgf("deploying bridge..")
 			// convert chain ID to uint
-			chainIdInt, err := strconv.Atoi(chainId)
+			domainIdInt, err := strconv.Atoi(domainId)
 			if err != nil {
 				log.Error().Err(fmt.Errorf("chain ID flag error: %v", err))
 				return err
 			}
-			bridgeAddr, err = calls.DeployBridge(ethClient, txFabric, uint8(chainIdInt), relayerAddresses, big.NewInt(0).SetUint64(relayerThreshold))
+			bridgeAddr, err = calls.DeployBridge(ethClient, txFabric, uint8(domainIdInt), relayerAddresses, big.NewInt(0).SetUint64(relayerThreshold))
 			if err != nil {
 				log.Error().Err(fmt.Errorf("bridge deploy failed: %w", err))
 				return err

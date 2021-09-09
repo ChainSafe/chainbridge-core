@@ -15,13 +15,13 @@ var queryProposalCmd = &cobra.Command{
 func init() {
 	queryProposalCmd.Flags().String("bridge", "", "bridge contract address")
 	queryProposalCmd.Flags().String("dataHash", "", "hash of proposal metadata")
-	queryProposalCmd.Flags().Uint64("chainId", 0, "source chain ID of proposal")
+	queryProposalCmd.Flags().Uint64("domainId", 0, "source chain ID of proposal")
 	queryProposalCmd.Flags().Uint64("depositNonce", 0, "deposit nonce of proposal")
 }
 
 func queryProposal(cmd *cobra.Command, args []string) {
 	bridgeAddress := cmd.Flag("bridge").Value
-	chainId := cmd.Flag("chainId").Value
+	domainId := cmd.Flag("domainId").Value
 	depositNonce := cmd.Flag("depositNonce").Value
 	dataHash := cmd.Flag("dataHash").Value
 	log.Debug().Msgf(`
@@ -29,7 +29,7 @@ Querying proposal
 Chain ID: %d
 Deposit nonce: %d
 Data hash: %s
-Bridge address: %s`, chainId, depositNonce, dataHash, bridgeAddress)
+Bridge address: %s`, domainId, depositNonce, dataHash, bridgeAddress)
 }
 
 /*
@@ -46,7 +46,7 @@ func queryProposal(cctx *cli.Context) error {
 		return err
 	}
 
-	domainID := cctx.Uint64("chainId")
+	domainID := cctx.Uint64("domainId")
 	depositNonce := cctx.Uint64("depositNonce")
 	dataHash := cctx.String("dataHash")
 	dataHashBytes := utils.SliceTo32Bytes(common.Hex2Bytes(dataHash))
