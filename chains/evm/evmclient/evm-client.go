@@ -209,10 +209,10 @@ func (c *EVMClient) From() common.Address {
 }
 
 func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransaction) (common.Hash, error) {
-	id, err := c.DomainID(ctx)
+	id, err := c.ChainID(ctx)
 	if err != nil {
 		//panic(err)
-		// Probably chain does not support DomainID eg. CELO
+		// Probably chain does not support chainID eg. CELO
 		id = nil
 	}
 	rawTX, err := tx.RawWithSignature(c.config.kp.PrivateKey(), id)
@@ -245,7 +245,7 @@ func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
 		if c.nonce == nil {
 			nonce, err := c.PendingNonceAt(context.Background(), c.config.kp.CommonAddress())
 			if err != nil {
-				time.Sleep(1)
+				time.Sleep(1 * time.Second)
 				continue
 			}
 			c.nonce = big.NewInt(0).SetUint64(nonce)

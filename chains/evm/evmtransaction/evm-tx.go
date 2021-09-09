@@ -22,7 +22,7 @@ type TX struct {
 // WithSignature returns a new transaction with the given signature.
 // This signature needs to be in the [R || S || V] format where V is 0 or 1.
 func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, domainID *big.Int) ([]byte, error) {
-	opts, err := bind.NewKeyedTransactorWithDomainID(key, domainID)
+	opts, err := bind.NewKeyedTransactorWithChainID(key, domainID)
 	if err != nil {
 		return nil, err
 	}
