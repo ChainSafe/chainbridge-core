@@ -15,7 +15,7 @@ var cancelProposalCmd = &cobra.Command{
 func init() {
 	cancelProposalCmd.Flags().String("bridge", "", "bridge contract address")
 	cancelProposalCmd.Flags().String("dataHash", "", "hash of proposal metadata")
-	cancelProposalCmd.Flags().Uint64("domainId", 0, "chain ID of proposal to cancel")
+	cancelProposalCmd.Flags().Uint64("domainId", 0, "domain ID of proposal to cancel")
 	cancelProposalCmd.Flags().Uint64("depositNonce", 0, "deposit nonce of proposal to cancel")
 }
 
@@ -59,7 +59,7 @@ func cancelProposal(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	log.Info().Msgf("Setting proposal with chain ID %v and deposit nonce %v status to 'Cancelled", domainID, depositNonce)
+	log.Info().Msgf("Setting proposal with domain ID %v and deposit nonce %v status to 'Cancelled", domainID, depositNonce)
 	return nil
 }
 */

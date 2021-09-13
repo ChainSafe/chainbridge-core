@@ -15,7 +15,7 @@ var queryProposalCmd = &cobra.Command{
 func init() {
 	queryProposalCmd.Flags().String("bridge", "", "bridge contract address")
 	queryProposalCmd.Flags().String("dataHash", "", "hash of proposal metadata")
-	queryProposalCmd.Flags().Uint64("domainId", 0, "source chain ID of proposal")
+	queryProposalCmd.Flags().Uint64("domainId", 0, "source domain ID of proposal")
 	queryProposalCmd.Flags().Uint64("depositNonce", 0, "deposit nonce of proposal")
 }
 
