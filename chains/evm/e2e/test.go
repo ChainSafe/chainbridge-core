@@ -25,6 +25,13 @@ type TestClient interface {
 	FetchEventLogs(ctx context.Context, contractAddress common.Address, event string, startBlock *big.Int, endBlock *big.Int) ([]types.Log, error)
 }
 
+func NewIntegrationTestSuite() IntegrationTestSuite{
+	return IntegrationTestSuite{
+		fabric1:,
+		fabric2:,
+	}
+}
+
 type IntegrationTestSuite struct {
 	suite.Suite
 	client            TestClient
