@@ -16,8 +16,10 @@ import (
 
 var setDepositNonceCmd = &cobra.Command{
 	Use:   "set-deposit-nonce",
-	Short: "Increase the deposit nonce",
-	Long:  "Increase the deposit nonce",
+	Short: "Set the deposit nonce",
+	Long: `Set the deposit nonce
+
+This nonce cannot be less than what is currently stored in the contract`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
 		return SetDepositNonceEVMCMD(cmd, args, txFabric)
@@ -26,8 +28,10 @@ var setDepositNonceCmd = &cobra.Command{
 
 func BindSetDepositNonceFlags(cli *cobra.Command) {
 	cli.Flags().Uint8("domainId", 0, "domain ID of chain")
-	cli.Flags().Uint64("depositNonce", 0, "Deposit nonce to increment (does not decrement)")
-	cli.Flags().String("bridgeAddress", "", "Bridge contract address")
+	cli.Flags().Uint64("depositNonce", 0, "deposit nonce to set (does not decrement)")
+	cli.Flags().String("bridgeAddress", "", "bridge contract address")
+	cli.MarkFlagRequired("domainId")
+	cli.MarkFlagRequired("depositNonce")
 }
 
 func init() {
