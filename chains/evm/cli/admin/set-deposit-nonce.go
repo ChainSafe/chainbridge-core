@@ -68,8 +68,6 @@ Bridge Address: %s`, domainId, depositNonce, bridgeAddress)
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	// add check for deposit nonce/domain ID
-
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
