@@ -2,6 +2,7 @@ package calls
 
 import (
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -46,7 +47,6 @@ func PrepareErc20DepositInput(destChainID uint8, resourceID [32]byte, data []byt
 	return input, nil
 }
 
-
 func PrepareAddRelayerInput(relayer common.Address) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(BridgeABI))
 	if err != nil {
@@ -58,32 +58,45 @@ func PrepareAddRelayerInput(relayer common.Address) ([]byte, error) {
 	}
 	return input, nil
 }
- func PrepareIsRelayerInput(address common.Address) ([]byte, error) {
-	 a, err := abi.JSON(strings.NewReader(BridgeABI))
-	 if err != nil {
-		 return nil, err
-	 }
 
-	 data, err := a.Pack("isRelayer", address)
-	 if err != nil {
-		 log.Error().Err(fmt.Errorf("unpack output error: %v", err))
-		 return nil, err
-	 }
-	 return data, nil
- }
+func PrepareIsRelayerInput(address common.Address) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(BridgeABI))
+	if err != nil {
+		return nil, err
+	}
 
- func ParseIsRelayerOutput(output []byte) (bool, error) {
-	 a, err := abi.JSON(strings.NewReader(BridgeABI))
-	 if err != nil {
-		 return false, err
-	 }
+	data, err := a.Pack("isRelayer", address)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("unpack output error: %v", err))
+		return nil, err
+	}
+	return data, nil
+}
 
-	 res, err := a.Unpack("isRelayer", output)
-	 if err != nil {
-		 log.Error().Err(fmt.Errorf("unpack output error: %v", err))
-		 return false, err
-	 }
+func ParseIsRelayerOutput(output []byte) (bool, error) {
+	a, err := abi.JSON(strings.NewReader(BridgeABI))
+	if err != nil {
+		return false, err
+	}
 
-	 b := abi.ConvertType(res[0], new(bool)).(*bool)
-	 return *b, nil
- }
+	res, err := a.Unpack("isRelayer", output)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("unpack output error: %v", err))
+		return false, err
+	}
+
+	b := abi.ConvertType(res[0], new(bool)).(*bool)
+	return *b, nil
+}
+
+func PrepareSetDepositNonceInput(domainID uint8, depositNonce *big.Int) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("adminSetDepositNonce", domainID, depositNonce)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
+}
