@@ -2,7 +2,6 @@ package calls
 
 import (
 	"fmt"
-	"math/big"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -89,7 +88,7 @@ func ParseIsRelayerOutput(output []byte) (bool, error) {
 	return *b, nil
 }
 
-func PrepareSetDepositNonceInput(domainID uint8, depositNonce *big.Int) ([]byte, error) {
+func PrepareSetDepositNonceInput(domainID uint8, depositNonce uint64) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(BridgeABI))
 	if err != nil {
 		return []byte{}, err
