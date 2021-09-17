@@ -13,7 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type MessageProcessor func(message *Message, args ...interface{}) error
+type MessageProcessor func(message *Message) error
 
 type RelayedChain interface {
 	PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *Message)
