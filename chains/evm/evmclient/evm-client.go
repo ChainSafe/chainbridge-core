@@ -150,7 +150,7 @@ func (c *EVMClient) WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error
 }
 
 const (
-	DepositSignature string = "Deposit(uint8,bytes32,uint64)"
+	DepositSignature string = "Deposit(uint8,bytes32,uint64,bytes)"
 )
 
 func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common.Address, startBlock *big.Int, endBlock *big.Int) ([]*listener.DepositLogs, error) {
