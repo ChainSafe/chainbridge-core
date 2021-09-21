@@ -21,6 +21,7 @@ type DepositLogs struct {
 	DestinationID uint8
 	ResourceID    [32]byte
 	DepositNonce  uint64
+	Calldata      []byte
 }
 
 type ChainClient interface {
@@ -30,7 +31,7 @@ type ChainClient interface {
 }
 
 type EventHandler interface {
-	HandleEvent(sourceID, destID uint8, nonce uint64, rID [32]byte) (*relayer.Message, error)
+	HandleEvent(sourceID, destID uint8, nonce uint64, rID [32]byte, data []byte) (*relayer.Message, error)
 }
 
 type EVMListener struct {
@@ -71,7 +72,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw bl
 					continue
 				}
 				for _, eventLog := range logs {
-					m, err := l.eventHandler.HandleEvent(chainID, eventLog.DestinationID, eventLog.DepositNonce, eventLog.ResourceID)
+					m, err := l.eventHandler.HandleEvent(chainID, eventLog.DestinationID, eventLog.DepositNonce, eventLog.ResourceID, eventLog.Calldata)
 					if err != nil {
 						errChn <- err
 						log.Error().Err(err)

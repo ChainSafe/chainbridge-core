@@ -14,7 +14,7 @@ import (
 )
 
 type EventHandlers map[common.Address]EventHandlerFunc
-type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, caller ChainClient) (*relayer.Message, error)
+type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, caller ChainClient, resourceId [32]byte, data []byte) (*relayer.Message, error)
 
 type ETHEventHandler struct {
 	bridgeAddress common.Address
@@ -29,7 +29,7 @@ func NewETHEventHandler(address common.Address, client ChainClient) *ETHEventHan
 	}
 }
 
-func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint64, rID [32]byte) (*relayer.Message, error) {
+func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint64, rID [32]byte, data []byte) (*relayer.Message, error) {
 	addr, err := e.matchResourceIDToHandlerAddress(rID)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint6
 		return nil, err
 	}
 
-	return eventHandler(sourceID, destID, depositNonce, addr, e.client)
+	return eventHandler(sourceID, destID, depositNonce, addr, e.client, rID, data)
 }
 
 func (e *ETHEventHandler) matchResourceIDToHandlerAddress(rID [32]byte) (common.Address, error) {
@@ -59,6 +59,9 @@ func (e *ETHEventHandler) matchResourceIDToHandlerAddress(rID [32]byte) (common.
 		return common.Address{}, err
 	}
 	res, err := a.Unpack("_resourceIDToHandlerAddress", out)
+	if err != nil {
+		return common.Address{}, err
+	}
 	out0 := *abi.ConvertType(res[0], new(common.Address)).(*common.Address)
 	return out0, nil
 }
@@ -98,7 +101,9 @@ func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
 	return arg
 }
 
-func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, client ChainClient) (*relayer.Message, error) {
+// NOTE: deprecated due to PR
+// https://github.com/ChainSafe/chainbridge-solidity/pull/382/files
+func Erc20EventHandlerWithDepositFetch(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, client ChainClient) (*relayer.Message, error) {
 	definition := "[{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"internalType\":\"uint8\",\"name\":\"destId\",\"type\":\"uint8\"}],\"name\":\"getDepositRecord\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"internalType\":\"uint8\",\"name\":\"_lenDestinationRecipientAddress\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"_destinationChainID\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"_resourceID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"_destinationRecipientAddress\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"_depositer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"internalType\":\"structERC20Handler.DepositRecord\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
 	type ERC20HandlerDepositRecord struct {
 		TokenAddress                   common.Address
@@ -110,6 +115,9 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddr
 		Amount                         *big.Int
 	}
 	a, err := abi.JSON(strings.NewReader(definition))
+	if err != nil {
+		return nil, err
+	}
 	input, err := a.Pack("getDepositRecord", nonce, destId)
 	if err != nil {
 		return nil, err
@@ -121,6 +129,9 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddr
 		return nil, err
 	}
 	res, err := a.Unpack("getDepositRecord", out)
+	if err != nil {
+		return nil, err
+	}
 	if len(res) == 0 {
 		return nil, errors.New("no handler associated with such resourceID")
 	}
@@ -135,6 +146,25 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddr
 		Payload: []interface{}{
 			out0.Amount.Bytes(),
 			out0.DestinationRecipientAddress,
+		},
+	}, nil
+}
+
+// WIP
+func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, client ChainClient, resourceId [32]byte, calldata []byte) (*relayer.Message, error) {
+	if len(calldata) == 0 {
+		return nil, errors.New("byte slice empty")
+	}
+
+	return &relayer.Message{
+		Source:       sourceID,
+		Destination:  destId,
+		DepositNonce: nonce,
+		ResourceId:   resourceId,
+		Type:         relayer.FungibleTransfer,
+		Payload:      []interface{}{
+			// out0.Amount.Bytes(),
+			// out0.DestinationRecipientAddress,
 		},
 	}, nil
 }
