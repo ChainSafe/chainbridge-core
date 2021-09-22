@@ -16,14 +16,14 @@ const DefaultGasMultiplier = 1
 const DefaultBlockConfirmations = 10
 
 type OptimismConfig struct {
-	SharedEVMConfig   config.SharedEVMConfig // Pass an Optimism verifier replica for the endpoint to handle all chain listening and reads
-	kp                *secp256k1.Keypair
-	SequencerEndpoint string // This is the endpoint for the Optimism sequencer and is purely used for the actual sending of transactions
+	SharedEVMConfig  config.SharedEVMConfig // Pass an Optimism verifier replica for the endpoint to handle all chain listening and reads
+	kp               *secp256k1.Keypair
+	VerifierEndpoint string // This is the endpoint for the Optimism verifier and is purely used for verifying transactions
 }
 
 type RawOptimismConfig struct {
 	config.RawSharedEVMConfig `mapstructure:",squash"`
-	SequencerEndpoint         string `mapstructure:"sequencerEndpoint"`
+	VerifierEndpoint          string `mapstructure:"verifierEndpoint"`
 }
 
 func NewConfig() *OptimismConfig {
@@ -60,8 +60,8 @@ func ParseConfig(rawConfig *RawOptimismConfig) (*OptimismConfig, error) {
 	}
 
 	config := &OptimismConfig{
-		SharedEVMConfig:   *cfg,
-		SequencerEndpoint: rawConfig.SequencerEndpoint,
+		SharedEVMConfig:  *cfg,
+		VerifierEndpoint: rawConfig.VerifierEndpoint,
 	}
 
 	return config, nil

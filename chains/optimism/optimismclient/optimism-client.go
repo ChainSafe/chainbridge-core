@@ -115,11 +115,11 @@ type rollupInfo struct {
 
 type OptimismClient struct {
 	*ethclient.Client
-	rpClient          *rpc.Client
-	nonceLock         sync.Mutex
-	config            *OptimismConfig
-	nonce             *big.Int
-	sequencerRpClient *rpc.Client
+	rpClient         *rpc.Client
+	nonceLock        sync.Mutex
+	config           *OptimismConfig
+	nonce            *big.Int
+	verifierRpClient *rpc.Client
 }
 
 func NewEVMClient() *OptimismClient {
@@ -137,6 +137,7 @@ func (c *OptimismClient) Configurate(path string, name string) error {
 	}
 	c.config = cfg
 	generalConfig := cfg.SharedEVMConfig.GeneralChainConfig
+	log.Debug().Msgf("config: %v", c.config)
 
 	kp, err := keystore.KeypairFromAddress(generalConfig.From, keystore.EthChain, generalConfig.KeystorePath, generalConfig.Insecure)
 	if err != nil {
@@ -146,25 +147,27 @@ func (c *OptimismClient) Configurate(path string, name string) error {
 	c.config.kp = krp
 
 	log.Info().Str("url", generalConfig.Endpoint).Msg("Connecting to optimism chain...")
-	rpcClient, err := rpc.DialContext(context.TODO(), generalConfig.Endpoint)
-	if err != nil {
-		log.Debug().Msgf("dial context err: %v", err)
-		return err
-	}
-	c.Client = ethclient.NewClient(rpcClient)
-	c.rpClient = rpcClient
+	// rpcClient, err := rpc.DialContext(context.TODO(), generalConfig.Endpoint)
+	// log.Debug().Msgf("general endpoint: %v", generalConfig.Endpoint)
+	// if err != nil {
+	// 	log.Debug().Msgf("endpoint: %v", generalConfig.Endpoint)
+	// 	log.Debug().Msgf("dial context err: %v", err)
+	// 	return err
+	// }
+	// c.Client = ethclient.NewClient(rpcClient)
+	// c.rpClient = rpcClient
 
-	// TODO: currently declaring an l2geth sequencer rpc client for all sending of transactions
-	// Thhe generalConfig.Endpoint that is currently used is purely for the verifier replica and is read-only.
+	// The VerifierEndpoint in the config that is currently purely for the verifier replica and is read-only.
 	// Thus, an actual transaction send requires a sequencer endpoint for writing to the node, and will only be called within `SendRawTransaction`
 	// We can consider switching this so that the generalConfig.Endpoint remains the sequencer node and
 	// this second rpc client is the verifier which is called only within `RollupInfo`
-	sequencerRpcClient, err := rpc.DialContext(context.TODO(), c.config.SequencerEndpoint)
-	if err != nil {
-		log.Debug().Msgf("dial context err: %v", err)
-		return err
-	}
-	c.sequencerRpClient = sequencerRpcClient
+	// verifierRpClient, err := rpc.DialContext(context.Background(), c.config.VerifierEndpoint)
+	// if err != nil {
+	// 	log.Debug().Msgf("dial context err: %v", err)
+	// 	return err
+	// }
+	// c.verifierRpClient = verifierRpClient
+	c.configureVerifier()
 
 	if generalConfig.LatestBlock {
 		curr, err := c.LatestBlock()
@@ -178,10 +181,25 @@ func (c *OptimismClient) Configurate(path string, name string) error {
 
 }
 
+func (c *OptimismClient) configureVerifier() error {
+	// The VerifierEndpoint in the config that is currently purely for the verifier replica and is read-only.
+	// Thus, an actual transaction send requires a sequencer endpoint for writing to the node, and will only be called within `SendRawTransaction`
+	// We can consider switching this so that the generalConfig.Endpoint remains the sequencer node and
+	// this second rpc client is the verifier which is called only within `RollupInfo`
+	verifierRpClient, err := rpc.DialContext(context.TODO(), c.config.VerifierEndpoint)
+	if err != nil {
+		log.Debug().Msgf("endpoint: %v", c.config.VerifierEndpoint)
+		log.Debug().Msgf("dial context err: %v", err)
+		return err
+	}
+	c.verifierRpClient = verifierRpClient
+	return nil
+}
+
 func (c *OptimismClient) RollupInfo() (*rollupInfo, error) {
 	var info *rollupInfo
 
-	err := c.rpClient.CallContext(context.TODO(), &info, "rollup_getInfo")
+	err := c.verifierRpClient.CallContext(context.TODO(), &info, "rollup_getInfo")
 	if err == nil && info == nil {
 		err = ethereum.NotFound
 	}
