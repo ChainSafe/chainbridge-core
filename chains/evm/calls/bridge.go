@@ -5,13 +5,15 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
 
 func PrepareSetBurnableInput(handler, tokenAddress common.Address) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(BridgeABI))
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
 	}
@@ -24,7 +26,7 @@ func PrepareSetBurnableInput(handler, tokenAddress common.Address) ([]byte, erro
 
 func PrepareAdminSetResourceInput(handler common.Address, rId [32]byte, addr common.Address) ([]byte, error) {
 	log.Debug().Msgf("ResourceID %x", rId)
-	a, err := abi.JSON(strings.NewReader(BridgeABI))
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
 	}
@@ -36,7 +38,7 @@ func PrepareAdminSetResourceInput(handler common.Address, rId [32]byte, addr com
 }
 
 func PrepareErc20DepositInput(destChainID uint8, resourceID [32]byte, data []byte) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(BridgeABI))
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
 	}
@@ -48,7 +50,7 @@ func PrepareErc20DepositInput(destChainID uint8, resourceID [32]byte, data []byt
 }
 
 func PrepareAddRelayerInput(relayer common.Address) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(BridgeABI))
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
 	}
@@ -59,7 +61,7 @@ func PrepareAddRelayerInput(relayer common.Address) ([]byte, error) {
 	return input, nil
 }
 func PrepareIsRelayerInput(address common.Address) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(BridgeABI))
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +75,7 @@ func PrepareIsRelayerInput(address common.Address) ([]byte, error) {
 }
 
 func ParseIsRelayerOutput(output []byte) (bool, error) {
-	a, err := abi.JSON(strings.NewReader(BridgeABI))
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return false, err
 	}

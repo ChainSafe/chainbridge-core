@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 )
 
 type SharedEVMConfig struct {
@@ -52,11 +52,11 @@ func (c *RawSharedEVMConfig) ParseConfig() (*SharedEVMConfig, error) {
 		Erc20Handler:       c.Erc20Handler,
 		Erc721Handler:      c.Erc721Handler,
 		GenericHandler:     c.GenericHandler,
-		GasLimit:           big.NewInt(calls.DefaultGasLimit),
-		MaxGasPrice:        big.NewInt(calls.DefaultGasPrice),
-		GasMultiplier:      big.NewFloat(calls.DefaultGasMultiplier),
+		GasLimit:           big.NewInt(consts.DefaultGasLimit),
+		MaxGasPrice:        big.NewInt(consts.DefaultGasPrice),
+		GasMultiplier:      big.NewFloat(consts.DefaultGasMultiplier),
 		StartBlock:         big.NewInt(c.StartBlock),
-		BlockConfirmations: big.NewInt(calls.DefaultBlockConfirmations),
+		BlockConfirmations: big.NewInt(consts.DefaultBlockConfirmations),
 	}
 
 	if c.Bridge != "" {

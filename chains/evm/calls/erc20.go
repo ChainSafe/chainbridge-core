@@ -6,6 +6,8 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -17,7 +19,7 @@ import (
 
 func PrepareMintTokensInput(destAddr common.Address, amount *big.Int) ([]byte, error) {
 	log.Debug().Msgf("Minting tokens %s %s", destAddr.String(), amount.String())
-	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
+	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
 	if err != nil {
 		return []byte{}, err
 	}
@@ -29,7 +31,7 @@ func PrepareMintTokensInput(destAddr common.Address, amount *big.Int) ([]byte, e
 }
 
 func PrepareErc20ApproveInput(target common.Address, amount *big.Int) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
+	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
 	if err != nil {
 		return []byte{}, err
 	}
@@ -41,7 +43,7 @@ func PrepareErc20ApproveInput(target common.Address, amount *big.Int) ([]byte, e
 }
 
 func PrepareErc20AddMinterInput(client ChainClient, erc20Contract, handler common.Address) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
+	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
 	if err != nil {
 		return []byte{}, err
 	}
@@ -57,7 +59,7 @@ func PrepareErc20AddMinterInput(client ChainClient, erc20Contract, handler commo
 }
 
 func PrepareRegisterGenericResourceInput(handler common.Address, rId [32]byte, addr common.Address, depositSig, executeSig [4]byte) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
+	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
 	if err != nil {
 		return []byte{}, err // Not sure what status to use here
 	}
@@ -69,7 +71,7 @@ func PrepareRegisterGenericResourceInput(handler common.Address, rId [32]byte, a
 }
 
 func PrepareERC20BalanceInput(accountAddr common.Address) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
+	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
 	if err != nil {
 		return []byte{}, err
 	}
@@ -81,7 +83,7 @@ func PrepareERC20BalanceInput(accountAddr common.Address) ([]byte, error) {
 }
 
 func ParseERC20BalanceOutput(output []byte) (*big.Int, error) {
-	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
+	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
 	if err != nil {
 		return new(big.Int), err
 	}
@@ -98,7 +100,7 @@ func ParseERC20BalanceOutput(output []byte) (*big.Int, error) {
 }
 
 func MinterRole(chainClient ChainClient, erc20Contract common.Address) ([32]byte, error) {
-	a, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
+	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
 	if err != nil {
 		return [32]byte{}, err
 	}

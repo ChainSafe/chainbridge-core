@@ -7,23 +7,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
 )
 
-const DefaultGasLimit = 2000000
-const DefaultGasPrice = 20000000000
-const DefaultGasMultiplier = 1
-const DefaultBlockConfirmations = 10
-
 func DeployErc20(c ChainClient, txFabric TxFabric, name, symbol string) (common.Address, error) {
-	parsed, err := abi.JSON(strings.NewReader(ERC20PresetMinterPauserABI))
+	parsed, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
 	if err != nil {
 		return common.Address{}, err
 	}
-	address, err := deployContract(c, parsed, common.FromHex(ERC20PresetMinterPauserBin), txFabric, name, symbol)
+	address, err := deployContract(c, parsed, common.FromHex(consts.ERC20PresetMinterPauserBin), txFabric, name, symbol)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -31,11 +28,11 @@ func DeployErc20(c ChainClient, txFabric TxFabric, name, symbol string) (common.
 }
 
 func DeployBridge(c ChainClient, txFabric TxFabric, chainID uint8, relayerAddrs []common.Address, initialRelayerThreshold *big.Int) (common.Address, error) {
-	parsed, err := abi.JSON(strings.NewReader(BridgeABI))
+	parsed, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return common.Address{}, err
 	}
-	address, err := deployContract(c, parsed, common.FromHex(BridgeBin), txFabric, chainID, relayerAddrs, initialRelayerThreshold, big.NewInt(0), big.NewInt(100))
+	address, err := deployContract(c, parsed, common.FromHex(consts.BridgeBin), txFabric, chainID, relayerAddrs, initialRelayerThreshold, big.NewInt(0), big.NewInt(100))
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -44,11 +41,11 @@ func DeployBridge(c ChainClient, txFabric TxFabric, chainID uint8, relayerAddrs 
 
 func DeployErc20Handler(c ChainClient, txFabric TxFabric, bridgeAddress common.Address) (common.Address, error) {
 	log.Debug().Msgf("Deployng ERC20 Handler with params: %s", bridgeAddress.String())
-	parsed, err := abi.JSON(strings.NewReader(ERC20HandlerABI))
+	parsed, err := abi.JSON(strings.NewReader(consts.ERC20HandlerABI))
 	if err != nil {
 		return common.Address{}, err
 	}
-	address, err := deployContract(c, parsed, common.FromHex(ERC20HandlerBin), txFabric, bridgeAddress, [][32]byte{}, []common.Address{}, []common.Address{})
+	address, err := deployContract(c, parsed, common.FromHex(consts.ERC20HandlerBin), txFabric, bridgeAddress, [][32]byte{}, []common.Address{}, []common.Address{})
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -69,7 +66,7 @@ func deployContract(client ChainClient, abi abi.ABI, bytecode []byte, txFabric T
 	if err != nil {
 		return common.Address{}, err
 	}
-	tx := txFabric(n.Uint64(), nil, big.NewInt(0), DefaultGasLimit, gp, append(bytecode, input...))
+	tx := txFabric(n.Uint64(), nil, big.NewInt(0), consts.DefaultDeployGasLimit, gp, append(bytecode, input...))
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return common.Address{}, err

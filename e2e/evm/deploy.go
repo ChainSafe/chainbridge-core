@@ -1,4 +1,4 @@
-package e2e
+package evm
 
 import (
 	"fmt"
@@ -16,6 +16,7 @@ var EveKp = keystore.TestKeyRing.EthereumKeys[keystore.EveKey]
 
 var (
 	DefaultRelayerAddresses = []common.Address{
+		common.HexToAddress(keystore.TestKeyRing.EthereumKeys[keystore.AliceKey].Address()),
 		common.HexToAddress(keystore.TestKeyRing.EthereumKeys[keystore.BobKey].Address()),
 		common.HexToAddress(keystore.TestKeyRing.EthereumKeys[keystore.CharlieKey].Address()),
 		common.HexToAddress(keystore.TestKeyRing.EthereumKeys[keystore.DaveKey].Address()),
@@ -23,7 +24,7 @@ var (
 	}
 )
 
-func PrepareEVME2EEnv(ethClient calls.ChainClient, fabric calls.TxFabric, chainID uint8, treshHold *big.Int) (common.Address, common.Address, common.Address, error) {
+func PrepareEVME2EEnv(ethClient calls.ChainClient, fabric calls.TxFabric, chainID uint8, treshHold *big.Int, mintTo common.Address) (common.Address, common.Address, common.Address, error) {
 	bridgeAddr, erc20Addr, erc20HandlerAddr, err := deployForTest(ethClient, fabric, chainID, treshHold)
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
@@ -41,7 +42,7 @@ func PrepareEVME2EEnv(ethClient calls.ChainClient, fabric calls.TxFabric, chainI
 	}
 	// Minting tokens
 	tenTokens := big.NewInt(0).Mul(big.NewInt(10), big.NewInt(0).Exp(big.NewInt(10), big.NewInt(18), nil))
-	minInput, err := calls.PrepareMintTokensInput(AliceKp.CommonAddress(), tenTokens)
+	minInput, err := calls.PrepareMintTokensInput(mintTo, tenTokens)
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 	"sync"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -140,9 +142,8 @@ func (c *EVMClient) WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error
 			time.Sleep(5 * time.Second)
 			continue
 		}
-		log.Debug().Msgf("Receipt Logs: %v", receipt.Logs)
 		if receipt.Status != 1 {
-			return receipt, errors.New("transaction failed on chain")
+			return receipt, errors.New(fmt.Sprintf("transaction failed on chain. Receipt status %v", receipt.Status))
 		}
 		return receipt, nil
 	}
@@ -221,7 +222,6 @@ func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransac
 	if err != nil {
 		return common.Hash{}, err
 	}
-
 	err = c.SendRawTransaction(ctx, rawTX)
 	if err != nil {
 		return common.Hash{}, err
