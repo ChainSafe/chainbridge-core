@@ -4,7 +4,9 @@ import (
 	"crypto/ecdsa"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -40,22 +42,21 @@ func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, chainId *big.Int) ([]byte, 
 }
 
 // NewTransaction is the
-func NewTransaction(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPricer evmtypes.GasPricer, data []byte) (evmtypes.CommonTransaction, error) {
+func NewTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPricer calls.GasPricer, data []byte) evmclient.CommonTransaction {
 	gasPrices, err := gasPricer.GasPrice()
 	if err != nil {
-		return nil, err
+		return nil
 	}
 	// If there is more than one gas price returned we are sending with DynamicFeeTx's
 	if gasPrices[1] == nil {
-		return newTransaction(nonce, to, amount, gasLimit, gasPrices[0], data), nil
+		return newTransaction(nonce, to, amount, gasLimit, gasPrices[0], data)
 	} else {
-		return newDynamicFeeTransaction(chainId, nonce, to, amount, gasLimit, gasPrices[0], gasPrices[1], data), nil
+		return newDynamicFeeTransaction(nonce, to, amount, gasLimit, gasPrices[0], gasPrices[1], data)
 	}
 }
 
-func newDynamicFeeTransaction(chainId *big.Int, nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasTipCap *big.Int, gasFeeCap *big.Int, data []byte) *TX {
+func newDynamicFeeTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasTipCap *big.Int, gasFeeCap *big.Int, data []byte) *TX {
 	tx := types.NewTx(&types.DynamicFeeTx{
-		ChainID:   chainId,
 		Nonce:     nonce,
 		To:        to,
 		GasFeeCap: gasFeeCap,

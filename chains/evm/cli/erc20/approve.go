@@ -8,8 +8,8 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
@@ -76,7 +76,7 @@ Decimals: %v`,
 	}
 	recipientAddr := common.HexToAddress(recipientAddress)
 
-	realAmount, err := cliutils.UserAmountToWei(amount, decimalsBigInt)
+	realAmount, err := utils.UserAmountToWei(amount, decimalsBigInt)
 	if err != nil {
 		log.Fatal().Err(err)
 		return err

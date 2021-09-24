@@ -10,11 +10,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-const DefaultGasLimit = 6721975
-const DefaultGasPrice = 20000000000
-const DefaultGasMultiplier = 1
-const DefaultBlockConfirmations = 10
-
 type EVMConfig struct {
 	SharedEVMConfig config.SharedEVMConfig
 	kp              *secp256k1.Keypair

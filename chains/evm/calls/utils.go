@@ -7,20 +7,26 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
-
-	"github.com/ethereum/go-ethereum/core/types"
-
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/rs/zerolog/log"
 )
 
-// UTILS
+// GasPricer abstract model for providers of gasPrice. Depending on the implementation array of gasprices could be differ.
+//In case of static implementation (pre EIP-1559) only one elemnt will be returned. For EIP1559 implementations 3 elements will be returned
+type GasPricer interface {
+	GasPrice() ([]*big.Int, error)
+}
+
+type TxFabric func(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPricer GasPricer, data []byte) evmclient.CommonTransaction
 
 type ChainClient interface {
-	SignAndSendTransaction(ctx context.Context, tx evmtypes.CommonTransaction) (common.Hash, error)
+	SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error)
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
 	WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error)
 	CodeAt(ctx context.Context, contract common.Address, blockNumber *big.Int) ([]byte, error)
@@ -31,6 +37,7 @@ type ChainClient interface {
 	GasPrice() (*big.Int, error)
 	From() common.Address
 	ChainID(ctx context.Context) (*big.Int, error)
+	Simulate(block *big.Int, txHash common.Hash, fromAddress common.Address) ([]byte, error)
 }
 
 func SliceTo32Bytes(in []byte) [32]byte {
@@ -77,27 +84,21 @@ func UserAmountToWei(amount string, decimal *big.Int) (*big.Int, error) {
 	return i, nil
 }
 
-func Transact(client ChainClient, txFabric evmtypes.TxFabric, to *common.Address, data []byte, gasLimit uint64) (common.Hash, error) {
+func Transact(client ChainClient, txFabric TxFabric, to *common.Address, data []byte, gasLimit uint64) (common.Hash, error) {
 	client.LockNonce()
 	n, err := client.UnsafeNonce()
 	if err != nil {
 		return common.Hash{}, err
 	}
 
-	cId, err := client.ChainID(context.TODO())
-	if err != nil {
-		return common.Hash{}, err
-	}
-
 	gasPricer := evmgaspricer.NewStaticGasPriceDeterminant(client)
-	tx, err := txFabric(cId, n.Uint64(), to, big.NewInt(0), gasLimit, gasPricer, data)
-	if err != nil {
-		return common.Hash{}, err
-	}
+	tx := txFabric(n.Uint64(), to, big.NewInt(0), gasLimit, gasPricer, data)
 	_, err = client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return common.Hash{}, err
 	}
+
+	log.Debug().Msgf("hash: %v from: %s", tx.Hash(), client.From())
 	_, err = client.WaitAndReturnTxReceipt(tx.Hash())
 	if err != nil {
 		return common.Hash{}, err
@@ -108,4 +109,12 @@ func Transact(client ChainClient, txFabric evmtypes.TxFabric, to *common.Address
 	}
 	client.UnlockNonce()
 	return tx.Hash(), nil
+}
+
+func ConstructErc20DepositData(destRecipient []byte, amount *big.Int) []byte {
+	var data []byte
+	data = append(data, math.PaddedBigBytes(amount, 32)...)
+	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(destRecipient))), 32)...)
+	data = append(data, destRecipient...)
+	return data
 }

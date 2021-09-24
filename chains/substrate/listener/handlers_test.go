@@ -11,19 +11,6 @@ package listener
 //	return types.Bytes{1, 1, 1, 1, 1}
 //}
 //
-//var AliceKp = keystore.TestKeyRing.EthereumKeys[keystore.AliceKey]
-//var BobKp = keystore.TestKeyRing.EthereumKeys[keystore.BobKey]
-//var EveKp = keystore.TestKeyRing.EthereumKeys[keystore.EveKey]
-//
-//var (
-//	DefaultRelayerAddresses = []common.Address{
-//		common.HexToAddress(keystore.TestKeyRing.EthereumKeys[keystore.AliceKey].Address()),
-//		common.HexToAddress(keystore.TestKeyRing.EthereumKeys[keystore.BobKey].Address()),
-//		common.HexToAddress(keystore.TestKeyRing.EthereumKeys[keystore.CharlieKey].Address()),
-//		common.HexToAddress(keystore.TestKeyRing.EthereumKeys[keystore.DaveKey].Address()),
-//		common.HexToAddress(keystore.TestKeyRing.EthereumKeys[keystore.EveKey].Address()),
-//	}
-//)
 
 //
 //func Test_gettx(t *testing.T) {

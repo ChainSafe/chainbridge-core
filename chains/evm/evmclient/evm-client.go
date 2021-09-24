@@ -3,6 +3,7 @@ package evmclient
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,13 +11,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
-
 	"github.com/ChainSafe/chainbridge-core/config"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -26,6 +26,14 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/rs/zerolog/log"
 )
+
+type CommonTransaction interface {
+	// Hash returns the transaction hash.
+	Hash() common.Hash
+
+	// RawWithSignature Returns signed transaction by provided private key
+	RawWithSignature(Key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
+}
 
 type EVMClient struct {
 	*ethclient.Client
@@ -138,7 +146,7 @@ func (c *EVMClient) WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error
 			continue
 		}
 		if receipt.Status != 1 {
-			return receipt, errors.New("transaction failed on chain")
+			return receipt, errors.New(fmt.Sprintf("transaction failed on chain. Receipt status %v", receipt.Status))
 		}
 		return receipt, nil
 	}
@@ -206,7 +214,7 @@ func (c *EVMClient) From() common.Address {
 	return c.config.kp.CommonAddress()
 }
 
-func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx evmtypes.CommonTransaction) (common.Hash, error) {
+func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransaction) (common.Hash, error) {
 	id, err := c.ChainID(ctx)
 	if err != nil {
 		//panic(err)
@@ -217,7 +225,6 @@ func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx evmtypes.Comm
 	if err != nil {
 		return common.Hash{}, err
 	}
-
 	err = c.SendRawTransaction(ctx, rawTx)
 	if err != nil {
 		return common.Hash{}, err
@@ -243,7 +250,7 @@ func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
 		if c.nonce == nil {
 			nonce, err := c.PendingNonceAt(context.Background(), c.config.kp.CommonAddress())
 			if err != nil {
-				time.Sleep(1)
+				time.Sleep(1 * time.Second)
 				continue
 			}
 			c.nonce = big.NewInt(0).SetUint64(nonce)
@@ -363,4 +370,37 @@ func buildQuery(contract common.Address, sig string, startBlock *big.Int, endBlo
 
 func (c *EVMClient) GetConfig() *EVMConfig {
 	return c.config
+}
+
+// Simulate function gets transaction info by hash and then executes a message call transaction, which is directly executed in the VM
+// of the node, but never mined into the blockchain. Execution happens against provided block.
+func (c *EVMClient) Simulate(block *big.Int, txHash common.Hash, from common.Address) ([]byte, error) {
+	tx, _, err := c.Client.TransactionByHash(context.TODO(), txHash)
+	if err != nil {
+		log.Debug().Msgf("[client] tx by hash error: %v", err)
+		return nil, err
+	}
+
+	log.Debug().Msgf("from: %v to: %v gas: %v gasPrice: %v value: %v data: %v", from, tx.To(), tx.Gas(), tx.GasPrice(), tx.Value(), tx.Data())
+
+	msg := ethereum.CallMsg{
+		From:     from,
+		To:       tx.To(),
+		Gas:      tx.Gas(),
+		GasPrice: tx.GasPrice(),
+		Value:    tx.Value(),
+		Data:     tx.Data(),
+	}
+	res, err := c.Client.CallContract(context.TODO(), msg, block)
+	if err != nil {
+		log.Debug().Msgf("[client] call contract error: %v", err)
+		return nil, err
+	}
+	bs, err := hex.DecodeString(common.Bytes2Hex(res))
+	if err != nil {
+		log.Debug().Msgf("[client] decode string error: %v", err)
+		return nil, err
+	}
+	log.Debug().Msg(string(bs))
+	return bs, nil
 }

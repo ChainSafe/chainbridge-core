@@ -7,6 +7,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/deploy"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/erc721"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -31,6 +32,7 @@ var (
 	JsonWalletFlagName         = "jsonWallet"
 	JsonWalletPasswordFlagName = "jsonWalletPassword"
 )
+
 func BindEVMCLIFlags(evmRootCLI *cobra.Command) {
 	evmRootCLI.PersistentFlags().String(UrlFlagName, "ws://localhost:8545", "node url")
 	evmRootCLI.PersistentFlags().Uint64(GasLimitFlagName, 6721975, "gasLimit used in transactions")
@@ -49,7 +51,6 @@ func BindEVMCLIFlags(evmRootCLI *cobra.Command) {
 	viper.BindPFlag(JsonWalletPasswordFlagName, evmRootCLI.PersistentFlags().Lookup(JsonWalletPasswordFlagName))
 
 }
-
 
 func init() {
 	// persistent flags
@@ -73,23 +74,7 @@ func init() {
 	EvmRootCLI.AddCommand(erc721.ERC721Cmd)
 
 	EvmRootCLI.AddCommand(account.AccountRootCMD)
+
+	// utils
+	EvmRootCLI.AddCommand(utils.UtilsCmd)
 }
-
-/*
-func EVMCLI(cli *cobra.Command) *cobra.Command {
-	evmRootCLI.Flags().String("url", "ws://localhost:8545", "node url")
-	evmRootCLI.Flags().Uint64("gasLimit", 6721975, "gasLimit used in transactions")
-	evmRootCLI.Flags().Uint64("gasPrice", 20000000000, "gasPrice used for transactions")
-	evmRootCLI.Flags().Uint64("networkID", 0, "networkid")
-	evmRootCLI.Flags().String("privateKey", "ws://localhost:8545", "Private key to usel")
-	evmRootCLI.Flags().String("jsonWallet", "ws://localhost:8545", "Encrypted JSON wallet")
-	evmRootCLI.Flags().String("jsonWalletPassword", "ws://localhost:8545", "Password for encrypted JSON wallet")
-
-	evmRootCLI.AddCommand(deploy.DeployEVM)
-	evmRootCLI.AddCommand(bridge.CancelProposalEVM)
-
-	cli.AddCommand(evmRootCLI)
-
-	return evmRootCLI
-}
-*/

@@ -7,61 +7,52 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
-	"github.com/ChainSafe/chainbridge-core/config"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
 )
 
-const DefaultGasLimit = 2000000
-
-type GasPricer interface {
-	GasPrice() ([]*big.Int, error)
-}
-
-func DeployErc20(c *evmclient.EVMClient, txFabric evmtypes.TxFabric, name, symbol string) (common.Address, error) {
-	parsed, err := abi.JSON(strings.NewReader(evmtypes.ERC20PresetMinterPauserABI))
+func DeployErc20(c ChainClient, txFabric TxFabric, name, symbol string) (common.Address, error) {
+	parsed, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
 	if err != nil {
 		return common.Address{}, err
 	}
-	address, err := deployContract(c, parsed, common.FromHex(evmtypes.ERC20PresetMinterPauserBin), txFabric, name, symbol)
+	address, err := deployContract(c, parsed, common.FromHex(consts.ERC20PresetMinterPauserBin), txFabric, name, symbol)
 	if err != nil {
 		return common.Address{}, err
 	}
 	return address, nil
 }
 
-func DeployBridge(c *evmclient.EVMClient, txFabric evmtypes.TxFabric, chainID uint8, relayerAddrs []common.Address, initialRelayerThreshold *big.Int) (common.Address, error) {
-	parsed, err := abi.JSON(strings.NewReader(evmtypes.BridgeABI))
+func DeployBridge(c ChainClient, txFabric TxFabric, chainID uint8, relayerAddrs []common.Address, initialRelayerThreshold *big.Int) (common.Address, error) {
+	parsed, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return common.Address{}, err
 	}
-	address, err := deployContract(c, parsed, common.FromHex(evmtypes.BridgeBin), txFabric, chainID, relayerAddrs, initialRelayerThreshold, big.NewInt(0), big.NewInt(100))
+	address, err := deployContract(c, parsed, common.FromHex(consts.BridgeBin), txFabric, chainID, relayerAddrs, initialRelayerThreshold, big.NewInt(0), big.NewInt(100))
 	if err != nil {
 		return common.Address{}, err
 	}
 	return address, nil
 }
 
-func DeployErc20Handler(c *evmclient.EVMClient, txFabric evmtypes.TxFabric, bridgeAddress common.Address) (common.Address, error) {
+func DeployErc20Handler(c ChainClient, txFabric TxFabric, bridgeAddress common.Address) (common.Address, error) {
 	log.Debug().Msgf("Deployng ERC20 Handler with params: %s", bridgeAddress.String())
-	parsed, err := abi.JSON(strings.NewReader(evmtypes.ERC20HandlerABI))
+	parsed, err := abi.JSON(strings.NewReader(consts.ERC20HandlerABI))
 	if err != nil {
 		return common.Address{}, err
 	}
-	address, err := deployContract(c, parsed, common.FromHex(evmtypes.ERC20HandlerBin), txFabric, bridgeAddress, [][32]byte{}, []common.Address{}, []common.Address{})
+	address, err := deployContract(c, parsed, common.FromHex(consts.ERC20HandlerBin), txFabric, bridgeAddress, [][32]byte{}, []common.Address{}, []common.Address{})
 	if err != nil {
 		return common.Address{}, err
 	}
 	return address, nil
 }
 
-func deployContract(client ChainClient, abi abi.ABI, bytecode []byte, txFabric evmtypes.TxFabric, params ...interface{}) (common.Address, error) {
+func deployContract(client ChainClient, abi abi.ABI, bytecode []byte, txFabric TxFabric, params ...interface{}) (common.Address, error) {
 	client.LockNonce()
 	n, err := client.UnsafeNonce()
 	if err != nil {
@@ -72,17 +63,10 @@ func deployContract(client ChainClient, abi abi.ABI, bytecode []byte, txFabric e
 		return common.Address{}, err
 	}
 
-	cId, err := client.ChainID(context.TODO())
-	if err != nil {
-		return common.Address{}, err
-	}
-
+	// TODO gas pricer should be dynamic
 	gasPricer := evmgaspricer.NewStaticGasPriceDeterminant(client)
-	tx, err := txFabric(cId, n.Uint64(), nil, big.NewInt(0), config.DefaultGasLimit, gasPricer, append(bytecode, input...))
-	if err != nil {
-		return common.Address{}, err
-	}
 
+	tx := txFabric(n.Uint64(), nil, big.NewInt(0), consts.DefaultDeployGasLimit, gasPricer, append(bytecode, input...))
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return common.Address{}, err

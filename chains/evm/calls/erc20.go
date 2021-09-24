@@ -6,7 +6,12 @@ import (
 	"math/big"
 	"strings"
 
+<<<<<<< HEAD
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
+=======
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+
+>>>>>>> main
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -15,7 +20,11 @@ import (
 
 func PrepareMintTokensInput(destAddr common.Address, amount *big.Int) ([]byte, error) {
 	log.Debug().Msgf("Minting tokens %s %s", destAddr.String(), amount.String())
+<<<<<<< HEAD
 	a, err := abi.JSON(strings.NewReader(evmtypes.ERC20PresetMinterPauserABI))
+=======
+	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
+>>>>>>> main
 	if err != nil {
 		return []byte{}, err
 	}
@@ -27,7 +36,11 @@ func PrepareMintTokensInput(destAddr common.Address, amount *big.Int) ([]byte, e
 }
 
 func PrepareErc20ApproveInput(target common.Address, amount *big.Int) ([]byte, error) {
+<<<<<<< HEAD
 	a, err := abi.JSON(strings.NewReader(evmtypes.ERC20PresetMinterPauserABI))
+=======
+	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
+>>>>>>> main
 	if err != nil {
 		return []byte{}, err
 	}
@@ -39,7 +52,11 @@ func PrepareErc20ApproveInput(target common.Address, amount *big.Int) ([]byte, e
 }
 
 func PrepareErc20AddMinterInput(client ChainClient, erc20Contract, handler common.Address) ([]byte, error) {
+<<<<<<< HEAD
 	a, err := abi.JSON(strings.NewReader(evmtypes.ERC20PresetMinterPauserABI))
+=======
+	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
+>>>>>>> main
 	if err != nil {
 		return []byte{}, err
 	}
@@ -55,7 +72,11 @@ func PrepareErc20AddMinterInput(client ChainClient, erc20Contract, handler commo
 }
 
 func PrepareRegisterGenericResourceInput(handler common.Address, rId [32]byte, addr common.Address, depositSig, executeSig [4]byte) ([]byte, error) {
+<<<<<<< HEAD
 	a, err := abi.JSON(strings.NewReader(evmtypes.ERC20PresetMinterPauserABI))
+=======
+	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
+>>>>>>> main
 	if err != nil {
 		return []byte{}, err // Not sure what status to use here
 	}
@@ -67,7 +88,11 @@ func PrepareRegisterGenericResourceInput(handler common.Address, rId [32]byte, a
 }
 
 func PrepareERC20BalanceInput(accountAddr common.Address) ([]byte, error) {
+<<<<<<< HEAD
 	a, err := abi.JSON(strings.NewReader(evmtypes.ERC20PresetMinterPauserABI))
+=======
+	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
+>>>>>>> main
 	if err != nil {
 		return []byte{}, err
 	}
@@ -79,7 +104,11 @@ func PrepareERC20BalanceInput(accountAddr common.Address) ([]byte, error) {
 }
 
 func ParseERC20BalanceOutput(output []byte) (*big.Int, error) {
+<<<<<<< HEAD
 	a, err := abi.JSON(strings.NewReader(evmtypes.ERC20PresetMinterPauserABI))
+=======
+	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
+>>>>>>> main
 	if err != nil {
 		return new(big.Int), err
 	}
@@ -96,7 +125,11 @@ func ParseERC20BalanceOutput(output []byte) (*big.Int, error) {
 }
 
 func MinterRole(chainClient ChainClient, erc20Contract common.Address) ([32]byte, error) {
+<<<<<<< HEAD
 	a, err := abi.JSON(strings.NewReader(evmtypes.ERC20PresetMinterPauserABI))
+=======
+	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
+>>>>>>> main
 	if err != nil {
 		return [32]byte{}, err
 	}
@@ -115,4 +148,40 @@ func MinterRole(chainClient ChainClient, erc20Contract common.Address) ([32]byte
 	}
 	out0 := *abi.ConvertType(res[0], new([32]byte)).(*[32]byte)
 	return out0, nil
+}
+
+func GetERC20Balance(ethClient ChainClient, erc20Addr, address common.Address) (*big.Int, error) {
+	input, err := PrepareERC20BalanceInput(address)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("prepare input error: %v", err))
+		return nil, err
+	}
+
+	msg := ethereum.CallMsg{
+		From: common.Address{},
+		To:   &erc20Addr,
+		Data: input,
+	}
+
+	out, err := ethClient.CallContract(context.TODO(), ToCallArg(msg), nil)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("call contract error: %v", err))
+		return nil, err
+	}
+
+	if len(out) == 0 {
+		// Make sure we have a contract to operate on, and bail out otherwise.
+		if code, err := ethClient.CodeAt(context.Background(), erc20Addr, nil); err != nil {
+			return nil, err
+		} else if len(code) == 0 {
+			return nil, fmt.Errorf("no code at provided address %s", erc20Addr.String())
+		}
+	}
+
+	balance, err := ParseERC20BalanceOutput(out)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("prepare output error: %v", err))
+		return nil, err
+	}
+	return balance, nil
 }

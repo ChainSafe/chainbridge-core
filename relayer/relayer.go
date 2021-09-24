@@ -4,6 +4,7 @@
 package relayer
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/ChainSafe/chainbridge-core/metrics"
@@ -12,19 +13,22 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type MessageProcessor func(message *Message) error
+
 type RelayedChain interface {
 	PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *Message)
 	Write(message *Message) error
 	ChainID() uint8
 }
 
-func NewRelayer(chains []RelayedChain) *Relayer {
-	return &Relayer{relayedChains: chains}
+func NewRelayer(chains []RelayedChain, messageProcessors ...MessageProcessor) *Relayer {
+	return &Relayer{relayedChains: chains, messageProcessors: messageProcessors}
 }
 
 type Relayer struct {
-	relayedChains []RelayedChain
-	registry      map[uint8]RelayedChain
+	relayedChains     []RelayedChain
+	registry          map[uint8]RelayedChain
+	messageProcessors []MessageProcessor
 }
 
 // Starts the relayer. Relayer routine is starting all the chains
@@ -66,13 +70,14 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 
 // Route function winds destination writer by mapping DestinationID from message to registered writer.
 func (r *Relayer) route(m *Message, chainMetrics *metrics.ChainMetrics) {
-	w, ok := r.registry[m.Destination]
+	destChain, ok := r.registry[m.Destination]
 	if !ok {
 		log.Error().Msgf("no resolver for destID %v to send message registered", m.Destination)
 		return
 	}
 
 	// extract amount from Payload field
+	// TODO: if the message is not for ERC20 transfer that panics or errors could appear
 	payloadAmount, err := m.extractAmountTransferred()
 	if err != nil {
 		log.Error().Err(err)
@@ -83,8 +88,15 @@ func (r *Relayer) route(m *Message, chainMetrics *metrics.ChainMetrics) {
 	chainMetrics.AmountTransferred.Add(payloadAmount)
 	chainMetrics.NumberOfTransfers.Inc()
 
+	for _, mp := range r.messageProcessors {
+		if err := mp(m); err != nil {
+			log.Error().Err(fmt.Errorf("error %w processing mesage %v", err, m))
+			return
+		}
+	}
+
 	log.Debug().Msgf("Sending message %+v to destination %v", m, m.Destination)
-	if err := w.Write(m); err != nil {
+	if err := destChain.Write(m); err != nil {
 		log.Error().Err(err).Msgf("writing message %+v", m)
 		return
 	}

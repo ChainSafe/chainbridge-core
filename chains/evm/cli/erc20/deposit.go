@@ -1,19 +1,17 @@
 package erc20
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"math/big"
 	"strconv"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -97,13 +95,22 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric evmtypes.TxFabric) e
 		log.Error().Err(fmt.Errorf("destination ID conversion error: %v", err))
 		return err
 	}
-	data := cliutils.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
+	data := calls.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
 	// TODO: confirm correct arguments
 	input, err := calls.PrepareErc20DepositInput(uint8(destinationIdInt), resourceIdBytesArr, data)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit input error: %v", err))
 		return err
 	}
+
+	blockNum, err := ethClient.BlockNumber(context.Background())
+	if err != nil {
+		log.Error().Err(fmt.Errorf("block fetch error: %v", err))
+		return err
+	}
+
+	log.Debug().Msgf("blockNum: %v", blockNum)
+
 	// destinationId
 	txHash, err := calls.Transact(ethClient, txFabric, &bridgeAddr, input, gasLimit)
 	if err != nil {
