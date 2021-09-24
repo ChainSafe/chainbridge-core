@@ -1,6 +1,6 @@
 module github.com/ChainSafe/chainbridge-core
 
-go 1.16
+go 1.15
 
 require (
 	github.com/centrifuge/go-substrate-rpc-client v2.0.0+incompatible
