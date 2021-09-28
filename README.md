@@ -547,6 +547,23 @@ Flags:
 ## Celo-CLI
 Though Celo is an EVM-compatible chain, it deviates in its implementation of the original Ethereum specifications, and therefore is deserving of its own separate module.
 
+See: [differences between EVM and Celo](#differences-between-evm-and-celo).
+
+```bash
+Usage:
+   celo-cli [command]
+
+Available Commands:
+  bridge      Bridge-related instructions
+  deploy      Deploy smart contracts
+  erc20       erc20-related instructions
+
+Flags:
+  -h, --help   help for celo-cli
+```
+
+### Differences Between EVM and Celo
+
 The differences alluded to above in how Celo constructs transactions versus those found within Ethereum can be viewed below by taking a look at the Message structs in both implementations.
 
 [Ethereum Message Struct](https://github.com/ethereum/go-ethereum/blob/ac7baeab57405c64592b1646a91e0a2bb33d8d6c/core/types/transaction.go#L586-L598)
@@ -588,21 +605,6 @@ Message {
    ethCompatible:       ethCompatible,       // Bool to check presence of: feeCurrency, gatewayFeeRecipient, gatewayFee
    checkNonce:          checkNonce,
 }
-```
-
-```bash
-Root command for starting Celo CLI
-
-Usage:
-   celo-cli [command]
-
-Available Commands:
-  bridge      Bridge-related instructions
-  deploy      Deploy smart contracts
-  erc20       erc20-related instructions
-
-Flags:
-  -h, --help   help for celo-cli
 ```
 
 ### Bridge
