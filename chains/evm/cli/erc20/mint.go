@@ -6,8 +6,8 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/cliutils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
@@ -67,7 +67,7 @@ func MintCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 
 	erc20Addr := common.HexToAddress(erc20Address)
 
-	realAmount, err := cliutils.UserAmountToWei(amount, decimalsBigInt)
+	realAmount, err := utils.UserAmountToWei(amount, decimalsBigInt)
 	if err != nil {
 		log.Error().Err(err)
 		return err

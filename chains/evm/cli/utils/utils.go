@@ -1,4 +1,4 @@
-package cliutils
+package utils
 
 import (
 	"errors"
@@ -6,15 +6,23 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/spf13/cobra"
 
-	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+var UtilsCmd = &cobra.Command{
+	Use:   "utils",
+	Short: "Utils-related instructions",
+	Long:  "Utils-related instructions",
+}
+
+func init() {
+	UtilsCmd.AddCommand(simulateCmd)
+	UtilsCmd.AddCommand(hashListCmd)
+}
 
 type EventSig string
 
@@ -61,14 +69,6 @@ func WeiAmountToUser(amount *big.Int, decimals *big.Int) (*big.Float, error) {
 	return new(big.Float).Quo(amountFloat, big.NewFloat(gomath.Pow10(int(decimals.Int64())))), nil
 }
 
-func ConstructErc20DepositData(destRecipient []byte, amount *big.Int) []byte {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(amount, 32)...)
-	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(destRecipient))), 32)...)
-	data = append(data, destRecipient...)
-	return data
-}
-
 // constructErc20Data constructs the data field to be passed into an erc721 deposit call
 func ConstructErc721DepositData(tokenId *big.Int, destRecipient []byte) []byte {
 	var data []byte
@@ -84,20 +84,4 @@ func ConstructGenericDepositData(metadata []byte) []byte {
 	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(metadata))), 32)...)
 	data = append(data, metadata...)
 	return data
-}
-
-func DefineSender(cmd *cobra.Command) (*secp256k1.Keypair, error) {
-	privateKey, err := cmd.Flags().GetString("privateKey")
-	if err != nil {
-		return nil, err
-	}
-	if privateKey != "" {
-		kp, err := secp256k1.NewKeypairFromString(privateKey)
-		if err != nil {
-			return nil, err
-		}
-		return kp, nil
-	}
-	var AliceKp = keystore.TestKeyRing.EthereumKeys[keystore.AliceKey]
-	return AliceKp, nil
 }

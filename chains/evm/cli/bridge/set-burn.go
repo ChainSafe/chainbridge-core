@@ -66,7 +66,7 @@ func SetBurnCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 	}
 
 	log.Info().Msgf("Setting contract %s as burnable on handler %s", tokenContractAddr.String(), handlerAddr.String())
-	setBurnableInput, err := calls.PrepareSetBurnableInput(ethClient, handlerAddr, tokenContractAddr)
+	setBurnableInput, err := calls.PrepareSetBurnableInput(handlerAddr, tokenContractAddr)
 	if err != nil {
 		log.Error().Err(err)
 		return err

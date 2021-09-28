@@ -3,8 +3,10 @@ package evmclient
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 	"sync"
 	"time"
@@ -12,6 +14,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -140,7 +143,7 @@ func (c *EVMClient) WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error
 			continue
 		}
 		if receipt.Status != 1 {
-			return receipt, errors.New("transaction failed on chain")
+			return receipt, errors.New(fmt.Sprintf("transaction failed on chain. Receipt status %v", receipt.Status))
 		}
 		return receipt, nil
 	}
@@ -219,7 +222,6 @@ func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransac
 	if err != nil {
 		return common.Hash{}, err
 	}
-
 	err = c.SendRawTransaction(ctx, rawTX)
 	if err != nil {
 		return common.Hash{}, err
@@ -325,4 +327,37 @@ func buildQuery(contract common.Address, sig string, startBlock *big.Int, endBlo
 
 func (c *EVMClient) GetConfig() *EVMConfig {
 	return c.config
+}
+
+// Simulate function gets transaction info by hash and then executes a message call transaction, which is directly executed in the VM
+// of the node, but never mined into the blockchain. Execution happens against provided block.
+func (c *EVMClient) Simulate(block *big.Int, txHash common.Hash, from common.Address) ([]byte, error) {
+	tx, _, err := c.Client.TransactionByHash(context.TODO(), txHash)
+	if err != nil {
+		log.Debug().Msgf("[client] tx by hash error: %v", err)
+		return nil, err
+	}
+
+	log.Debug().Msgf("from: %v to: %v gas: %v gasPrice: %v value: %v data: %v", from, tx.To(), tx.Gas(), tx.GasPrice(), tx.Value(), tx.Data())
+
+	msg := ethereum.CallMsg{
+		From:     from,
+		To:       tx.To(),
+		Gas:      tx.Gas(),
+		GasPrice: tx.GasPrice(),
+		Value:    tx.Value(),
+		Data:     tx.Data(),
+	}
+	res, err := c.Client.CallContract(context.TODO(), msg, block)
+	if err != nil {
+		log.Debug().Msgf("[client] call contract error: %v", err)
+		return nil, err
+	}
+	bs, err := hex.DecodeString(common.Bytes2Hex(res))
+	if err != nil {
+		log.Debug().Msgf("[client] decode string error: %v", err)
+		return nil, err
+	}
+	log.Debug().Msg(string(bs))
+	return bs, nil
 }
