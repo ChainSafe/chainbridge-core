@@ -23,7 +23,7 @@ Refer to [installation](https://github.com/ChainSafe/chainbridge-docs/blob/devel
 
 The chainbridge-core-example currently supports two modules:
 1. [EVM-CLI](#evm-cli)
-2. [Celo-CLI](celo-cli
+2. [Celo-CLI](#celo-cli)
 
 ## Usage
 Since chainbridge-core is the modular framework it will require writing some code to get it running. Here you can find some examples
