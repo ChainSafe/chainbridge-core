@@ -547,6 +547,49 @@ Flags:
 ## Celo-CLI
 Though Celo is an EVM-compatible chain, it deviates in its implementation of the original Ethereum specifications, and therefore is deserving of its own separate module.
 
+The differences alluded to above in how Celo constructs transactions versus those found within Ethereum can be viewed below by taking a look at the Message structs in both implementations.
+
+[Ethereum Message Struct](https://github.com/ethereum/go-ethereum/blob/ac7baeab57405c64592b1646a91e0a2bb33d8d6c/core/types/transaction.go#L586-L598)
+
+Here you will find fields relating to the most recent London hardfork (EIP-1559), most notably `gasFeeCap` and `gasTipCap`.
+
+```go
+Message {
+   from:       from,
+   to:         to,
+   nonce:      nonce,
+   amount:     amount,
+   gasLimit:   gasLimit,
+   gasPrice:   gasPrice,
+   gasFeeCap:  gasFeeCap,
+   gasTipCap:  gasTipCap,
+   data:       data,
+   accessList: accessList,
+   isFake:     isFake,
+}
+```
+
+[Celo Message Struct](https://github.com/ChainSafe/chainbridge-celo-module/blob/b6d7ad422a5356500d2d5cf0b98e00da86dbb42e/transaction/tx.go#L422-L435)
+
+In Celo's struct you will notice that there are additional fields added for `feeCurrency`, `gatewayFeeRecipient` and `gatewayFee`. You may also notice the `ethCompatible` field, a boolean value we added in order to quickly determine whether the message is Ethereum compatible or not, ie, that `feeCurrency`, `gatewayFeeRecipient` and `gatewayFee` are omitted.
+
+```go
+Message {
+   from:                from,
+   to:                  to,
+   nonce:               nonce,
+   amount:              amount,
+   gasLimit:            gasLimit,
+   gasPrice:            gasPrice,
+   feeCurrency:         feeCurrency,         // Celo-specific
+   gatewayFeeRecipient: gatewayFeeRecipient, // Celo-specific
+   gatewayFee:          gatewayFee,          // Celo-specific
+   data:                data,
+   ethCompatible:       ethCompatible,       // Bool to check presence of: feeCurrency, gatewayFeeRecipient, gatewayFee
+   checkNonce:          checkNonce,
+}
+```
+
 ```bash
 Root command for starting Celo CLI
 
