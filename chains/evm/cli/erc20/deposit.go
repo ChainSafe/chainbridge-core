@@ -33,7 +33,10 @@ func BindDepositCmdFlags(cli *cobra.Command) {
 	cli.Flags().String("destId", "", "destination chain ID")
 	cli.Flags().String("resourceId", "", "resource ID for transfer")
 	cli.Flags().Uint64("decimals", 0, "ERC20 token decimals")
-	cli.MarkFlagRequired("decimals")
+	err := cli.MarkFlagRequired("decimals")
+	if err != nil {
+		panic(err)
+	}
 }
 
 func init() {
