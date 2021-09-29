@@ -2,6 +2,7 @@ package calls
 
 import (
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 	"math/big"
 	"strings"
 
@@ -43,6 +44,30 @@ func PrepareErc20DepositInput(destDomainID uint8, resourceID [32]byte, data []by
 		return []byte{}, err
 	}
 	input, err := a.Pack("deposit", destDomainID, resourceID, data)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
+}
+
+func PrepareExecuteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID [32]byte, calldata []byte, revertOnFail bool) ([]byte, error){
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("executeProposal", sourceDomainID, depositNonce, calldata, resourceID, revertOnFail)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
+}
+
+func PrepareVoteProposalInput(sourceDomainID uint8, resourceID [32]byte, calldata []byte) ([]byte, error){
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("voteProposal", sourceDomainID, resourceID, calldata)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -103,4 +128,34 @@ func Deposit(client ChainClient, fabric TxFabric, bridgeAddress, recipient commo
 	}
 	log.Debug().Str("hash", h.String()).Msgf("Deposit sent")
 	return nil
+}
+
+
+func ExecuteProposal(client ClientDispatcher, fabric TxFabric, proposal *voter.Proposal) (common.Hash, error) {
+	// revertOnFail should be constantly false, true is used only for internal contract calls when you need to execute proposal in voteProposal function right after it becomes Passed becouse of votes
+	input, err := PrepareExecuteProposalInput(proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data, true)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	gasLimit := uint64(300000)
+	h, err := Transact(client, fabric, &proposal.BridgeAddress, input, gasLimit)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("execute proposal failed %w", err)
+	}
+	return h, nil
+}
+
+
+func VoteProposal(client ClientDispatcher, fabric TxFabric, proposal *voter.Proposal) (common.Hash, error) {
+	// revertOnFail should be constantly false, true is used only for internal contract calls when you need to execute proposal in voteProposal function right after it becomes Passed becouse of votes
+	input, err := PrepareVoteProposalInput(proposal.Source, proposal.ResourceId, proposal.Data)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	gasLimit := uint64(300000)
+	h, err := Transact(client, fabric, &proposal.BridgeAddress, input, gasLimit)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("vote proposal failed %w", err)
+	}
+	return h, nil
 }

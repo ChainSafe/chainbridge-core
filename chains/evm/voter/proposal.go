@@ -5,10 +5,8 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 
-	"github.com/status-im/keycard-go/hexutils"
-
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -16,8 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
 )
-
-type TxFabric func(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) evmclient.CommonTransaction
 
 func NewProposal(source uint8, depositNonce uint64, resourceId [32]byte, data []byte, handlerAddress, bridgeAddress common.Address) *Proposal {
 	return &Proposal{
@@ -31,7 +27,7 @@ func NewProposal(source uint8, depositNonce uint64, resourceId [32]byte, data []
 }
 
 type Proposal struct {
-	Source         uint8  // Source where message was initiated
+	Source         uint8  // Source domainID where message was initiated
 	DepositNonce   uint64 // Nonce for the deposit
 	ResourceId     [32]byte
 	Payload        []interface{} // data associated with event sequence
@@ -89,73 +85,12 @@ func (p *Proposal) VotedBy(evmCaller ChainClient, by common.Address) (bool, erro
 	return out0, nil
 }
 
-func (p *Proposal) Execute(client ChainClient, fabric TxFabric) error {
-	log.Debug().Str("rID", hexutils.BytesToHex(p.ResourceId[:])).Uint64("depositNonce", p.DepositNonce).Msg("Executing proposal")
-	definition := "[{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"domainID\",\"type\":\"uint8\"},{\"internalType\":\"uint64\",\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"resourceID\",\"type\":\"bytes32\"}],\"name\":\"executeProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
-	a, err := abi.JSON(strings.NewReader(definition))
-	if err != nil {
-		return err // Not sure what status to use here
-	}
-	input, err := a.Pack("executeProposal", p.Source, p.DepositNonce, p.Data, p.ResourceId)
+func (p *Proposal) Vote(client ChainClient, fabric calls.TxFabric) error {
+	hash, err := calls.VoteProposal(client, fabric, p)
 	if err != nil {
 		return err
 	}
-	gasLimit := uint64(2000000)
-	gp, err := client.GasPrice()
-	if err != nil {
-		return err
-	}
-	client.LockNonce()
-	n, err := client.UnsafeNonce()
-	if err != nil {
-		return err
-	}
-	tx := fabric(n.Uint64(), &p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
-	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
-	if err != nil {
-		return err
-	}
-	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msgf("Executed")
-	err = client.UnsafeIncreaseNonce()
-	if err != nil {
-		return err
-	}
-	client.UnlockNonce()
-	return nil
-}
-
-func (p *Proposal) Vote(client ChainClient, fabric TxFabric) error {
-	log.Debug().Str("rID", hexutils.BytesToHex(p.ResourceId[:])).Uint64("depositNonce", p.DepositNonce).Uint8("domainID", p.Source).Msg("Voting proposal")
-	definition := "[{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"domainID\",\"type\":\"uint8\"},{\"internalType\":\"uint64\",\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"resourceID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"dataHash\",\"type\":\"bytes32\"}],\"name\":\"voteProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
-	a, err := abi.JSON(strings.NewReader(definition))
-	if err != nil {
-		return err // Not sure what status to use here
-	}
-	input, err := a.Pack("voteProposal", p.Source, p.DepositNonce, p.ResourceId, p.GetDataHash())
-	if err != nil {
-		return err
-	}
-	gasLimit := uint64(1000000)
-	gp, err := client.GasPrice()
-	if err != nil {
-		return err
-	}
-	client.LockNonce()
-	n, err := client.UnsafeNonce()
-	if err != nil {
-		return err
-	}
-	tx := fabric(n.Uint64(), &p.BridgeAddress, big.NewInt(0), gasLimit, gp, input)
-	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
-	if err != nil {
-		return err
-	}
-	log.Debug().Str("hash", hash.String()).Uint64("nonce", n.Uint64()).Msgf("Voted")
-	err = client.UnsafeIncreaseNonce()
-	if err != nil {
-		return err
-	}
-	client.UnlockNonce()
+	log.Debug().Str("hash", hash.String()).Uint64("nonce", p.DepositNonce).Msgf("Voted")
 	return nil
 }
 
