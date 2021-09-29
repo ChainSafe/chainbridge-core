@@ -75,7 +75,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw bl
 				if verified, err := l.chainReader.IsRollupVerified(startBlock.Uint64()); err != nil {
 					log.Error().Err(err).Msg("Error while checking whether chain is verified")
 					log.Error().Msgf("Block Number: %v", startBlock)
-					return
+					continue
 				} else if !verified {
 					//log.Error().Msg("Chain is not verified at current batch index")
 					//log.Error().Msgf("Block Number: %v", startBlock)
