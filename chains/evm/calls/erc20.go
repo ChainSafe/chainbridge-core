@@ -14,9 +14,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// @dev
-// inputs here and in bridge.go could get consolidated into something similar to txFabric in deploy.go
-
 func PrepareMintTokensInput(destAddr common.Address, amount *big.Int) ([]byte, error) {
 	log.Debug().Msgf("Minting tokens %s %s", destAddr.String(), amount.String())
 	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))

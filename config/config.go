@@ -19,11 +19,11 @@ type GeneralChainConfig struct {
 }
 
 func (c *GeneralChainConfig) Validate() error {
-	// viper defaults to 0 for not specified ints, but we must have a valid chain id
+	// viper defaults to 0 for not specified ints, but we must have a valid domain id
 	// Previous method of checking used a string cast like below
-	//chainId := string(c.Id)
+	//domainId := string(c.Id)
 	if c.Id == nil {
-		return fmt.Errorf("required field chain.Id empty for chain %v", c.Id)
+		return fmt.Errorf("required field domain.Id empty for chain %v", c.Id)
 	}
 	if c.Endpoint == "" {
 		return fmt.Errorf("required field chain.Endpoint empty for chain %v", *c.Id)

@@ -62,7 +62,7 @@ func TestValidateConfig(t *testing.T) {
 
 	err = missingId.Validate()
 	if err == nil {
-		t.Fatalf("must require chain id field, %v", err)
+		t.Fatalf("must require domain id field, %v", err)
 	}
 
 }
