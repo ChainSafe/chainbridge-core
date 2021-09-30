@@ -15,11 +15,11 @@ type ProposalVoter interface {
 }
 
 type EventListener interface {
-	ListenToEvents(startBlock *big.Int, chainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message
+	ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message
 }
 
 type SubstrateChain struct {
-	chainID  uint8
+	domainID uint8
 	stop     chan<- struct{}
 	listener EventListener
 	writer   ProposalVoter
@@ -27,12 +27,12 @@ type SubstrateChain struct {
 	config   *config.SharedSubstrateConfig
 }
 
-func NewSubstrateChain(listener EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, chainID uint8, config *config.SharedSubstrateConfig) *SubstrateChain {
+func NewSubstrateChain(listener EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, domainID uint8, config *config.SharedSubstrateConfig) *SubstrateChain {
 	return &SubstrateChain{
 		listener: listener,
 		writer:   writer,
 		kvdb:     kvdb,
-		chainID:  chainID,
+		domainID: domainID,
 		config:   config,
 	}
 }
@@ -40,13 +40,13 @@ func NewSubstrateChain(listener EventListener, writer ProposalVoter, kvdb blocks
 func (c *SubstrateChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *relayer.Message) {
 	log.Info().Msg("Polling Blocks...")
 	// Handler chain specific configs and flags
-	//b, err := blockstore.GetLastStoredBlock(c.kvdb, c.chainID)
+	//b, err := blockstore.GetLastStoredBlock(c.kvdb, c.domainID)
 	block, err := blockstore.SetupBlockstore(&c.config.GeneralChainConfig, c.kvdb, c.config.StartBlock)
 	if err != nil {
 		sysErr <- fmt.Errorf("error %w on getting last stored block", err)
 		return
 	}
-	ech := c.listener.ListenToEvents(block, c.chainID, c.kvdb, stop, sysErr)
+	ech := c.listener.ListenToEvents(block, c.domainID, c.kvdb, stop, sysErr)
 	for {
 		select {
 		case <-stop:
@@ -64,8 +64,8 @@ func (c *SubstrateChain) Write(message *relayer.Message) error {
 
 }
 
-func (c *SubstrateChain) ChainID() uint8 {
-	return c.chainID
+func (c *SubstrateChain) DomainID() uint8 {
+	return c.domainID
 }
 
 func (c *SubstrateChain) Stop() {

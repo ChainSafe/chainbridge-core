@@ -34,11 +34,11 @@ type ProposalHandlers map[relayer.TransferType]ProposalHandler
 type SubstrateWriter struct {
 	client   Voter
 	handlers ProposalHandlers
-	chainID  uint8
+	domainID uint8
 }
 
-func NewSubstrateWriter(chainID uint8, client Voter) *SubstrateWriter {
-	return &SubstrateWriter{chainID: chainID, client: client}
+func NewSubstrateWriter(domainID uint8, client Voter) *SubstrateWriter {
+	return &SubstrateWriter{domainID: domainID, client: client}
 }
 
 func (w *SubstrateWriter) RegisterHandler(t relayer.TransferType, handler ProposalHandler) {
@@ -55,7 +55,7 @@ func (w *SubstrateWriter) VoteProposal(m *relayer.Message) error {
 	}
 	prop, err := w.createProposal(m.Source, m.DepositNonce, m.ResourceId, handler(m)...)
 	if err != nil {
-		return fmt.Errorf("failed to construct proposal (chain=%d, name=%v) Error: %w", m.Destination, w.chainID, err)
+		return fmt.Errorf("failed to construct proposal (chain=%d, name=%v) Error: %w", m.Destination, w.domainID, err)
 	}
 
 	for i := 0; i < BlockRetryLimit; i++ {
