@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -17,13 +16,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// GasPricer abstract model for providers of gasPrice. Depending on the implementation array of gasprices could be differ.
-//In case of static implementation (pre EIP-1559) only one elemnt will be returned. For EIP1559 implementations 3 elements will be returned
-type GasPricer interface {
-	GasPrice() ([]*big.Int, error)
-}
 
-type TxFabric func(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPricer GasPricer, data []byte) evmclient.CommonTransaction
+type TxFabric func(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrices []*big.Int, data []byte) (evmclient.CommonTransaction, error)
 
 type ChainClient interface {
 	SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error)
@@ -34,7 +28,10 @@ type ChainClient interface {
 	LockNonce()
 	UnlockNonce()
 	UnsafeIncreaseNonce() error
-	GasPrice() (*big.Int, error)
+	// GasPrices method returns array of gasPRices to be compatibale with pre- and post- London fork
+	// if array size is bigger than 1, then it must contians maxTipFee and maxCapFee for post London Fork chains,
+	// otherwise it contains regular gasPrice as first element
+	GasPrices() []*big.Int
 	From() common.Address
 	ChainID(ctx context.Context) (*big.Int, error)
 	Simulate(block *big.Int, txHash common.Hash, fromAddress common.Address) ([]byte, error)
@@ -91,8 +88,10 @@ func Transact(client ChainClient, txFabric TxFabric, to *common.Address, data []
 		return common.Hash{}, err
 	}
 
-	gasPricer := evmgaspricer.NewStaticGasPriceDeterminant(client)
-	tx := txFabric(n.Uint64(), to, big.NewInt(0), gasLimit, gasPricer, data)
+	tx, err := txFabric(n.Uint64(), to, big.NewInt(0), gasLimit, client.GasPrices(), data)
+	if err != nil {
+		return common.Hash{}, err
+	}
 	_, err = client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return common.Hash{}, err

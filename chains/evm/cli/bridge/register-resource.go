@@ -8,7 +8,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -35,7 +34,7 @@ func init() {
 	BindRegisterResourceCmdFlags(registerResourceCmd)
 }
 
-func RegisterResourceCmd(cmd *cobra.Command, args []string, txFabric evmtypes.TxFabric) error {
+func RegisterResourceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	handlerAddressString := cmd.Flag("handler").Value.String()
 	resourceId := cmd.Flag("resourceId").Value.String()
 	targetAddress := cmd.Flag("target").Value.String()

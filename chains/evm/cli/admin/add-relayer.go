@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
@@ -20,8 +18,7 @@ var addRelayerCmd = &cobra.Command{
 	Short: "Add a new relayer",
 	Long:  "Add a new relayer",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return AddRelayerEVMCMD(cmd, args, txFabric)
+		return AddRelayerEVMCMD(cmd, args, evmtransaction.NewTransaction)
 	},
 }
 
@@ -34,7 +31,7 @@ func init() {
 	BindAddRelayerFlags(addRelayerCmd)
 }
 
-func AddRelayerEVMCMD(cmd *cobra.Command, args []string, txFabric evmtypes.TxFabric) error {
+func AddRelayerEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	relayerAddress := cmd.Flag("relayer").Value.String()
 	bridgeAddress := cmd.Flag("bridge").Value.String()
 	log.Debug().Msgf(`

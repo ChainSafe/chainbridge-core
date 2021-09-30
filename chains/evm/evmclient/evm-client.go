@@ -98,9 +98,7 @@ func (c *EVMClient) Configurate(path string, name string) error {
 		}
 		cfg.SharedEVMConfig.StartBlock = curr
 	}
-
 	return nil
-
 }
 
 type headerNumber struct {
@@ -270,7 +268,7 @@ func (c *EVMClient) UnsafeIncreaseNonce() error {
 	return nil
 }
 
-func (c *EVMClient) BaseFee() (*big.Int, error) {
+func (c *EVMClient) baseFee() (*big.Int, error) {
 	head, err := c.HeaderByNumber(context.TODO(), nil)
 	if err != nil {
 		return nil, err
@@ -278,7 +276,7 @@ func (c *EVMClient) BaseFee() (*big.Int, error) {
 	return head.BaseFee, nil
 }
 
-func (c *EVMClient) GasPrice() (*big.Int, error) {
+func (c *EVMClient) GasPrices() []*big.Int {
 	if c.gasPrice != nil {
 		return c.gasPrice, nil
 	}

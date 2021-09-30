@@ -11,7 +11,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -41,7 +40,7 @@ func init() {
 	BindDepositCmdFlags(depositCmd)
 }
 
-func DepositCmd(cmd *cobra.Command, args []string, txFabric evmtypes.TxFabric) error {
+func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	recipient := cmd.Flag("recipient").Value.String()
 	bridgeAddress := cmd.Flag("bridge").Value.String()
 	amount := cmd.Flag("amount").Value.String()

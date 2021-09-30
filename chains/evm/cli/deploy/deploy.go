@@ -7,8 +7,6 @@ import (
 	"math/big"
 	"strconv"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
@@ -71,7 +69,7 @@ func CallDeployCLI(cmd *cobra.Command, args []string) error {
 	return DeployCLI(cmd, args, txFabric)
 }
 
-func DeployCLI(cmd *cobra.Command, args []string, txFabric evmtypes.TxFabric) error {
+func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	// fetch global flag values
 	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {

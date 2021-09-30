@@ -5,8 +5,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -16,9 +15,6 @@ import (
 	"github.com/status-im/keycard-go/hexutils"
 )
 
-type GasPricer interface {
-	GasPrice() ([]*big.Int, error)
-}
 
 func NewProposal(source uint8, depositNonce uint64, resourceId [32]byte, data []byte, handlerAddress, bridgeAddress common.Address) *Proposal {
 	return &Proposal{
@@ -90,7 +86,7 @@ func (p *Proposal) VotedBy(evmCaller ChainClient, by common.Address) (bool, erro
 	return out0, nil
 }
 
-func (p *Proposal) Execute(client ChainClient, fabric evmtypes.TxFabric) error {
+func (p *Proposal) Execute(client ChainClient, fabric calls.TxFabric) error {
 	log.Debug().Str("rID", hexutils.BytesToHex(p.ResourceId[:])).Uint64("depositNonce", p.DepositNonce).Msg("Executing proposal")
 	definition := "[{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"chainID\",\"type\":\"uint8\"},{\"internalType\":\"uint64\",\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"resourceID\",\"type\":\"bytes32\"}],\"name\":\"executeProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 	a, err := abi.JSON(strings.NewReader(definition))
@@ -110,17 +106,9 @@ func (p *Proposal) Execute(client ChainClient, fabric evmtypes.TxFabric) error {
 		return err
 	}
 
-	cId, err := client.ChainID(context.TODO())
-	if err != nil {
-		return err
-	}
 	gasLimit := uint64(2000000)
 
-	gasPricer := evmgaspricer.NewLondonGasPricerDeterminant(client)
-	tx, err := fabric(cId, n.Uint64(), &p.BridgeAddress, big.NewInt(0), gasLimit, gasPricer, input)
-	if err != nil {
-		return err
-	}
+	tx, err := fabric(n.Uint64(), &p.BridgeAddress, big.NewInt(0), gasLimit, client.GasPrices(), input)
 
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
@@ -134,7 +122,7 @@ func (p *Proposal) Execute(client ChainClient, fabric evmtypes.TxFabric) error {
 	return nil
 }
 
-func (p *Proposal) Vote(client ChainClient, fabric evmtypes.TxFabric) error {
+func (p *Proposal) Vote(client ChainClient, fabric calls.TxFabric) error {
 	log.Debug().Str("rID", hexutils.BytesToHex(p.ResourceId[:])).Uint64("depositNonce", p.DepositNonce).Uint8("chainID", p.Source).Msg("Voting proposal")
 	definition := "[{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"chainID\",\"type\":\"uint8\"},{\"internalType\":\"uint64\",\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"resourceID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"dataHash\",\"type\":\"bytes32\"}],\"name\":\"voteProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 	a, err := abi.JSON(strings.NewReader(definition))
@@ -155,17 +143,9 @@ func (p *Proposal) Vote(client ChainClient, fabric evmtypes.TxFabric) error {
 		return err
 	}
 
-	cId, err := client.ChainID(context.TODO())
-	if err != nil {
-		return err
-	}
 	gasLimit := uint64(2000000)
 
-	gasPricer := evmgaspricer.NewLondonGasPricerDeterminant(client)
-	tx, err := fabric(cId, n.Uint64(), &p.BridgeAddress, big.NewInt(0), gasLimit, gasPricer, input)
-	if err != nil {
-		return err
-	}
+	tx := fabric(n.Uint64(), &p.BridgeAddress, big.NewInt(0), gasLimit, client.GasPrice(), input)
 
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {

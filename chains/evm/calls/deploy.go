@@ -66,7 +66,10 @@ func deployContract(client ChainClient, abi abi.ABI, bytecode []byte, txFabric T
 	// TODO gas pricer should be dynamic
 	gasPricer := evmgaspricer.NewStaticGasPriceDeterminant(client)
 
-	tx := txFabric(n.Uint64(), nil, big.NewInt(0), consts.DefaultDeployGasLimit, gasPricer, append(bytecode, input...))
+	tx, err := txFabric(n.Uint64(), nil, big.NewInt(0), consts.DefaultDeployGasLimit, gasPrice, append(bytecode, input...))
+	if err != nil {
+		return common.Address{}, err
+	}
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return common.Address{}, err

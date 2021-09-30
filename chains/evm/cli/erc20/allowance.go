@@ -1,8 +1,8 @@
 package erc20
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -27,7 +27,7 @@ func init() {
 	BindAllowanceCmdFlags(allowanceCmd)
 }
 
-func AllowanceCmd(cmd *cobra.Command, args []string, txFabric evmtypes.TxFabric) error {
+func AllowanceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	erc20Address := cmd.Flag("erc20Address").Value.String()
 	ownerAddress := cmd.Flag("owner").Value.String()
 	spenderAddress := cmd.Flag("spender").Value.String()

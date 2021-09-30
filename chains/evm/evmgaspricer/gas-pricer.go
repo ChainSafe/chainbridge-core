@@ -5,14 +5,16 @@ import (
 	"math/big"
 )
 
-type DefaultGasPricer interface {
-	GasPrice() (*big.Int, error)
-}
 
-type LondonGasPricer interface {
-	DefaultGasPricer
+
+type LondonGasClient interface {
+	GasPriceClient
 	BaseFee() (*big.Int, error)
 	EstimateGasLondon(ctx context.Context, baseFee *big.Int) (*big.Int, *big.Int, error)
+}
+
+type GasPriceClient interface {
+	GasPrice() (*big.Int, error)
 }
 
 // DefaultGasPrice for when you want to always use generic `GasPrice()` method from an EVM client.
@@ -23,10 +25,10 @@ type LondonGasPricer interface {
 // Currently, if the client being used is created by the `EVMClientFromParams` constructor a constant gas price is then set
 // and will be returned by this gas pricer
 type StaticGasPriceDeterminant struct {
-	client DefaultGasPricer
+	client GasPriceClient
 }
 
-func NewStaticGasPriceDeterminant(client DefaultGasPricer) *StaticGasPriceDeterminant {
+func NewStaticGasPriceDeterminant(client GasPriceClient) *StaticGasPriceDeterminant {
 	return &StaticGasPriceDeterminant{client: client}
 }
 
@@ -42,15 +44,15 @@ func (gasPricer *StaticGasPriceDeterminant) GasPrice() ([]*big.Int, error) {
 	return gasPrices, nil
 }
 
-type LondonGasPricerDeterminant struct {
-	client LondonGasPricer
+type LondonGasPriceDeterminant struct {
+	client LondonGasClient
 }
 
-func NewLondonGasPricerDeterminant(client LondonGasPricer) *LondonGasPricerDeterminant {
-	return &LondonGasPricerDeterminant{client: client}
+func NewLondonGasPriceDeterminant(client LondonGasClient) *LondonGasPriceDeterminant {
+	return &LondonGasPriceDeterminant{client: client}
 }
 
-func (gasPricer *LondonGasPricerDeterminant) GasPrice() ([]*big.Int, error) {
+func (gasPricer *LondonGasPriceDeterminant) GasPrice() ([]*big.Int, error) {
 	baseFee, err := gasPricer.client.BaseFee()
 	if err != nil {
 		return nil, err

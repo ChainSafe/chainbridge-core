@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
@@ -34,7 +32,7 @@ func init() {
 	BindAddMinterCmdFlags(addMinterCmd)
 }
 
-func AddMinterCmd(cmd *cobra.Command, args []string, txFabric evmtypes.TxFabric) error {
+func AddMinterCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	erc20Address := cmd.Flag("erc20Address").Value.String()
 	minterAddress := cmd.Flag("minter").Value.String()
 

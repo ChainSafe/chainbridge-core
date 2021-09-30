@@ -4,10 +4,7 @@ import (
 	"crypto/ecdsa"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -41,17 +38,13 @@ func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, chainId *big.Int) ([]byte, 
 	return data, nil
 }
 
-// NewTransaction is the
-func NewTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPricer calls.GasPricer, data []byte) evmclient.CommonTransaction {
-	gasPrices, err := gasPricer.GasPrice()
-	if err != nil {
-		return nil
-	}
+// NewTransaction is the ethereum transaction constructor
+func NewTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrices []*big.Int, data []byte) (evmclient.CommonTransaction, error) {
 	// If there is more than one gas price returned we are sending with DynamicFeeTx's
 	if gasPrices[1] == nil {
-		return newTransaction(nonce, to, amount, gasLimit, gasPrices[0], data)
+		return newTransaction(nonce, to, amount, gasLimit, gasPrices[0], data), nil
 	} else {
-		return newDynamicFeeTransaction(nonce, to, amount, gasLimit, gasPrices[0], gasPrices[1], data)
+		return newDynamicFeeTransaction(nonce, to, amount, gasLimit, gasPrices[0], gasPrices[1], data), nil
 	}
 }
 
@@ -71,9 +64,22 @@ func newDynamicFeeTransaction(nonce uint64, to *common.Address, amount *big.Int,
 func newTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *TX {
 	var tx *types.Transaction
 	if to == nil {
-		tx = types.NewContractCreation(nonce, amount, gasLimit, gasPrice, data)
+		tx = types.NewTx(&types.LegacyTx{
+			Nonce:    nonce,
+			Value:    amount,
+			Gas:      gasLimit,
+			GasPrice: gasPrice,
+			Data:     data,
+		})
 	} else {
-		tx = types.NewTransaction(nonce, *to, amount, gasLimit, gasPrice, data)
+		tx = types.NewTx(&types.LegacyTx{
+			Nonce:    nonce,
+			To:       to,
+			Value:    amount,
+			Gas:      gasLimit,
+			GasPrice: gasPrice,
+			Data:     data,
+		})
 	}
 	return &TX{tx: tx}
 }

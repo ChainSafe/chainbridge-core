@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtypes"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
@@ -42,7 +40,7 @@ func init() {
 	BindApproveCmdFlags(approveCmd)
 }
 
-func ApproveCmd(cmd *cobra.Command, args []string, txFabric evmtypes.TxFabric) error {
+func ApproveCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	erc20Address := cmd.Flag("erc20address").Value.String()
 	recipientAddress := cmd.Flag("recipient").Value.String()
 	amount := cmd.Flag("amount").Value.String()
