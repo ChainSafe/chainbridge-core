@@ -39,7 +39,7 @@ type CommonTransaction interface {
 	Hash() common.Hash
 
 	// RawWithSignature Returns signed transaction by provided private key
-	RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
+	RawWithSignature(key *ecdsa.PrivateKey, domainID *big.Int) ([]byte, error)
 }
 
 func NewEVMClient() *EVMClient {
@@ -215,7 +215,7 @@ func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransac
 	id, err := c.ChainID(ctx)
 	if err != nil {
 		//panic(err)
-		// Probably chain does not support ChainID eg. CELO
+		// Probably chain does not support chainID eg. CELO
 		id = nil
 	}
 	rawTX, err := tx.RawWithSignature(c.config.kp.PrivateKey(), id)

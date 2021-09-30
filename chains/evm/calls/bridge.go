@@ -37,12 +37,12 @@ func PrepareAdminSetResourceInput(handler common.Address, rId [32]byte, addr com
 	return input, nil
 }
 
-func PrepareErc20DepositInput(destChainID uint8, resourceID [32]byte, data []byte) ([]byte, error) {
+func PrepareErc20DepositInput(destDomainID uint8, resourceID [32]byte, data []byte) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
 	}
-	input, err := a.Pack("deposit", destChainID, resourceID, data)
+	input, err := a.Pack("deposit", destDomainID, resourceID, data)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -90,9 +90,9 @@ func ParseIsRelayerOutput(output []byte) (bool, error) {
 	return *b, nil
 }
 
-func Deposit(client ChainClient, fabric TxFabric, bridgeAddress, recipient common.Address, amount *big.Int, resourceID [32]byte, destChainID uint8) error {
+func Deposit(client ChainClient, fabric TxFabric, bridgeAddress, recipient common.Address, amount *big.Int, resourceID [32]byte, destDomainID uint8) error {
 	data := ConstructErc20DepositData(recipient.Bytes(), amount)
-	input, err := PrepareErc20DepositInput(destChainID, resourceID, data)
+	input, err := PrepareErc20DepositInput(destDomainID, resourceID, data)
 	if err != nil {
 		return err
 	}

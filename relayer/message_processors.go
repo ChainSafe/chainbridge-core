@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// AdjustDecimalsForERC20AmountMessageProcessor is a function, that accepts message and map[chainID uint8]{decimal uint}
+// AdjustDecimalsForERC20AmountMessageProcessor is a function, that accepts message and map[domainID uint8]{decimal uint}
 // using this  params processor converts amount for one chain to another for provided decimals with floor rounding
 func AdjustDecimalsForERC20AmountMessageProcessor(args ...interface{}) MessageProcessor {
 	return func(m *Message) error {
