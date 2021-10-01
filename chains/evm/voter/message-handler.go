@@ -138,7 +138,7 @@ func ERC721MessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress commo
 	return NewProposal(msg.Source, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress), nil
 }
 
-func GenericMessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress common.Address) (*Proposal, error) {
+func GenericMessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress common.Address) (Proposer, error) {
 	if len(msg.Payload) != 1 {
 		return nil, errors.New("malformed payload. Len  of payload should be 1")
 	}
