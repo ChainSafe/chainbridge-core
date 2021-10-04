@@ -28,6 +28,7 @@ type EVMChain struct {
 	domainID uint8
 	kvdb     blockstore.KeyValueReaderWriter
 	config   *config.SharedEVMConfig
+
 }
 
 func NewEVMChain(dr EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, domainID uint8, config *config.SharedEVMConfig) *EVMChain {
