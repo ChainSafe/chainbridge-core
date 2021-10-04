@@ -15,7 +15,7 @@ func TestAdjustDecimalsForERC20AmountMessageProcessor(t *testing.T) {
 			a.Bytes(), // 145.5567 tokens
 		},
 	}
-	err := AdjustDecimalsForERC20AmountMessageProcessor(msg, map[uint8]uint64{1: 18, 2: 2})
+	err := AdjustDecimalsForERC20AmountMessageProcessor(map[uint8]uint64{1: 18, 2: 2})(msg)
 	if err != nil {
 		t.Fatal()
 	}
@@ -30,7 +30,7 @@ func TestAdjustDecimalsForERC20AmountMessageProcessor(t *testing.T) {
 			big.NewInt(14555).Bytes(), // 145.55 tokens from 2nd chain
 		},
 	}
-	err = AdjustDecimalsForERC20AmountMessageProcessor(msg2, map[uint8]uint64{1: 18, 2: 2})
+	err = AdjustDecimalsForERC20AmountMessageProcessor(map[uint8]uint64{1: 18, 2: 2})(msg2)
 	if err != nil {
 		t.Fatal()
 	}

@@ -59,6 +59,9 @@ func (e *ETHEventHandler) matchResourceIDToHandlerAddress(rID [32]byte) (common.
 		return common.Address{}, err
 	}
 	res, err := a.Unpack("_resourceIDToHandlerAddress", out)
+	if err != nil {
+		return common.Address{}, err
+	}
 	out0 := *abi.ConvertType(res[0], new(common.Address)).(*common.Address)
 	return out0, nil
 }
@@ -110,6 +113,10 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddr
 		Amount                         *big.Int
 	}
 	a, err := abi.JSON(strings.NewReader(definition))
+	if err != nil {
+		return nil, err
+	}
+
 	input, err := a.Pack("getDepositRecord", nonce, destId)
 	if err != nil {
 		return nil, err
@@ -121,6 +128,10 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddr
 		return nil, err
 	}
 	res, err := a.Unpack("getDepositRecord", out)
+	if err != nil {
+		return nil, err
+	}
+
 	if len(res) == 0 {
 		return nil, errors.New("no handler associated with such resourceID")
 	}

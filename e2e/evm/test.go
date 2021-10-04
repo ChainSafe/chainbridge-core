@@ -108,7 +108,7 @@ func (s *IntegrationTestSuite) TestDeposit() {
 	}
 	//wait for vote log event
 	proposalEvent := "ProposalEvent(uint8,uint64,uint8,bytes32,bytes32)"
-	evts, err := s.client2.FetchEventLogs(context.Background(), s.bridgeAddr, proposalEvent, b, ba)
+	evts, _ := s.client2.FetchEventLogs(context.Background(), s.bridgeAddr, proposalEvent, b, ba)
 	var passedEventFound bool
 	for _, evt := range evts {
 		status := evt.Topics[3].Big().Uint64()
