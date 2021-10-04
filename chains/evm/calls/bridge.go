@@ -38,12 +38,12 @@ func PrepareAdminSetResourceInput(handler common.Address, rId [32]byte, addr com
 	return input, nil
 }
 
-func PrepareErc20DepositInput(destChainID uint8, resourceID [32]byte, data []byte) ([]byte, error) {
+func PrepareErc20DepositInput(destDomainID uint8, resourceID [32]byte, data []byte) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
 	}
-	input, err := a.Pack("deposit", destChainID, resourceID, data)
+	input, err := a.Pack("deposit", destDomainID, resourceID, data)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -85,6 +85,7 @@ func PrepareAddRelayerInput(relayer common.Address) ([]byte, error) {
 	}
 	return input, nil
 }
+
 func PrepareIsRelayerInput(address common.Address) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
@@ -115,9 +116,9 @@ func ParseIsRelayerOutput(output []byte) (bool, error) {
 	return *b, nil
 }
 
-func Deposit(client ChainClient, fabric TxFabric, bridgeAddress, recipient common.Address, amount *big.Int, resourceID [32]byte, destChainID uint8) error {
+func Deposit(client ChainClient, fabric TxFabric, bridgeAddress, recipient common.Address, amount *big.Int, resourceID [32]byte, destDomainID uint8) error {
 	data := ConstructErc20DepositData(recipient.Bytes(), amount)
-	input, err := PrepareErc20DepositInput(destChainID, resourceID, data)
+	input, err := PrepareErc20DepositInput(destDomainID, resourceID, data)
 	if err != nil {
 		return err
 	}
@@ -129,7 +130,6 @@ func Deposit(client ChainClient, fabric TxFabric, bridgeAddress, recipient commo
 	log.Debug().Str("hash", h.String()).Msgf("Deposit sent")
 	return nil
 }
-
 
 func ExecuteProposal(client ClientDispatcher, fabric TxFabric, proposal *voter.Proposal) (common.Hash, error) {
 	// revertOnFail should be constantly false, true is used only for internal contract calls when you need to execute proposal in voteProposal function right after it becomes Passed becouse of votes
@@ -158,4 +158,16 @@ func VoteProposal(client ClientDispatcher, fabric TxFabric, proposal *voter.Prop
 		return common.Hash{}, fmt.Errorf("vote proposal failed %w", err)
 	}
 	return h, nil
+}
+
+func PrepareSetDepositNonceInput(domainID uint8, depositNonce uint64) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("adminSetDepositNonce", domainID, depositNonce)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
 }

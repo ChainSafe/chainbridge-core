@@ -24,8 +24,8 @@ var (
 	}
 )
 
-func PrepareEVME2EEnv(ethClient calls.ChainClient, fabric calls.TxFabric, chainID uint8, treshHold *big.Int, mintTo common.Address) (common.Address, common.Address, common.Address, error) {
-	bridgeAddr, erc20Addr, erc20HandlerAddr, err := deployForTest(ethClient, fabric, chainID, treshHold)
+func PrepareEVME2EEnv(ethClient calls.ChainClient, fabric calls.TxFabric, domainID uint8, treshHold *big.Int, mintTo common.Address) (common.Address, common.Address, common.Address, error) {
+	bridgeAddr, erc20Addr, erc20HandlerAddr, err := deployForTest(ethClient, fabric, domainID, treshHold)
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
@@ -83,13 +83,13 @@ func PrepareEVME2EEnv(ethClient calls.ChainClient, fabric calls.TxFabric, chainI
 	return bridgeAddr, erc20Addr, erc20HandlerAddr, nil
 }
 
-func deployForTest(c calls.ChainClient, fabric calls.TxFabric, chainID uint8, treshHold *big.Int) (common.Address, common.Address, common.Address, error) {
+func deployForTest(c calls.ChainClient, fabric calls.TxFabric, domainID uint8, treshHold *big.Int) (common.Address, common.Address, common.Address, error) {
 	erc20Addr, err := calls.DeployErc20(c, fabric, "Test", "TST")
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, fmt.Errorf("ERC20 deploy failed: %w", err)
 	}
 
-	bridgeAdrr, err := calls.DeployBridge(c, fabric, chainID, DefaultRelayerAddresses, treshHold)
+	bridgeAdrr, err := calls.DeployBridge(c, fabric, domainID, DefaultRelayerAddresses, treshHold)
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, fmt.Errorf("Bridge deploy failed: %w", err)
 	}

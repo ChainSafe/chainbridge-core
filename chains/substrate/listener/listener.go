@@ -45,7 +45,7 @@ func (l *SubstrateListener) RegisterSubscription(tt relayer.TransferType, handle
 	l.eventHandlers[tt] = handler
 }
 
-func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message {
+func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message {
 	ch := make(chan *relayer.Message)
 	go func() {
 		for {
@@ -79,19 +79,19 @@ func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, chainID uint8, k
 					log.Error().Err(err).Msg("Failed to process events in block")
 					continue
 				}
-				msg, err := l.handleEvents(chainID, evts)
+				msg, err := l.handleEvents(domainID, evts)
 				if err != nil {
 					log.Error().Err(err).Msg("Error handling substrate events")
 				}
 				for _, m := range msg {
-					log.Info().Uint8("chain", chainID).Uint8("destination", m.Destination).Str("rID", hexutils.BytesToHex(m.ResourceId[:])).Msgf("Sending new message %+v", m)
+					log.Info().Uint8("chain", domainID).Uint8("destination", m.Destination).Str("rID", hexutils.BytesToHex(m.ResourceId[:])).Msgf("Sending new message %+v", m)
 					ch <- m
 				}
 				if startBlock.Int64()%20 == 0 {
 					// Logging process every 20 blocks to exclude spam
-					log.Debug().Str("block", startBlock.String()).Uint8("chainID", chainID).Msg("Queried block for deposit events")
+					log.Debug().Str("block", startBlock.String()).Uint8("domainID", domainID).Msg("Queried block for deposit events")
 				}
-				err = blockstore.StoreBlock(kvrw, startBlock, chainID)
+				err = blockstore.StoreBlock(kvrw, startBlock, domainID)
 				if err != nil {
 					log.Error().Str("block", startBlock.String()).Err(err).Msg("Failed to write latest block to blockstore")
 				}
@@ -103,11 +103,11 @@ func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, chainID uint8, k
 }
 
 // handleEvents calls the associated handler for all registered event types
-func (l *SubstrateListener) handleEvents(chainID uint8, evts *substrate.Events) ([]*relayer.Message, error) {
+func (l *SubstrateListener) handleEvents(domainID uint8, evts *substrate.Events) ([]*relayer.Message, error) {
 	msgs := make([]*relayer.Message, 0)
 	if l.eventHandlers[relayer.FungibleTransfer] != nil {
 		for _, evt := range evts.ChainBridge_FungibleTransfer {
-			m, err := l.eventHandlers[relayer.FungibleTransfer](chainID, evt)
+			m, err := l.eventHandlers[relayer.FungibleTransfer](domainID, evt)
 			if err != nil {
 				return nil, err
 			}
@@ -116,7 +116,7 @@ func (l *SubstrateListener) handleEvents(chainID uint8, evts *substrate.Events) 
 	}
 	if l.eventHandlers[relayer.NonFungibleTransfer] != nil {
 		for _, evt := range evts.ChainBridge_NonFungibleTransfer {
-			m, err := l.eventHandlers[relayer.NonFungibleTransfer](chainID, evt)
+			m, err := l.eventHandlers[relayer.NonFungibleTransfer](domainID, evt)
 			if err != nil {
 				return nil, err
 			}
@@ -126,7 +126,7 @@ func (l *SubstrateListener) handleEvents(chainID uint8, evts *substrate.Events) 
 	}
 	if l.eventHandlers[relayer.GenericTransfer] != nil {
 		for _, evt := range evts.ChainBridge_GenericTransfer {
-			m, err := l.eventHandlers[relayer.GenericTransfer](chainID, evt)
+			m, err := l.eventHandlers[relayer.GenericTransfer](domainID, evt)
 			if err != nil {
 				return nil, err
 			}
