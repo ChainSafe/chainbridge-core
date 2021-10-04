@@ -13,13 +13,6 @@ func TestValidateConfig(t *testing.T) {
 		From:     "0x0",
 	}
 
-	missingType := GeneralChainConfig{
-		Name:     "chain",
-		Id:       &id,
-		Endpoint: "endpoint",
-		From:     "0x0",
-	}
-
 	missingEndpoint := GeneralChainConfig{
 		Name:     "chain",
 		Id:       &id,
@@ -40,14 +33,16 @@ func TestValidateConfig(t *testing.T) {
 		From:     "0x0",
 	}
 
+	missingFrom := GeneralChainConfig{
+		Name:     "chain",
+		Id:       &id,
+		Endpoint: "endpoint",
+		From:     "",
+	}
+
 	err := valid.Validate()
 	if err != nil {
 		t.Fatal(err)
-	}
-
-	err = missingType.Validate()
-	if err == nil {
-		t.Fatal("must require type field")
 	}
 
 	err = missingEndpoint.Validate()
@@ -65,4 +60,8 @@ func TestValidateConfig(t *testing.T) {
 		t.Fatalf("must require chain id field, %v", err)
 	}
 
+	err = missingFrom.Validate()
+	if err == nil {
+		t.Fatalf("must require from field, %v", err)
+	}
 }

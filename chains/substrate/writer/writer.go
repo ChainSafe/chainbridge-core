@@ -2,7 +2,6 @@ package writer
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"time"
 
@@ -51,7 +50,7 @@ func (w *SubstrateWriter) RegisterHandler(t relayer.TransferType, handler Propos
 func (w *SubstrateWriter) VoteProposal(m *relayer.Message) error {
 	handler, ok := w.handlers[m.Type]
 	if !ok {
-		return errors.New(fmt.Sprintf("no corresponding substrate handler found for message type %s", m.Type))
+		return fmt.Errorf("no corresponding substrate handler found for message type %s", m.Type)
 	}
 	prop, err := w.createProposal(m.Source, m.DepositNonce, m.ResourceId, handler(m)...)
 	if err != nil {

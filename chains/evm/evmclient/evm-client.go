@@ -144,7 +144,7 @@ func (c *EVMClient) WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error
 			continue
 		}
 		if receipt.Status != 1 {
-			return receipt, errors.New(fmt.Sprintf("transaction failed on chain. Receipt status %v", receipt.Status))
+			return receipt, fmt.Errorf("transaction failed on chain. Receipt status %v", receipt.Status)
 		}
 		return receipt, nil
 	}

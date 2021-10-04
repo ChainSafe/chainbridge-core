@@ -27,7 +27,7 @@ type EVMChain struct {
 	writer                ProposalVoter
 	chainID               uint8
 	kvdb                  blockstore.KeyValueReaderWriter
-	bridgeContractAddress string
+	bridgeContractAddress string //nolint
 	config                *config.SharedEVMConfig
 }
 
