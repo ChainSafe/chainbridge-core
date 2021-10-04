@@ -8,8 +8,8 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -19,22 +19,17 @@ var BlockRetryInterval = time.Second * 5
 
 type ChainClient interface {
 	LatestBlock() (*big.Int, error)
-	SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error)
 	RelayerAddress() common.Address
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
-	UnsafeNonce() (*big.Int, error)
-	LockNonce()
-	UnlockNonce()
-	UnsafeIncreaseNonce() error
-	GasPrice() (*big.Int, error)
 	ChainID(ctx context.Context) (*big.Int, error)
+	calls.ClientDispatcher
 }
 
 type Proposer interface {
 	Status(client ChainClient) (relayer.ProposalStatus, error)
 	VotedBy(client ChainClient, by common.Address) (bool, error)
-	Execute(client ChainClient, fabric TxFabric) error
-	Vote(client ChainClient, fabric TxFabric) error
+	Execute(client ChainClient, fabric calls.TxFabric) error
+	Vote(client ChainClient, fabric calls.TxFabric) error
 }
 
 type MessageHandler interface {
@@ -45,10 +40,10 @@ type EVMVoter struct {
 	stop   <-chan struct{}
 	mh     MessageHandler
 	client ChainClient
-	fabric TxFabric
+	fabric calls.TxFabric
 }
 
-func NewVoter(mh MessageHandler, client ChainClient, fabric TxFabric) *EVMVoter {
+func NewVoter(mh MessageHandler, client ChainClient, fabric calls.TxFabric) *EVMVoter {
 	return &EVMVoter{
 		mh:     mh,
 		client: client,
