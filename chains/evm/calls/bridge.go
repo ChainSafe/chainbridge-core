@@ -60,6 +60,7 @@ func PrepareAddRelayerInput(relayer common.Address) ([]byte, error) {
 	}
 	return input, nil
 }
+
 func PrepareIsRelayerInput(address common.Address) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
@@ -103,4 +104,16 @@ func Deposit(client ChainClient, fabric TxFabric, bridgeAddress, recipient commo
 	}
 	log.Debug().Str("hash", h.String()).Msgf("Deposit sent")
 	return nil
+}
+
+func PrepareSetDepositNonceInput(domainID uint8, depositNonce uint64) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("adminSetDepositNonce", domainID, depositNonce)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
 }
