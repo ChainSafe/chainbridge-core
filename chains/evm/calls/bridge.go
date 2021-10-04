@@ -85,6 +85,7 @@ func PrepareAddRelayerInput(relayer common.Address) ([]byte, error) {
 	}
 	return input, nil
 }
+
 func PrepareIsRelayerInput(address common.Address) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
@@ -130,7 +131,6 @@ func Deposit(client ChainClient, fabric TxFabric, bridgeAddress, recipient commo
 	return nil
 }
 
-
 func ExecuteProposal(client ClientDispatcher, fabric TxFabric, proposal *voter.Proposal) (common.Hash, error) {
 	// revertOnFail should be constantly false, true is used only for internal contract calls when you need to execute proposal in voteProposal function right after it becomes Passed becouse of votes
 	input, err := PrepareExecuteProposalInput(proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data, true)
@@ -158,4 +158,16 @@ func VoteProposal(client ClientDispatcher, fabric TxFabric, proposal *voter.Prop
 		return common.Hash{}, fmt.Errorf("vote proposal failed %w", err)
 	}
 	return h, nil
+}
+
+func PrepareSetDepositNonceInput(domainID uint8, depositNonce uint64) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("adminSetDepositNonce", domainID, depositNonce)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
 }
