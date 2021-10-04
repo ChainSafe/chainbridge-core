@@ -29,5 +29,5 @@ func (db *LVLDB) SetByKey(key []byte, value []byte) error {
 }
 
 func (db *LVLDB) Close() error {
-	return db.Close()
+	return db.db.Close()
 }

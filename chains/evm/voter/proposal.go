@@ -65,6 +65,9 @@ func (p *Proposal) Status(evmCaller ChainClient) (relayer.ProposalStatus, error)
 		ProposedBlock *big.Int
 	}
 	res, err := a.Unpack("getProposal", out)
+	if err != nil {
+		return relayer.ProposalStatusInactive, err
+	}
 	out0 := *abi.ConvertType(res[0], new(bridgeProposal)).(*bridgeProposal)
 	return relayer.ProposalStatus(out0.Status), nil
 }
@@ -85,6 +88,9 @@ func (p *Proposal) VotedBy(evmCaller ChainClient, by common.Address) (bool, erro
 		return false, err
 	}
 	res, err := a.Unpack("_hasVotedOnProposal", out)
+	if err != nil {
+		return false, err
+	}
 	out0 := *abi.ConvertType(res[0], new(bool)).(*bool)
 	return out0, nil
 }
