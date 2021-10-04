@@ -5,17 +5,13 @@ package voter
 
 import (
 	"context"
+	"fmt"
 	"math/big"
-	"time"
-
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/rs/zerolog/log"
 )
-
-var BlockRetryInterval = time.Second * 5
 
 type ChainClient interface {
 	LatestBlock() (*big.Int, error)
@@ -28,7 +24,6 @@ type ChainClient interface {
 type Proposer interface {
 	Status(client ChainClient) (relayer.ProposalStatus, error)
 	VotedBy(client ChainClient, by common.Address) (bool, error)
-	Execute(client ChainClient, fabric calls.TxFabric) error
 	Vote(client ChainClient, fabric calls.TxFabric) error
 }
 
@@ -58,55 +53,19 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
 	}
 	ps, err := prop.Status(w.client)
 	if err != nil {
-		log.Error().Err(err).Msgf("error getting proposal status %+v", prop)
+		return fmt.Errorf("error getting proposal: %+v status %w", prop, err)
 	}
-
-	votedByCurrentExecutor, err := prop.VotedBy(w.client, w.client.RelayerAddress())
+	votedByTheRelayer, err := prop.VotedBy(w.client, w.client.RelayerAddress())
 	if err != nil {
 		return err
 	}
-
-	if votedByCurrentExecutor || ps == relayer.ProposalStatusPassed || ps == relayer.ProposalStatusCanceled || ps == relayer.ProposalStatusExecuted {
-		if ps == relayer.ProposalStatusPassed {
-			// We should not vote for this proposal but it is ready to be executed
-			err = prop.Execute(w.client, w.fabric)
-			if err != nil {
-				log.Error().Err(err).Msgf("Executing failed")
-				return err
-			}
-			return nil
-		} else {
-			log.Debug().Bool("voted", votedByCurrentExecutor).Str("voter", w.client.RelayerAddress().String()).Msgf("proposal status %s", relayer.StatusMap[ps])
-			return nil
+	// if this relayer had not voted for proposal and proposal in Active status then we need to vote for
+	// And that basically it o other options compared to previous contracts version
+	if !votedByTheRelayer && ps == relayer.ProposalStatusActive {
+		err = prop.Vote(w.client, w.fabric)
+		if err != nil {
+			return fmt.Errorf("Voting failed. Err: %w", err)
 		}
 	}
-	err = prop.Vote(w.client, w.fabric)
-	if err != nil {
-		log.Error().Err(err).Msgf("Voting failed")
-		return err
-	}
-	// Checking every 5 seconds does proposal is ready to be executed
-	// TODO: somehow update infinity loop to break after some period of time
-	for {
-		select {
-		case <-time.After(BlockRetryInterval):
-			ps, err := prop.Status(w.client)
-			if err != nil {
-				log.Error().Err(err).Msgf("error getting proposal status %+v", prop)
-				return err
-			}
-			if ps == relayer.ProposalStatusPassed {
-				err = prop.Execute(w.client, w.fabric)
-				if err != nil {
-					log.Error().Err(err).Msgf("Executing failed")
-					return err
-				}
-				return nil
-			}
-			continue
-		case <-w.stop:
-			return nil
-
-		}
-	}
+	return nil
 }
