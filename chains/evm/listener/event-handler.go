@@ -113,6 +113,10 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddr
 		Amount                         *big.Int
 	}
 	a, err := abi.JSON(strings.NewReader(definition))
+	if err != nil {
+		return nil, err
+	}
+
 	input, err := a.Pack("getDepositRecord", nonce, destId)
 	if err != nil {
 		return nil, err
@@ -127,6 +131,7 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddr
 	if err != nil {
 		return nil, err
 	}
+
 	if len(res) == 0 {
 		return nil, errors.New("no handler associated with such resourceID")
 	}

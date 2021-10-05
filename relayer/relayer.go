@@ -62,7 +62,7 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 		case m := <-messagesChannel:
 			go r.route(m, chainMetrics)
 			continue
-		case _ = <-stop:
+		case <-stop:
 			return
 		}
 	}
