@@ -1,6 +1,8 @@
 package calls_test
 
 import (
+	"testing"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 )
 
