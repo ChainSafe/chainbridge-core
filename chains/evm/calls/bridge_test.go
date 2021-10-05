@@ -1,6 +1,7 @@
-package calls
+package calls_test
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"testing"
 )
 
@@ -8,7 +9,7 @@ func TestPrepareSetDepositNonceInput(t *testing.T) {
 	domainId := uint8(0)
 	depositNonce := uint64(0)
 
-	bytes, err := PrepareSetDepositNonceInput(domainId, depositNonce)
+	bytes, err := calls.PrepareSetDepositNonceInput(domainId, depositNonce)
 	if err != nil {
 		t.Fatalf("could not prepare set deposit nonce input: %v", err)
 	}

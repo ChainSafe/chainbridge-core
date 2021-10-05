@@ -28,7 +28,6 @@ type EVMChain struct {
 	domainID uint8
 	kvdb     blockstore.KeyValueReaderWriter
 	config   *config.SharedEVMConfig
-	chainID               uint8
 	bridgeContractAddress string //nolint
 }
 
