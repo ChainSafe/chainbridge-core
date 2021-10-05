@@ -102,6 +102,35 @@ func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
 	return arg
 }
 
+func getDepositRecord(definition string, nonce uint64, destId uint8, handlerContractAddress *common.Address, client ChainClient) (interface{}, error) {
+	a, err := abi.JSON(strings.NewReader(definition))
+	if err != nil {
+		return nil, err
+	}
+
+	input, err := a.Pack("getDepositRecord", nonce, destId)
+	if err != nil {
+		return nil, err
+	}
+
+	msg := ethereum.CallMsg{From: common.Address{}, To: handlerContractAddress, Data: input}
+	out, err := client.CallContract(context.TODO(), toCallArg(msg), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	recs, err := a.Unpack("getDepositRecord", out)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(recs) == 0 {
+		return nil, errors.New("no handler associated with such resourceID")
+	}
+
+	return recs[0], nil
+}
+
 func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, client ChainClient) (*relayer.Message, error) {
 	definition := "[{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"internalType\":\"uint8\",\"name\":\"destId\",\"type\":\"uint8\"}],\"name\":\"getDepositRecord\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"internalType\":\"uint8\",\"name\":\"_lenDestinationRecipientAddress\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"_destinationDomainID\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"_resourceID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"_destinationRecipientAddress\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"_depositer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"internalType\":\"structERC20Handler.DepositRecord\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
 	type ERC20HandlerDepositRecord struct {
@@ -113,26 +142,13 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddr
 		Depositer                      common.Address
 		Amount                         *big.Int
 	}
-	a, err := abi.JSON(strings.NewReader(definition))
-	input, err := a.Pack("getDepositRecord", nonce, destId)
+
+	rec, err := getDepositRecord(definition, nonce, destId, &handlerContractAddress, client)
 	if err != nil {
 		return nil, err
 	}
 
-	msg := ethereum.CallMsg{From: common.Address{}, To: &handlerContractAddress, Data: input}
-	out, err := client.CallContract(context.TODO(), toCallArg(msg), nil)
-	if err != nil {
-		return nil, err
-	}
-	res, err := a.Unpack("getDepositRecord", out)
-	if err != nil {
-		return nil, err
-	}
-	if len(res) == 0 {
-		return nil, errors.New("no handler associated with such resourceID")
-	}
-
-	out0 := *abi.ConvertType(res[0], new(ERC20HandlerDepositRecord)).(*ERC20HandlerDepositRecord)
+	out0 := *abi.ConvertType(rec, new(ERC20HandlerDepositRecord)).(*ERC20HandlerDepositRecord)
 	return &relayer.Message{
 		Source:       sourceID,
 		Destination:  destId,
@@ -142,6 +158,32 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddr
 		Payload: []interface{}{
 			out0.Amount.Bytes(),
 			out0.DestinationRecipientAddress,
+		},
+	}, nil
+}
+
+func GenericEventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, client ChainClient) (*relayer.Message, error) {
+	type GenericHandlerDepositRecord struct {
+		DestinationChainID uint8
+		Depositer          common.Address
+		ResourceID         [32]byte
+		MetaData           []byte
+	}
+
+	rec, err := getDepositRecord(consts.GenericHandlerABI, nonce, destId, &handlerContractAddress, client)
+	if err != nil {
+		return nil, err
+	}
+
+	out0 := *abi.ConvertType(rec, new(GenericHandlerDepositRecord)).(*GenericHandlerDepositRecord)
+	return &relayer.Message{
+		Source:       sourceID,
+		Destination:  destId,
+		DepositNonce: nonce,
+		ResourceId:   out0.ResourceID,
+		Type:         relayer.GenericTransfer,
+		Payload: []interface{}{
+			out0.MetaData,
 		},
 	}, nil
 }
