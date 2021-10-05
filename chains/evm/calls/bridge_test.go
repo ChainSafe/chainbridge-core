@@ -2,7 +2,6 @@ package calls_test
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"testing"
 )
 
 func TestPrepareSetDepositNonceInput(t *testing.T) {
