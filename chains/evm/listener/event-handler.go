@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -141,6 +142,36 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddr
 		Payload: []interface{}{
 			out0.Amount.Bytes(),
 			out0.DestinationRecipientAddress,
+		},
+	}, nil
+}
+
+func Erc721EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, client ChainClient) (*relayer.Message, error) {
+	type Erc721HandlerDepositRecord struct {
+		TokenAddress                   common.Address
+		LenDestinationRecipientAddress uint8
+		DestinationDomainID            uint8
+		ResourceID                     [32]byte
+		DestinationRecipientAddress    []byte
+		Depositer                      common.Address
+		TokenId                        [32]byte
+		MetaData                       []byte
+	}
+
+	rec, err := getDepositRecord(consts.ERC721HandlerABI, nonce, destId, &handlerContractAddress, client)
+	if err != nil {
+		return nil, err
+	}
+
+	out0 := *abi.ConvertType(rec, new(Erc721HandlerDepositRecord)).(*Erc721HandlerDepositRecord)
+	return &relayer.Message{
+		Source:       sourceID,
+		Destination:  destId,
+		DepositNonce: nonce,
+		ResourceId:   out0.ResourceID,
+		Type:         relayer.NonFungibleTransfer,
+		Payload: []interface{}{
+			out0.MetaData,
 		},
 	}, nil
 }
