@@ -13,3 +13,10 @@ license-check:
 	@echo "  >  \033[Checking for license headers...\033[0m "
 	GO111MODULE=off go get -u github.com/google/addlicense
 	addlicense -check -c "ChainSafe Systems" -f ./scripts/header.txt -y 2021 .
+
+
+coverage:
+	go tool cover -func cover.out | grep total | awk '{print $3}'
+
+test:
+	./scripts/test.sh

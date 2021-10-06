@@ -21,4 +21,5 @@ func init() {
 	AdminCmd.AddCommand(setThresholdCmd)
 	AdminCmd.AddCommand(unpauseCmd)
 	AdminCmd.AddCommand(withdrawCmd)
+	AdminCmd.AddCommand(setDepositNonceCmd)
 }

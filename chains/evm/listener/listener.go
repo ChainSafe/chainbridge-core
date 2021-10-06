@@ -56,7 +56,7 @@ func NewEVMListener(chainReader ChainClient, handler EventHandler, bridgeAddress
 	return &EVMListener{chainReader: chainReader, eventHandler: handler, bridgeAddress: bridgeAddress}
 }
 
-func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message {
+func (l *EVMListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message {
 	// TODO: This channel should be closed somewhere!
 	ch := make(chan *relayer.Message)
 	go func() {
@@ -80,11 +80,11 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw bl
 				if err != nil {
 					// Filtering logs error really can appear only on wrong configuration or temporary network problem
 					// so i do no see any reason to break execution
-					log.Error().Err(err).Str("ChainID", string(chainID)).Msgf("Unable to filter logs")
+					log.Error().Err(err).Str("DomainID", string(domainID)).Msgf("Unable to filter logs")
 					continue
 				}
 				for _, eventLog := range logs {
-					m, err := l.eventHandler.HandleEvent(chainID, eventLog.DestinationID, eventLog.DepositNonce, eventLog.ResourceID, eventLog.Calldata)
+					m, err := l.eventHandler.HandleEvent(domainID, eventLog.DestinationID, eventLog.DepositNonce, eventLog.ResourceID, eventLog.Calldata)
 					if err != nil {
 						errChn <- err
 						log.Error().Err(err)
@@ -95,11 +95,11 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw bl
 				}
 				if startBlock.Int64()%20 == 0 {
 					// Logging process every 20 bocks to exclude spam
-					log.Debug().Str("block", startBlock.String()).Uint8("chainID", chainID).Msg("Queried block for deposit events")
+					log.Debug().Str("block", startBlock.String()).Uint8("domainID", domainID).Msg("Queried block for deposit events")
 				}
 				// TODO: We can store blocks to DB inside listener or make listener send something to channel each block to save it.
 				//Write to block store. Not a critical operation, no need to retry
-				err = blockstore.StoreBlock(kvrw, startBlock, chainID)
+				err = blockstore.StoreBlock(kvrw, startBlock, domainID)
 				if err != nil {
 					log.Error().Str("block", startBlock.String()).Err(err).Msg("Failed to write latest block to blockstore")
 				}
