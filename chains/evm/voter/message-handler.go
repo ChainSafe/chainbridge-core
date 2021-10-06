@@ -111,7 +111,7 @@ func ERC20MessageHandler(m *relayer.Message, handlerAddr, bridgeAddress common.A
 	return NewProposal(m.Source, m.DepositNonce, m.ResourceId, data, handlerAddr, bridgeAddress), nil
 }
 
-func ERC721MessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress common.Address) (*Proposal, error) {
+func ERC721MessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress common.Address) (Proposer, error) {
 	if len(msg.Payload) != 3 {
 		return nil, errors.New("malformed payload. Len  of payload should be 3")
 	}
