@@ -53,12 +53,12 @@ func DeployErc20Handler(c ChainClient, txFabric TxFabric, bridgeAddress common.A
 }
 
 func DeployGenericHandler(c ChainClient, txFabric TxFabric, bridgeAddress common.Address) (common.Address, error) {
-	log.Debug().Msgf("Deployng ERC20 Handler with params: %s", bridgeAddress.String())
+	log.Debug().Msgf("Deployng Generic Handler with params: %s", bridgeAddress.String())
 	parsed, err := abi.JSON(strings.NewReader(consts.GenericHandlerABI))
 	if err != nil {
 		return common.Address{}, err
 	}
-	address, err := deployContract(c, parsed, common.FromHex(consts.GenericHandlerBin), txFabric, bridgeAddress, [][32]byte{}, []common.Address{}, []byte{}, []byte{})
+	address, err := deployContract(c, parsed, common.FromHex(consts.GenericHandlerBin), txFabric, bridgeAddress, [][32]byte{}, []common.Address{}, [][4]byte{}, [][4]byte{})
 	if err != nil {
 		return common.Address{}, err
 	}
