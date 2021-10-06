@@ -268,7 +268,7 @@ func (c *EVMClient) UnsafeIncreaseNonce() error {
 	return nil
 }
 
-func (c *EVMClient) baseFee() (*big.Int, error) {
+func (c *EVMClient) BaseFee() (*big.Int, error) {
 	head, err := c.HeaderByNumber(context.TODO(), nil)
 	if err != nil {
 		return nil, err
@@ -276,50 +276,18 @@ func (c *EVMClient) baseFee() (*big.Int, error) {
 	return head.BaseFee, nil
 }
 
-func (c *EVMClient) GasPrices() []*big.Int {
-	if c.gasPrice != nil {
-		return c.gasPrice, nil
-	}
-	gasPrice, err := c.SafeEstimateGas(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-	return gasPrice, nil
-}
+//func (c *EVMClient) GasPrices() *big.Int {
+//	if c.gasPrice != nil {
+//		return c.gasPrice, nil
+//	}
+//	gasPrice, err := c.SafeEstimateGas(context.TODO())
+//	if err != nil {
+//		return nil, err
+//	}
+//	return gasPrice, nil
+//}
 
-func (c *EVMClient) EstimateGasLondon(ctx context.Context, baseFee *big.Int) (*big.Int, *big.Int, error) {
-	var maxPriorityFeePerGas *big.Int
-	var maxFeePerGas *big.Int
-
-	sharedEVMConfig := c.config.SharedEVMConfig
-	if sharedEVMConfig.MaxGasPrice.Cmp(baseFee) < 0 {
-		maxPriorityFeePerGas = big.NewInt(1)
-		maxFeePerGas = new(big.Int).Add(sharedEVMConfig.MaxGasPrice, maxPriorityFeePerGas)
-		return maxPriorityFeePerGas, maxFeePerGas, nil
-	}
-
-	maxPriorityFeePerGas, err := c.SuggestGasTipCap(context.TODO())
-	if err != nil {
-		return nil, nil, err
-	}
-
-	maxFeePerGas = new(big.Int).Add(
-		maxPriorityFeePerGas,
-		new(big.Int).Mul(baseFee, big.NewInt(2)),
-	)
-
-	if maxFeePerGas.Cmp(maxPriorityFeePerGas) < 0 {
-		return nil, nil, fmt.Errorf("maxFeePerGas (%v) < maxPriorityFeePerGas (%v)", maxFeePerGas, maxPriorityFeePerGas)
-	}
-	// Check we aren't exceeding our limit
-	if maxFeePerGas.Cmp(sharedEVMConfig.MaxGasPrice) == 1 {
-		maxPriorityFeePerGas.Sub(sharedEVMConfig.MaxGasPrice, baseFee)
-		maxFeePerGas = sharedEVMConfig.MaxGasPrice
-	}
-	return maxPriorityFeePerGas, maxFeePerGas, nil
-}
-
-func (c *EVMClient) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
+func (c *EVMClient) EstimateGas() (*big.Int, error) {
 	suggestedGasPrice, err := c.SuggestGasPrice(context.TODO())
 	if err != nil {
 		return nil, err
