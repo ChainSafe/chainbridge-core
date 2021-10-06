@@ -17,11 +17,23 @@ import (
 var BlockRetryInterval = time.Second * 5
 var BlockDelay = big.NewInt(10) //TODO: move to config
 
+// DepositLogs struct holds event data with all necessary parameters and a handler response
+// https://github.com/ChainSafe/chainbridge-solidity/blob/develop/contracts/Bridge.sol#L343
 type DepositLogs struct {
+	// ID of chain deposit will be bridged to
 	DestinationID uint8
-	ResourceID    [32]byte
-	DepositNonce  uint64
-	Calldata      []byte
+	// ResourceID used to find address of handler to be used for deposit
+	ResourceID [32]byte
+	// Nonce of deposit
+	DepositNonce uint64
+	// Address (msg.sender)
+	Address string
+	// Additional data to be passed to specified handler
+	Calldata []byte
+	// ERC20Handler: responds with empty data
+	// ERC721Handler: responds with deposited token metadata acquired by calling a tokenURI method in the token contract
+	// GenericHandler: responds with the raw bytes returned from the call to the target contract
+	HandlerResponse []byte
 }
 
 type ChainClient interface {

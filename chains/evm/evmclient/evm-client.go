@@ -162,10 +162,12 @@ func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common
 
 	for _, l := range logs {
 		dl := &listener.DepositLogs{
-			DestinationID: uint8(l.Topics[1].Big().Uint64()),
-			ResourceID:    l.Topics[2],
-			DepositNonce:  l.Topics[3].Big().Uint64(),
-			Calldata:      l.Topics[4].Bytes(),
+			DestinationID:   uint8(l.Topics[1].Big().Uint64()),
+			ResourceID:      l.Topics[2],
+			DepositNonce:    l.Topics[3].Big().Uint64(),
+			Address:         l.Topics[4].Hex(),
+			Calldata:        l.Topics[5].Bytes(),
+			HandlerResponse: l.Topics[6].Bytes(),
 		}
 		depositLogs = append(depositLogs, dl)
 	}

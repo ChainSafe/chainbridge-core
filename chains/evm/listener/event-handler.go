@@ -3,7 +3,6 @@ package listener
 import (
 	"context"
 	"errors"
-	"math/big"
 	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/relayer"
@@ -101,70 +100,20 @@ func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
 	return arg
 }
 
-// NOTE: deprecated due to PR
-// https://github.com/ChainSafe/chainbridge-solidity/pull/382/files
-func Erc20EventHandlerWithDepositFetch(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, client ChainClient) (*relayer.Message, error) {
-	definition := "[{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"internalType\":\"uint8\",\"name\":\"destId\",\"type\":\"uint8\"}],\"name\":\"getDepositRecord\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"internalType\":\"uint8\",\"name\":\"_lenDestinationRecipientAddress\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"_destinationChainID\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"_resourceID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"_destinationRecipientAddress\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"_depositer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"internalType\":\"structERC20Handler.DepositRecord\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
-	type ERC20HandlerDepositRecord struct {
-		TokenAddress                   common.Address
-		LenDestinationRecipientAddress uint8
-		DestinationChainID             uint8
-		ResourceID                     [32]byte
-		DestinationRecipientAddress    []byte
-		Depositer                      common.Address
-		Amount                         *big.Int
-	}
-	a, err := abi.JSON(strings.NewReader(definition))
-	if err != nil {
-		return nil, err
-	}
-	input, err := a.Pack("getDepositRecord", nonce, destId)
-	if err != nil {
-		return nil, err
-	}
+// Erc20EventHandler converts data pulled from contract event logs into message
+func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, client ChainClient, resourceID [32]byte, calldata []byte) (*relayer.Message, error) {
 
-	msg := ethereum.CallMsg{From: common.Address{}, To: &handlerContractAddress, Data: input}
-	out, err := client.CallContract(context.TODO(), toCallArg(msg), nil)
-	if err != nil {
-		return nil, err
-	}
-	res, err := a.Unpack("getDepositRecord", out)
-	if err != nil {
-		return nil, err
-	}
-	if len(res) == 0 {
-		return nil, errors.New("no handler associated with such resourceID")
-	}
+	// TODO: parse calldata
 
-	out0 := *abi.ConvertType(res[0], new(ERC20HandlerDepositRecord)).(*ERC20HandlerDepositRecord)
 	return &relayer.Message{
 		Source:       sourceID,
 		Destination:  destId,
 		DepositNonce: nonce,
-		ResourceId:   out0.ResourceID,
+		ResourceId:   resourceID,
 		Type:         relayer.FungibleTransfer,
 		Payload: []interface{}{
-			out0.Amount.Bytes(),
-			out0.DestinationRecipientAddress,
-		},
-	}, nil
-}
-
-// WIP
-func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, client ChainClient, resourceId [32]byte, calldata []byte) (*relayer.Message, error) {
-	if len(calldata) == 0 {
-		return nil, errors.New("byte slice empty")
-	}
-
-	return &relayer.Message{
-		Source:       sourceID,
-		Destination:  destId,
-		DepositNonce: nonce,
-		ResourceId:   resourceId,
-		Type:         relayer.FungibleTransfer,
-		Payload:      []interface{}{
-			// out0.Amount.Bytes(),
-			// out0.DestinationRecipientAddress,
+			calldata, // amount?
+			// add destination recipient address?
 		},
 	}, nil
 }
