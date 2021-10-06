@@ -96,9 +96,14 @@ func deployForTest(c calls.ChainClient, fabric calls.TxFabric, domainID uint8, t
 
 	erc20HandlerAddr, err := calls.DeployErc20Handler(c, fabric, bridgeAdrr)
 	if err != nil {
-		return common.Address{}, common.Address{}, common.Address{}, fmt.Errorf("Bridge deploy failed: %w", err)
+		return common.Address{}, common.Address{}, common.Address{}, fmt.Errorf("ERC20 handler deploy failed: %w", err)
 	}
 
-	log.Debug().Msgf("Smart contracts deployed.\n Bridge: %s; \n ERC20: %s;\n ERC20Handler: %s;\n", bridgeAdrr, erc20Addr, erc20HandlerAddr)
+	genericHandlerAddr, err := calls.DeployGenericHandler(c, fabric, bridgeAdrr)
+	if err != nil {
+		return common.Address{}, common.Address{}, common.Address{}, fmt.Errorf("Generic handler deploy failed: %w", err)
+	}
+
+	log.Debug().Msgf("Smart contracts deployed.\n Bridge: %s; \n ERC20: %s;\n ERC20Handler: %s;\n GenericHandler: %s; \n", bridgeAdrr, erc20Addr, erc20HandlerAddr, genericHandlerAddr)
 	return bridgeAdrr, erc20Addr, erc20HandlerAddr, nil
 }

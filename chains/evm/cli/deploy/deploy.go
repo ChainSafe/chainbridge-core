@@ -33,6 +33,7 @@ var (
 	Erc20HandlerFlagName     = "erc20Handler"
 	Erc20FlagName            = "erc20"
 	Erc721FlagName           = "erc721"
+	GenericHandlerFlagName   = "genericHandler"
 	DeployAllFlagName        = "all"
 	RelayerThresholdFlagName = "relayerThreshold"
 	DomainIdFlagName         = "domainId"
@@ -47,7 +48,7 @@ func BindDeployEVMFlags(deployCmd *cobra.Command) {
 	deployCmd.Flags().Bool(BridgeFlagName, false, "deploy bridge")
 	deployCmd.Flags().Bool(Erc20HandlerFlagName, false, "deploy ERC20 handler")
 	//deployCmd.Flags().Bool("erc721Handler", false, "deploy ERC721 handler")
-	//deployCmd.Flags().Bool("genericHandler", false, "deploy generic handler")
+	deployCmd.Flags().Bool(GenericHandlerFlagName, false, "deploy generic handler")
 	deployCmd.Flags().Bool(Erc20FlagName, false, "deploy ERC20")
 	deployCmd.Flags().Bool(Erc721FlagName, false, "deploy ERC721")
 	deployCmd.Flags().Bool(DeployAllFlagName, false, "deploy all")
@@ -97,7 +98,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 	for _, addr := range relayerAddressesStringSlice {
 		relayerAddresses = append(relayerAddresses, common.HexToAddress(addr))
 	}
-	log.Debug().Msgf("Relaysers for deploy %+v", relayerAddressesStringSlice)
+	log.Debug().Msgf("Relayers for deploy %+v", relayerAddressesStringSlice)
 	var bridgeAddr common.Address
 	bridgeAddressString := cmd.Flag("bridgeAddress").Value.String()
 	if common.IsHexAddress(bridgeAddressString) {
@@ -113,19 +114,24 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 		return err
 	}
 	log.Debug().Msgf("all bool: %v", allBool)
-	bridgeBool, err := cmd.Flags().GetBool("bridge")
+	bridgeBool, err := cmd.Flags().GetBool(BridgeFlagName)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("bridge flag error: %v", err))
 		return err
 	}
-	erc20HandlerBool, err := cmd.Flags().GetBool("erc20Handler")
+	erc20HandlerBool, err := cmd.Flags().GetBool(Erc20HandlerFlagName)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 handler flag error: %v", err))
 		return err
 	}
-	erc20Bool, err := cmd.Flags().GetBool("erc20")
+	erc20Bool, err := cmd.Flags().GetBool(Erc20FlagName)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 flag error: %v", err))
+		return err
+	}
+	genericHandlerBool, err := cmd.Flags().GetBool("genericHandler")
+	if err != nil {
+		log.Error().Err(fmt.Errorf("generic handler flag error: %v", err))
 		return err
 	}
 
@@ -140,6 +146,9 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 		}
 		if erc20Bool {
 			deployments = append(deployments, "erc20")
+		}
+		if genericHandlerBool {
+			deployments = append(deployments, "genericHandler")
 		}
 	}
 	if len(deployments) == 0 {
@@ -180,6 +189,20 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 				return err
 			}
 			deployedContracts["erc20Handler"] = erc20HandlerAddr.String()
+		case "genericHandler":
+			log.Debug().Msgf("deploying generic handler..")
+			emptyAddr := common.Address{}
+			if bridgeAddr == emptyAddr {
+				log.Error().Err(errors.New("bridge flag or bridgeAddress param should be set for contracts deployments"))
+				return err
+			}
+
+			genericHandlerAddr, err := calls.DeployGenericHandler(ethClient, txFabric, bridgeAddr)
+			if err != nil {
+				log.Error().Err(fmt.Errorf("Generic handler deploy failed: %w", err))
+				return err
+			}
+			deployedContracts["genericHandler"] = genericHandlerAddr.String()
 		case "erc20":
 			log.Debug().Msgf("deploying ERC20..")
 			name := cmd.Flag("erc20Name").Value.String()
