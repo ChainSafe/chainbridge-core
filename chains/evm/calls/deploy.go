@@ -64,7 +64,6 @@ func DeployGenericHandler(c ChainClient, txFabric TxFabric, bridgeAddress common
 	return address, nil
 }
 
-
 func deployContract(client ChainClient, abi abi.ABI, bytecode []byte, txFabric TxFabric, params ...interface{}) (common.Address, error) {
 	gp, err := client.GasPrice()
 	if err != nil {
