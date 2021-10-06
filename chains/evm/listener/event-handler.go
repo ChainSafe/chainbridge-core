@@ -136,3 +136,25 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID internal
 		},
 	}, nil
 }
+
+// GenericEventHandler
+func GenericEventHandler(sourceID, destId uint8, nonce uint64, resourceID internalTypes.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error) {
+	if len(calldata) < 84 {
+		err := errors.New("invalid calldata length: less than 84 bytes")
+		return nil, err
+	}
+
+	// first 32 bytes are metadata length
+	metadata := calldata[32:]
+
+	return &relayer.Message{
+		Source:       sourceID,
+		Destination:  destId,
+		DepositNonce: nonce,
+		ResourceId:   resourceID,
+		Type:         relayer.GenericTransfer,
+		Payload: []interface{}{
+			metadata,
+		},
+	}, nil
+}
