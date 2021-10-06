@@ -55,7 +55,6 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
 		return err
 	}
 	// if this relayer had not voted for proposal and proposal in Active status then we need to vote for
-	// And that basically it o other options compared to previous contracts version
 	if !votedByTheRelayer && ps == relayer.ProposalStatusActive {
 		hash, err := calls.VoteProposal(w.client, w.fabric, prop)
 		log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
