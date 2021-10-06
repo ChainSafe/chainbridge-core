@@ -7,15 +7,11 @@ import (
 	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
-
-// @dev
-// inputs here and in bridge.go could get consolidated into something similar to txFabric in deploy.go
 
 func PrepareMintTokensInput(destAddr common.Address, amount *big.Int) ([]byte, error) {
 	log.Debug().Msgf("Minting tokens %s %s", destAddr.String(), amount.String())

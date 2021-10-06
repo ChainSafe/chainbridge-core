@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ChainSafe/chainbridge-core/config"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
@@ -25,21 +27,21 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type EVMClient struct {
-	*ethclient.Client
-	rpClient  *rpc.Client
-	nonceLock sync.Mutex
-	config    *EVMConfig
-	nonce     *big.Int
-	gasPrice  *big.Int
-}
-
 type CommonTransaction interface {
 	// Hash returns the transaction hash.
 	Hash() common.Hash
 
 	// RawWithSignature Returns signed transaction by provided private key
-	RawWithSignature(key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
+	RawWithSignature(Key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
+}
+
+type EVMClient struct {
+	*ethclient.Client
+	rpClient  *rpc.Client
+	config    *EVMConfig
+	nonce     *big.Int
+	nonceLock sync.Mutex
+	gasPrice  *big.Int
 }
 
 func NewEVMClient() *EVMClient {
@@ -57,7 +59,8 @@ func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey, gasPrice *
 	c.rpClient = rpcClient
 	c.config = &EVMConfig{}
 	c.config.kp = kp
-	c.gasPrice = gasPrice
+	c.config.SharedEVMConfig = config.SharedEVMConfig{}
+	c.config.SharedEVMConfig.MaxGasPrice = gasPrice
 	return c, nil
 }
 
@@ -95,9 +98,7 @@ func (c *EVMClient) Configurate(path string, name string) error {
 		}
 		cfg.SharedEVMConfig.StartBlock = curr
 	}
-
 	return nil
-
 }
 
 type headerNumber struct {
@@ -218,11 +219,11 @@ func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransac
 		// Probably chain does not support ChainID eg. CELO
 		id = nil
 	}
-	rawTX, err := tx.RawWithSignature(c.config.kp.PrivateKey(), id)
+	rawTx, err := tx.RawWithSignature(c.config.kp.PrivateKey(), id)
 	if err != nil {
 		return common.Hash{}, err
 	}
-	err = c.SendRawTransaction(ctx, rawTX)
+	err = c.SendRawTransaction(ctx, rawTx)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -267,7 +268,15 @@ func (c *EVMClient) UnsafeIncreaseNonce() error {
 	return nil
 }
 
-func (c *EVMClient) GasPrice() (*big.Int, error) {
+func (c *EVMClient) baseFee() (*big.Int, error) {
+	head, err := c.HeaderByNumber(context.TODO(), nil)
+	if err != nil {
+		return nil, err
+	}
+	return head.BaseFee, nil
+}
+
+func (c *EVMClient) GasPrices() []*big.Int {
 	if c.gasPrice != nil {
 		return c.gasPrice, nil
 	}
@@ -276,6 +285,38 @@ func (c *EVMClient) GasPrice() (*big.Int, error) {
 		return nil, err
 	}
 	return gasPrice, nil
+}
+
+func (c *EVMClient) EstimateGasLondon(ctx context.Context, baseFee *big.Int) (*big.Int, *big.Int, error) {
+	var maxPriorityFeePerGas *big.Int
+	var maxFeePerGas *big.Int
+
+	sharedEVMConfig := c.config.SharedEVMConfig
+	if sharedEVMConfig.MaxGasPrice.Cmp(baseFee) < 0 {
+		maxPriorityFeePerGas = big.NewInt(1)
+		maxFeePerGas = new(big.Int).Add(sharedEVMConfig.MaxGasPrice, maxPriorityFeePerGas)
+		return maxPriorityFeePerGas, maxFeePerGas, nil
+	}
+
+	maxPriorityFeePerGas, err := c.SuggestGasTipCap(context.TODO())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	maxFeePerGas = new(big.Int).Add(
+		maxPriorityFeePerGas,
+		new(big.Int).Mul(baseFee, big.NewInt(2)),
+	)
+
+	if maxFeePerGas.Cmp(maxPriorityFeePerGas) < 0 {
+		return nil, nil, fmt.Errorf("maxFeePerGas (%v) < maxPriorityFeePerGas (%v)", maxFeePerGas, maxPriorityFeePerGas)
+	}
+	// Check we aren't exceeding our limit
+	if maxFeePerGas.Cmp(sharedEVMConfig.MaxGasPrice) == 1 {
+		maxPriorityFeePerGas.Sub(sharedEVMConfig.MaxGasPrice, baseFee)
+		maxFeePerGas = sharedEVMConfig.MaxGasPrice
+	}
+	return maxPriorityFeePerGas, maxFeePerGas, nil
 }
 
 func (c *EVMClient) SafeEstimateGas(ctx context.Context) (*big.Int, error) {

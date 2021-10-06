@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -53,10 +53,6 @@ func DeployErc20Handler(c ChainClient, txFabric TxFabric, bridgeAddress common.A
 }
 
 func deployContract(client ChainClient, abi abi.ABI, bytecode []byte, txFabric TxFabric, params ...interface{}) (common.Address, error) {
-	gp, err := client.GasPrice()
-	if err != nil {
-		return common.Address{}, err
-	}
 	client.LockNonce()
 	n, err := client.UnsafeNonce()
 	if err != nil {
@@ -66,7 +62,14 @@ func deployContract(client ChainClient, abi abi.ABI, bytecode []byte, txFabric T
 	if err != nil {
 		return common.Address{}, err
 	}
-	tx := txFabric(n.Uint64(), nil, big.NewInt(0), consts.DefaultDeployGasLimit, gp, append(bytecode, input...))
+
+	// TODO gas pricer should be dynamic
+	gasPricer := evmgaspricer.NewStaticGasPriceDeterminant(client)
+
+	tx, err := txFabric(n.Uint64(), nil, big.NewInt(0), consts.DefaultDeployGasLimit, gasPrice, append(bytecode, input...))
+	if err != nil {
+		return common.Address{}, err
+	}
 	hash, err := client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return common.Address{}, err

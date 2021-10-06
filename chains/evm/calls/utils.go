@@ -16,7 +16,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type TxFabric func(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) evmclient.CommonTransaction
+
+type TxFabric func(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrices []*big.Int, data []byte) (evmclient.CommonTransaction, error)
 
 type ChainClient interface {
 	SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error)
@@ -27,8 +28,12 @@ type ChainClient interface {
 	LockNonce()
 	UnlockNonce()
 	UnsafeIncreaseNonce() error
-	GasPrice() (*big.Int, error)
+	// GasPrices method returns array of gasPRices to be compatibale with pre- and post- London fork
+	// if array size is bigger than 1, then it must contians maxTipFee and maxCapFee for post London Fork chains,
+	// otherwise it contains regular gasPrice as first element
+	GasPrices() []*big.Int
 	From() common.Address
+	ChainID(ctx context.Context) (*big.Int, error)
 	Simulate(block *big.Int, txHash common.Hash, fromAddress common.Address) ([]byte, error)
 }
 
@@ -77,16 +82,16 @@ func UserAmountToWei(amount string, decimal *big.Int) (*big.Int, error) {
 }
 
 func Transact(client ChainClient, txFabric TxFabric, to *common.Address, data []byte, gasLimit uint64) (common.Hash, error) {
-	gp, err := client.GasPrice()
-	if err != nil {
-		return common.Hash{}, err
-	}
 	client.LockNonce()
 	n, err := client.UnsafeNonce()
 	if err != nil {
 		return common.Hash{}, err
 	}
-	tx := txFabric(n.Uint64(), to, big.NewInt(0), gasLimit, gp, data)
+
+	tx, err := txFabric(n.Uint64(), to, big.NewInt(0), gasLimit, client.GasPrices(), data)
+	if err != nil {
+		return common.Hash{}, err
+	}
 	_, err = client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return common.Hash{}, err

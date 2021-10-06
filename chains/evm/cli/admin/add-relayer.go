@@ -3,6 +3,7 @@ package admin
 import (
 	"errors"
 	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
@@ -16,9 +17,8 @@ var addRelayerCmd = &cobra.Command{
 	Use:   "add-relayer",
 	Short: "Add a new relayer",
 	Long:  "Add a new relayer",
-	RunE:   func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return AddRelayerEVMCMD(cmd, args, txFabric)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return AddRelayerEVMCMD(cmd, args, evmtransaction.NewTransaction)
 	},
 }
 
