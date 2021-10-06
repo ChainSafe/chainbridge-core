@@ -50,7 +50,7 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
 	if err != nil {
 		return fmt.Errorf("error getting proposal: %+v status %w", prop, err)
 	}
-	votedByTheRelayer, err := calls.ProposalVotedBy(w.client, w.client.RelayerAddress(), prop)
+	votedByTheRelayer, err := calls.IsProposalVotedBy(w.client, w.client.RelayerAddress(), prop)
 	if err != nil {
 		return err
 	}

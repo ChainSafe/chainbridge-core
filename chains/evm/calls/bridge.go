@@ -182,7 +182,7 @@ type ContractCallerClient interface {
 func ProposalStatus(evmCaller ContractCallerClient, p *proposal.Proposal) (relayer.ProposalStatus, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
-		return relayer.ProposalStatusActive, err
+		return relayer.ProposalStatusInactive, err
 	}
 	input, err := a.Pack("getProposal", p.Source, p.DepositNonce, p.Data)
 	if err != nil {
@@ -217,7 +217,7 @@ func idAndNonce(srcId uint8, nonce uint64) *big.Int {
 	return big.NewInt(0).SetBytes(data)
 }
 
-func ProposalVotedBy(evmCaller ContractCallerClient, by common.Address, p *proposal.Proposal) (bool, error) {
+func IsProposalVotedBy(evmCaller ContractCallerClient, by common.Address, p *proposal.Proposal) (bool, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return false, err
