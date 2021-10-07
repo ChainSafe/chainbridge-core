@@ -24,7 +24,10 @@ var DeployEVM = &cobra.Command{
 	Use:   "deploy",
 	Short: "Deploy smart contracts",
 	Long:  "This command can be used to deploy all or some of the contracts required for bridging. Selection of contracts can be made by either specifying --all or a subset of flags",
-	RunE:  CallDeployCLI,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		txFabric := evmtransaction.NewTransaction
+		return DeployCLI(cmd, args, txFabric)
+	},
 }
 
 var (
@@ -63,11 +66,8 @@ func BindDeployEVMFlags(deployCmd *cobra.Command) {
 
 func init() {
 	BindDeployEVMFlags(DeployEVM)
-}
 
-func CallDeployCLI(cmd *cobra.Command, args []string) error {
-	txFabric := evmtransaction.NewTransaction
-	return DeployCLI(cmd, args, txFabric)
+	DeployEVM.AddCommand(deployCentrifugeAssetStoreCmd)
 }
 
 func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
@@ -78,6 +78,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 	}
 	log.Debug().Msgf("url: %s gas limit: %v gas price: %v", url, gasLimit, gasPrice)
 	log.Debug().Msgf("SENDER Private key 0x%s", hex.EncodeToString(crypto.FromECDSA(senderKeyPair.PrivateKey())))
+
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("ethereum client error: %v", err)).Msg("error initializing new EVM client")
@@ -228,6 +229,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 			}
 		}
 	}
-	fmt.Printf("%+v", deployedContracts)
+
+	log.Info().Msgf("%+v", deployedContracts)
 	return nil
 }
