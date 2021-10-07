@@ -162,3 +162,35 @@ func GenericEventHandler(sourceID, destId uint8, nonce uint64, handlerContractAd
 		},
 	}, nil
 }
+
+func Erc721EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, client ChainClient) (*relayer.Message, error) {
+	type Erc721HandlerDepositRecord struct {
+		TokenAddress                   common.Address
+		LenDestinationRecipientAddress uint8
+		DestinationDomainID            uint8
+		ResourceID                     [32]byte
+		DestinationRecipientAddress    []byte
+		Depositer                      common.Address
+		TokenId                        [32]byte
+		MetaData                       []byte
+	}
+
+	rec, err := getDepositRecord(consts.ERC721HandlerABI, nonce, destId, &handlerContractAddress, client)
+	if err != nil {
+		return nil, err
+	}
+
+	out0 := *abi.ConvertType(rec, new(Erc721HandlerDepositRecord)).(*Erc721HandlerDepositRecord)
+	return &relayer.Message{
+		Source:       sourceID,
+		Destination:  destId,
+		DepositNonce: nonce,
+		ResourceId:   out0.ResourceID,
+		Type:         relayer.NonFungibleTransfer,
+		Payload: []interface{}{
+			out0.TokenId,
+			out0.DestinationRecipientAddress,
+			out0.MetaData,
+		},
+	}, nil
+}
