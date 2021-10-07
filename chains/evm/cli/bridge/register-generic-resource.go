@@ -1,6 +1,14 @@
 package bridge
 
 import (
+	"encoding/hex"
+	"fmt"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -9,26 +17,33 @@ var registerGenericResourceCmd = &cobra.Command{
 	Use:   "register-generic-resource",
 	Short: "Register a generic resource ID",
 	Long:  "Register a resource ID with a contract address for a generic handler",
-	Run:   registerGenericResource,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		txFabric := evmtransaction.NewTransaction
+		return RegisterGenericResourceCmd(cmd, args, txFabric)
+	},
+}
+
+func BindRegisterGenericResourceCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().String("handler", "", "handler contract address")
+	cmd.Flags().String("resourceId", "", "resource ID to query")
+	cmd.Flags().String("bridge", "", "bridge contract address")
+	cmd.Flags().String("target", "", "contract address to be registered")
+	cmd.Flags().String("deposit", "0x00000000", "deposit function signature")
+	cmd.Flags().String("execute", "0x00000000", "execute proposal function signature")
+	cmd.Flags().Bool("hash", false, "treat signature inputs as function prototype strings, hash and take the first 4 bytes")
 }
 
 func init() {
-	registerGenericResourceCmd.Flags().String("handler", "", "handler contract address")
-	registerGenericResourceCmd.Flags().String("resourceId", "", "resource ID to query")
-	registerGenericResourceCmd.Flags().String("bridge", "", "bridge contract address")
-	registerGenericResourceCmd.Flags().String("target", "", "contract address to be registered")
-	registerGenericResourceCmd.Flags().String("deposit", "0x00000000", "deposit function signature")
-	registerGenericResourceCmd.Flags().String("execute", "0x00000000", "execute proposal function signature")
-	registerGenericResourceCmd.Flags().Bool("hash", false, "treat signature inputs as function prototype strings, hash and take the first 4 bytes")
+	BindRegisterGenericResourceCmdFlags(registerGenericResourceCmd)
 }
 
-func registerGenericResource(cmd *cobra.Command, args []string) {
-	handlerAddress := cmd.Flag("handler").Value
-	resourceId := cmd.Flag("resourceId").Value
-	bridgeAddress := cmd.Flag("bridge").Value
-	targetAddress := cmd.Flag("target").Value
-	deposit := cmd.Flag("deposit").Value
-	execute := cmd.Flag("execute").Value
+func RegisterGenericResourceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+	handlerAddressStr := cmd.Flag("handler").Value.String()
+	resourceId := cmd.Flag("resourceId").Value.String()
+	bridgeAddressStr := cmd.Flag("bridge").Value.String()
+	targetAddressStr := cmd.Flag("target").Value.String()
+	depositSig := cmd.Flag("deposit").Value.String()
+	executeSig := cmd.Flag("execute").Value.String()
 	hash := cmd.Flag("hash").Value
 	log.Debug().Msgf(`
 Registering generic resource
@@ -39,62 +54,66 @@ Target address: %s
 Deposit: %s
 Execute: %s
 Hash: %v
-`, handlerAddress, resourceId, bridgeAddress, targetAddress, deposit, execute, hash)
-}
+`, handlerAddressStr, resourceId, bridgeAddressStr, targetAddressStr, depositSig, executeSig, hash)
 
-/*
-func registerGenericResource(cctx *cli.Context) error {
-	url := cctx.String("url")
-	gasLimit := cctx.Int64("gasLimit")
-	gasPrice := cctx.Int64("gasPrice")
-
-	depositSig := cctx.String("deposit")
-	depositSigBytes := common.Hex2Bytes(depositSig)
-	depositSigBytesArr := utils.SliceTo4Bytes(depositSigBytes)
-
-	executeSig := cctx.String("execute")
-	executeSigBytes := common.Hex2Bytes(executeSig)
-	executeSigBytesArr := utils.SliceTo4Bytes(executeSigBytes)
-
-	if cctx.Bool("hash") {
-		depositSigBytesArr = utils.GetSolidityFunctionSig(depositSig)
-		executeSigBytesArr = utils.GetSolidityFunctionSig(executeSig)
+	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	if err != nil {
+		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	sender, err := cliutils.DefineSender(cctx)
+	depositSigBytes := calls.GetSolidityFunctionSig([]byte(depositSig))
+	executeSigBytes := calls.GetSolidityFunctionSig([]byte(executeSig))
+
+	if !common.IsHexAddress(handlerAddressStr) {
+		err := fmt.Errorf("invalid handler address %s", handlerAddressStr)
+		log.Error().Err(err)
+		return err
+	}
+	handlerAddr := common.HexToAddress(handlerAddressStr)
+
+	if !common.IsHexAddress(targetAddressStr) {
+		err := fmt.Errorf("invalid target address %s", targetAddressStr)
+		log.Error().Err(err)
+		return err
+	}
+	targetAddr := common.HexToAddress(targetAddressStr)
+
+	bridgeAddress := common.HexToAddress(bridgeAddressStr)
+	if resourceId[0:2] == "0x" {
+		resourceId = resourceId[2:]
+	}
+	resourceIdBytes, err := hex.DecodeString(resourceId)
 	if err != nil {
 		return err
 	}
+	resourceIdBytesArr := calls.SliceTo32Bytes(resourceIdBytes)
 
-	bridgeAddress, err := cliutils.DefineBridgeAddress(cctx)
+	log.Info().Msgf("Registering contract %s with resource ID %s on handler %s", targetAddressStr, resourceId, handlerAddr)
+
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
+		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
 
-	handler := cctx.String("handler")
-	if !common.IsHexAddress(handler) {
-		return fmt.Errorf("invalid handler address %s", handler)
+	registerGenericResourceInput, err := calls.PrepareAdminSetGenericResourceInput(
+		handlerAddr,
+		resourceIdBytesArr,
+		targetAddr,
+		executeSigBytes,
+		depositSigBytes,
+	)
+	if err != nil {
+		log.Error().Err(err)
+		return err
 	}
-	handlerAddress := common.HexToAddress(handler)
-	targetContract := cctx.String("targetContract")
-	if !common.IsHexAddress(targetContract) {
-		return fmt.Errorf("invalid targetContract address %s", targetContract)
-	}
-	targetContractAddress := common.HexToAddress(targetContract)
-	resourceId := cctx.String("resourceId")
-	resourceIdBytes := common.Hex2Bytes(resourceId)
-	resourceIdBytesArr := utils.SliceTo32Bytes(resourceIdBytes)
 
-	log.Info().Msgf("Registering contract %s with resource ID %s on handler %s", targetContract, resourceId, handler)
-	ethClient, err := client.NewClient(url, false, sender, big.NewInt(gasLimit), big.NewInt(gasPrice), big.NewFloat(1))
+	_, err = calls.Transact(ethClient, txFabric, &bridgeAddress, registerGenericResourceInput, gasLimit)
 	if err != nil {
+		log.Error().Err(err)
 		return err
 	}
-	err = utils.RegisterGenericResource(ethClient, bridgeAddress, handlerAddress, resourceIdBytesArr, targetContractAddress, depositSigBytesArr, executeSigBytesArr)
-	if err != nil {
-		return err
-	}
-	fmt.Println("Resource registered")
+
+	log.Info().Msg("Generic resource registered")
 	return nil
 }
-*/
