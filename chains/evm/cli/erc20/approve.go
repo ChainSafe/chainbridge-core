@@ -34,8 +34,8 @@ func BindApproveCmdFlags(cli *cobra.Command) {
 	if err != nil {
 		panic(err)
 	}
-
 }
+
 func init() {
 	BindApproveCmdFlags(approveCmd)
 }
