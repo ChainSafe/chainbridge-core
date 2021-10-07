@@ -137,7 +137,7 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID internal
 	}, nil
 }
 
-// GenericEventHandler
+// GenericEventHandler extracts metadata of generic deposit event log into message
 func GenericEventHandler(sourceID, destId uint8, nonce uint64, resourceID internalTypes.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error) {
 	if len(calldata) < 84 {
 		err := errors.New("invalid calldata length: less than 84 bytes")
