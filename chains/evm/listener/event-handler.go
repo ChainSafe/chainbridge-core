@@ -213,6 +213,8 @@ func Erc721EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAdd
 		ResourceId:   out0.ResourceID,
 		Type:         relayer.NonFungibleTransfer,
 		Payload: []interface{}{
+			out0.TokenId,
+			out0.DestinationRecipientAddress,
 			out0.MetaData,
 		},
 	}, nil
