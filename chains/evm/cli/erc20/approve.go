@@ -90,7 +90,7 @@ Decimals: %v`,
 		log.Fatal().Err(err)
 		return err
 	}
-	_, err = calls.Transact(ethClient, txFabric, &erc20Addr, i, gasLimit)
+	_, err = calls.Transact(ethClient, txFabric, &erc20Addr, i, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Fatal().Err(err)
 		return err

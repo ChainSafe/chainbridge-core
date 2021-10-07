@@ -97,7 +97,7 @@ func Deposit(client ChainClient, fabric TxFabric, bridgeAddress, recipient commo
 		return err
 	}
 	gasLimit := uint64(2000000)
-	h, err := Transact(client, fabric, &bridgeAddress, input, gasLimit)
+	h, err := Transact(client, fabric, &bridgeAddress, input, gasLimit, big.NewInt(0))
 	if err != nil {
 		return fmt.Errorf("deposit failed %w", err)
 	}
