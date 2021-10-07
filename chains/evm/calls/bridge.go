@@ -60,6 +60,25 @@ func PrepareAdminSetGenericResourceInput(
 	return input, nil
 }
 
+func PrepareAdminSetGenericResourceInput(
+	handler common.Address,
+	rId [32]byte,
+	addr common.Address,
+	depositFunctionSig [4]byte,
+	executeFunctionSig [4]byte,
+) ([]byte, error) {
+	log.Debug().Msgf("ResourceID %x", rId)
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("adminSetGenericResource", handler, rId, addr, depositFunctionSig, executeFunctionSig)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
+}
+
 func PrepareErc20DepositInput(destDomainID uint8, resourceID [32]byte, data []byte) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
