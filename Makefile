@@ -20,3 +20,8 @@ coverage:
 
 test:
 	./scripts/test.sh
+
+## Install dependency subkey
+install-subkey:
+	curl https://getsubstrate.io -sSf | bash -s -- --fast
+	cargo install --force --git https://github.com/paritytech/substrate subkey
