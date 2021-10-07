@@ -6,7 +6,6 @@ import (
 	"math/big"
 )
 
-// TODO: how to pass confif there?????
 type LondonGasClient interface {
 	GasPriceClient
 	BaseFee() (*big.Int, error)
@@ -17,7 +16,7 @@ type GasPriceClient interface {
 	EstimateGas() (*big.Int, error)
 }
 
-// DefaultGasPrice for when you want to always use generic `GasPrice()` method from an EVM client.
+// StaticGasPriceDeterminant for when you want to always use generic `GasPrice()` method from an EVM client.
 //
 // Client should implement `GasPrice()` to query first for a gas price field that is set on client construction
 // This way a developer can use a specific gas price for transactions, such as in the CLI
@@ -25,39 +24,33 @@ type GasPriceClient interface {
 // Currently, if the client being used is created by the `EVMClientFromParams` constructor a constant gas price is then set
 // and will be returned by this gas pricer
 type StaticGasPriceDeterminant struct {
-	client GasPriceClient
+	UpperLimitFeePerGas *big.Int
+}
+func NewStaticGasPriceDeterminant(UpperLimitFeePerGas *big.Int) *StaticGasPriceDeterminant {
+	return &StaticGasPriceDeterminant{UpperLimitFeePerGas}
+
 }
 
-func NewStaticGasPriceDeterminant(client GasPriceClient) *StaticGasPriceDeterminant {
-	return &StaticGasPriceDeterminant{client: client}
-}
-
-func (gasPricer *StaticGasPriceDeterminant) GasPrice() ([]*big.Int, error) {
-	gp, err := gasPricer.client.EstimateGas()
+func (gasPricer *StaticGasPriceDeterminant) GasPrice(client GasPriceClient) ([]*big.Int, error) {
+	gp, err := client.EstimateGas()
 	if err != nil {
 		return nil, err
 	}
-
 	var gasPrices []*big.Int
 	gasPrices[0] = gp
-
 	return gasPrices, nil
 }
 
 type LondonGasPriceDeterminant struct {
-	client LondonGasClient
-	BaseFee *big.Int
-	MaxPriorityFee *big.Int
-	MaxFeePerGas *big.Int
 	UpperLimitFeePerGas *big.Int
 }
 
-func NewLondonGasPriceDeterminant(client LondonGasClient) *LondonGasPriceDeterminant {
-	return &LondonGasPriceDeterminant{client: client}
+func NewLondonGasPriceDeterminant(UpperLimitFeePerGas *big.Int) *LondonGasPriceDeterminant {
+	return &LondonGasPriceDeterminant{UpperLimitFeePerGas: UpperLimitFeePerGas}
 }
 
-func (gasPricer *LondonGasPriceDeterminant) GasPrice() ([]*big.Int, error) {
-	baseFee, err := gasPricer.client.BaseFee()
+func (gasPricer *LondonGasPriceDeterminant) GasPrice(client LondonGasClient) ([]*big.Int, error) {
+	baseFee, err := client.BaseFee()
 	if err != nil {
 		return nil, err
 	}
@@ -66,10 +59,10 @@ func (gasPricer *LondonGasPriceDeterminant) GasPrice() ([]*big.Int, error) {
 	if baseFee == nil {
 		// we are using staticGasPriceDeterminant because it counts configs in its gasPrice calculations
 		// and seem to be the most favorable option
-		staticGasPricer := NewStaticGasPriceDeterminant(gasPricer.client)
-		return staticGasPricer.GasPrice()
+		staticGasPricer := NewStaticGasPriceDeterminant(gasPricer.UpperLimitFeePerGas)
+		return staticGasPricer.GasPrice(client)
 	}
-	gasTipCap, gasFeeCap, err := gasPricer.estimateGasLondon(baseFee)
+	gasTipCap, gasFeeCap, err := gasPricer.estimateGasLondon(client, baseFee)
 	if err != nil {
 		return nil, err
 	}
@@ -80,10 +73,9 @@ func (gasPricer *LondonGasPriceDeterminant) GasPrice() ([]*big.Int, error) {
 
 const TwoAndTheHalfGwei = 2500000000
 
-func (gasPricer *LondonGasPriceDeterminant) estimateGasLondon(baseFee *big.Int) (*big.Int, *big.Int, error) {
+func (gasPricer *LondonGasPriceDeterminant) estimateGasLondon(client LondonGasClient, baseFee *big.Int) (*big.Int, *big.Int, error) {
 	var maxPriorityFeePerGas *big.Int
 	var maxFeePerGas *big.Int
-
 
 	// if gasPriceLimit is set and lower than networks baseFee then
 	// maxPriorityFee is set to 3 GWEI because that was practically and theoretically defined as optimum
@@ -94,7 +86,7 @@ func (gasPricer *LondonGasPriceDeterminant) estimateGasLondon(baseFee *big.Int) 
 		return maxPriorityFeePerGas, maxFeePerGas, nil
 	}
 
-	maxPriorityFeePerGas, err := gasPricer.client.SuggestGasTipCap(context.TODO())
+	maxPriorityFeePerGas, err := client.SuggestGasTipCap(context.TODO())
 	if err != nil {
 		return nil, nil, err
 	}

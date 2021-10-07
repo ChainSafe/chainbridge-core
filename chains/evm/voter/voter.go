@@ -74,7 +74,7 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
 
 	if votedByCurrentExecutor || ps == relayer.ProposalStatusPassed || ps == relayer.ProposalStatusCanceled || ps == relayer.ProposalStatusExecuted {
 		if ps == relayer.ProposalStatusPassed {
-			// We should not vote for this proposal but it is ready to be executed
+			// We should not vote for this proposal, but it is ready to be executed
 			err = prop.Execute(w.client, w.fabric)
 			if err != nil {
 				log.Error().Err(err).Msgf("Executing failed")

@@ -11,8 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/config"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
@@ -35,6 +33,10 @@ type CommonTransaction interface {
 	RawWithSignature(Key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
 }
 
+type GasPricer interface {
+	GasPrices ([]*big.Int, error)
+}
+
 type EVMClient struct {
 	*ethclient.Client
 	rpClient  *rpc.Client
@@ -42,13 +44,14 @@ type EVMClient struct {
 	nonce     *big.Int
 	nonceLock sync.Mutex
 	gasPrice  *big.Int
+	gasPricer GasPricer
 }
 
 func NewEVMClient() *EVMClient {
 	return &EVMClient{}
 }
 
-func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey, gasPrice *big.Int) (*EVMClient, error) {
+func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey, gasPricer GasPricer) (*EVMClient, error) {
 	rpcClient, err := rpc.DialContext(context.TODO(), url)
 	if err != nil {
 		return nil, err
@@ -59,8 +62,7 @@ func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey, gasPrice *
 	c.rpClient = rpcClient
 	c.config = &EVMConfig{}
 	c.config.kp = kp
-	c.config.SharedEVMConfig = config.SharedEVMConfig{}
-	c.config.SharedEVMConfig.MaxGasPrice = gasPrice
+	c.gasPricer = gasPricer
 	return c, nil
 }
 
@@ -275,17 +277,6 @@ func (c *EVMClient) BaseFee() (*big.Int, error) {
 	}
 	return head.BaseFee, nil
 }
-
-//func (c *EVMClient) GasPrices() *big.Int {
-//	if c.gasPrice != nil {
-//		return c.gasPrice, nil
-//	}
-//	gasPrice, err := c.SafeEstimateGas(context.TODO())
-//	if err != nil {
-//		return nil, err
-//	}
-//	return gasPrice, nil
-//}
 
 func (c *EVMClient) EstimateGas() (*big.Int, error) {
 	suggestedGasPrice, err := c.SuggestGasPrice(context.TODO())
