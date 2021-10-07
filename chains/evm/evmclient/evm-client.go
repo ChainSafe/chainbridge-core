@@ -155,7 +155,7 @@ const (
 	// destinationDomainID
 	// resourceID
 	// depositNonce
-	// address
+	// msg.sender
 	// calldata
 	// handlerResponse
 	// https://github.com/ChainSafe/chainbridge-solidity/blob/develop/contracts/Bridge.sol#L343
@@ -174,7 +174,7 @@ func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common
 			DestinationID:   uint8(l.Topics[1].Big().Uint64()),
 			ResourceID:      l.Topics[2],
 			DepositNonce:    l.Topics[3].Big().Uint64(),
-			Address:         common.HexToAddress(l.Topics[4].Hex()),
+			SenderAddress:   common.HexToAddress(l.Topics[4].Hex()),
 			Calldata:        l.Topics[5].Bytes(),
 			HandlerResponse: l.Topics[6].Bytes(),
 		}

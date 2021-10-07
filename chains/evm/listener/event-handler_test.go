@@ -13,14 +13,14 @@ func TestErc20EventHandler(t *testing.T) {
 		DestinationID:   0,
 		ResourceID:      [32]byte{0},
 		DepositNonce:    1,
-		Address:         common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		SenderAddress:   common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
 		Calldata:        []byte{123}, // bytes rep. of the amount
 		HandlerResponse: []byte{},    // empty []byte
 	}
 
 	sourceID := uint8(1)
 
-	message, err := Erc20EventHandler(sourceID, depositLog.DestinationID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Address, depositLog.Calldata, depositLog.HandlerResponse)
+	message, err := Erc20EventHandler(sourceID, depositLog.DestinationID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.SenderAddress, depositLog.Calldata, depositLog.HandlerResponse)
 	if err != nil {
 		t.Fatalf("could not generate event handler message: %v", err)
 	}
@@ -33,7 +33,7 @@ func TestErc20EventHandler(t *testing.T) {
 		Type:         relayer.FungibleTransfer,
 		Payload: []interface{}{
 			depositLog.Calldata,
-			depositLog.Address,
+			depositLog.SenderAddress,
 			depositLog.HandlerResponse,
 		},
 	}

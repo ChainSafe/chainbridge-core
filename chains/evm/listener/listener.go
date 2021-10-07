@@ -26,8 +26,8 @@ type DepositLogs struct {
 	ResourceID [32]byte
 	// Nonce of deposit
 	DepositNonce uint64
-	// Address (msg.sender: user)
-	Address common.Address
+	// Address of sender (msg.sender: user)
+	SenderAddress common.Address
 	// Additional data to be passed to specified handler
 	Calldata []byte
 	// ERC20Handler: responds with empty data

@@ -13,7 +13,7 @@ import (
 )
 
 type EventHandlers map[common.Address]EventHandlerFunc
-type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID [32]byte, address common.Address, calldata, handlerResponse []byte) (*relayer.Message, error)
+type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID [32]byte, senderAddress common.Address, calldata, handlerResponse []byte) (*relayer.Message, error)
 
 type ETHEventHandler struct {
 	bridgeAddress common.Address
@@ -29,17 +29,17 @@ func NewETHEventHandler(address common.Address, client ChainClient) *ETHEventHan
 }
 
 func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint64, resourceID [32]byte, calldata, handlerResponse []byte) (*relayer.Message, error) {
-	addr, err := e.matchResourceIDToHandlerAddress(resourceID)
+	senderAddr, err := e.matchResourceIDToHandlerAddress(resourceID)
 	if err != nil {
 		return nil, err
 	}
 
-	eventHandler, err := e.matchAddressWithHandlerFunc(addr)
+	eventHandler, err := e.matchAddressWithHandlerFunc(senderAddr)
 	if err != nil {
 		return nil, err
 	}
 
-	return eventHandler(sourceID, destID, depositNonce, resourceID, addr, calldata, handlerResponse)
+	return eventHandler(sourceID, destID, depositNonce, resourceID, senderAddr, calldata, handlerResponse)
 }
 
 func (e *ETHEventHandler) matchResourceIDToHandlerAddress(rID [32]byte) (common.Address, error) {
@@ -102,7 +102,7 @@ func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
 
 // Erc20EventHandler converts data pulled from event logs into message
 // handlerResponse can be an empty slice
-func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID [32]byte, addr common.Address, calldata, handlerResponse []byte) (*relayer.Message, error) {
+func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID [32]byte, senderAddress common.Address, calldata, handlerResponse []byte) (*relayer.Message, error) {
 	if len(calldata) == 0 {
 		err := errors.New("missing calldata")
 		return nil, err
@@ -116,7 +116,7 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID [32]byte
 		Type:         relayer.FungibleTransfer,
 		Payload: []interface{}{
 			calldata,
-			addr,
+			senderAddress,
 			handlerResponse,
 		},
 	}, nil
