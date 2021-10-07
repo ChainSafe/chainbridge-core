@@ -44,7 +44,12 @@ func RegisterGenericResourceCmd(cmd *cobra.Command, args []string, txFabric call
 	targetAddressStr := cmd.Flag("target").Value.String()
 	depositSig := cmd.Flag("deposit").Value.String()
 	executeSig := cmd.Flag("execute").Value.String()
-	hash := cmd.Flag("hash").Value
+	hash, err := cmd.Flags().GetBool("hash")
+	if err != nil {
+		log.Error().Err(err)
+		return fmt.Errorf("could not get hash value: %v", err)
+	}
+
 	log.Debug().Msgf(`
 Registering generic resource
 Handler address: %s
@@ -61,8 +66,15 @@ Hash: %v
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	depositSigBytes := calls.GetSolidityFunctionSig([]byte(depositSig))
-	executeSigBytes := calls.GetSolidityFunctionSig([]byte(executeSig))
+	var depositSigBytes [4]byte
+	var executeSigBytes [4]byte
+	if hash {
+		depositSigBytes = calls.GetSolidityFunctionSig([]byte(depositSig))
+		executeSigBytes = calls.GetSolidityFunctionSig([]byte(executeSig))
+	} else {
+		copy(depositSigBytes[:], []byte(depositSig)[:])
+		copy(executeSigBytes[:], []byte(executeSig)[:])
+	}
 
 	if !common.IsHexAddress(handlerAddressStr) {
 		err := fmt.Errorf("invalid handler address %s", handlerAddressStr)
