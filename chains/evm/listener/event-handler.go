@@ -102,7 +102,7 @@ func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
 	return arg
 }
 
-func getDepositRecord(definition string, nonce uint64, destId uint8, handlerContractAddress *common.Address, client ChainClient) (interface{}, error) {
+func GetDepositRecord(definition string, nonce uint64, destId uint8, handlerContractAddress *common.Address, client ChainClient) (interface{}, error) {
 	a, err := abi.JSON(strings.NewReader(definition))
 	if err != nil {
 		return nil, err
@@ -143,7 +143,7 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddr
 		Amount                         *big.Int
 	}
 
-	rec, err := getDepositRecord(definition, nonce, destId, &handlerContractAddress, client)
+	rec, err := GetDepositRecord(definition, nonce, destId, &handlerContractAddress, client)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +170,7 @@ func GenericEventHandler(sourceID, destId uint8, nonce uint64, handlerContractAd
 		MetaData           []byte
 	}
 
-	rec, err := getDepositRecord(consts.GenericHandlerABI, nonce, destId, &handlerContractAddress, client)
+	rec, err := GetDepositRecord(consts.GenericHandlerABI, nonce, destId, &handlerContractAddress, client)
 	if err != nil {
 		return nil, err
 	}
