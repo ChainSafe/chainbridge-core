@@ -18,7 +18,7 @@ var BlockRetryInterval = time.Second * 5
 var BlockDelay = big.NewInt(10) //TODO: move to config
 
 // DepositLogs struct holds event data with all necessary parameters and a handler response
-// https://github.com/ChainSafe/chainbridge-solidity/blob/develop/contracts/Bridge.sol#L343
+// https://github.com/ChainSafe/chainbridge-solidity/blob/develop/contracts/Bridge.sol#L47
 type DepositLogs struct {
 	// ID of chain deposit will be bridged to
 	DestinationID uint8
@@ -26,14 +26,14 @@ type DepositLogs struct {
 	ResourceID [32]byte
 	// Nonce of deposit
 	DepositNonce uint64
-	// Address (msg.sender)
-	Address string
+	// Address (msg.sender: user)
+	Address common.Address
 	// Additional data to be passed to specified handler
 	Calldata []byte
 	// ERC20Handler: responds with empty data
 	// ERC721Handler: responds with deposited token metadata acquired by calling a tokenURI method in the token contract
 	// GenericHandler: responds with the raw bytes returned from the call to the target contract
-	HandlerResponse []byte
+	HandlerResponse []byte // empty for ERC20
 }
 
 type ChainClient interface {
@@ -43,7 +43,7 @@ type ChainClient interface {
 }
 
 type EventHandler interface {
-	HandleEvent(sourceID, destID uint8, nonce uint64, rID [32]byte, data []byte) (*relayer.Message, error)
+	HandleEvent(sourceID, destID uint8, nonce uint64, rID [32]byte, calldata, handlerResponse []byte) (*relayer.Message, error)
 }
 
 type EVMListener struct {
@@ -84,7 +84,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw b
 					continue
 				}
 				for _, eventLog := range logs {
-					m, err := l.eventHandler.HandleEvent(domainID, eventLog.DestinationID, eventLog.DepositNonce, eventLog.ResourceID, eventLog.Calldata)
+					m, err := l.eventHandler.HandleEvent(domainID, eventLog.DestinationID, eventLog.DepositNonce, eventLog.ResourceID, eventLog.Calldata, eventLog.HandlerResponse)
 					if err != nil {
 						errChn <- err
 						log.Error().Err(err)

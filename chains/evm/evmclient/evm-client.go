@@ -151,7 +151,12 @@ func (c *EVMClient) WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error
 }
 
 const (
-	DepositSignature string = "Deposit(uint8,bytes32,uint64,bytes)"
+	// DepositSignature is function signature of the contract method: deposit
+	// destinationDomainID
+	// resourceID
+	// calldata
+	// https://github.com/ChainSafe/chainbridge-solidity/blob/develop/contracts/Bridge.sol#L332
+	DepositSignature string = "Deposit(uint8,bytes32,bytes)"
 )
 
 func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common.Address, startBlock *big.Int, endBlock *big.Int) ([]*listener.DepositLogs, error) {
@@ -166,7 +171,7 @@ func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common
 			DestinationID:   uint8(l.Topics[1].Big().Uint64()),
 			ResourceID:      l.Topics[2],
 			DepositNonce:    l.Topics[3].Big().Uint64(),
-			Address:         l.Topics[4].Hex(),
+			Address:         common.HexToAddress(l.Topics[4].Hex()),
 			Calldata:        l.Topics[5].Bytes(),
 			HandlerResponse: l.Topics[6].Bytes(),
 		}
