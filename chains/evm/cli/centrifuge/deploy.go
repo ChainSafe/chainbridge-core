@@ -1,4 +1,4 @@
-package deploy
+package centrifuge
 
 import (
 	"fmt"
@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var deployCentrifugeAssetStoreCmd = &cobra.Command{
-	Use:   "centrifuge-asset-store",
+var deployCmd = &cobra.Command{
+	Use:   "deploy",
 	Short: "Deploy centrifuge asset store contract",
 	Long:  "This command can be used to deploy Centrifuge asset store contract that represents bridged Centrifuge assets.",
 	RunE: func(cmd *cobra.Command, args []string) error {

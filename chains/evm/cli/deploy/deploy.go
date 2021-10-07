@@ -66,8 +66,6 @@ func BindDeployEVMFlags(deployCmd *cobra.Command) {
 
 func init() {
 	BindDeployEVMFlags(DeployEVM)
-
-	DeployEVM.AddCommand(deployCentrifugeAssetStoreCmd)
 }
 
 func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
