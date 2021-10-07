@@ -8,14 +8,13 @@ import (
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
 )
 
-func DeployErc20(c ChainClient, txFabric TxFabric, name, symbol string) (common.Address, error) {
+func DeployErc20(c ClientDeployer, txFabric TxFabric, name, symbol string) (common.Address, error) {
 	parsed, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
 	if err != nil {
 		return common.Address{}, err
@@ -27,7 +26,7 @@ func DeployErc20(c ChainClient, txFabric TxFabric, name, symbol string) (common.
 	return address, nil
 }
 
-func DeployBridge(c ChainClient, txFabric TxFabric, domainID uint8, relayerAddrs []common.Address, initialRelayerThreshold *big.Int) (common.Address, error) {
+func DeployBridge(c ClientDeployer, txFabric TxFabric, domainID uint8, relayerAddrs []common.Address, initialRelayerThreshold *big.Int) (common.Address, error) {
 	parsed, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return common.Address{}, err
@@ -39,7 +38,7 @@ func DeployBridge(c ChainClient, txFabric TxFabric, domainID uint8, relayerAddrs
 	return address, nil
 }
 
-func DeployErc20Handler(c ChainClient, txFabric TxFabric, bridgeAddress common.Address) (common.Address, error) {
+func DeployErc20Handler(c ClientDeployer, txFabric TxFabric, bridgeAddress common.Address) (common.Address, error) {
 	log.Debug().Msgf("Deployng ERC20 Handler with params: %s", bridgeAddress.String())
 	parsed, err := abi.JSON(strings.NewReader(consts.ERC20HandlerABI))
 	if err != nil {
@@ -52,7 +51,7 @@ func DeployErc20Handler(c ChainClient, txFabric TxFabric, bridgeAddress common.A
 	return address, nil
 }
 
-func deployContract(client ChainClient, abi abi.ABI, bytecode []byte, txFabric TxFabric, params ...interface{}) (common.Address, error) {
+func deployContract(client ClientDeployer, abi abi.ABI, bytecode []byte, txFabric TxFabric, params ...interface{}) (common.Address, error) {
 	client.LockNonce()
 	n, err := client.UnsafeNonce()
 	if err != nil {
@@ -63,10 +62,11 @@ func deployContract(client ChainClient, abi abi.ABI, bytecode []byte, txFabric T
 		return common.Address{}, err
 	}
 
-	// TODO gas pricer should be dynamic
-	gasPricer := evmgaspricer.NewStaticGasPriceDeterminant(client)
-
-	tx, err := txFabric(n.Uint64(), nil, big.NewInt(0), consts.DefaultDeployGasLimit, gasPrice, append(bytecode, input...))
+	gp, err := client.GasPrice()
+	if err != nil {
+		return common.Address{}, err
+	}
+	tx, err := txFabric(n.Uint64(), nil, big.NewInt(0), consts.DefaultDeployGasLimit, gp, append(bytecode, input...))
 	if err != nil {
 		return common.Address{}, err
 	}

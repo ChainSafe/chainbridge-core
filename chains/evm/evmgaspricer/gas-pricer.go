@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+
+	"github.com/rs/zerolog/log"
 )
 
 type LondonGasClient interface {
@@ -13,7 +15,7 @@ type LondonGasClient interface {
 }
 
 type GasPriceClient interface {
-	EstimateGas() (*big.Int, error)
+	SuggestGasPrice(ctx context.Context) (*big.Int, error)
 }
 
 // StaticGasPriceDeterminant for when you want to always use generic `GasPrice()` method from an EVM client.
@@ -24,17 +26,27 @@ type GasPriceClient interface {
 // Currently, if the client being used is created by the `EVMClientFromParams` constructor a constant gas price is then set
 // and will be returned by this gas pricer
 type StaticGasPriceDeterminant struct {
-	UpperLimitFeePerGas *big.Int
+	upperLimitFeePerGas *big.Int
+	gasPriceMultiplayer *big.Float
 }
-func NewStaticGasPriceDeterminant(UpperLimitFeePerGas *big.Int) *StaticGasPriceDeterminant {
-	return &StaticGasPriceDeterminant{UpperLimitFeePerGas}
+func NewStaticGasPriceDeterminant(upperLimitFeePerGas *big.Int, gasPriceMultiplayer *big.Float) *StaticGasPriceDeterminant {
+	return &StaticGasPriceDeterminant{upperLimitFeePerGas, gasPriceMultiplayer}
 
 }
 
 func (gasPricer *StaticGasPriceDeterminant) GasPrice(client GasPriceClient) ([]*big.Int, error) {
-	gp, err := client.EstimateGas()
+	gp, err := client.SuggestGasPrice(context.TODO())
+	log.Debug().Msgf("Suggested GP %s", gp.String())
 	if err != nil {
 		return nil, err
+	}
+	if gasPricer.gasPriceMultiplayer != nil {
+		gp = multiplyGasPrice(gp, gasPricer.gasPriceMultiplayer)
+	}
+	if gasPricer.upperLimitFeePerGas != nil {
+		if gp.Cmp(gasPricer.upperLimitFeePerGas) == 1 {
+			gp = gasPricer.upperLimitFeePerGas
+		}
 	}
 	var gasPrices []*big.Int
 	gasPrices[0] = gp
@@ -42,11 +54,11 @@ func (gasPricer *StaticGasPriceDeterminant) GasPrice(client GasPriceClient) ([]*
 }
 
 type LondonGasPriceDeterminant struct {
-	UpperLimitFeePerGas *big.Int
+	upperLimitFeePerGas *big.Int
 }
 
 func NewLondonGasPriceDeterminant(UpperLimitFeePerGas *big.Int) *LondonGasPriceDeterminant {
-	return &LondonGasPriceDeterminant{UpperLimitFeePerGas: UpperLimitFeePerGas}
+	return &LondonGasPriceDeterminant{upperLimitFeePerGas: UpperLimitFeePerGas}
 }
 
 func (gasPricer *LondonGasPriceDeterminant) GasPrice(client LondonGasClient) ([]*big.Int, error) {
@@ -59,7 +71,7 @@ func (gasPricer *LondonGasPriceDeterminant) GasPrice(client LondonGasClient) ([]
 	if baseFee == nil {
 		// we are using staticGasPriceDeterminant because it counts configs in its gasPrice calculations
 		// and seem to be the most favorable option
-		staticGasPricer := NewStaticGasPriceDeterminant(gasPricer.UpperLimitFeePerGas)
+		staticGasPricer := NewStaticGasPriceDeterminant(gasPricer.upperLimitFeePerGas, big.NewFloat(1))
 		return staticGasPricer.GasPrice(client)
 	}
 	gasTipCap, gasFeeCap, err := gasPricer.estimateGasLondon(client, baseFee)
@@ -80,7 +92,7 @@ func (gasPricer *LondonGasPriceDeterminant) estimateGasLondon(client LondonGasCl
 	// if gasPriceLimit is set and lower than networks baseFee then
 	// maxPriorityFee is set to 3 GWEI because that was practically and theoretically defined as optimum
 	// and Max Fee set to baseFee + maxPriorityFeePerGas
-	if gasPricer.UpperLimitFeePerGas != nil && gasPricer.UpperLimitFeePerGas.Cmp(baseFee) < 0 {
+	if gasPricer.upperLimitFeePerGas != nil && gasPricer.upperLimitFeePerGas.Cmp(baseFee) < 0 {
 		maxPriorityFeePerGas = big.NewInt(TwoAndTheHalfGwei)
 		maxFeePerGas = new(big.Int).Add(baseFee, maxPriorityFeePerGas)
 		return maxPriorityFeePerGas, maxFeePerGas, nil
@@ -99,9 +111,18 @@ func (gasPricer *LondonGasPriceDeterminant) estimateGasLondon(client LondonGasCl
 		return nil, nil, fmt.Errorf("maxFeePerGas (%v) < maxPriorityFeePerGas (%v)", maxFeePerGas, maxPriorityFeePerGas)
 	}
 	// Check we aren't exceeding our limit if gasPriceLimit set
-	if gasPricer.UpperLimitFeePerGas != nil && maxFeePerGas.Cmp(gasPricer.UpperLimitFeePerGas) == 1 {
-		maxPriorityFeePerGas.Sub(gasPricer.UpperLimitFeePerGas, baseFee)
-		maxFeePerGas = gasPricer.UpperLimitFeePerGas
+	if gasPricer.upperLimitFeePerGas != nil && maxFeePerGas.Cmp(gasPricer.upperLimitFeePerGas) == 1 {
+		maxPriorityFeePerGas.Sub(gasPricer.upperLimitFeePerGas, baseFee)
+		maxFeePerGas = gasPricer.upperLimitFeePerGas
 	}
 	return maxPriorityFeePerGas, maxFeePerGas, nil
 }
+
+func multiplyGasPrice(gasEstimate *big.Int, gasMultiplier *big.Float) *big.Int {
+	gasEstimateFloat := new(big.Float).SetInt(gasEstimate)
+	result := gasEstimateFloat.Mul(gasEstimateFloat, gasMultiplier)
+	gasPrice := new(big.Int)
+	result.Int(gasPrice)
+	return gasPrice
+}
+

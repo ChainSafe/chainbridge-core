@@ -3,7 +3,6 @@ package evmclient
 import (
 	"context"
 	"crypto/ecdsa"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -25,18 +24,12 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type GasPricer interface {
-	GasPrices ([]*big.Int, error)
-}
-
 type EVMClient struct {
 	*ethclient.Client
 	rpClient  *rpc.Client
 	config    *EVMConfig
 	nonce     *big.Int
 	nonceLock sync.Mutex
-	gasPrice  *big.Int
-	gasPricer GasPricer
 }
 
 type CommonTransaction interface {
@@ -51,7 +44,7 @@ func NewEVMClient() *EVMClient {
 	return &EVMClient{}
 }
 
-func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey, gasPricer GasPricer) (*EVMClient, error) {
+func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey) (*EVMClient, error) {
 	rpcClient, err := rpc.DialContext(context.TODO(), url)
 	if err != nil {
 		return nil, err
@@ -62,7 +55,6 @@ func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey, gasPricer 
 	c.rpClient = rpcClient
 	c.config = &EVMConfig{}
 	c.config.kp = kp
-	c.gasPricer = gasPricer
 	return c, nil
 }
 
@@ -278,33 +270,6 @@ func (c *EVMClient) BaseFee() (*big.Int, error) {
 	return head.BaseFee, nil
 }
 
-func (c *EVMClient) EstimateGas() (*big.Int, error) {
-	suggestedGasPrice, err := c.SuggestGasPrice(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-	log.Debug().Msgf("Suggested GP %s", suggestedGasPrice.String())
-	var gasPrice *big.Int
-	if c.config.SharedEVMConfig.GasMultiplier != nil {
-		gasPrice = multiplyGasPrice(suggestedGasPrice, c.config.SharedEVMConfig.GasMultiplier)
-	}
-	// Check we aren't exceeding our limit
-	if c.config.SharedEVMConfig.MaxGasPrice != nil {
-		if gasPrice.Cmp(c.config.SharedEVMConfig.MaxGasPrice) == 1 {
-			return c.config.SharedEVMConfig.MaxGasPrice, nil
-		}
-	}
-	return gasPrice, nil
-}
-
-func multiplyGasPrice(gasEstimate *big.Int, gasMultiplier *big.Float) *big.Int {
-	gasEstimateFloat := new(big.Float).SetInt(gasEstimate)
-	result := gasEstimateFloat.Mul(gasEstimateFloat, gasMultiplier)
-	gasPrice := new(big.Int)
-	result.Int(gasPrice)
-	return gasPrice
-}
-
 func toBlockNumArg(number *big.Int) string {
 	if number == nil {
 		return "latest"
@@ -327,37 +292,4 @@ func buildQuery(contract common.Address, sig string, startBlock *big.Int, endBlo
 
 func (c *EVMClient) GetConfig() *EVMConfig {
 	return c.config
-}
-
-// Simulate function gets transaction info by hash and then executes a message call transaction, which is directly executed in the VM
-// of the node, but never mined into the blockchain. Execution happens against provided block.
-func (c *EVMClient) Simulate(block *big.Int, txHash common.Hash, from common.Address) ([]byte, error) {
-	tx, _, err := c.Client.TransactionByHash(context.TODO(), txHash)
-	if err != nil {
-		log.Debug().Msgf("[client] tx by hash error: %v", err)
-		return nil, err
-	}
-
-	log.Debug().Msgf("from: %v to: %v gas: %v gasPrice: %v value: %v data: %v", from, tx.To(), tx.Gas(), tx.GasPrice(), tx.Value(), tx.Data())
-
-	msg := ethereum.CallMsg{
-		From:     from,
-		To:       tx.To(),
-		Gas:      tx.Gas(),
-		GasPrice: tx.GasPrice(),
-		Value:    tx.Value(),
-		Data:     tx.Data(),
-	}
-	res, err := c.Client.CallContract(context.TODO(), msg, block)
-	if err != nil {
-		log.Debug().Msgf("[client] call contract error: %v", err)
-		return nil, err
-	}
-	bs, err := hex.DecodeString(common.Bytes2Hex(res))
-	if err != nil {
-		log.Debug().Msgf("[client] decode string error: %v", err)
-		return nil, err
-	}
-	log.Debug().Msg(string(bs))
-	return bs, nil
 }
