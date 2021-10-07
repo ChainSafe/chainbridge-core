@@ -13,7 +13,7 @@ import (
 )
 
 type EventHandlers map[common.Address]EventHandlerFunc
-type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID [32]byte, senderAddress common.Address, calldata, handlerResponse []byte) (*relayer.Message, error)
+type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID [32]byte, handlerAddress common.Address, calldata, handlerResponse []byte) (*relayer.Message, error)
 
 type ETHEventHandler struct {
 	bridgeAddress common.Address
@@ -29,26 +29,27 @@ func NewETHEventHandler(address common.Address, client ChainClient) *ETHEventHan
 }
 
 func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint64, resourceID [32]byte, calldata, handlerResponse []byte) (*relayer.Message, error) {
-	senderAddr, err := e.matchResourceIDToHandlerAddress(resourceID)
+	handlerAddr, err := e.matchResourceIDToHandlerAddress(resourceID)
 	if err != nil {
 		return nil, err
 	}
 
-	eventHandler, err := e.matchAddressWithHandlerFunc(senderAddr)
+	eventHandler, err := e.matchAddressWithHandlerFunc(handlerAddr)
 	if err != nil {
 		return nil, err
 	}
 
-	return eventHandler(sourceID, destID, depositNonce, resourceID, senderAddr, calldata, handlerResponse)
+	return eventHandler(sourceID, destID, depositNonce, resourceID, handlerAddr, calldata, handlerResponse)
 }
 
-func (e *ETHEventHandler) matchResourceIDToHandlerAddress(rID [32]byte) (common.Address, error) {
+// matchResourceIDToHandlerAddress is a private method that matches a previously registered resource ID to its corresponding handler address
+func (e *ETHEventHandler) matchResourceIDToHandlerAddress(resourceID [32]byte) (common.Address, error) {
 	definition := "[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"_resourceIDToHandlerAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
 	a, err := abi.JSON(strings.NewReader(definition))
 	if err != nil {
 		return common.Address{}, err
 	}
-	input, err := a.Pack("_resourceIDToHandlerAddress", rID)
+	input, err := a.Pack("_resourceIDToHandlerAddress", resourceID)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -65,19 +66,21 @@ func (e *ETHEventHandler) matchResourceIDToHandlerAddress(rID [32]byte) (common.
 	return out0, nil
 }
 
-func (e *ETHEventHandler) matchAddressWithHandlerFunc(addr common.Address) (EventHandlerFunc, error) {
-	hf, ok := e.eventHandlers[addr]
+// matchAddressWithHandlerFunc is a private method that matches a handler address with an associated handler function
+func (e *ETHEventHandler) matchAddressWithHandlerFunc(handlerAddress common.Address) (EventHandlerFunc, error) {
+	hf, ok := e.eventHandlers[handlerAddress]
 	if !ok {
 		return nil, errors.New("no corresponding event handler for this address exists")
 	}
 	return hf, nil
 }
 
-func (e *ETHEventHandler) RegisterEventHandler(address string, handler EventHandlerFunc) {
+// RegisterEventHandler is a public method that registers an event handler by associating a handler function to a specific address
+func (e *ETHEventHandler) RegisterEventHandler(handlerAddress string, handler EventHandlerFunc) {
 	if e.eventHandlers == nil {
 		e.eventHandlers = make(map[common.Address]EventHandlerFunc)
 	}
-	e.eventHandlers[common.HexToAddress(address)] = handler
+	e.eventHandlers[common.HexToAddress(handlerAddress)] = handler
 }
 
 func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
@@ -102,7 +105,7 @@ func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
 
 // Erc20EventHandler converts data pulled from event logs into message
 // handlerResponse can be an empty slice
-func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID [32]byte, senderAddress common.Address, calldata, handlerResponse []byte) (*relayer.Message, error) {
+func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID [32]byte, handlerAddress common.Address, calldata, handlerResponse []byte) (*relayer.Message, error) {
 	if len(calldata) == 0 {
 		err := errors.New("missing calldata")
 		return nil, err
@@ -116,7 +119,7 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID [32]byte
 		Type:         relayer.FungibleTransfer,
 		Payload: []interface{}{
 			calldata,
-			senderAddress,
+			handlerAddress,
 			handlerResponse,
 		},
 	}, nil
