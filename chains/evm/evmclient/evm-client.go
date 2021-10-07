@@ -159,7 +159,7 @@ const (
 	// calldata
 	// handlerResponse
 	// https://github.com/ChainSafe/chainbridge-solidity/blob/develop/contracts/Bridge.sol#L343
-	DepositSignature string = "Deposit(uint8,bytes32,uint64,msg.sender,bytes,bytes)"
+	DepositSignature string = "Deposit(uint8,bytes32,uint64,address,bytes,bytes)"
 )
 
 func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common.Address, startBlock *big.Int, endBlock *big.Int) ([]*listener.DepositLogs, error) {
