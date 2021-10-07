@@ -64,6 +64,20 @@ func DeployGenericHandler(c ChainClient, txFabric TxFabric, bridgeAddress common
 	return address, nil
 }
 
+func DeployCentrifugeAssetStore(c ChainClient, txFabric TxFabric) (common.Address, error) {
+	log.Debug().Msgf("Deployng Centrifuge asset store")
+	parsed, err := abi.JSON(strings.NewReader(consts.CentrifugeAssetStoreABI))
+	if err != nil {
+		return common.Address{}, err
+	}
+
+	address, err := deployContract(c, parsed, common.FromHex(consts.CentrifugeAssetStoreBin), txFabric)
+	if err != nil {
+		return common.Address{}, err
+	}
+	return address, nil
+}
+
 func deployContract(client ChainClient, abi abi.ABI, bytecode []byte, txFabric TxFabric, params ...interface{}) (common.Address, error) {
 	gp, err := client.GasPrice()
 	if err != nil {
