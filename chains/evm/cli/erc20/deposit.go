@@ -30,7 +30,7 @@ func BindDepositCmdFlags(cli *cobra.Command) {
 	cli.Flags().String("recipient", "", "address of recipient")
 	cli.Flags().String("bridge", "", "address of bridge contract")
 	cli.Flags().String("amount", "", "amount to deposit")
-	cli.Flags().String("destId", "", "destination chain ID")
+	cli.Flags().String("destId", "", "destination domain ID")
 	cli.Flags().String("resourceId", "", "resource ID for transfer")
 	cli.Flags().Uint64("decimals", 0, "ERC20 token decimals")
 	err := cli.MarkFlagRequired("decimals")

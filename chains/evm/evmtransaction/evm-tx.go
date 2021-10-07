@@ -19,8 +19,8 @@ type TX struct {
 // but return raw byte representation of transaction to be compatible and interchangeable between different go-ethereum forks
 // WithSignature returns a new transaction with the given signature.
 // This signature needs to be in the [R || S || V] format where V is 0 or 1.
-func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, chainId *big.Int) ([]byte, error) {
-	opts, err := bind.NewKeyedTransactorWithChainID(key, chainId)
+func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, domainID *big.Int) ([]byte, error) {
+	opts, err := bind.NewKeyedTransactorWithChainID(key, domainID)
 	if err != nil {
 		return nil, err
 	}

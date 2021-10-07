@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"math/big"
 	"strings"
 
@@ -16,7 +17,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type MessageHandlerFunc func(m *relayer.Message, handlerAddr, bridgeAddress common.Address) (Proposer, error)
+type MessageHandlerFunc func(m *relayer.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error)
 
 func NewEVMMessageHandler(client ChainClient, bridgeAddress common.Address) *EVMMessageHandler {
 	return &EVMMessageHandler{
@@ -31,7 +32,7 @@ type EVMMessageHandler struct {
 	bridgeAddress common.Address
 }
 
-func (mh *EVMMessageHandler) HandleMessage(m *relayer.Message) (Proposer, error) {
+func (mh *EVMMessageHandler) HandleMessage(m *relayer.Message) (*proposal.Proposal, error) {
 	// Matching resource ID with handler.
 	addr, err := mh.matchResourceIDToHandlerAddress(m.ResourceId)
 	if err != nil {
@@ -91,7 +92,7 @@ func (mh *EVMMessageHandler) RegisterMessageHandler(address common.Address, hand
 	mh.handlers[address] = handler
 }
 
-func ERC20MessageHandler(m *relayer.Message, handlerAddr, bridgeAddress common.Address) (Proposer, error) {
+func ERC20MessageHandler(m *relayer.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
 	if len(m.Payload) != 2 {
 		return nil, errors.New("malformed payload. Len  of payload should be 2")
 	}
@@ -108,10 +109,10 @@ func ERC20MessageHandler(m *relayer.Message, handlerAddr, bridgeAddress common.A
 	recipientLen := big.NewInt(int64(len(recipient))).Bytes()
 	data = append(data, common.LeftPadBytes(recipientLen, 32)...) // length of recipient (uint256)
 	data = append(data, recipient...)                             // recipient ([]byte)
-	return NewProposal(m.Source, m.DepositNonce, m.ResourceId, data, handlerAddr, bridgeAddress), nil
+	return proposal.NewProposal(m.Source, m.DepositNonce, m.ResourceId, data, handlerAddr, bridgeAddress), nil
 }
 
-func ERC721MessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress common.Address) (*Proposal, error) {
+func ERC721MessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
 	if len(msg.Payload) != 3 {
 		return nil, errors.New("malformed payload. Len  of payload should be 3")
 	}
@@ -135,10 +136,10 @@ func ERC721MessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress commo
 	metadataLen := big.NewInt(int64(len(metadata))).Bytes()
 	data.Write(common.LeftPadBytes(metadataLen, 32))
 	data.Write(metadata)
-	return NewProposal(msg.Source, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress), nil
+	return proposal.NewProposal(msg.Source, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress), nil
 }
 
-func GenericMessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress common.Address) (*Proposal, error) {
+func GenericMessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
 	if len(msg.Payload) != 1 {
 		return nil, errors.New("malformed payload. Len  of payload should be 1")
 	}
@@ -150,7 +151,7 @@ func GenericMessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress comm
 	metadataLen := big.NewInt(int64(len(metadata))).Bytes()
 	data.Write(common.LeftPadBytes(metadataLen, 32)) // length of metadata (uint256)
 	data.Write(metadata)
-	return NewProposal(msg.Source, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress), nil
+	return proposal.NewProposal(msg.Source, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress), nil
 }
 
 func toCallArg(msg ethereum.CallMsg) map[string]interface{} {

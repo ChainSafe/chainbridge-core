@@ -35,7 +35,7 @@ var (
 	Erc721FlagName           = "erc721"
 	DeployAllFlagName        = "all"
 	RelayerThresholdFlagName = "relayerThreshold"
-	ChainIdFlagName          = "chainId"
+	DomainIdFlagName         = "domainId"
 	RelayersFlagName         = "relayers"
 	FeeFlagName              = "fee"
 	BridgeAddressFlagName    = "bridgeAddress"
@@ -52,7 +52,7 @@ func BindDeployEVMFlags(deployCmd *cobra.Command) {
 	deployCmd.Flags().Bool(Erc721FlagName, false, "deploy ERC721")
 	deployCmd.Flags().Bool(DeployAllFlagName, false, "deploy all")
 	deployCmd.Flags().Uint64(RelayerThresholdFlagName, 1, "number of votes required for a proposal to pass")
-	deployCmd.Flags().String(ChainIdFlagName, "1", "chain ID for the instance")
+	deployCmd.Flags().String(DomainIdFlagName, "1", "domain ID for the instance")
 	deployCmd.Flags().StringSlice(RelayersFlagName, []string{}, "list of initial relayers")
 	deployCmd.Flags().String(FeeFlagName, "0", "fee to be taken when making a deposit (in ETH, decimas are allowed)")
 	deployCmd.Flags().String(BridgeAddressFlagName, "", "bridge contract address. Should be provided if handlers are deployed separately")
@@ -147,19 +147,19 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 		log.Error().Err(ErrNoDeploymentFalgsProvided)
 		return err
 	}
-	chainId := cmd.Flag("chainId").Value.String()
+	domainId := cmd.Flag("domainId").Value.String()
 	deployedContracts := make(map[string]string)
 	for _, v := range deployments {
 		switch v {
 		case "bridge":
 			log.Debug().Msgf("deploying bridge..")
-			// convert chain ID to uint
-			chainIdInt, err := strconv.Atoi(chainId)
+			// convert domain ID to uint
+			domainIdInt, err := strconv.Atoi(domainId)
 			if err != nil {
-				log.Error().Err(fmt.Errorf("chain ID flag error: %v", err))
+				log.Error().Err(fmt.Errorf("domain ID flag error: %v", err))
 				return err
 			}
-			bridgeAddr, err = calls.DeployBridge(ethClient, txFabric, uint8(chainIdInt), relayerAddresses, big.NewInt(0).SetUint64(relayerThreshold))
+			bridgeAddr, err = calls.DeployBridge(ethClient, txFabric, uint8(domainIdInt), relayerAddresses, big.NewInt(0).SetUint64(relayerThreshold))
 			if err != nil {
 				log.Error().Err(fmt.Errorf("bridge deploy failed: %w", err))
 				return err

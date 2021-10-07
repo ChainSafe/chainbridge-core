@@ -27,12 +27,12 @@ func DeployErc20(c ChainClient, txFabric TxFabric, name, symbol string) (common.
 	return address, nil
 }
 
-func DeployBridge(c ChainClient, txFabric TxFabric, chainID uint8, relayerAddrs []common.Address, initialRelayerThreshold *big.Int) (common.Address, error) {
+func DeployBridge(c ChainClient, txFabric TxFabric, domainID uint8, relayerAddrs []common.Address, initialRelayerThreshold *big.Int) (common.Address, error) {
 	parsed, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return common.Address{}, err
 	}
-	address, err := deployContract(c, parsed, common.FromHex(consts.BridgeBin), txFabric, chainID, relayerAddrs, initialRelayerThreshold, big.NewInt(0), big.NewInt(100))
+	address, err := deployContract(c, parsed, common.FromHex(consts.BridgeBin), txFabric, domainID, relayerAddrs, initialRelayerThreshold, big.NewInt(0), big.NewInt(100))
 	if err != nil {
 		return common.Address{}, err
 	}

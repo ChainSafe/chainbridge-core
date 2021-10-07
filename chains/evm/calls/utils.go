@@ -3,6 +3,7 @@ package calls
 import (
 	"context"
 	"errors"
+	"github.com/ethereum/go-ethereum/common/math"
 	gomath "math"
 	"math/big"
 	"strings"
@@ -11,7 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/rs/zerolog/log"
 )
@@ -81,9 +81,21 @@ func UserAmountToWei(amount string, decimal *big.Int) (*big.Int, error) {
 	return i, nil
 }
 
-func Transact(client ChainClient, txFabric TxFabric, to *common.Address, data []byte, gasLimit uint64) (common.Hash, error) {
+type ClientDispatcher interface {
+	GasPrice() (*big.Int, error)
+	WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error)
+	SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error)
+	UnsafeNonce() (*big.Int, error)
+	LockNonce()
+	UnlockNonce()
+	UnsafeIncreaseNonce() error
+	From() common.Address
+}
+
+func Transact(client ClientDispatcher, txFabric TxFabric, to *common.Address, data []byte, gasLimit uint64) (common.Hash, error) {
 	client.LockNonce()
 	n, err := client.UnsafeNonce()
+	gp, err := client.GasPrice()
 	if err != nil {
 		return common.Hash{}, err
 	}

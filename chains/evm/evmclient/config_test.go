@@ -160,7 +160,7 @@ func TestRequiredOpts(t *testing.T) {
 	_, err := ParseConfig(&input)
 
 	if err == nil {
-		t.Error("config missing chainId field but no error reported")
+		t.Error("config missing domainId field but no error reported")
 	}
 
 	// Empty bridgeContract provided

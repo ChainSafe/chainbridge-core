@@ -25,14 +25,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type CommonTransaction interface {
-	// Hash returns the transaction hash.
-	Hash() common.Hash
-
-	// RawWithSignature Returns signed transaction by provided private key
-	RawWithSignature(Key *ecdsa.PrivateKey, chainID *big.Int) ([]byte, error)
-}
-
 type GasPricer interface {
 	GasPrices ([]*big.Int, error)
 }
@@ -45,6 +37,14 @@ type EVMClient struct {
 	nonceLock sync.Mutex
 	gasPrice  *big.Int
 	gasPricer GasPricer
+}
+
+type CommonTransaction interface {
+	// Hash returns the transaction hash.
+	Hash() common.Hash
+
+	// RawWithSignature Returns signed transaction by provided private key
+	RawWithSignature(key *ecdsa.PrivateKey, domainID *big.Int) ([]byte, error)
 }
 
 func NewEVMClient() *EVMClient {
@@ -218,7 +218,7 @@ func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransac
 	id, err := c.ChainID(ctx)
 	if err != nil {
 		//panic(err)
-		// Probably chain does not support ChainID eg. CELO
+		// Probably chain does not support chainID eg. CELO
 		id = nil
 	}
 	rawTx, err := tx.RawWithSignature(c.config.kp.PrivateKey(), id)
