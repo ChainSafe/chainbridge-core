@@ -67,7 +67,6 @@ func PrepareAdminSetGenericResourceInput(
 	depositFunctionSig [4]byte,
 	executeFunctionSig [4]byte,
 ) ([]byte, error) {
-	log.Debug().Msgf("ResourceID %x", rId)
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
