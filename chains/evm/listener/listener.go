@@ -33,7 +33,7 @@ type DepositLogs struct {
 	// ERC20Handler: responds with empty data
 	// ERC721Handler: responds with deposited token metadata acquired by calling a tokenURI method in the token contract
 	// GenericHandler: responds with the raw bytes returned from the call to the target contract
-	HandlerResponse []byte // empty for ERC20
+	HandlerResponse []byte
 }
 
 type ChainClient interface {

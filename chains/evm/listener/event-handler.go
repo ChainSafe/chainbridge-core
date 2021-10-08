@@ -113,7 +113,8 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID [32]byte
 
 	// TODO: refactor
 	amount := calldata[:32]
-	recipientAddress := calldata[33:64]
+	// ignore recipientAddressLenParsed: calldata[33:64]
+	recipientAddress := calldata[65:]
 
 	return &relayer.Message{
 		Source:       sourceID,
