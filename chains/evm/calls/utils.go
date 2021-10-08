@@ -97,6 +97,9 @@ func Transact(client ClientDispatcher, txFabric TxFabric, to *common.Address, da
 	if err != nil {
 		return common.Hash{}, err
 	}
+	if value == nil {
+		value = big.NewInt(0)
+	}
 	tx := txFabric(n.Uint64(), to, value, gasLimit, gp, data)
 	_, err = client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
