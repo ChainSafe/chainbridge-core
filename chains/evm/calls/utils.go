@@ -76,7 +76,6 @@ func UserAmountToWei(amount string, decimal *big.Int) (*big.Int, error) {
 	return i, nil
 }
 
-
 type ClientDispatcher interface {
 	GasPrice() (*big.Int, error)
 	WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error)

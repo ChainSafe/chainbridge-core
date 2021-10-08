@@ -5,9 +5,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"math/big"
 	"strings"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"

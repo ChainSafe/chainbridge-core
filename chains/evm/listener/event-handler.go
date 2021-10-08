@@ -13,7 +13,7 @@ import (
 )
 
 type EventHandlers map[common.Address]EventHandlerFunc
-type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID [32]byte, handlerAddress common.Address, calldata, handlerResponse []byte) (*relayer.Message, error)
+type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID [32]byte, calldata, handlerResponse []byte) (*relayer.Message, error)
 
 type ETHEventHandler struct {
 	bridgeAddress common.Address
@@ -39,7 +39,7 @@ func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint6
 		return nil, err
 	}
 
-	return eventHandler(sourceID, destID, depositNonce, resourceID, handlerAddr, calldata, handlerResponse)
+	return eventHandler(sourceID, destID, depositNonce, resourceID, calldata, handlerResponse)
 }
 
 // matchResourceIDToHandlerAddress is a private method that matches a previously registered resource ID to its corresponding handler address
@@ -105,11 +105,15 @@ func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
 
 // Erc20EventHandler converts data pulled from event logs into message
 // handlerResponse can be an empty slice
-func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID [32]byte, handlerAddress common.Address, calldata, handlerResponse []byte) (*relayer.Message, error) {
+func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID [32]byte, calldata, handlerResponse []byte) (*relayer.Message, error) {
 	if len(calldata) == 0 {
 		err := errors.New("missing calldata")
 		return nil, err
 	}
+
+	// TODO: refactor
+	amount := calldata[:32]
+	recipientAddress := calldata[33:64]
 
 	return &relayer.Message{
 		Source:       sourceID,
@@ -118,9 +122,8 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID [32]byte
 		ResourceId:   resourceID,
 		Type:         relayer.FungibleTransfer,
 		Payload: []interface{}{
-			calldata,
-			handlerAddress,
-			handlerResponse,
+			amount,
+			recipientAddress,
 		},
 	}, nil
 }
