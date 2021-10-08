@@ -113,17 +113,17 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 		return err
 	}
 	log.Debug().Msgf("all bool: %v", allBool)
-	bridgeBool, err := cmd.Flags().GetBool(BridgeFlagName)
+	bridgeBool, err := cmd.Flags().GetBool("bridge")
 	if err != nil {
 		log.Error().Err(fmt.Errorf("bridge flag error: %v", err))
 		return err
 	}
-	erc20HandlerBool, err := cmd.Flags().GetBool(Erc20HandlerFlagName)
+	erc20HandlerBool, err := cmd.Flags().GetBool("erc20Handler")
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 handler flag error: %v", err))
 		return err
 	}
-	erc20Bool, err := cmd.Flags().GetBool(Erc20FlagName)
+	erc20Bool, err := cmd.Flags().GetBool("erc20")
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 flag error: %v", err))
 		return err
