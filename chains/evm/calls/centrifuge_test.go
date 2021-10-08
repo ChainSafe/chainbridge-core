@@ -17,7 +17,7 @@ type IsCentrifugeAssetStoredTestSuite struct {
 	clientMock       *mock_utils.MockChainClient
 }
 
-func TestRunTestSuite(t *testing.T) {
+func TestRunIsCentrifugeAssetStoredTestSuite(t *testing.T) {
 	suite.Run(t, new(IsCentrifugeAssetStoredTestSuite))
 }
 
