@@ -98,10 +98,9 @@ func transferBaseCurrency(cmd *cobra.Command, args []string, txFabric calls.TxFa
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	// ignore success bool
 	decimals, _ := big.NewInt(0).SetString(cmd.Flag("decimals").Value.String(), 10)
 
-	realAmount, err := calls.UserAmountToWei(amount, decimals)
+	weiAmount, err := calls.UserAmountToWei(amount, decimals)
 	if err != nil {
 		return err
 	}
@@ -112,7 +111,7 @@ func transferBaseCurrency(cmd *cobra.Command, args []string, txFabric calls.TxFa
 		return err
 	}
 
-	txHash, err := calls.Transact(ethClient, txFabric, &recipientAddress, nil, gasLimit, realAmount)
+	txHash, err := calls.Transact(ethClient, txFabric, &recipientAddress, nil, gasLimit, weiAmount)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("base currency deposit error: %v", err))
 		return err
