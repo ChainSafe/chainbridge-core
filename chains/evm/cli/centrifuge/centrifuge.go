@@ -5,11 +5,12 @@ import (
 )
 
 var CentrifugeCmd = &cobra.Command{
-	Use:   "cent",
+	Use:   "centrifuge",
 	Short: "Centrifuge related instructions",
 	Long:  "Centrifuge related instructions",
 }
 
 func init() {
 	CentrifugeCmd.AddCommand(deployCmd)
+	CentrifugeCmd.AddCommand(hashExistsCmd)
 }
