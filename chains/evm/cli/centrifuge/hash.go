@@ -13,17 +13,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var hashExistsCmd = &cobra.Command{
-	Use:   "hash-exists",
+var getHashCmd = &cobra.Command{
+	Use:   "getHash",
 	Short: "Return if a given hash exists in asset store",
 	Long:  "Calls ",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return HashExistsCmd(cmd, args, txFabric)
+		return GetHashCmd(cmd, args, txFabric)
 	},
 }
 
-func BindHashExistsCmdFlags(cli *cobra.Command) {
+func BindGetHashCmdFlags(cli *cobra.Command) {
 	cli.Flags().String("hash", "", "A hash to lookup")
 	cli.Flags().String("address", "", "Centrifuge asset store contract address")
 
@@ -38,10 +38,10 @@ func BindHashExistsCmdFlags(cli *cobra.Command) {
 }
 
 func init() {
-	BindHashExistsCmdFlags(hashExistsCmd)
+	BindGetHashCmdFlags(getHashCmd)
 }
 
-func HashExistsCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func GetHashCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	storeAddrStr := cmd.Flag("address").Value.String()
 	hash := cmd.Flag("hash").Value.String()
 

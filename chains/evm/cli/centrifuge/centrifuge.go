@@ -12,5 +12,5 @@ var CentrifugeCmd = &cobra.Command{
 
 func init() {
 	CentrifugeCmd.AddCommand(deployCmd)
-	CentrifugeCmd.AddCommand(hashExistsCmd)
+	CentrifugeCmd.AddCommand(getHashCmd)
 }

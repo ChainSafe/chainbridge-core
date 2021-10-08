@@ -21,6 +21,12 @@ var deployCmd = &cobra.Command{
 	},
 }
 
+func BindDeployCmdFlags(cli *cobra.Command) {}
+
+func init() {
+	BindDeployCmdFlags(deployCmd)
+}
+
 func DeployCentrifugeAssetStoreCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
