@@ -62,7 +62,7 @@ func HashExistsCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) e
 		return err
 	}
 
-	isAssetStored, err := calls.IsAssetStored(ethClient, storeAddr, byteHash)
+	isAssetStored, err := calls.IsCentrifugeAssetStored(ethClient, storeAddr, byteHash)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("Centrifuge asset store deploy failed: %w", err))
 	}

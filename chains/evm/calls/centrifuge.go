@@ -55,7 +55,7 @@ func parseIsAssetStoredOutput(output []byte) (bool, error) {
 	return isAssetStored, nil
 }
 
-func IsAssetStored(ethClient ChainClient, storeAddr common.Address, hash [32]byte) (bool, error) {
+func IsCentrifugeAssetStored(ethClient ChainClient, storeAddr common.Address, hash [32]byte) (bool, error) {
 	input, err := prepareIsAssetStoredInput(hash)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("prepare input error: %v", err))
