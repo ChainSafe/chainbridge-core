@@ -51,6 +51,31 @@ func DeployErc20Handler(c ClientDeployer, txFabric TxFabric, gasPriceClient GasP
 	return address, nil
 }
 
+func DeployErc721(c ClientDeployer, txFabric TxFabric, gasPriceClient GasPricer, name, symbol, baseURI string) (common.Address, error) {
+	parsed, err := abi.JSON(strings.NewReader(consts.ERC721PresetMinterPauserABI))
+	if err != nil {
+		return common.Address{}, err
+	}
+	address, err := deployContract(c, parsed, common.FromHex(consts.ERC721PresetMinterPauserBin), txFabric, gasPriceClient, name, symbol, baseURI)
+	if err != nil {
+		return common.Address{}, err
+	}
+	return address, nil
+}
+
+func DeployErc721Handler(c ClientDeployer, txFabric TxFabric, gasPriceClient GasPricer, bridgeAddress common.Address) (common.Address, error) {
+	log.Debug().Msgf("Deployng ERC721 Handler with params: %s", bridgeAddress.String())
+	parsed, err := abi.JSON(strings.NewReader(consts.ERC721HandlerABI))
+	if err != nil {
+		return common.Address{}, err
+	}
+	address, err := deployContract(c, parsed, common.FromHex(consts.ERC721HandlerBin), txFabric, gasPriceClient, bridgeAddress) // TODO: add arguments
+	if err != nil {
+		return common.Address{}, err
+	}
+	return address, nil
+}
+
 func deployContract(client ClientDeployer, abi abi.ABI, bytecode []byte, txFabric TxFabric, gasPriceClient GasPricer, params ...interface{}) (common.Address, error) {
 	client.LockNonce()
 	n, err := client.UnsafeNonce()
