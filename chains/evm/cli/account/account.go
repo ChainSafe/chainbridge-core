@@ -155,6 +155,12 @@ func BindTransferCmdFlags(cli *cobra.Command) {
 	cli.Flags().String("recipient", "", "address of recipient")
 	cli.Flags().String("amount", "", "amount to deposit")
 	cli.Flags().Uint64("decimals", 18, "base token decimals")
-	cli.MarkFlagRequired("amount")
-	cli.MarkFlagRequired("recipient")
+	err := cli.MarkFlagRequired("amount")
+	if err != nil {
+		panic(err)
+	}
+	err = cli.MarkFlagRequired("recipient")
+	if err != nil {
+		panic(err)
+	}
 }
