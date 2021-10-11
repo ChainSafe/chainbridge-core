@@ -84,7 +84,7 @@ func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, domainID uint8, 
 					log.Error().Err(err).Msg("Error handling substrate events")
 				}
 				for _, m := range msg {
-					log.Info().Uint8("chain", domainID).Uint8("destination", m.Destination).Str("rID", hexutils.BytesToHex(m.ResourceId[:])).Msgf("Sending new message %+v", m)
+					log.Info().Uint8("chain", domainID).Uint8("destination", m.Destination).Str("ResourceId", hexutils.BytesToHex(m.ResourceId[:])).Msgf("Sending new message %+v", m)
 					ch <- m
 				}
 				if startBlock.Int64()%20 == 0 {

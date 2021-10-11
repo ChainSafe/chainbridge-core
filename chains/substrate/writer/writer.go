@@ -7,6 +7,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/substrate"
 	"github.com/ChainSafe/chainbridge-core/relayer"
+	internalTypes "github.com/ChainSafe/chainbridge-core/types"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/rs/zerolog/log"
 )
@@ -109,7 +110,7 @@ func (w *SubstrateWriter) proposalValid(prop *SubstrateProposal) (bool, string, 
 	}
 }
 
-func (w *SubstrateWriter) createProposal(sourceChain uint8, depositNonce uint64, resourceId [32]byte, args ...interface{}) (*SubstrateProposal, error) {
+func (w *SubstrateWriter) createProposal(sourceChain uint8, depositNonce uint64, resourceId internalTypes.ResourceID, args ...interface{}) (*SubstrateProposal, error) {
 	meta := w.client.GetMetadata()
 	method, err := w.client.ResolveResourceId(resourceId)
 	if err != nil {

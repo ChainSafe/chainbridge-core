@@ -3,9 +3,11 @@ package calls
 import (
 	"context"
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"math/big"
 	"strings"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
+	"github.com/ChainSafe/chainbridge-core/types"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/relayer"
@@ -14,7 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
-
 
 func PrepareSetBurnableInput(handler, tokenAddress common.Address) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
@@ -28,20 +29,20 @@ func PrepareSetBurnableInput(handler, tokenAddress common.Address) ([]byte, erro
 	return input, nil
 }
 
-func PrepareAdminSetResourceInput(handler common.Address, rId [32]byte, addr common.Address) ([]byte, error) {
-	log.Debug().Msgf("ResourceID %x", rId)
+func PrepareAdminSetResourceInput(handler common.Address, resourceID types.ResourceID, addr common.Address) ([]byte, error) {
+	log.Debug().Msgf("resourceID %x", resourceID)
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
 	}
-	input, err := a.Pack("adminSetResource", handler, rId, addr)
+	input, err := a.Pack("adminSetResource", handler, resourceID, addr)
 	if err != nil {
 		return []byte{}, err
 	}
 	return input, nil
 }
 
-func PrepareErc20DepositInput(destDomainID uint8, resourceID [32]byte, data []byte) ([]byte, error) {
+func PrepareErc20DepositInput(destDomainID uint8, resourceID types.ResourceID, data []byte) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
@@ -53,7 +54,7 @@ func PrepareErc20DepositInput(destDomainID uint8, resourceID [32]byte, data []by
 	return input, nil
 }
 
-func PrepareExecuteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID [32]byte, calldata []byte, revertOnFail bool) ([]byte, error){
+func PrepareExecuteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID types.ResourceID, calldata []byte, revertOnFail bool) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
@@ -65,7 +66,7 @@ func PrepareExecuteProposalInput(sourceDomainID uint8, depositNonce uint64, reso
 	return input, nil
 }
 
-func PrepareVoteProposalInput(sourceDomainID uint8, resourceID [32]byte, calldata []byte) ([]byte, error){
+func PrepareVoteProposalInput(sourceDomainID uint8, resourceID types.ResourceID, calldata []byte) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
@@ -119,7 +120,7 @@ func ParseIsRelayerOutput(output []byte) (bool, error) {
 	return *b, nil
 }
 
-func Deposit(client ChainClient, fabric TxFabric, bridgeAddress, recipient common.Address, amount *big.Int, resourceID [32]byte, destDomainID uint8) error {
+func Deposit(client ChainClient, fabric TxFabric, bridgeAddress, recipient common.Address, amount *big.Int, resourceID types.ResourceID, destDomainID uint8) error {
 	data := ConstructErc20DepositData(recipient.Bytes(), amount)
 	input, err := PrepareErc20DepositInput(destDomainID, resourceID, data)
 	if err != nil {
@@ -147,7 +148,6 @@ func ExecuteProposal(client ClientDispatcher, fabric TxFabric, proposal *proposa
 	}
 	return h, nil
 }
-
 
 func VoteProposal(client ClientDispatcher, fabric TxFabric, proposal *proposal.Proposal) (common.Hash, error) {
 	// revertOnFail should be constantly false, true is used only for internal contract calls when you need to execute proposal in voteProposal function right after it becomes Passed becouse of votes
@@ -195,7 +195,7 @@ func ProposalStatus(evmCaller ContractCallerClient, p *proposal.Proposal) (relay
 		return relayer.ProposalStatusInactive, err
 	}
 	type bridgeProposal struct {
-		ResourceID    [32]byte
+		ResourceID    types.ResourceID
 		DataHash      [32]byte
 		YesVotes      []common.Address
 		NoVotes       []common.Address

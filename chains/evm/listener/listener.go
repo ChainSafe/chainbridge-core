@@ -10,6 +10,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/blockstore"
 	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
@@ -19,7 +20,7 @@ var BlockDelay = big.NewInt(10) //TODO: move to config
 
 type DepositLogs struct {
 	DestinationID uint8
-	ResourceID    [32]byte
+	ResourceID    types.ResourceID
 	DepositNonce  uint64
 }
 
@@ -30,7 +31,7 @@ type ChainClient interface {
 }
 
 type EventHandler interface {
-	HandleEvent(sourceID, destID uint8, nonce uint64, rID [32]byte) (*relayer.Message, error)
+	HandleEvent(sourceID, destID uint8, nonce uint64, resourceID types.ResourceID) (*relayer.Message, error)
 }
 
 type EVMListener struct {
