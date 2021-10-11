@@ -152,8 +152,8 @@ func BindImportPrivKeyFlags(cli *cobra.Command) {
 }
 
 func BindTransferCmdFlags(cli *cobra.Command) {
-	cli.Flags().String("recipient", "", "address of recipient")
-	cli.Flags().String("amount", "", "amount to deposit")
+	cli.Flags().String("recipient", "", "recipient address")
+	cli.Flags().String("amount", "", "transfer amount")
 	cli.Flags().Uint64("decimals", 18, "base token decimals")
 	err := cli.MarkFlagRequired("amount")
 	if err != nil {
