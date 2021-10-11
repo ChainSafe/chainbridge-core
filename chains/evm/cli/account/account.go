@@ -132,9 +132,7 @@ func confirmTransfer(cmd *cobra.Command, args []string) {
 		fmt.Printf("Send transaction %s(%s) to %s (Y/N)?", amount, decimals, recipient)
 		s, _ := reader.ReadString('\n')
 
-		s = strings.TrimSuffix(s, "\n")
-
-		s = strings.ToLower(s)
+		s = strings.ToLower(strings.TrimSuffix(s, "\n"))
 
 		if strings.Compare(s, "n") == 0 {
 			os.Exit(0)
