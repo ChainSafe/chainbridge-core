@@ -15,8 +15,8 @@ import (
 
 var getHashCmd = &cobra.Command{
 	Use:   "getHash",
-	Short: "Return if a given hash exists in asset store",
-	Long:  "Calls ",
+	Short: "Returns if a given hash exists in asset store",
+	Long:  "Checks _assetsStored map on Centrifuge asset store contract to find if asset hash exists.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
 		return GetHashCmd(cmd, args, txFabric)
