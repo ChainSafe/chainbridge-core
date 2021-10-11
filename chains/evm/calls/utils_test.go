@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	mock_utils "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
 )
@@ -12,7 +11,6 @@ import (
 type GetSolidityFunctionSigTestSuite struct {
 	suite.Suite
 	gomockController *gomock.Controller
-	clientMock       *mock_utils.MockChainClient
 }
 
 func TestRunGetSolidityFunctionSigTestSuite(t *testing.T) {

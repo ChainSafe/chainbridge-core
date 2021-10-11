@@ -35,10 +35,7 @@ type ChainClient interface {
 
 func GetSolidityFunctionSig(in []byte) [4]byte {
 	var res [4]byte
-	var hash [32]byte
-
-	hash = crypto.Keccak256Hash(in)
-
+	hash := crypto.Keccak256Hash(in)
 	copy(res[:], hash[:])
 	return res
 }
