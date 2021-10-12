@@ -39,7 +39,7 @@ func DeployBridge(c ChainClient, txFabric TxFabric, domainID uint8, relayerAddrs
 }
 
 func DeployErc20Handler(c ChainClient, txFabric TxFabric, bridgeAddress common.Address) (common.Address, error) {
-	log.Debug().Msgf("Deployng ERC20 Handler with params: %s", bridgeAddress.String())
+	log.Debug().Msgf("Deploying ERC20 Handler with params: %s", bridgeAddress.String())
 	parsed, err := abi.JSON(strings.NewReader(consts.ERC20HandlerABI))
 	if err != nil {
 		return common.Address{}, err
@@ -52,7 +52,7 @@ func DeployErc20Handler(c ChainClient, txFabric TxFabric, bridgeAddress common.A
 }
 
 func DeployGenericHandler(c ChainClient, txFabric TxFabric, bridgeAddress common.Address) (common.Address, error) {
-	log.Debug().Msgf("Deployng Generic Handler with params: %s", bridgeAddress.String())
+	log.Debug().Msgf("Deploying Generic Handler with params: %s", bridgeAddress.String())
 	parsed, err := abi.JSON(strings.NewReader(consts.GenericHandlerABI))
 	if err != nil {
 		return common.Address{}, err
@@ -63,7 +63,6 @@ func DeployGenericHandler(c ChainClient, txFabric TxFabric, bridgeAddress common
 	}
 	return address, nil
 }
-
 
 func deployContract(client ChainClient, abi abi.ABI, bytecode []byte, txFabric TxFabric, params ...interface{}) (common.Address, error) {
 	gp, err := client.GasPrice()
