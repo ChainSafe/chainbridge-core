@@ -2,7 +2,6 @@ package admin
 
 import (
 	"fmt"
-
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
