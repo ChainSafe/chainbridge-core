@@ -209,7 +209,6 @@ func (c *OptimismClient) IsRollupVerified(blockNumber uint64) (bool, error) {
 
 	log.Debug().Msgf("Block number to check against index: %v", blockNumber)
 	log.Debug().Msgf("Rollup info: %v", info)
-	log.Debug().Msgf("verified transaction index: %v", info.RollupContext.VerifiedIndex)
 	if blockNumber <= info.RollupContext.VerifiedIndex {
 		return true, nil
 	} else {

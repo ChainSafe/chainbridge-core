@@ -55,7 +55,6 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw bl
 			case <-stopChn:
 				return
 			default:
-				//log.Debug().Msgf("Block Number: %v", startBlock)
 				// Although L1 block confirmations are checked in the data-transport-layer,
 				// this check is needed as to not infinitely loop without a bound if a continue statement below is hit. Our bound is the latest Optimism batch index
 				// NOTE: If we wanted to do our own check we would most likely need another separate sync service for l1 which seems unnecessary
@@ -79,8 +78,8 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw bl
 					continue
 				} else if !verified {
 					log.Error().Msg("Chain is not verified at current index")
-					time.Sleep(BlockRetryInterval)
 					log.Error().Msgf("Block Number: %v", startBlock)
+					time.Sleep(BlockRetryInterval)
 					continue
 				}
 				log.Error().Msgf("Verified index: %v", startBlock)
