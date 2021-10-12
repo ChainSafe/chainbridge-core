@@ -23,7 +23,7 @@ type Voter interface {
 	SubmitTx(method string, args ...interface{}) error
 	GetVoterAccountID() types.AccountID
 	GetMetadata() (meta types.Metadata)
-	ResolveResourceId(id [32]byte) (string, error)
+	ResolveResourceId(resourceId internalTypes.ResourceID) (string, error)
 	// TODO: Vote state should be higher abstraction
 	GetProposalStatus(sourceID, proposalBytes []byte) (bool, *substrate.VoteState, error)
 }
