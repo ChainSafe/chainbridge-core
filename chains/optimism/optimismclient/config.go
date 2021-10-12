@@ -18,11 +18,13 @@ const DefaultBlockConfirmations = 10
 type OptimismConfig struct {
 	SharedEVMConfig  config.SharedEVMConfig // Pass an Optimism verifier replica for the endpoint to handle all chain listening and reads
 	kp               *secp256k1.Keypair
+	VerifyRollup     bool
 	VerifierEndpoint string // This is the endpoint for the Optimism verifier and is purely used for verifying transactions
 }
 
 type RawOptimismConfig struct {
 	config.RawSharedEVMConfig `mapstructure:",squash"`
+	VerifyRollup              bool   `mapstructure:"verifyRollup"`
 	VerifierEndpoint          string `mapstructure:"verifierEndpoint"`
 }
 
@@ -61,6 +63,7 @@ func ParseConfig(rawConfig *RawOptimismConfig) (*OptimismConfig, error) {
 
 	config := &OptimismConfig{
 		SharedEVMConfig:  *cfg,
+		VerifyRollup:     rawConfig.VerifyRollup,
 		VerifierEndpoint: rawConfig.VerifierEndpoint,
 	}
 

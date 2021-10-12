@@ -197,6 +197,10 @@ func (c *OptimismClient) RollupInfo() (*rollupInfo, error) {
 func (c *OptimismClient) IsRollupVerified(blockNumber uint64) (bool, error) {
 	log.Debug().Msg("Just got inside method IsRollupVerified")
 
+	if !c.config.VerifyRollup {
+		return true, nil
+	}
+
 	//status := c.syncRollup()
 	info, err := c.RollupInfo()
 	if err != nil {

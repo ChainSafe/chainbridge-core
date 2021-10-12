@@ -75,13 +75,15 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw bl
 				if verified, err := l.chainReader.IsRollupVerified(startBlock.Uint64()); err != nil {
 					log.Error().Err(err).Msg("Error while checking whether chain is verified")
 					log.Error().Msgf("Block Number: %v", startBlock)
+					time.Sleep(BlockRetryInterval)
 					continue
 				} else if !verified {
-					//log.Error().Msg("Chain is not verified at current batch index")
-					//log.Error().Msgf("Block Number: %v", startBlock)
+					log.Error().Msg("Chain is not verified at current index")
+					time.Sleep(BlockRetryInterval)
+					log.Error().Msgf("Block Number: %v", startBlock)
 					continue
 				}
-				log.Error().Msgf("Verified batch index: %v", startBlock)
+				log.Error().Msgf("Verified index: %v", startBlock)
 
 				logs, err := l.chainReader.FetchDepositLogs(context.Background(), l.bridgeAddress, startBlock, startBlock)
 				if err != nil {
@@ -90,17 +92,6 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw bl
 					log.Error().Err(err).Str("ChainID", string(chainID)).Msgf("Unable to filter logs")
 					continue
 				}
-
-				if verified, err := l.chainReader.IsRollupVerified(startBlock.Uint64()); err != nil {
-					log.Error().Err(err).Msg("Error while checking whether chain is verified")
-					log.Error().Msgf("Block Number: %v", startBlock)
-					return
-				} else if !verified {
-					//log.Error().Msg("Chain is not verified at current batch index")
-					//log.Error().Msgf("Block Number: %v", startBlock)
-					continue
-				}
-				log.Error().Msgf("Verified batch index: %v", startBlock)
 
 				log.Debug().Msgf("Rollup is verified on L1, can handle deposit event on optimism")
 				for _, eventLog := range logs {
