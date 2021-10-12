@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/relayer"
+	internalTypes "github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -29,8 +30,8 @@ func NewETHEventHandler(address common.Address, client ChainClient) *ETHEventHan
 	}
 }
 
-func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint64, rID [32]byte) (*relayer.Message, error) {
-	addr, err := e.matchResourceIDToHandlerAddress(rID)
+func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint64, resourceID internalTypes.ResourceID) (*relayer.Message, error) {
+	addr, err := e.matchResourceIDToHandlerAddress(resourceID)
 	if err != nil {
 		return nil, err
 	}
@@ -43,13 +44,13 @@ func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint6
 	return eventHandler(sourceID, destID, depositNonce, addr, e.client)
 }
 
-func (e *ETHEventHandler) matchResourceIDToHandlerAddress(rID [32]byte) (common.Address, error) {
+func (e *ETHEventHandler) matchResourceIDToHandlerAddress(resourceID internalTypes.ResourceID) (common.Address, error) {
 	definition := "[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"_resourceIDToHandlerAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
 	a, err := abi.JSON(strings.NewReader(definition))
 	if err != nil {
 		return common.Address{}, err
 	}
-	input, err := a.Pack("_resourceIDToHandlerAddress", rID)
+	input, err := a.Pack("_resourceIDToHandlerAddress", resourceID)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -107,7 +108,7 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddr
 		TokenAddress                   common.Address
 		LenDestinationRecipientAddress uint8
 		DestinationDomainID            uint8
-		ResourceID                     [32]byte
+		ResourceID                     internalTypes.ResourceID
 		DestinationRecipientAddress    []byte
 		Depositer                      common.Address
 		Amount                         *big.Int

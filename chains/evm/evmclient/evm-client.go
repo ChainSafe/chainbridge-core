@@ -14,6 +14,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
+	internalType "github.com/ChainSafe/chainbridge-core/types"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -164,7 +165,7 @@ func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common
 	for _, l := range logs {
 		dl := &listener.DepositLogs{
 			DestinationID: uint8(l.Topics[1].Big().Uint64()),
-			ResourceID:    l.Topics[2],
+			ResourceID:    internalType.ResourceID(l.Topics[2]),
 			DepositNonce:  l.Topics[3].Big().Uint64(),
 		}
 		depositLogs = append(depositLogs, dl)
