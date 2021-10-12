@@ -1,6 +1,10 @@
 package cli
 
 import (
+	"fmt"
+	"os"
+	"time"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/account"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/admin"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/bridge"
@@ -8,6 +12,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/erc721"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -34,6 +39,10 @@ var (
 	JsonWalletPasswordFlagName = "jsonWalletPassword"
 )
 
+var (
+	cliLogsFilename = "cli_output_data.log"
+)
+
 func BindEVMCLIFlags(evmRootCLI *cobra.Command) {
 	evmRootCLI.PersistentFlags().String(UrlFlagName, "ws://localhost:8545", "node url")
 	evmRootCLI.PersistentFlags().Uint64(GasLimitFlagName, 6721975, "gasLimit used in transactions")
@@ -51,6 +60,62 @@ func BindEVMCLIFlags(evmRootCLI *cobra.Command) {
 	_ = viper.BindPFlag(JsonWalletFlagName, evmRootCLI.PersistentFlags().Lookup(JsonWalletFlagName))
 	_ = viper.BindPFlag(JsonWalletPasswordFlagName, evmRootCLI.PersistentFlags().Lookup(JsonWalletPasswordFlagName))
 
+}
+
+func writeCliIODataToFile(cmd *cobra.Command) {
+	file, err := os.OpenFile(cliLogsFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("failed to create cli log file: %v", err))
+	}
+
+	defer file.Close()
+
+	currentTimestamp := time.Now().Format("02-01|15:00.000 ")
+
+	urlFlagName := cmd.Flag(UrlFlagName).Name
+	gasLimitFlagName := cmd.Flag(GasLimitFlagName).Name
+	gasPriceFlagName := cmd.Flag(GasPriceFlagName).Name
+	networkIdFlagName := cmd.Flag(NetworkIdFlagName).Name
+	jsonWalletFlagName := cmd.Flag(JsonWalletFlagName).Name
+	jsonWalletPasswordFlagName := cmd.Flag(JsonWalletPasswordFlagName).Name
+
+	urlFlagValue := cmd.Flag(UrlFlagName).Value.String()
+	gasLimitFlagValue := cmd.Flag(GasLimitFlagName).Value.String()
+	gasPriceFlagValue := cmd.Flag(GasPriceFlagName).Value.String()
+	networkIdFlagValue := cmd.Flag(NetworkIdFlagName).Value.String()
+	jsonWalletFlagValue := cmd.Flag(JsonWalletFlagName).Value.String()
+	jsonWalletPasswordFlagValue := cmd.Flag(JsonWalletPasswordFlagName).Value.String()
+
+	cmdsMap := map[string]string{
+		urlFlagName:                urlFlagValue,
+		gasLimitFlagName:           gasLimitFlagValue,
+		gasPriceFlagName:           gasPriceFlagValue,
+		networkIdFlagName:          networkIdFlagValue,
+		jsonWalletFlagName:         jsonWalletFlagValue,
+		jsonWalletPasswordFlagName: jsonWalletPasswordFlagValue,
+	}
+
+	var keys string
+	var values string
+	var keyWithValue string
+	for key, value := range cmdsMap {
+		if value != "" {
+			keys += fmt.Sprintf(`%s, `, key)
+			values += fmt.Sprintf(`%s, `, value)
+			keyWithValue += fmt.Sprintf(`%s: %s `, key, value)
+		}
+	}
+
+	finalLog := fmt.Sprintf("Called cli commands: %s with values: %s",
+		keys, values)
+	log.Debug().Msgf(finalLog)
+
+	_, err = file.WriteString(
+		currentTimestamp +
+			keyWithValue + "=>\n" + finalLog)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("failed to create cli log file: %v", err))
+	}
 }
 
 func init() {
