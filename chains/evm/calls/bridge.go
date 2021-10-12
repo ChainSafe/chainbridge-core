@@ -127,7 +127,7 @@ func Deposit(client ChainClient, fabric TxFabric, bridgeAddress, recipient commo
 		return err
 	}
 	gasLimit := uint64(2000000)
-	h, err := Transact(client, fabric, &bridgeAddress, input, gasLimit)
+	h, err := Transact(client, fabric, &bridgeAddress, input, gasLimit, big.NewInt(0))
 	if err != nil {
 		return fmt.Errorf("deposit failed %w", err)
 	}
@@ -142,7 +142,7 @@ func ExecuteProposal(client ClientDispatcher, fabric TxFabric, proposal *proposa
 		return common.Hash{}, err
 	}
 	gasLimit := uint64(300000)
-	h, err := Transact(client, fabric, &proposal.BridgeAddress, input, gasLimit)
+	h, err := Transact(client, fabric, &proposal.BridgeAddress, input, gasLimit, big.NewInt(0))
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("execute proposal failed %w", err)
 	}
@@ -156,7 +156,7 @@ func VoteProposal(client ClientDispatcher, fabric TxFabric, proposal *proposal.P
 		return common.Hash{}, err
 	}
 	gasLimit := uint64(300000)
-	h, err := Transact(client, fabric, &proposal.BridgeAddress, input, gasLimit)
+	h, err := Transact(client, fabric, &proposal.BridgeAddress, input, gasLimit, big.NewInt(0))
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("vote proposal failed %w", err)
 	}

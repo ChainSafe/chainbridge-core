@@ -36,7 +36,7 @@ func PrepareEVME2EEnv(ethClient calls.ChainClient, fabric calls.TxFabric, domain
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
-	_, err = calls.Transact(ethClient, fabric, &bridgeAddr, registerResourceInput, gasLimit)
+	_, err = calls.Transact(ethClient, fabric, &bridgeAddr, registerResourceInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
@@ -46,7 +46,7 @@ func PrepareEVME2EEnv(ethClient calls.ChainClient, fabric calls.TxFabric, domain
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
-	_, err = calls.Transact(ethClient, fabric, &erc20Addr, minInput, gasLimit)
+	_, err = calls.Transact(ethClient, fabric, &erc20Addr, minInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
@@ -56,7 +56,7 @@ func PrepareEVME2EEnv(ethClient calls.ChainClient, fabric calls.TxFabric, domain
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
-	_, err = calls.Transact(ethClient, fabric, &erc20Addr, approveInput, gasLimit)
+	_, err = calls.Transact(ethClient, fabric, &erc20Addr, approveInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
@@ -66,7 +66,7 @@ func PrepareEVME2EEnv(ethClient calls.ChainClient, fabric calls.TxFabric, domain
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
-	_, err = calls.Transact(ethClient, fabric, &erc20Addr, minterInput, gasLimit)
+	_, err = calls.Transact(ethClient, fabric, &erc20Addr, minterInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
@@ -75,7 +75,7 @@ func PrepareEVME2EEnv(ethClient calls.ChainClient, fabric calls.TxFabric, domain
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
-	_, err = calls.Transact(ethClient, fabric, &bridgeAddr, setBurnInput, gasLimit)
+	_, err = calls.Transact(ethClient, fabric, &bridgeAddr, setBurnInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
