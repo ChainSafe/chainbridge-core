@@ -6,8 +6,9 @@ package voter
 import (
 	"context"
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"math/big"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/relayer"
@@ -59,7 +60,7 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
 		hash, err := calls.VoteProposal(w.client, w.fabric, prop)
 		log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
 		if err != nil {
-			return fmt.Errorf("Voting failed. Err: %w", err)
+			return fmt.Errorf("voting failed. Err: %w", err)
 		}
 	}
 	return nil

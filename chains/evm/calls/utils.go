@@ -87,7 +87,7 @@ type ClientDispatcher interface {
 	From() common.Address
 }
 
-func Transact(client ClientDispatcher, txFabric TxFabric, to *common.Address, data []byte, gasLimit uint64) (common.Hash, error) {
+func Transact(client ClientDispatcher, txFabric TxFabric, to *common.Address, data []byte, gasLimit uint64, value *big.Int) (common.Hash, error) {
 	gp, err := client.GasPrice()
 	if err != nil {
 		return common.Hash{}, err
@@ -97,7 +97,10 @@ func Transact(client ClientDispatcher, txFabric TxFabric, to *common.Address, da
 	if err != nil {
 		return common.Hash{}, err
 	}
-	tx := txFabric(n.Uint64(), to, big.NewInt(0), gasLimit, gp, data)
+	if value == nil {
+		value = big.NewInt(0)
+	}
+	tx := txFabric(n.Uint64(), to, value, gasLimit, gp, data)
 	_, err = client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return common.Hash{}, err

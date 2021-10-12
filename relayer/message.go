@@ -6,6 +6,8 @@ package relayer
 import (
 	"errors"
 	"math/big"
+
+	"github.com/ChainSafe/chainbridge-core/types"
 )
 
 type TransferType string
@@ -34,7 +36,7 @@ type Message struct {
 	Source       uint8  // Source where message was initiated
 	Destination  uint8  // Destination chain of message
 	DepositNonce uint64 // Nonce for the deposit
-	ResourceId   [32]byte
+	ResourceId   types.ResourceID
 	Payload      []interface{} // data associated with event sequence
 	Type         TransferType
 }

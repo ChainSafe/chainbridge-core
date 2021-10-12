@@ -8,7 +8,9 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
+	"github.com/ChainSafe/chainbridge-core/types"
 
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"
@@ -44,7 +46,7 @@ func (mh *EVMMessageHandler) HandleMessage(m *relayer.Message) (*proposal.Propos
 	if err != nil {
 		return nil, err
 	}
-	log.Info().Str("type", string(m.Type)).Uint8("src", m.Source).Uint8("dst", m.Destination).Uint64("nonce", m.DepositNonce).Str("rId", fmt.Sprintf("%x", m.ResourceId)).Msg("Handling new message")
+	log.Info().Str("type", string(m.Type)).Uint8("src", m.Source).Uint8("dst", m.Destination).Uint64("nonce", m.DepositNonce).Str("resourceID", fmt.Sprintf("%x", m.ResourceId)).Msg("Handling new message")
 	prop, err := handleMessage(m, addr, mh.bridgeAddress)
 	if err != nil {
 		return nil, err
@@ -52,13 +54,12 @@ func (mh *EVMMessageHandler) HandleMessage(m *relayer.Message) (*proposal.Propos
 	return prop, nil
 }
 
-func (mh *EVMMessageHandler) matchResourceIDToHandlerAddress(rID [32]byte) (common.Address, error) {
-	definition := "[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"_resourceIDToHandlerAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
-	a, err := abi.JSON(strings.NewReader(definition))
+func (mh *EVMMessageHandler) matchResourceIDToHandlerAddress(resourceID types.ResourceID) (common.Address, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return common.Address{}, err
 	}
-	input, err := a.Pack("_resourceIDToHandlerAddress", rID)
+	input, err := a.Pack("_resourceIDToHandlerAddress", resourceID)
 	if err != nil {
 		return common.Address{}, err
 	}

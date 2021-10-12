@@ -10,6 +10,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/blockstore"
 	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
@@ -23,7 +24,7 @@ type DepositLogs struct {
 	// ID of chain deposit will be bridged to
 	DestinationID uint8
 	// ResourceID used to find address of handler to be used for deposit
-	ResourceID [32]byte
+	ResourceID types.ResourceID
 	// Nonce of deposit
 	DepositNonce uint64
 	// Address of sender (msg.sender: user)
@@ -43,7 +44,7 @@ type ChainClient interface {
 }
 
 type EventHandler interface {
-	HandleEvent(sourceID, destID uint8, nonce uint64, rID [32]byte, calldata, handlerResponse []byte) (*relayer.Message, error)
+	HandleEvent(sourceID, destID uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error)
 }
 
 type EVMListener struct {
