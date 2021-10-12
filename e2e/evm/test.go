@@ -53,9 +53,7 @@ type IntegrationTestSuite struct {
 	genericRID         [32]byte
 }
 
-func (s *IntegrationTestSuite) SetupSuite()    {}
-func (s *IntegrationTestSuite) TearDownSuite() {}
-func (s *IntegrationTestSuite) SetupTest() {
+func (s *IntegrationTestSuite) SetupSuite() {
 	ethClient, err := evmclient.NewEVMClientFromParams(s.endpoint1, s.adminKey.PrivateKey(), big.NewInt(consts.DefaultGasPrice))
 	s.Nil(err)
 	s.client = ethClient
@@ -84,6 +82,9 @@ func (s *IntegrationTestSuite) SetupTest() {
 	s.erc20RID = calls.SliceTo32Bytes(append(common.LeftPadBytes(genericHandlerAddr.Bytes(), 31), 1))
 	s.genericRID = calls.SliceTo32Bytes(append(common.LeftPadBytes(genericHandlerAddr.Bytes(), 31), 1))
 }
+func (s *IntegrationTestSuite) TearDownSuite() {}
+func (s *IntegrationTestSuite) SetupTest()     {}
+func (s *IntegrationTestSuite) TearDownTest()  {}
 
 func (s *IntegrationTestSuite) TestErc20Deposit() {
 	dstAddr := keystore.TestKeyRing.EthereumKeys[keystore.BobKey].CommonAddress()
