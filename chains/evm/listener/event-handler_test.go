@@ -28,7 +28,7 @@ func TestErc20EventHandler(t *testing.T) {
 		DepositNonce:    1,
 		SenderAddress:   common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
 		Calldata:        calldata,
-		HandlerResponse: []byte{}, // empty []byte
+		HandlerResponse: []byte{},
 	}
 
 	sourceID := uint8(1)
@@ -38,9 +38,7 @@ func TestErc20EventHandler(t *testing.T) {
 		t.Fatalf("could not generate event handler message: %v", err)
 	}
 
-	// TODO: refactor
 	amountParsed := calldata[:32]
-	// ignore recipientAddressLenParsed: calldata[33:64]
 	recipientAddressParsed := calldata[65:]
 
 	expected := &relayer.Message{

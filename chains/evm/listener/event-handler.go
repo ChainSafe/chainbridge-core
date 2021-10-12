@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -44,8 +45,7 @@ func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint6
 
 // matchResourceIDToHandlerAddress is a private method that matches a previously registered resource ID to its corresponding handler address
 func (e *ETHEventHandler) matchResourceIDToHandlerAddress(resourceID [32]byte) (common.Address, error) {
-	definition := "[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"_resourceIDToHandlerAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
-	a, err := abi.JSON(strings.NewReader(definition))
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -111,9 +111,7 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID [32]byte
 		return nil, err
 	}
 
-	// TODO: refactor
 	amount := calldata[:32]
-	// ignore recipientAddressLenParsed: calldata[33:64]
 	recipientAddress := calldata[65:]
 
 	return &relayer.Message{
