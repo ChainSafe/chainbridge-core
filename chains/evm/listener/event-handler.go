@@ -15,7 +15,7 @@ import (
 )
 
 type EventHandlers map[common.Address]EventHandlerFunc
-type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID [32]byte, calldata, handlerResponse []byte) (*relayer.Message, error)
+type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID internalTypes.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error)
 
 type ETHEventHandler struct {
 	bridgeAddress common.Address
@@ -107,8 +107,19 @@ func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
 // Erc20EventHandler converts data pulled from event logs into message
 // handlerResponse can be an empty slice
 func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID internalTypes.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error) {
+
 	if len(calldata) == 0 {
 		err := errors.New("missing calldata")
+		return nil, err
+	}
+
+	if len(calldata[:32]) < 32 {
+		err := errors.New("calldata not properly padded: less than 32 bytes")
+		return nil, err
+	}
+
+	if len(calldata[65:]) < 32 {
+		err := errors.New("recipient address not properly padded: less than 32 bytes")
 		return nil, err
 	}
 

@@ -1,6 +1,7 @@
 package listener_test
 
 import (
+	"errors"
 	"math/big"
 	"testing"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
 )
+
+var errIncorrectCalldataLen = errors.New("incorrect calldata len: less than 32 bytes")
 
 type ListenerTestSuite struct {
 	suite.Suite
@@ -75,7 +78,37 @@ func (s *ListenerTestSuite) TestErc20HandleEvent() {
 
 	s.NotNil(message)
 
-	if !s.Equal(message, expected) {
-		s.Fail("ERC20 event handler message does not equal expected message")
+	s.Equal(message, expected)
+}
+
+func (s *ListenerTestSuite) TestErc20HandleEventIncorrectCalldataLen() {
+	// 0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b
+	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}
+
+	// construct ERC20 deposit data
+	// follows behavior of solidity tests
+	// https://github.com/ChainSafe/chainbridge-solidity/blob/develop/test/contractBridge/depositERC20.js#L46-L50
+	var calldata []byte
+	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(2), 16)...)
+	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(recipientByteSlice))), 16)...)
+	calldata = append(calldata, recipientByteSlice...)
+
+	depositLog := &listener.DepositLogs{
+		DestinationID:   0,
+		ResourceID:      [32]byte{0},
+		DepositNonce:    1,
+		SenderAddress:   common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		Calldata:        calldata,
+		HandlerResponse: []byte{},
 	}
+
+	sourceID := uint8(1)
+
+	s.mockEventHandler.EXPECT().HandleEvent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), calldata, gomock.Any()).Return(nil, errIncorrectCalldataLen)
+
+	message, err := s.mockEventHandler.HandleEvent(sourceID, depositLog.DestinationID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Calldata, depositLog.HandlerResponse)
+
+	s.Nil(message)
+
+	s.NotNil(err)
 }
