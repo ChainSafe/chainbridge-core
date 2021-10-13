@@ -26,7 +26,6 @@ func (s *ListenerTestSuite) SetupSuite()    {}
 func (s *ListenerTestSuite) TearDownSuite() {}
 func (s *ListenerTestSuite) SetupTest() {
 	gomockController := gomock.NewController(s.T())
-	defer gomockController.Finish()
 	s.mockEventHandler = mock_listener.NewMockEventHandler(gomockController)
 }
 func (s *ListenerTestSuite) TearDownTest() {}
@@ -53,12 +52,11 @@ func (s *ListenerTestSuite) TestErc20HandleEvent() {
 	}
 
 	sourceID := uint8(1)
-
 	amountParsed := calldata[:32]
 	recipientAddressParsed := calldata[65:]
 
-	s.mockEventHandler.EXPECT().HandleEvent(sourceID, depositLog.DestinationID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Calldata, depositLog.HandlerResponse).Return(&relayer.Message{
-		Source:       uint8(1),
+	expected := &relayer.Message{
+		Source:       sourceID,
 		Destination:  depositLog.DestinationID,
 		DepositNonce: depositLog.DepositNonce,
 		ResourceId:   depositLog.ResourceID,
@@ -67,5 +65,17 @@ func (s *ListenerTestSuite) TestErc20HandleEvent() {
 			amountParsed,
 			recipientAddressParsed,
 		},
-	}, nil)
+	}
+
+	s.mockEventHandler.EXPECT().HandleEvent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(expected, nil)
+
+	message, err := s.mockEventHandler.HandleEvent(sourceID, depositLog.DestinationID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Calldata, depositLog.HandlerResponse)
+
+	s.Nil(err)
+
+	s.NotNil(message)
+
+	if !s.Equal(message, expected) {
+		s.Fail("ERC20 event handler message does not equal expected message")
+	}
 }
