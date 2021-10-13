@@ -31,6 +31,23 @@ func BindRegisterGenericResourceCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().String("deposit", "0x00000000", "deposit function signature")
 	cmd.Flags().String("execute", "0x00000000", "execute proposal function signature")
 	cmd.Flags().Bool("hash", false, "treat signature inputs as function prototype strings, hash and take the first 4 bytes")
+
+	err := cmd.MarkFlagRequired("handler")
+	if err != nil {
+		panic(err)
+	}
+	err = cmd.MarkFlagRequired("resourceId")
+	if err != nil {
+		panic(err)
+	}
+	err = cmd.MarkFlagRequired("bridge")
+	if err != nil {
+		panic(err)
+	}
+	err = cmd.MarkFlagRequired("target")
+	if err != nil {
+		panic(err)
+	}
 }
 
 func init() {
