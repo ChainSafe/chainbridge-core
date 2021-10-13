@@ -1,16 +1,37 @@
-package listener
+package listener_test
 
 import (
 	"math/big"
-	"reflect"
 	"testing"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
+	mock_listener "github.com/ChainSafe/chainbridge-core/chains/evm/listener/mock"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestErc20EventHandler(t *testing.T) {
+type ListenerTestSuite struct {
+	suite.Suite
+	mockEventHandler *mock_listener.MockEventHandler
+}
+
+func TestRunTestSuite(t *testing.T) {
+	suite.Run(t, new(ListenerTestSuite))
+}
+
+func (s *ListenerTestSuite) SetupSuite()    {}
+func (s *ListenerTestSuite) TearDownSuite() {}
+func (s *ListenerTestSuite) SetupTest() {
+	gomockController := gomock.NewController(s.T())
+	defer gomockController.Finish()
+	s.mockEventHandler = mock_listener.NewMockEventHandler(gomockController)
+}
+func (s *ListenerTestSuite) TearDownTest() {}
+
+func (s *ListenerTestSuite) TestErc20HandleEvent() {
 	// 0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b
 	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}
 
@@ -22,7 +43,7 @@ func TestErc20EventHandler(t *testing.T) {
 	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(recipientByteSlice))), 32)...)
 	calldata = append(calldata, recipientByteSlice...)
 
-	depositLog := &DepositLogs{
+	depositLog := &listener.DepositLogs{
 		DestinationID:   0,
 		ResourceID:      [32]byte{0},
 		DepositNonce:    1,
@@ -33,15 +54,10 @@ func TestErc20EventHandler(t *testing.T) {
 
 	sourceID := uint8(1)
 
-	message, err := Erc20EventHandler(sourceID, depositLog.DestinationID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Calldata, depositLog.HandlerResponse)
-	if err != nil {
-		t.Fatalf("could not generate event handler message: %v", err)
-	}
-
 	amountParsed := calldata[:32]
 	recipientAddressParsed := calldata[65:]
 
-	expected := &relayer.Message{
+	s.mockEventHandler.EXPECT().HandleEvent(sourceID, depositLog.DestinationID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Calldata, depositLog.HandlerResponse).Return(&relayer.Message{
 		Source:       uint8(1),
 		Destination:  depositLog.DestinationID,
 		DepositNonce: depositLog.DepositNonce,
@@ -51,9 +67,5 @@ func TestErc20EventHandler(t *testing.T) {
 			amountParsed,
 			recipientAddressParsed,
 		},
-	}
-
-	if !reflect.DeepEqual(message, expected) {
-		t.Fatal("ERC20 event handler message does not equal expected message")
-	}
+	}, nil)
 }
