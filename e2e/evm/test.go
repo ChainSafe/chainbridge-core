@@ -181,11 +181,10 @@ func (s *IntegrationTestSuite) TestGenericDeposit() {
 	}
 	s.True(executedEventFound)
 
-	assetHash := [32]byte{29, 189, 125, 11, 86, 26, 65, 210, 60, 42, 70, 154, 212, 47, 189, 112, 213, 67, 139, 174, 130, 111, 111, 214, 7, 65, 49, 144, 195, 124, 54, 59}
 	exists, err := calls.IsCentrifugeAssetStored(
 		s.client2,
 		s.assetStoreAddr,
-		assetHash,
+		hash,
 	)
 	s.Nil(err)
 	s.Equal(true, exists)
