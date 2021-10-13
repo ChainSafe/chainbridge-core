@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"github.com/ChainSafe/chainbridge-core/types"
 
@@ -54,8 +55,7 @@ func (mh *EVMMessageHandler) HandleMessage(m *relayer.Message) (*proposal.Propos
 }
 
 func (mh *EVMMessageHandler) matchResourceIDToHandlerAddress(resourceID types.ResourceID) (common.Address, error) {
-	definition := "[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"_resourceIDToHandlerAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
-	a, err := abi.JSON(strings.NewReader(definition))
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return common.Address{}, err
 	}
