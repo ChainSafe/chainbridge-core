@@ -332,6 +332,7 @@ Usage:
 Flags:
       --bridge string       bridge contract address
       --deposit string      deposit function signature (default "0x00000000")
+      --depositerOffset int   depositer address position offset in the metadata, in bytes
       --execute string      execute proposal function signature (default "0x00000000")
       --handler string      handler contract address
       --hash                treat signature inputs as function prototype strings, hash and take the first 4 bytes
