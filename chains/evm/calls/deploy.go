@@ -51,6 +51,20 @@ func DeployErc20Handler(c ChainClient, txFabric TxFabric, bridgeAddress common.A
 	return address, nil
 }
 
+func DeployGenericHandler(c ChainClient, txFabric TxFabric, bridgeAddress common.Address) (common.Address, error) {
+	log.Debug().Msgf("Deployng Generic Handler with params: %s", bridgeAddress.String())
+	parsed, err := abi.JSON(strings.NewReader(consts.GenericHandlerABI))
+	if err != nil {
+		return common.Address{}, err
+	}
+	address, err := deployContract(c, parsed, common.FromHex(consts.GenericHandlerBin), txFabric, bridgeAddress, [][32]byte{}, []common.Address{}, [][4]byte{}, [][4]byte{})
+	if err != nil {
+		return common.Address{}, err
+	}
+	return address, nil
+}
+
+
 func deployContract(client ChainClient, abi abi.ABI, bytecode []byte, txFabric TxFabric, params ...interface{}) (common.Address, error) {
 	gp, err := client.GasPrice()
 	if err != nil {

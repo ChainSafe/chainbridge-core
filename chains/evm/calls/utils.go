@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
 )
 
@@ -30,6 +31,13 @@ type ChainClient interface {
 	GasPrice() (*big.Int, error)
 	From() common.Address
 	Simulate(block *big.Int, txHash common.Hash, fromAddress common.Address) ([]byte, error)
+}
+
+func GetSolidityFunctionSig(in []byte) [4]byte {
+	var res [4]byte
+	hash := crypto.Keccak256Hash(in)
+	copy(res[:], hash[:])
+	return res
 }
 
 func SliceTo32Bytes(in []byte) [32]byte {
