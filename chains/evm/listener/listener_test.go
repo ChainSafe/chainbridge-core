@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-var errIncorrectCalldataLen = errors.New("incorrect calldata len: less than 32 bytes")
+var errIncorrectCalldataLen = errors.New("invalid calldata length: less than 84 bytes")
 
 type ListenerTestSuite struct {
 	suite.Suite
@@ -70,9 +70,7 @@ func (s *ListenerTestSuite) TestErc20HandleEvent() {
 		},
 	}
 
-	s.mockEventHandler.EXPECT().HandleEvent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(expected, nil)
-
-	message, err := s.mockEventHandler.HandleEvent(sourceID, depositLog.DestinationID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Calldata, depositLog.HandlerResponse)
+	message, err := listener.Erc20EventHandler(sourceID, depositLog.DestinationID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Calldata, depositLog.HandlerResponse)
 
 	s.Nil(err)
 
@@ -104,11 +102,9 @@ func (s *ListenerTestSuite) TestErc20HandleEventIncorrectCalldataLen() {
 
 	sourceID := uint8(1)
 
-	s.mockEventHandler.EXPECT().HandleEvent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), calldata, gomock.Any()).Return(nil, errIncorrectCalldataLen)
-
-	message, err := s.mockEventHandler.HandleEvent(sourceID, depositLog.DestinationID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Calldata, depositLog.HandlerResponse)
+	message, err := listener.Erc20EventHandler(sourceID, depositLog.DestinationID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Calldata, depositLog.HandlerResponse)
 
 	s.Nil(message)
 
-	s.NotNil(err)
+	s.EqualError(err, errIncorrectCalldataLen.Error())
 }
