@@ -31,6 +31,7 @@ func BindRegisterGenericResourceCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().String("target", "", "contract address to be registered")
 	cmd.Flags().String("deposit", "0x00000000", "deposit function signature")
 	cmd.Flags().String("execute", "0x00000000", "execute proposal function signature")
+	cmd.Flags().Int("depositerOffset", 0, "depositer address position offset in the metadata, in bytes")
 	cmd.Flags().Bool("hash", false, "treat signature inputs as function prototype strings, hash and take the first 4 bytes")
 
 	err := cmd.MarkFlagRequired("handler")
@@ -62,6 +63,11 @@ func RegisterGenericResourceCmd(cmd *cobra.Command, args []string, txFabric call
 	targetAddressStr := cmd.Flag("target").Value.String()
 	depositSig := cmd.Flag("deposit").Value.String()
 	executeSig := cmd.Flag("execute").Value.String()
+	depositerOffset, err := cmd.Flags().GetInt("depositerOffset")
+	if err != nil {
+		log.Error().Err(err)
+		return fmt.Errorf("could not get depositer offset value: %v", err)
+	}
 	hash, err := cmd.Flags().GetBool("hash")
 	if err != nil {
 		log.Error().Err(err)
@@ -130,8 +136,9 @@ Hash: %v
 		handlerAddr,
 		resourceIdBytesArr,
 		targetAddr,
-		executeSigBytes,
 		depositSigBytes,
+		big.NewInt(int64(depositerOffset)),
+		executeSigBytes,
 	)
 	if err != nil {
 		log.Error().Err(err)

@@ -48,13 +48,14 @@ func PrepareAdminSetGenericResourceInput(
 	rId [32]byte,
 	addr common.Address,
 	depositFunctionSig [4]byte,
+	depositerOffset *big.Int,
 	executeFunctionSig [4]byte,
 ) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
 	}
-	input, err := a.Pack("adminSetGenericResource", handler, rId, addr, depositFunctionSig, executeFunctionSig)
+	input, err := a.Pack("adminSetGenericResource", handler, rId, addr, depositFunctionSig, depositerOffset, executeFunctionSig)
 	if err != nil {
 		return []byte{}, err
 	}
