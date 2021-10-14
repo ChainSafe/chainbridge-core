@@ -56,7 +56,7 @@ func (s *ListenerTestSuite) TestErc20HandleEvent() {
 
 	sourceID := uint8(1)
 	amountParsed := calldata[:32]
-	recipientAddressParsed := calldata[65:]
+	recipientAddressParsed := calldata[64:]
 
 	expected := &relayer.Message{
 		Source:       sourceID,
