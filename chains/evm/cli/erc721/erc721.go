@@ -11,5 +11,8 @@ var ERC721Cmd = &cobra.Command{
 }
 
 func init() {
-	ERC721Cmd.AddCommand(addMinterCmd)
+	ERC721Cmd.AddCommand(mintCmd)
+	ERC721Cmd.AddCommand(approveCmd)
+	ERC721Cmd.AddCommand(ownerCmd)
+	ERC721Cmd.AddCommand(depositCmd)
 }
