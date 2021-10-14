@@ -61,78 +61,6 @@ func PrepareAdminSetGenericResourceInput(
 	return input, nil
 }
 
-func PrepareAdminSetGenericResourceInput(
-	handler common.Address,
-	rId [32]byte,
-	addr common.Address,
-	depositFunctionSig [4]byte,
-	executeFunctionSig [4]byte,
-) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
-	if err != nil {
-		return []byte{}, err
-	}
-	input, err := a.Pack("adminSetGenericResource", handler, rId, addr, depositFunctionSig, executeFunctionSig)
-	if err != nil {
-		return []byte{}, err
-	}
-	return input, nil
-}
-
-func PrepareAdminSetGenericResourceInput(
-	handler common.Address,
-	rId [32]byte,
-	addr common.Address,
-	depositFunctionSig [4]byte,
-	executeFunctionSig [4]byte,
-) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
-	if err != nil {
-		return []byte{}, err
-	}
-	input, err := a.Pack("adminSetGenericResource", handler, rId, addr, depositFunctionSig, executeFunctionSig)
-	if err != nil {
-		return []byte{}, err
-	}
-	return input, nil
-}
-
-func PrepareErc20DepositInput(destDomainID uint8, resourceID [32]byte, data []byte) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
-	if err != nil {
-		return []byte{}, err
-	}
-	input, err := a.Pack("deposit", destDomainID, resourceID, data)
-	if err != nil {
-		return []byte{}, err
-	}
-	return input, nil
-}
-
-func PrepareExecuteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID types.ResourceID, calldata []byte, revertOnFail bool) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
-	if err != nil {
-		return []byte{}, err
-	}
-	input, err := a.Pack("executeProposal", sourceDomainID, depositNonce, calldata, resourceID, revertOnFail)
-	if err != nil {
-		return []byte{}, err
-	}
-	return input, nil
-}
-
-func PrepareVoteProposalInput(sourceDomainID uint8, resourceID types.ResourceID, calldata []byte) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
-	if err != nil {
-		return []byte{}, err
-	}
-	input, err := a.Pack("voteProposal", sourceDomainID, resourceID, calldata)
-	if err != nil {
-		return []byte{}, err
-	}
-	return input, nil
-}
-
 func PrepareAddRelayerInput(relayer common.Address) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
@@ -217,6 +145,18 @@ func Deposit(client ChainClient, fabric TxFabric, bridgeAddress common.Address, 
 	return nil
 }
 
+func PrepareExecuteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID types.ResourceID, calldata []byte, revertOnFail bool) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("executeProposal", sourceDomainID, depositNonce, calldata, resourceID, revertOnFail)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
+}
+
 func ExecuteProposal(client ClientDispatcher, fabric TxFabric, proposal *proposal.Proposal) (common.Hash, error) {
 	// revertOnFail should be constantly false, true is used only for internal contract calls when you need to execute proposal in voteProposal function right after it becomes Passed becouse of votes
 	input, err := PrepareExecuteProposalInput(proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data, true)
@@ -229,6 +169,18 @@ func ExecuteProposal(client ClientDispatcher, fabric TxFabric, proposal *proposa
 		return common.Hash{}, fmt.Errorf("execute proposal failed %w", err)
 	}
 	return h, nil
+}
+
+func PrepareVoteProposalInput(sourceDomainID uint8, resourceID types.ResourceID, calldata []byte) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("voteProposal", sourceDomainID, resourceID, calldata)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
 }
 
 func VoteProposal(client ClientDispatcher, fabric TxFabric, proposal *proposal.Proposal) (common.Hash, error) {
