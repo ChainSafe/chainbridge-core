@@ -31,11 +31,10 @@ func GlobalFlagValues(cmd *cobra.Command) (string, uint64, *big.Int, *secp256k1.
 		log.Error().Err(fmt.Errorf("gas price error: %v", err))
 		return "", consts.DefaultGasLimit, nil, nil, err
 	}
-	var gasPrice *big.Int
+	var gasPrice *big.Int = nil
 	if gasPriceInt != 0 {
 		gasPrice = big.NewInt(0).SetUint64(gasPriceInt)
 	}
-	gasPrice = nil
 
 	senderKeyPair, err := defineSender(cmd)
 	if err != nil {

@@ -123,6 +123,9 @@ type GasPricer interface {
 func Transact(client ClientDispatcher, txFabric TxFabric, gasPriceClient GasPricer, to *common.Address, data []byte, gasLimit uint64) (common.Hash, error) {
 	client.LockNonce()
 	n, err := client.UnsafeNonce()
+	if err != nil {
+		return common.Hash{}, nil
+	}
 	gp, err := gasPriceClient.GasPrice()
 	if err != nil {
 		return common.Hash{}, err
