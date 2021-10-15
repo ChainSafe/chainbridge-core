@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
@@ -21,7 +23,7 @@ var approveCmd = &cobra.Command{
 	Long:  "Approve tokens in an ERC20 contract for transfer",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return ApproveCmd(cmd, args, txFabric)
+		return ApproveCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 }
 
@@ -40,7 +42,7 @@ func init() {
 	BindApproveCmdFlags(approveCmd)
 }
 
-func ApproveCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func ApproveCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 	erc20Address := cmd.Flag("erc20address").Value.String()
 	recipientAddress := cmd.Flag("recipient").Value.String()
 	amount := cmd.Flag("amount").Value.String()
@@ -80,17 +82,19 @@ Decimals: %v`,
 		return err
 	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
+	gasPricer.SetClient(ethClient)
+	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 	i, err := calls.PrepareErc20ApproveInput(recipientAddr, realAmount)
 	if err != nil {
 		log.Fatal().Err(err)
 		return err
 	}
-	_, err = calls.Transact(ethClient, txFabric, &erc20Addr, i, gasLimit)
+	_, err = calls.Transact(ethClient, txFabric, gasPricer, &erc20Addr, i, gasLimit)
 	if err != nil {
 		log.Fatal().Err(err)
 		return err

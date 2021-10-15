@@ -17,8 +17,6 @@ type EVMConfig struct {
 
 type RawEVMConfig struct {
 	config.RawSharedEVMConfig `mapstructure:",squash"`
-	EgsApiKey                 string `mapstructure:"egsApiKey"`
-	EgsSpeed                  string `mapstructure:"egsSpeed"`
 }
 
 func NewConfig() *EVMConfig {

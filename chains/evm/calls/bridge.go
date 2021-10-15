@@ -15,7 +15,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-
 func PrepareSetBurnableInput(handler, tokenAddress common.Address) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
@@ -53,7 +52,7 @@ func PrepareErc20DepositInput(destDomainID uint8, resourceID [32]byte, data []by
 	return input, nil
 }
 
-func PrepareExecuteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID [32]byte, calldata []byte, revertOnFail bool) ([]byte, error){
+func PrepareExecuteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID [32]byte, calldata []byte, revertOnFail bool) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
@@ -65,7 +64,7 @@ func PrepareExecuteProposalInput(sourceDomainID uint8, depositNonce uint64, reso
 	return input, nil
 }
 
-func PrepareVoteProposalInput(sourceDomainID uint8, resourceID [32]byte, calldata []byte) ([]byte, error){
+func PrepareVoteProposalInput(sourceDomainID uint8, resourceID [32]byte, calldata []byte) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
@@ -119,14 +118,14 @@ func ParseIsRelayerOutput(output []byte) (bool, error) {
 	return *b, nil
 }
 
-func Deposit(client ClientDispatcher, fabric TxFabric, bridgeAddress, recipient common.Address, amount *big.Int, resourceID [32]byte, destDomainID uint8) error {
+func Deposit(client ClientDispatcher, fabric TxFabric, gasPriceClient GasPricer, bridgeAddress, recipient common.Address, amount *big.Int, resourceID [32]byte, destDomainID uint8) error {
 	data := ConstructErc20DepositData(recipient.Bytes(), amount)
 	input, err := PrepareErc20DepositInput(destDomainID, resourceID, data)
 	if err != nil {
 		return err
 	}
 	gasLimit := uint64(2000000)
-	h, err := Transact(client, fabric, &bridgeAddress, input, gasLimit)
+	h, err := Transact(client, fabric, gasPriceClient, &bridgeAddress, input, gasLimit)
 	if err != nil {
 		return fmt.Errorf("deposit failed %w", err)
 	}
@@ -134,29 +133,28 @@ func Deposit(client ClientDispatcher, fabric TxFabric, bridgeAddress, recipient 
 	return nil
 }
 
-func ExecuteProposal(client ClientDispatcher, fabric TxFabric, proposal *proposal.Proposal) (common.Hash, error) {
+func ExecuteProposal(client ClientDispatcher, fabric TxFabric, gasPriceClient GasPricer, proposal *proposal.Proposal) (common.Hash, error) {
 	// revertOnFail should be constantly false, true is used only for internal contract calls when you need to execute proposal in voteProposal function right after it becomes Passed becouse of votes
 	input, err := PrepareExecuteProposalInput(proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data, true)
 	if err != nil {
 		return common.Hash{}, err
 	}
 	gasLimit := uint64(300000)
-	h, err := Transact(client, fabric, &proposal.BridgeAddress, input, gasLimit)
+	h, err := Transact(client, fabric, gasPriceClient, &proposal.BridgeAddress, input, gasLimit)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("execute proposal failed %w", err)
 	}
 	return h, nil
 }
 
-
-func VoteProposal(client ClientDispatcher, fabric TxFabric, proposal *proposal.Proposal) (common.Hash, error) {
+func VoteProposal(client ClientDispatcher, fabric TxFabric, gasPriceClient GasPricer, proposal *proposal.Proposal) (common.Hash, error) {
 	// revertOnFail should be constantly false, true is used only for internal contract calls when you need to execute proposal in voteProposal function right after it becomes Passed becouse of votes
 	input, err := PrepareVoteProposalInput(proposal.Source, proposal.ResourceId, proposal.Data)
 	if err != nil {
 		return common.Hash{}, err
 	}
 	gasLimit := uint64(300000)
-	h, err := Transact(client, fabric, &proposal.BridgeAddress, input, gasLimit)
+	h, err := Transact(client, fabric, gasPriceClient, &proposal.BridgeAddress, input, gasLimit)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("vote proposal failed %w", err)
 	}

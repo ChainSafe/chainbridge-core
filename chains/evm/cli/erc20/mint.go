@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
@@ -22,7 +23,7 @@ var mintCmd = &cobra.Command{
 	Long:  "Mint tokens on an ERC20 mintable contract",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return MintCmd(cmd, args, txFabric)
+		return MintCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 }
 
@@ -37,7 +38,7 @@ func init() {
 	BindMintCmdFlags(mintCmd)
 }
 
-func MintCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func MintCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 	amount := cmd.Flag("amount").Value.String()
 	erc20Address := cmd.Flag("erc20Address").Value.String()
 	dstAddressStr := cmd.Flag("dstAddress").Value.String()
@@ -74,11 +75,14 @@ func MintCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 		return err
 	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
+
+	gasPricer.SetClient(ethClient)
+	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
 	mintTokensInput, err := calls.PrepareMintTokensInput(dstAddress, realAmount)
 	if err != nil {
@@ -86,7 +90,7 @@ func MintCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 		return err
 	}
 
-	_, err = calls.Transact(ethClient, txFabric, &erc20Addr, mintTokensInput, gasLimit)
+	_, err = calls.Transact(ethClient, txFabric, gasPricer, &erc20Addr, mintTokensInput, gasLimit)
 	if err != nil {
 		log.Error().Err(err)
 		return err

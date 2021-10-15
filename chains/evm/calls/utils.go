@@ -17,8 +17,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-
-
 type TxFabric func(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrices []*big.Int, data []byte) (evmclient.CommonTransaction, error)
 
 type ClientContractChecker interface {
@@ -34,7 +32,7 @@ type ContractCheckerCallerClient interface {
 	ClientContractChecker
 }
 
-type  ClientDeployer interface {
+type ClientDeployer interface {
 	ClientDispatcher
 	ClientContractChecker
 }
@@ -47,7 +45,6 @@ type ClientDispatcher interface {
 	UnlockNonce()
 	UnsafeIncreaseNonce() error
 	From() common.Address
-	GasPrice() ([]*big.Int, error)
 }
 
 type SimulateCallerClient interface {
@@ -119,10 +116,14 @@ func UserAmountToWei(amount string, decimal *big.Int) (*big.Int, error) {
 	return i, nil
 }
 
-func Transact(client ClientDispatcher, txFabric TxFabric, to *common.Address, data []byte, gasLimit uint64) (common.Hash, error) {
+type GasPricer interface {
+	GasPrice() ([]*big.Int, error)
+}
+
+func Transact(client ClientDispatcher, txFabric TxFabric, gasPriceClient GasPricer, to *common.Address, data []byte, gasLimit uint64) (common.Hash, error) {
 	client.LockNonce()
 	n, err := client.UnsafeNonce()
-	gp, err := client.GasPrice()
+	gp, err := gasPriceClient.GasPrice()
 	if err != nil {
 		return common.Hash{}, err
 	}
