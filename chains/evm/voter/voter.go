@@ -61,7 +61,7 @@ func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
 		hash, err := calls.VoteProposal(w.client, w.fabric, w.gasPriceClient, prop)
 		log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
 		if err != nil {
-			return fmt.Errorf("Voting failed. Err: %w", err)
+			return fmt.Errorf("voting failed. Err: %w", err)
 		}
 	}
 	return nil

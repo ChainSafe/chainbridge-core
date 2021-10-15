@@ -45,7 +45,7 @@ func PrepareEVME2EEnv(ethClient E2EClient, fabric calls.TxFabric, domainID uint8
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
-	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &bridgeAddr, registerResourceInput, gasLimit)
+	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &bridgeAddr, registerResourceInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
@@ -55,7 +55,7 @@ func PrepareEVME2EEnv(ethClient E2EClient, fabric calls.TxFabric, domainID uint8
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
-	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &erc20Addr, minInput, gasLimit)
+	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &erc20Addr, minInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
@@ -65,7 +65,7 @@ func PrepareEVME2EEnv(ethClient E2EClient, fabric calls.TxFabric, domainID uint8
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
-	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &erc20Addr, approveInput, gasLimit)
+	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &erc20Addr, approveInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
@@ -75,7 +75,7 @@ func PrepareEVME2EEnv(ethClient E2EClient, fabric calls.TxFabric, domainID uint8
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
-	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &erc20Addr, minterInput, gasLimit)
+	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &erc20Addr, minterInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
@@ -84,7 +84,7 @@ func PrepareEVME2EEnv(ethClient E2EClient, fabric calls.TxFabric, domainID uint8
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
-	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &bridgeAddr, setBurnInput, gasLimit)
+	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &bridgeAddr, setBurnInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}

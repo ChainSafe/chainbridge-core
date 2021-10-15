@@ -3,6 +3,7 @@ package erc20
 import (
 	"errors"
 	"fmt"
+	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
@@ -70,7 +71,7 @@ func AddMinterCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, ga
 		log.Error().Err(err)
 		return err
 	}
-	_, err = calls.Transact(ethClient, txFabric, gasPricer, &erc20Addr, mintableInput, gasLimit)
+	_, err = calls.Transact(ethClient, txFabric, gasPricer, &erc20Addr, mintableInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Error().Err(err)
 		return err

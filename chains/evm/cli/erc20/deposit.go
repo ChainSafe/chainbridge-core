@@ -119,7 +119,7 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasP
 	log.Debug().Msgf("blockNum: %v", blockNum)
 
 	// destinationId
-	txHash, err := calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddr, input, gasLimit)
+	txHash, err := calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddr, input, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit error: %v", err))
 		return err

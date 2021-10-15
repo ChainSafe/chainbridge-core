@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
+	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -76,7 +76,7 @@ Bridge address: %s`, relayerAddress, bridgeAddress)
 		return err
 	}
 
-	_, err = calls.Transact(ethClient, txFabric, gasPricer, &bridge, addRelayerInput, gasLimit)
+	_, err = calls.Transact(ethClient, txFabric, gasPricer, &bridge, addRelayerInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Info().Msgf("%s added as relayer", relayerAddress)
 		return err

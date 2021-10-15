@@ -3,6 +3,7 @@ package bridge
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 
@@ -95,7 +96,7 @@ Bridge address: %s
 		return err
 	}
 
-	_, err = calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddress, registerResourceInput, gasLimit)
+	_, err = calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddress, registerResourceInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Error().Err(err)
 		return err

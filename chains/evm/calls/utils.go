@@ -37,6 +37,10 @@ type ClientDeployer interface {
 	ClientContractChecker
 }
 
+type GasPricer interface {
+	GasPrice() ([]*big.Int, error)
+}
+
 type ClientDispatcher interface {
 	WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error)
 	SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error)
@@ -51,24 +55,6 @@ type SimulateCallerClient interface {
 	ContractCallerClient
 	TransactionByHash(ctx context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error)
 }
-
-//
-//type ChainClient interface {
-//	SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error)
-//	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
-//	WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error)
-//	CodeAt(ctx context.Context, contract common.Address, blockNumber *big.Int) ([]byte, error)
-//	UnsafeNonce() (*big.Int, error)
-//	LockNonce()
-//	UnlockNonce()
-//	UnsafeIncreaseNonce() error
-//	// GasPrice method returns array of gasPrices to be compatibale with pre- and post- London fork
-//	// if array size is bigger than 1, then it must contians maxTipFee and maxCapFee for post London Fork chains,
-//	// otherwise it contains regular gasPrice as first element
-//	GasPrice() ([]*big.Int, error)
-//	From() common.Address
-//	ChainID(ctx context.Context) (*big.Int, error)
-//}
 
 func SliceTo32Bytes(in []byte) [32]byte {
 	var res [32]byte
@@ -116,11 +102,7 @@ func UserAmountToWei(amount string, decimal *big.Int) (*big.Int, error) {
 	return i, nil
 }
 
-type GasPricer interface {
-	GasPrice() ([]*big.Int, error)
-}
-
-func Transact(client ClientDispatcher, txFabric TxFabric, gasPriceClient GasPricer, to *common.Address, data []byte, gasLimit uint64) (common.Hash, error) {
+func Transact(client ClientDispatcher, txFabric TxFabric, gasPriceClient GasPricer, to *common.Address, data []byte, gasLimit uint64, value *big.Int) (common.Hash, error) {
 	client.LockNonce()
 	n, err := client.UnsafeNonce()
 	if err != nil {
@@ -138,7 +120,6 @@ func Transact(client ClientDispatcher, txFabric TxFabric, gasPriceClient GasPric
 	if err != nil {
 		return common.Hash{}, err
 	}
-
 	log.Debug().Msgf("hash: %v from: %s", tx.Hash(), client.From())
 	_, err = client.WaitAndReturnTxReceipt(tx.Hash())
 	if err != nil {

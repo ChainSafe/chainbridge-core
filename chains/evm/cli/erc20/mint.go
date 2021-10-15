@@ -90,7 +90,7 @@ func MintCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPric
 		return err
 	}
 
-	_, err = calls.Transact(ethClient, txFabric, gasPricer, &erc20Addr, mintTokensInput, gasLimit)
+	_, err = calls.Transact(ethClient, txFabric, gasPricer, &erc20Addr, mintTokensInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Error().Err(err)
 		return err
