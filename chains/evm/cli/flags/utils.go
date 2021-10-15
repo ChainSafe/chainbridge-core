@@ -1,9 +1,11 @@
 package flags
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/big"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 
 	"github.com/ChainSafe/chainbridge-core/keystore"
@@ -57,4 +59,15 @@ func defineSender(cmd *cobra.Command) (*secp256k1.Keypair, error) {
 	}
 	var AliceKp = keystore.TestKeyRing.EthereumKeys[keystore.AliceKey]
 	return AliceKp, nil
+}
+
+func ProcessResourceID(resourceID string) ([32]byte, error) {
+	if resourceID[0:2] == "0x" {
+		resourceID = resourceID[2:]
+	}
+	resourceIdBytes, err := hex.DecodeString(resourceID)
+	if err != nil {
+		return [32]byte{}, err
+	}
+	return calls.SliceTo32Bytes(resourceIdBytes), nil
 }

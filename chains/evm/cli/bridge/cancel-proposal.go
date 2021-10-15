@@ -13,23 +13,21 @@ var cancelProposalCmd = &cobra.Command{
 }
 
 func init() {
-	cancelProposalCmd.Flags().String("bridge", "", "bridge contract address")
-	cancelProposalCmd.Flags().String("dataHash", "", "hash of proposal metadata")
-	cancelProposalCmd.Flags().Uint64("domainId", 0, "domain ID of proposal to cancel")
-	cancelProposalCmd.Flags().Uint64("depositNonce", 0, "deposit nonce of proposal to cancel")
+	cancelProposalCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	cancelProposalCmd.Flags().StringVarP(&DataHash, "dataHash", "dh", "", "hash of proposal metadata")
+	cancelProposalCmd.Flags().Uint64VarP(&DomainID, "domainId", "dID", 0, "domain ID of proposal to cancel")
+	cancelProposalCmd.Flags().Uint64VarP(&DepositNonce, "depositNonce", "dn", 0, "deposit nonce of proposal to cancel")
 }
 
 func cancelProposal(cmd *cobra.Command, args []string) {
-	adminAddress := cmd.Flag("admin").Value
-	bridgeAddress := cmd.Flag("bridge").Value
-	domainId := cmd.Flag("domainId").Value
-	depositNonce := cmd.Flag("depositNonce").Value
+
 	log.Debug().Msgf(`
 Cancel propsal
-Admin address: %s
 Bridge address: %s
 Chain ID: %d
-Deposit nonce: %d`, adminAddress, bridgeAddress, domainId, depositNonce)
+Deposit nonce: %d
+DataHash: %s
+`, Bridge, DomainID, DepositNonce, DataHash)
 }
 
 /*

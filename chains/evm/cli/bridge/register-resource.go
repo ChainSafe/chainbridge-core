@@ -1,7 +1,6 @@
 package bridge
 
 import (
-	"encoding/hex"
 	"fmt"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
@@ -21,31 +20,65 @@ var registerResourceCmd = &cobra.Command{
 		txFabric := evmtransaction.NewTransaction
 		return RegisterResourceCmd(cmd, args, txFabric)
 	},
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := validateRegisterResourceFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+
+		err = processRegisterResourceFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+		return nil
+	},
 }
 
-func BindRegisterResourceCmdFlags(cli *cobra.Command) {
-	cli.Flags().String("handler", "", "handler contract address")
-	cli.Flags().String("bridge", "", "bridge contract address")
-	cli.Flags().String("target", "", "contract address to be registered")
-	cli.Flags().String("resourceId", "", "resource ID to be registered")
+func BindRegisterResourceCmdFlags() {
+	registerResourceCmd.Flags().StringVarP(&Handler, "handler", "h", "", "handler contract address")
+	registerResourceCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	registerResourceCmd.Flags().StringVarP(&Target, "target", "t", "", "contract address to be registered")
+	registerResourceCmd.Flags().StringVarP(&ResourceID, "resourceId", "rID", "", "resource ID to be registered")
 }
 
 func init() {
-	BindRegisterResourceCmdFlags(registerResourceCmd)
+	BindRegisterResourceCmdFlags()
+}
+
+func validateRegisterResourceFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Handler) {
+		return fmt.Errorf("invalid handler address %s", Handler)
+	}
+	if !common.IsHexAddress(Target) {
+		return fmt.Errorf("invalid target address %s", Target)
+	}
+	if !common.IsHexAddress(Bridge) {
+		return fmt.Errorf("invalid bridge address %s", Bridge)
+	}
+	return nil
+}
+
+func processRegisterResourceFlags(cmd *cobra.Command, args []string) error {
+	var err error
+	handlerAddr = common.HexToAddress(Handler)
+	targetContractAddr = common.HexToAddress(Target)
+	bridgeAddr = common.HexToAddress(Bridge)
+
+	resourceIdBytesArr, err = flags.ProcessResourceID(ResourceID)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func RegisterResourceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	handlerAddressString := cmd.Flag("handler").Value.String()
-	resourceId := cmd.Flag("resourceId").Value.String()
-	targetAddress := cmd.Flag("target").Value.String()
-	bridgeAddressStr := cmd.Flag("bridge").Value.String()
 	log.Debug().Msgf(`
 Registering resource
 Handler address: %s
 Resource ID: %s
 Target address: %s
 Bridge address: %s
-`, handlerAddressString, resourceId, targetAddress, bridgeAddressStr)
+`, Handler, ResourceID, Target, Bridge)
 
 	// fetch global flag values
 	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
@@ -53,30 +86,7 @@ Bridge address: %s
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	if !common.IsHexAddress(handlerAddressString) {
-		err := fmt.Errorf("invalid handler address %s", handlerAddressString)
-		log.Error().Err(err)
-		return err
-	}
-	handlerAddr := common.HexToAddress(handlerAddressString)
-
-	if !common.IsHexAddress(targetAddress) {
-		err := fmt.Errorf("invalid target address %s", targetAddress)
-		log.Error().Err(err)
-		return err
-	}
-	targetContractAddr := common.HexToAddress(targetAddress)
-	bridgeAddress := common.HexToAddress(bridgeAddressStr)
-	if resourceId[0:2] == "0x" {
-		resourceId = resourceId[2:]
-	}
-	resourceIdBytes, err := hex.DecodeString(resourceId)
-	if err != nil {
-		return err
-	}
-	resourceIdBytesArr := calls.SliceTo32Bytes(resourceIdBytes)
-
-	fmt.Printf("Registering contract %s with resource ID %s on handler %s", targetAddress, resourceId, handlerAddr)
+	fmt.Printf("Registering contract %s with resource ID %s on handler %s", Target, ResourceID, handlerAddr)
 
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
@@ -90,7 +100,7 @@ Bridge address: %s
 		return err
 	}
 
-	_, err = calls.Transact(ethClient, txFabric, &bridgeAddress, registerResourceInput, gasLimit)
+	_, err = calls.Transact(ethClient, txFabric, &bridgeAddr, registerResourceInput, gasLimit)
 	if err != nil {
 		log.Error().Err(err)
 		return err

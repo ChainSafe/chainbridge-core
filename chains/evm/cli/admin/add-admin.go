@@ -13,17 +13,15 @@ var addAdminCmd = &cobra.Command{
 }
 
 func init() {
-	addAdminCmd.Flags().String("admin", "", "address to add")
-	addAdminCmd.Flags().String("bridge", "", "bridge contract address")
+	addAdminCmd.Flags().StringVarP(&Admin, "admin", "a", "", "address to add")
+	addAdminCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
 }
 
 func addAdmin(cmd *cobra.Command, args []string) {
-	adminAddress := cmd.Flag("admin").Value
-	bridgeAddress := cmd.Flag("bridge").Value
 	log.Debug().Msgf(`
 Adding admin
 Admin address: %s
-Bridge address: %s`, adminAddress, bridgeAddress)
+Bridge address: %s`, Admin, Bridge)
 }
 
 /*

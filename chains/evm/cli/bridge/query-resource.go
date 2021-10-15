@@ -13,17 +13,15 @@ var queryResourceCmd = &cobra.Command{
 }
 
 func init() {
-	queryResourceCmd.Flags().String("handler", "", "handler contract address")
-	queryResourceCmd.Flags().String("resourceId", "", "resource ID to query")
+	queryResourceCmd.Flags().StringVarP(&Handler, "handler", "h", "", "handler contract address")
+	queryResourceCmd.Flags().StringVarP(&ResourceID, "resourceId", "rID", "", "resource ID to query")
 }
 
 func queryResource(cmd *cobra.Command, args []string) {
-	handlerAddress := cmd.Flag("handler").Value
-	resourceId := cmd.Flag("resourceId").Value
 	log.Debug().Msgf(`
 Querying resource
 Handler address: %s
-Resource ID: %s`, handlerAddress, resourceId)
+Resource ID: %s`, Handler, ResourceID)
 }
 
 /*

@@ -21,40 +21,50 @@ var addMinterCmd = &cobra.Command{
 		txFabric := evmtransaction.NewTransaction
 		return AddMinterCmd(cmd, args, txFabric)
 	},
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := validateAddMinterFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+		processAddMinterFlags(cmd, args)
+
+		return nil
+	},
 }
 
-func BindAddMinterCmdFlags(cli *cobra.Command) {
-	cli.Flags().String("erc20Address", "", "ERC20 contract address")
-	cli.Flags().String("minter", "", "address of minter")
+func BindAddMinterCmdFlags() {
+	addMinterCmd.Flags().StringVarP(&Erc20Address, "erc20Address", "erc20add", "", "ERC20 contract address")
+	addMinterCmd.Flags().StringVarP(&Minter, "minter", "m", "", "address of minter")
 }
 
 func init() {
-	BindAddMinterCmdFlags(addMinterCmd)
+	BindAddMinterCmdFlags()
+}
+
+func validateAddMinterFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Erc20Address) {
+		return errors.New("invalid erc20Address address")
+	}
+	if !common.IsHexAddress(Minter) {
+		return errors.New("invalid minter address")
+	}
+	return nil
+}
+
+var minterAddr common.Address
+
+func processAddMinterFlags(cmd *cobra.Command, args []string) {
+	erc20Addr = common.HexToAddress(Erc20Address)
+	minterAddr = common.HexToAddress(Minter)
 }
 
 func AddMinterCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	erc20Address := cmd.Flag("erc20Address").Value.String()
-	minterAddress := cmd.Flag("minter").Value.String()
 
 	// fetch global flag values
 	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
-
-	if !common.IsHexAddress(erc20Address) {
-		err := errors.New("invalid erc20Address address")
-		log.Error().Err(err)
-		return err
-	}
-	erc20Addr := common.HexToAddress(erc20Address)
-
-	if !common.IsHexAddress(minterAddress) {
-		err := errors.New("invalid minter address")
-		log.Error().Err(err)
-		return err
-	}
-	minterAddr := common.HexToAddress(minterAddress)
 
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {

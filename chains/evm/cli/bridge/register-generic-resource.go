@@ -13,23 +13,16 @@ var registerGenericResourceCmd = &cobra.Command{
 }
 
 func init() {
-	registerGenericResourceCmd.Flags().String("handler", "", "handler contract address")
-	registerGenericResourceCmd.Flags().String("resourceId", "", "resource ID to query")
-	registerGenericResourceCmd.Flags().String("bridge", "", "bridge contract address")
-	registerGenericResourceCmd.Flags().String("target", "", "contract address to be registered")
-	registerGenericResourceCmd.Flags().String("deposit", "0x00000000", "deposit function signature")
-	registerGenericResourceCmd.Flags().String("execute", "0x00000000", "execute proposal function signature")
-	registerGenericResourceCmd.Flags().Bool("hash", false, "treat signature inputs as function prototype strings, hash and take the first 4 bytes")
+	registerGenericResourceCmd.Flags().StringVarP(&Handler, "handler", "h", "", "handler contract address")
+	registerGenericResourceCmd.Flags().StringVarP(&ResourceID, "resourceId", "rID", "", "resource ID to query")
+	registerGenericResourceCmd.Flags().StringVarP(&Bridge, "bridge", "", "b", "bridge contract address")
+	registerGenericResourceCmd.Flags().StringVarP(&Target, "target", "", "t", "contract address to be registered") // TODO change the description (target is not necessary a contract address, could be hash storage)
+	registerGenericResourceCmd.Flags().StringVarP(&Deposit, "deposit", "d", "0x00000000", "deposit function signature")
+	registerGenericResourceCmd.Flags().StringVarP(&Execute, "execute", "e", "0x00000000", "execute proposal function signature")
+	registerGenericResourceCmd.Flags().BoolVarP(&Hash, "hash", "hsh", false, "treat signature inputs as function prototype strings, hash and take the first 4 bytes")
 }
 
 func registerGenericResource(cmd *cobra.Command, args []string) {
-	handlerAddress := cmd.Flag("handler").Value
-	resourceId := cmd.Flag("resourceId").Value
-	bridgeAddress := cmd.Flag("bridge").Value
-	targetAddress := cmd.Flag("target").Value
-	deposit := cmd.Flag("deposit").Value
-	execute := cmd.Flag("execute").Value
-	hash := cmd.Flag("hash").Value
 	log.Debug().Msgf(`
 Registering generic resource
 Handler address: %s
@@ -39,7 +32,7 @@ Target address: %s
 Deposit: %s
 Execute: %s
 Hash: %v
-`, handlerAddress, resourceId, bridgeAddress, targetAddress, deposit, execute, hash)
+`, Handler, ResourceID, Bridge, Target, Deposit, Execute, Hash)
 }
 
 /*

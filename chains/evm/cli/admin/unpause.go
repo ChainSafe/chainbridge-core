@@ -13,14 +13,13 @@ var unpauseCmd = &cobra.Command{
 }
 
 func init() {
-	unpauseCmd.Flags().String("bridge", "", "bridge contract address")
+	setThresholdCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
 }
 
 func unpause(cmd *cobra.Command, args []string) {
-	bridgeAddress := cmd.Flag("bridge").Value
 	log.Debug().Msgf(`
 Unpausing
-Bridge address: %s`, bridgeAddress)
+Bridge address: %s`, Bridge)
 }
 
 /*

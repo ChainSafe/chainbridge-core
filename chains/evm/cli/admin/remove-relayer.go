@@ -13,17 +13,15 @@ var removeRelayerCmd = &cobra.Command{
 }
 
 func init() {
-	removeRelayerCmd.Flags().String("relayer", "", "address to remove")
-	removeRelayerCmd.Flags().String("bridge", "", "bridge contract address")
+	removeRelayerCmd.Flags().StringVarP(&Relayer, "relayer", "r", "", "address to remove")
+	removeRelayerCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
 }
 
 func removeRelayer(cmd *cobra.Command, args []string) {
-	relayerAddress := cmd.Flag("relayer").Value
-	bridgeAddress := cmd.Flag("bridge").Value
 	log.Debug().Msgf(`
 Removing relayer 
 Relayer address: %s
-Bridge address: %s`, relayerAddress, bridgeAddress)
+Bridge address: %s`, Relayer, Bridge)
 }
 
 /*

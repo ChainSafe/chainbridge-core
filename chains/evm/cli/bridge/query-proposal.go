@@ -13,23 +13,19 @@ var queryProposalCmd = &cobra.Command{
 }
 
 func init() {
-	queryProposalCmd.Flags().String("bridge", "", "bridge contract address")
-	queryProposalCmd.Flags().String("dataHash", "", "hash of proposal metadata")
-	queryProposalCmd.Flags().Uint64("domainId", 0, "source domain ID of proposal")
-	queryProposalCmd.Flags().Uint64("depositNonce", 0, "deposit nonce of proposal")
+	queryProposalCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	queryProposalCmd.Flags().StringVarP(&DataHash, "dataHash", "dh", "", "hash of proposal metadata")
+	queryProposalCmd.Flags().Uint64VarP(&DomainID, "domainId", "dID", 0, "source domain ID of proposal")
+	queryProposalCmd.Flags().Uint64VarP(&DepositNonce, "depositNonce", "dn", 0, "	deposit nonce of proposal")
 }
 
 func queryProposal(cmd *cobra.Command, args []string) {
-	bridgeAddress := cmd.Flag("bridge").Value
-	domainId := cmd.Flag("domainId").Value
-	depositNonce := cmd.Flag("depositNonce").Value
-	dataHash := cmd.Flag("dataHash").Value
 	log.Debug().Msgf(`
 Querying proposal
 Chain ID: %d
 Deposit nonce: %d
 Data hash: %s
-Bridge address: %s`, domainId, depositNonce, dataHash, bridgeAddress)
+Bridge address: %s`, DomainID, DepositNonce, DataHash, Bridge)
 }
 
 /*
