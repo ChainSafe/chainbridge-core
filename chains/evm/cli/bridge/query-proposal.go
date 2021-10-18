@@ -18,7 +18,7 @@ func init() {
 	queryProposalCmd.Flags().StringVarP(&DataHash, "dataHash", "dh", "", "hash of proposal metadata")
 	queryProposalCmd.Flags().Uint64VarP(&DomainID, "domainId", "dID", 0, "source domain ID of proposal")
 	queryProposalCmd.Flags().Uint64VarP(&DepositNonce, "depositNonce", "dn", 0, "	deposit nonce of proposal")
-	flags.CheckRequiredFlags(queryProposalCmd, "bridge", "dataHash", "domainId", "depositNonce")
+	flags.MarkFlagsAsRequired(queryProposalCmd, "bridge", "dataHash", "domainId", "depositNonce")
 }
 
 func queryProposal(cmd *cobra.Command, args []string) {

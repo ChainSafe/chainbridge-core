@@ -21,23 +21,44 @@ var simulateCmd = &cobra.Command{
 		txFabric := evmtransaction.NewTransaction
 		return SimulateCmd(cmd, args, txFabric)
 	},
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := validateSimulateFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+
+		processSimulateFlags(cmd, args)
+		return nil
+	},
 }
 
-func BindSimulateCmdFlags(cli *cobra.Command) {
-	cli.Flags().String("txHash", "", "transaction hash")
-	cli.Flags().String("blockNumber", "", "block number")
-	cli.Flags().String("fromAddress", "", "address of sender")
+func BindSimulateCmdFlags() {
+	simulateCmd.Flags().StringVarP(&TxHash, "txHash", "th", "", "transaction hash")
+	simulateCmd.Flags().StringVarP(&BlockNumber, "blockNumber", "bn", "", "block number")
+	simulateCmd.Flags().StringVarP(&FromAddress, "fromAddress", "fAddr", "", "address of sender")
+	flags.MarkFlagsAsRequired(simulateCmd, "txHash", "blockNumber", "fromAddress")
 }
 
 func init() {
-	BindSimulateCmdFlags(simulateCmd)
+	BindSimulateCmdFlags()
+}
+
+func validateSimulateFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(TxHash) {
+		return fmt.Errorf("invalid tx hash %s", TxHash)
+	}
+	if !common.IsHexAddress(FromAddress) {
+		return fmt.Errorf("invalid from address %s", FromAddress)
+	}
+	return nil
+}
+
+func processSimulateFlags(cmd *cobra.Command, args []string) {
+	txHash = common.HexToHash(TxHash)
+	fromAddr = common.HexToAddress(FromAddress)
 }
 
 func SimulateCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	txHash := cmd.Flag("txHash").Value.String()
-	blockNumber := cmd.Flag("blockNumber").Value.String()
-	fromAddress := cmd.Flag("fromAddress").Value.String()
-
 	// fetch global flag values
 	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
@@ -45,15 +66,14 @@ func SimulateCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) err
 	}
 
 	// convert string block number to big.Int
-	// ignore success bool
-	blockNumberBigInt, _ := new(big.Int).SetString(blockNumber, 10)
+	blockNumberBigInt, _ := new(big.Int).SetString(BlockNumber, 10)
 
 	log.Debug().Msgf(`
 Simulating transaction
 Tx hash: %s
 Block number: %v
 From address: %s`,
-		txHash, blockNumberBigInt, fromAddress)
+		TxHash, blockNumberBigInt, FromAddress)
 
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
 	if err != nil {
@@ -61,7 +81,7 @@ From address: %s`,
 		return err
 	}
 
-	data, err := ethClient.Simulate(blockNumberBigInt, common.HexToHash(txHash), common.HexToAddress(fromAddress))
+	data, err := ethClient.Simulate(blockNumberBigInt, txHash, fromAddr)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("[utils] simulate transact error: %v", err))
 		return err

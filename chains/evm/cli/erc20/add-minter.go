@@ -35,7 +35,7 @@ var addMinterCmd = &cobra.Command{
 func BindAddMinterCmdFlags() {
 	addMinterCmd.Flags().StringVarP(&Erc20Address, "erc20Address", "erc20add", "", "ERC20 contract address")
 	addMinterCmd.Flags().StringVarP(&Handler, "handler", "h", "", "handler contract address")
-	flags.CheckRequiredFlags(addMinterCmd, "erc20Address", "handler")
+	flags.MarkFlagsAsRequired(addMinterCmd, "erc20Address", "handler")
 }
 
 func init() {

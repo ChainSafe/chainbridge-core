@@ -37,7 +37,7 @@ var balanceCmd = &cobra.Command{
 func BindBalanceCmdFlags() {
 	balanceCmd.Flags().StringVarP(&Erc20Address, "erc20Address", "erc20add", "", "ERC20 contract address")
 	balanceCmd.Flags().StringVarP(&AccountAddress, "accountAddress", "accAdd", "", "address to receive balance of")
-	flags.CheckRequiredFlags(balanceCmd, "erc20Address", "accountAddress")
+	flags.MarkFlagsAsRequired(balanceCmd, "erc20Address", "accountAddress")
 }
 
 func init() {
@@ -51,7 +51,7 @@ func validateBalanceFlags(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid recipient address %s", Recipient)
 	}
 	if !common.IsHexAddress(AccountAddress) {
-		return errors.New("invalid account address")
+		rreturn fmt.Errorf("invalid account address %s", AccountAddress)
 	}
 	return nil
 }

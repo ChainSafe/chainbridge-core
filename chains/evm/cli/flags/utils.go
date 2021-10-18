@@ -72,7 +72,7 @@ func ProcessResourceID(resourceID string) ([32]byte, error) {
 	return calls.SliceTo32Bytes(resourceIdBytes), nil
 }
 
-func CheckRequiredFlags(cmd *cobra.Command, flags ...string) {
+func MarkFlagsAsRequired(cmd *cobra.Command, flags ...string) {
 	for _, flag := range flags {
 		err := cmd.MarkFlagRequired(flag)
 		if err != nil {

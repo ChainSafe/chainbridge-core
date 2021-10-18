@@ -21,16 +21,15 @@ var hashListCmd = &cobra.Command{
 	},
 }
 
-func BindHashListCmdFlags(cli *cobra.Command) {
-	cli.Flags().String("blockNumber", "", "block number")
+func BindHashListCmdFlags() {
+	hashListCmd.Flags().StringVarP(&BlockNumber, "blockNumber", "bn", "", "block number")
 }
 
 func init() {
-	BindHashListCmdFlags(hashListCmd)
+	BindHashListCmdFlags()
 }
 
 func HashListCmd(cmd *cobra.Command, args []string) error {
-	blockNumber := cmd.Flag("blockNumber").Value.String()
 
 	// fetch global flag values
 	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
@@ -44,7 +43,7 @@ func HashListCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	blockNum, err := strconv.Atoi(blockNumber)
+	blockNum, err := strconv.Atoi(BlockNumber)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("block string->int conversion error: %v", err))
 		return err

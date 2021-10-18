@@ -16,7 +16,7 @@ var setFeeCmd = &cobra.Command{
 func init() {
 	setFeeCmd.Flags().StringVarP(&Fee, "fee", "f", "", "New fee (in ether)")
 	setFeeCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
-	flags.CheckRequiredFlags(setFeeCmd, "fee", "bridge")
+	flags.MarkFlagsAsRequired(setFeeCmd, "fee", "bridge")
 }
 
 func setFee(cmd *cobra.Command, args []string) {

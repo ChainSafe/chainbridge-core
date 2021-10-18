@@ -21,7 +21,7 @@ func init() {
 	withdrawCmd.Flags().StringVarP(&Token, "token", "t", "", "ERC20 or ERC721 token contract address")
 	withdrawCmd.Flags().StringVarP(&Recipient, "recipient", "r", "", "address to withdraw to")
 	withdrawCmd.Flags().Uint64VarP(&Decimals, "decimals", "d", 0, "ERC20 token decimals")
-	flags.CheckRequiredFlags(withdrawCmd, "amount", "tokenId", "bridge", "handler", "token", "recipient", "decimals")
+	flags.MarkFlagsAsRequired(withdrawCmd, "amount", "tokenId", "bridge", "handler", "token", "recipient", "decimals")
 }
 
 func withdraw(cmd *cobra.Command, args []string) {

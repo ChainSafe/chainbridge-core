@@ -21,7 +21,7 @@ func init() {
 	registerGenericResourceCmd.Flags().StringVarP(&Deposit, "deposit", "d", "0x00000000", "deposit function signature")
 	registerGenericResourceCmd.Flags().StringVarP(&Execute, "execute", "e", "0x00000000", "execute proposal function signature")
 	registerGenericResourceCmd.Flags().BoolVarP(&Hash, "hash", "hsh", false, "treat signature inputs as function prototype strings, hash and take the first 4 bytes")
-	flags.CheckRequiredFlags(registerGenericResourceCmd, "handler", "resourceId", "bridge", "target")
+	flags.MarkFlagsAsRequired(registerGenericResourceCmd, "handler", "resourceId", "bridge", "target")
 }
 
 func registerGenericResource(cmd *cobra.Command, args []string) {

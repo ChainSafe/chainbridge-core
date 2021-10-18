@@ -36,7 +36,7 @@ var isRelayerCmd = &cobra.Command{
 func BindIsRelayerFlags() {
 	isRelayerCmd.Flags().StringVarP(&Relayer, "relayer", "r", "", "address to check")
 	isRelayerCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
-	flags.CheckRequiredFlags(isRelayerCmd, "relayer", "bridge")
+	flags.MarkFlagsAsRequired(isRelayerCmd, "relayer", "bridge")
 
 }
 

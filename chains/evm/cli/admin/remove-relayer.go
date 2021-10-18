@@ -16,7 +16,7 @@ var removeRelayerCmd = &cobra.Command{
 func init() {
 	removeRelayerCmd.Flags().StringVarP(&Relayer, "relayer", "r", "", "address to remove")
 	removeRelayerCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
-	flags.CheckRequiredFlags(removeRelayerCmd, "relayer", "bridge")
+	flags.MarkFlagsAsRequired(removeRelayerCmd, "relayer", "bridge")
 }
 
 func removeRelayer(cmd *cobra.Command, args []string) {
