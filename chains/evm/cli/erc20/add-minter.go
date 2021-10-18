@@ -34,8 +34,8 @@ var addMinterCmd = &cobra.Command{
 
 func BindAddMinterCmdFlags() {
 	addMinterCmd.Flags().StringVarP(&Erc20Address, "erc20Address", "erc20add", "", "ERC20 contract address")
-	addMinterCmd.Flags().StringVarP(&Handler, "handler", "h", "", "handler contract address")
-	flags.MarkFlagsAsRequired(addMinterCmd, "erc20Address", "handler")
+	addMinterCmd.Flags().StringVarP(&Minter, "minter", "h", "", "handler contract address")
+	flags.MarkFlagsAsRequired(addMinterCmd, "erc20Address", "minter")
 }
 
 func init() {
@@ -46,17 +46,17 @@ func validateAddMinterFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Erc20Address) {
 		return errors.New("invalid erc20Address address")
 	}
-	if !common.IsHexAddress(Handler) {
+	if !common.IsHexAddress(Minter) {
 		return errors.New("invalid minter address")
 	}
 	return nil
 }
 
-var handlerAddr common.Address
+var minterAddr common.Address
 
 func processAddMinterFlags(cmd *cobra.Command, args []string) {
 	erc20Addr = common.HexToAddress(Erc20Address)
-	handlerAddr = common.HexToAddress(Handler)
+	minterAddr = common.HexToAddress(Minter)
 }
 
 func AddMinterCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
@@ -72,7 +72,7 @@ func AddMinterCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) er
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
-	mintableInput, err := calls.PrepareErc20AddMinterInput(ethClient, erc20Addr, handlerAddr)
+	mintableInput, err := calls.PrepareErc20AddMinterInput(ethClient, erc20Addr, minterAddr)
 	if err != nil {
 		log.Error().Err(err)
 		return err
@@ -83,6 +83,6 @@ func AddMinterCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) er
 		return err
 	}
 
-	log.Info().Msgf("%s account granted minter roles", handlerAddr.String())
+	log.Info().Msgf("%s account granted minter roles", minterAddr.String())
 	return nil
 }

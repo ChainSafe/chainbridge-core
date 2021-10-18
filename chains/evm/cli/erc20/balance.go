@@ -2,7 +2,6 @@ package erc20
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
@@ -51,7 +50,7 @@ func validateBalanceFlags(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid recipient address %s", Recipient)
 	}
 	if !common.IsHexAddress(AccountAddress) {
-		rreturn fmt.Errorf("invalid account address %s", AccountAddress)
+		return fmt.Errorf("invalid account address %s", AccountAddress)
 	}
 	return nil
 }
