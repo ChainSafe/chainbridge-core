@@ -21,8 +21,10 @@ var BlockDelay = big.NewInt(10) //TODO: move to config
 // DepositLogs struct holds event data with all necessary parameters and a handler response
 // https://github.com/ChainSafe/chainbridge-solidity/blob/develop/contracts/Bridge.sol#L47
 type DepositLogs struct {
+	// Data is raw log data (UnpackToInterface throws error if it is not present)
+	Data []byte
 	// ID of chain deposit will be bridged to
-	DestinationID uint8
+	DestinationDomainID uint8
 	// ResourceID used to find address of handler to be used for deposit
 	ResourceID types.ResourceID
 	// Nonce of deposit
@@ -77,6 +79,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw b
 					time.Sleep(BlockRetryInterval)
 					continue
 				}
+
 				logs, err := l.chainReader.FetchDepositLogs(context.Background(), l.bridgeAddress, startBlock, startBlock)
 				if err != nil {
 					// Filtering logs error really can appear only on wrong configuration or temporary network problem
@@ -85,7 +88,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw b
 					continue
 				}
 				for _, eventLog := range logs {
-					m, err := l.eventHandler.HandleEvent(domainID, eventLog.DestinationID, eventLog.DepositNonce, eventLog.ResourceID, eventLog.Calldata, eventLog.HandlerResponse)
+					m, err := l.eventHandler.HandleEvent(domainID, eventLog.DestinationDomainID, eventLog.DepositNonce, eventLog.ResourceID, eventLog.Calldata, eventLog.HandlerResponse)
 					if err != nil {
 						errChn <- err
 						log.Error().Err(err)

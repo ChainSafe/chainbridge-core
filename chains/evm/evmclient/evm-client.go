@@ -8,15 +8,17 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
-	internalType "github.com/ChainSafe/chainbridge-core/types"
 
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -170,18 +172,33 @@ func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common
 	}
 	depositLogs := make([]*listener.DepositLogs, 0)
 
+	abi, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return nil, err
+	}
+
 	for _, l := range logs {
-		dl := &listener.DepositLogs{
-			DestinationID:   uint8(l.Topics[1].Big().Uint64()),
-			ResourceID:      internalType.ResourceID(l.Topics[2]),
-			DepositNonce:    l.Topics[3].Big().Uint64(),
-			SenderAddress:   common.HexToAddress(l.Topics[4].Hex()),
-			Calldata:        l.Topics[5].Bytes(),
-			HandlerResponse: l.Topics[6].Bytes(),
+		dl, err := c.UnpackDepositEventLog(abi, l.Data)
+		if err != nil {
+			log.Error().Msgf("failed unpacking deposit event log: %v", err)
+			continue
 		}
+
 		depositLogs = append(depositLogs, dl)
 	}
+
 	return depositLogs, nil
+}
+
+func (c *EVMClient) UnpackDepositEventLog(abi abi.ABI, data []byte) (*listener.DepositLogs, error) {
+	var dl listener.DepositLogs
+
+	err := abi.UnpackIntoInterface(&dl, "Deposit", data)
+	if err != nil {
+		return &listener.DepositLogs{}, err
+	}
+
+	return &dl, nil
 }
 
 func (c *EVMClient) FetchEventLogs(ctx context.Context, contractAddress common.Address, event string, startBlock *big.Int, endBlock *big.Int) ([]types.Log, error) {

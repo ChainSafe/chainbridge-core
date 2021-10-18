@@ -46,12 +46,12 @@ func (s *ListenerTestSuite) TestErc20HandleEvent() {
 	calldata = append(calldata, recipientByteSlice...)
 
 	depositLog := &listener.DepositLogs{
-		DestinationID:   0,
-		ResourceID:      [32]byte{0},
-		DepositNonce:    1,
-		SenderAddress:   common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
-		Calldata:        calldata,
-		HandlerResponse: []byte{},
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		Calldata:            calldata,
+		HandlerResponse:     []byte{},
 	}
 
 	sourceID := uint8(1)
@@ -60,7 +60,7 @@ func (s *ListenerTestSuite) TestErc20HandleEvent() {
 
 	expected := &relayer.Message{
 		Source:       sourceID,
-		Destination:  depositLog.DestinationID,
+		Destination:  depositLog.DestinationDomainID,
 		DepositNonce: depositLog.DepositNonce,
 		ResourceId:   depositLog.ResourceID,
 		Type:         relayer.FungibleTransfer,
@@ -70,7 +70,7 @@ func (s *ListenerTestSuite) TestErc20HandleEvent() {
 		},
 	}
 
-	message, err := listener.Erc20EventHandler(sourceID, depositLog.DestinationID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Calldata, depositLog.HandlerResponse)
+	message, err := listener.Erc20EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Calldata, depositLog.HandlerResponse)
 
 	s.Nil(err)
 
@@ -92,17 +92,17 @@ func (s *ListenerTestSuite) TestErc20HandleEventIncorrectCalldataLen() {
 	calldata = append(calldata, recipientByteSlice...)
 
 	depositLog := &listener.DepositLogs{
-		DestinationID:   0,
-		ResourceID:      [32]byte{0},
-		DepositNonce:    1,
-		SenderAddress:   common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
-		Calldata:        calldata,
-		HandlerResponse: []byte{},
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		Calldata:            calldata,
+		HandlerResponse:     []byte{},
 	}
 
 	sourceID := uint8(1)
 
-	message, err := listener.Erc20EventHandler(sourceID, depositLog.DestinationID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Calldata, depositLog.HandlerResponse)
+	message, err := listener.Erc20EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Calldata, depositLog.HandlerResponse)
 
 	s.Nil(message)
 
