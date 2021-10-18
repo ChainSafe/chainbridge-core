@@ -15,13 +15,12 @@ import (
 // Currently, if the client being used is created by the `EVMClientFromParams` constructor a constant gas price is then set
 // and will be returned by this gas pricer
 type StaticGasPriceDeterminant struct {
-	client              GasPriceClient
-	upperLimitFeePerGas *big.Int
-	gasPriceMultiplayer *big.Float
+	client GasPriceClient
+	opts   *GasPricerOpts
 }
 
 func NewStaticGasPriceDeterminant(client GasPriceClient, opts *GasPricerOpts) *StaticGasPriceDeterminant {
-	return &StaticGasPriceDeterminant{client: client, upperLimitFeePerGas: opts.UpperLimitFeePerGas, gasPriceMultiplayer: opts.GasPriceMultiplayer}
+	return &StaticGasPriceDeterminant{client: client, opts: opts}
 
 }
 
@@ -31,15 +30,18 @@ func (gasPricer *StaticGasPriceDeterminant) GasPrice() ([]*big.Int, error) {
 	if err != nil {
 		return nil, err
 	}
-	if gasPricer.gasPriceMultiplayer != nil {
-		gp = multiplyGasPrice(gp, gasPricer.gasPriceMultiplayer)
-	}
-	if gasPricer.upperLimitFeePerGas != nil {
-		if gp.Cmp(gasPricer.upperLimitFeePerGas) == 1 {
-			gp = gasPricer.upperLimitFeePerGas
+	if gasPricer.opts != nil {
+
+		if gasPricer.opts.GasPriceFactor != nil {
+			gp = multiplyGasPrice(gp, gasPricer.opts.GasPriceFactor)
+		}
+		if gasPricer.opts.UpperLimitFeePerGas != nil {
+			if gp.Cmp(gasPricer.opts.UpperLimitFeePerGas) == 1 {
+				gp = gasPricer.opts.UpperLimitFeePerGas
+			}
 		}
 	}
-	var gasPrices []*big.Int
+	gasPrices := make([]*big.Int, 1)
 	gasPrices[0] = gp
 	return gasPrices, nil
 }

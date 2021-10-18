@@ -25,7 +25,7 @@ func (gasPricer *LondonGasPriceDeterminant) GasPrice() ([]*big.Int, error) {
 	if baseFee == nil {
 		// we are using staticGasPriceDeterminant because it counts configs in its gasPrice calculations
 		// and seem to be the most favorable option
-		staticGasPricer := NewStaticGasPriceDeterminant(gasPricer.client, &GasPricerOpts{GasPriceMultiplayer: nil, UpperLimitFeePerGas: gasPricer.upperLimitFeePerGas})
+		staticGasPricer := NewStaticGasPriceDeterminant(gasPricer.client, &GasPricerOpts{GasPriceFactor: nil, UpperLimitFeePerGas: gasPricer.upperLimitFeePerGas})
 		return staticGasPricer.GasPrice()
 	}
 	gasTipCap, gasFeeCap, err := gasPricer.estimateGasLondon(baseFee)

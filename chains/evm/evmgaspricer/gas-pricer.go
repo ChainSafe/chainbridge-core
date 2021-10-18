@@ -18,7 +18,7 @@ type GasPriceClient interface {
 // GasPricerOpts is the structure that holds parameters that could be used to configure different gasPRicer implementation
 type GasPricerOpts struct {
 	UpperLimitFeePerGas *big.Int      // UpperLimitFeePerGas in Static and London gasPricer limits the maximum gas price that could be used. In London gasPricer if BaseFee > UpperLimitFeePerGas, then maxFeeCap will be BaseFee + 2.5 Gwei for MaxTipCap. If nil - not applied
-	GasPriceMultiplayer *big.Float    // GasPriceMultiplayer In static gasPricer multiplies final gasPrice. Could be for example 0.75 or 5.
+	GasPriceFactor      *big.Float    // GasPriceFactor In static gasPricer multiplies final gasPrice. Could be for example 0.75 or 5.
 	Args                []interface{} // Args is the array of dynamic typed args that could be used for other custom GasPricer implementations
 }
 
