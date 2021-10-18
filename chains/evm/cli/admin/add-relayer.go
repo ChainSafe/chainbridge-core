@@ -83,7 +83,7 @@ Bridge address: %s`, Relayer, Bridge)
 		return err
 	}
 
-	_, err = calls.Transact(ethClient, txFabric, &bridge, addRelayerInput, gasLimit, big.NewInt(0))
+	_, err = calls.Transact(ethClient, txFabric, &bridgeAddr, addRelayerInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Info().Msgf("%s added as relayer", relayerAddr)
 		return err
