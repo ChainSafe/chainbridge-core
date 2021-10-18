@@ -34,6 +34,8 @@ var addRelayerCmd = &cobra.Command{
 func BindAddRelayerFlags() {
 	addRelayerCmd.Flags().StringVarP(&Relayer, "relayer", "r", "", "address to add")
 	addRelayerCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	flags.CheckRequiredFlags(addRelayerCmd, "relayer", "bridge")
+
 }
 
 func init() {

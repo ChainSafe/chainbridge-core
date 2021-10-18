@@ -2,6 +2,7 @@ package erc20
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -21,6 +22,7 @@ func BindAllowanceCmdFlags() {
 	allowanceCmd.Flags().StringVarP(&Erc20Address, "erc20Address", "erc20add", "", "ERC20 contract address")
 	allowanceCmd.Flags().StringVarP(&OwnerAddress, "owner", "o", "", "address of token owner")
 	allowanceCmd.Flags().StringVarP(&SpenderAddress, "spender", "s", "", "address of spender")
+	flags.CheckRequiredFlags(allowanceCmd, "erc20Address", "owner", "spender")
 }
 
 func init() {

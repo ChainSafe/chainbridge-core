@@ -69,6 +69,9 @@ func BindDeployEVMFlags(deployCmd *cobra.Command) {
 	deployCmd.Flags().StringVar(&BridgeAddress, "bridgeAddress", "", "bridge contract address. Should be provided if handlers are deployed separately")
 	deployCmd.Flags().StringVar(&Erc20Symbol, "erc20Symbol", "", "ERC20 contract symbol")
 	deployCmd.Flags().StringVar(&Erc20Name, "erc20Name", "", "ERC20 contract name")
+	flags.CheckRequiredFlags(deployCmd,
+		"bridge", "erc20Handler", "erc20", "erc721", "all", "relayerTreshold", "domainId",
+		"relayers", "fee", "bridgeAddress", "erc20Symbol", "erc20Name")
 }
 
 func init() {

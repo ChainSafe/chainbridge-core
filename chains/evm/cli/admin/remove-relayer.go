@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -15,6 +16,7 @@ var removeRelayerCmd = &cobra.Command{
 func init() {
 	removeRelayerCmd.Flags().StringVarP(&Relayer, "relayer", "r", "", "address to remove")
 	removeRelayerCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	flags.CheckRequiredFlags(removeRelayerCmd, "relayer", "bridge")
 }
 
 func removeRelayer(cmd *cobra.Command, args []string) {

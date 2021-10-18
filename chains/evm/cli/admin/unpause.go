@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -13,7 +14,8 @@ var unpauseCmd = &cobra.Command{
 }
 
 func init() {
-	setThresholdCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	unpauseCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	flags.CheckRequiredFlags(unpauseCmd, "bridge")
 }
 
 func unpause(cmd *cobra.Command, args []string) {

@@ -34,7 +34,8 @@ var setBurnCmd = &cobra.Command{
 func BindSetBurnCmdFlags() {
 	setBurnCmd.Flags().StringVarP(&Handler, "handler", "h", "", "ERC20 handler contract address")
 	setBurnCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
-	setBurnCmd.Flags().StringVarP(&TokenContract, "tc", "tokenContract", "", "token contract to be registered")
+	setBurnCmd.Flags().StringVarP(&TokenContract, "tokenContract", "tc", "", "token contract to be registered")
+	flags.CheckRequiredFlags(setBurnCmd, "handler", "bridge", "tokenContract")
 }
 
 func init() {

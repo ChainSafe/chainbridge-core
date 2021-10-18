@@ -19,7 +19,7 @@ var (
 	AccountAddress string
 	OwnerAddress   string
 	SpenderAddress string
-	Minter         string
+	Handler        string
 )
 
 //processed flag vars

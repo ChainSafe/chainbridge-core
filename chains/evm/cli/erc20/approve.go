@@ -41,10 +41,7 @@ func BindApproveCmdFlags() {
 	depositCmd.Flags().StringVarP(&Amount, "amount", "a", "", "amount to grant allowance")
 	depositCmd.Flags().StringVarP(&Recipient, "recipient", "r", "", "address of recipient")
 	depositCmd.Flags().Uint64VarP(&Decimals, "decimals", "r", 18, "ERC20 token decimals")
-	err := approveCmd.MarkFlagRequired("decimals")
-	if err != nil {
-		panic(err)
-	}
+	flags.CheckRequiredFlags(depositCmd, "erc20Address", "amount", "recipient")
 }
 
 func init() {

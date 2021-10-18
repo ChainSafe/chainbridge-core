@@ -47,10 +47,7 @@ func BindDepositCmdFlags() {
 	depositCmd.Flags().Uint64VarP(&DomainID, "destId", "did", 0, "destination domain ID")
 	depositCmd.Flags().StringVarP(&ResourceID, "resourceId", "rid", "", "resource ID for transfer")
 	depositCmd.Flags().Uint64VarP(&Decimals, "decimals", "r", 0, "ERC20 token decimals")
-	err := depositCmd.MarkFlagRequired("decimals")
-	if err != nil {
-		panic(err)
-	}
+	flags.CheckRequiredFlags(depositCmd, "recipient", "bridge", "amount", "destId", "resourceId", "decimals")
 }
 
 func validateDepositFlags(cmd *cobra.Command, args []string) error {

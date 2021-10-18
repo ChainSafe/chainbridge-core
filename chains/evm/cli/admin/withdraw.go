@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -14,12 +15,13 @@ var withdrawCmd = &cobra.Command{
 
 func init() {
 	withdrawCmd.Flags().StringVarP(&Amount, "amount", "a", "", "token amount to withdraw. Should be set or ID or amount if both set error will occur")
-	withdrawCmd.Flags().StringVarP(&TokenID, "id", "id", "", "token ID to withdraw. Should be set or ID or amount if both set error will occur")
+	withdrawCmd.Flags().StringVarP(&TokenID, "tokenId", "id", "", "token ID to withdraw. Should be set or ID or amount if both set error will occur")
 	withdrawCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
 	withdrawCmd.Flags().StringVarP(&Handler, "handler", "h", "", "handler contract address")
 	withdrawCmd.Flags().StringVarP(&Token, "token", "t", "", "ERC20 or ERC721 token contract address")
 	withdrawCmd.Flags().StringVarP(&Recipient, "recipient", "r", "", "address to withdraw to")
 	withdrawCmd.Flags().Uint64VarP(&Decimals, "decimals", "d", 0, "ERC20 token decimals")
+	flags.CheckRequiredFlags(withdrawCmd, "amount", "tokenId", "bridge", "handler", "token", "recipient", "decimals")
 }
 
 func withdraw(cmd *cobra.Command, args []string) {

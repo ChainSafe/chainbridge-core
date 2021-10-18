@@ -1,6 +1,7 @@
 package bridge
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -15,6 +16,7 @@ var queryResourceCmd = &cobra.Command{
 func init() {
 	queryResourceCmd.Flags().StringVarP(&Handler, "handler", "h", "", "handler contract address")
 	queryResourceCmd.Flags().StringVarP(&ResourceID, "resourceId", "rID", "", "resource ID to query")
+	flags.CheckRequiredFlags(queryResourceCmd, "handler", "resourceId")
 }
 
 func queryResource(cmd *cobra.Command, args []string) {

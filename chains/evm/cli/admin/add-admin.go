@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -15,6 +16,8 @@ var addAdminCmd = &cobra.Command{
 func init() {
 	addAdminCmd.Flags().StringVarP(&Admin, "admin", "a", "", "address to add")
 	addAdminCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	flags.CheckRequiredFlags(addAdminCmd, "admin", "bridge")
+
 }
 
 func addAdmin(cmd *cobra.Command, args []string) {

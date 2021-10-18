@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -15,6 +16,7 @@ var removeAdminCmd = &cobra.Command{
 func init() {
 	removeAdminCmd.Flags().StringVarP(&Admin, "admin", "a", "", "address to remove")
 	removeAdminCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	flags.CheckRequiredFlags(removeAdminCmd, "admin", "bridge")
 }
 
 func removeAdmin(cmd *cobra.Command, args []string) {

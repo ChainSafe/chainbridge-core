@@ -39,6 +39,7 @@ func BindRegisterResourceCmdFlags() {
 	registerResourceCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
 	registerResourceCmd.Flags().StringVarP(&Target, "target", "t", "", "contract address to be registered")
 	registerResourceCmd.Flags().StringVarP(&ResourceID, "resourceId", "rID", "", "resource ID to be registered")
+	flags.CheckRequiredFlags(registerResourceCmd, "handler", "bridge", "target", "resourceId")
 }
 
 func init() {

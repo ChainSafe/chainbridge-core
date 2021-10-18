@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -15,6 +16,7 @@ var setThresholdCmd = &cobra.Command{
 func init() {
 	setThresholdCmd.Flags().Uint64VarP(&RelayerTreshold, "threshold", "t", 0, "new relayer threshold")
 	setThresholdCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	flags.CheckRequiredFlags(setThresholdCmd, "treshold", "bridge")
 }
 
 func setThreshold(cmd *cobra.Command, args []string) {
