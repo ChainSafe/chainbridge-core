@@ -102,7 +102,7 @@ Bridge address: %s
 		return err
 	}
 
-	_, err = calls.Transact(ethClient, txFabric, &bridgeAddress, registerResourceInput, gasLimit, big.NewInt(0))
+	_, err = calls.Transact(ethClient, txFabric, &bridgeAddr, registerResourceInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Error().Err(err)
 		return err
