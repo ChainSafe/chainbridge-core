@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
@@ -85,7 +86,7 @@ Bridge Address: %s`, DomainID, DepositNonce, Bridge)
 		return err
 	}
 
-	_, err = calls.Transact(ethClient, txFabric, &bridgeAddr, setDepositNonceInput, gasLimit)
+	_, err = calls.Transact(ethClient, txFabric, &bridgeAddr, setDepositNonceInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Error().Err(fmt.Errorf("transact error: %v", err))
 		return err
