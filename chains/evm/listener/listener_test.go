@@ -50,7 +50,7 @@ func (s *ListenerTestSuite) TestErc20HandleEvent() {
 		ResourceID:          [32]byte{0},
 		DepositNonce:        1,
 		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
-		Calldata:            calldata,
+		Data:                calldata,
 		HandlerResponse:     []byte{},
 	}
 
@@ -70,7 +70,7 @@ func (s *ListenerTestSuite) TestErc20HandleEvent() {
 		},
 	}
 
-	message, err := listener.Erc20EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Calldata, depositLog.HandlerResponse)
+	message, err := listener.Erc20EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
 
 	s.Nil(err)
 
@@ -96,13 +96,13 @@ func (s *ListenerTestSuite) TestErc20HandleEventIncorrectCalldataLen() {
 		ResourceID:          [32]byte{0},
 		DepositNonce:        1,
 		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
-		Calldata:            calldata,
+		Data:                calldata,
 		HandlerResponse:     []byte{},
 	}
 
 	sourceID := uint8(1)
 
-	message, err := listener.Erc20EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Calldata, depositLog.HandlerResponse)
+	message, err := listener.Erc20EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
 
 	s.Nil(message)
 
