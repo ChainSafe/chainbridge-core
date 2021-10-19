@@ -5,14 +5,13 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
-	"github.com/ChainSafe/chainbridge-core/keystore"
-	"github.com/ChainSafe/chainbridge-core/relayer"
 	substrateTypes "github.com/centrifuge/go-substrate-rpc-client/types"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
+	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/rs/zerolog/log"
@@ -75,7 +74,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.erc20HandlerAddr = erc20HandlerAddr
 	s.genericHandlerAddr = genericHandlerAddr
 	s.assetStoreAddr = assetStoreAddr
-
 	_, _, _, _, _, err = PrepareEVME2EEnv(ethClient2, s.fabric2, 2, big.NewInt(1), s.adminKey.CommonAddress())
 	s.Nil(err)
 
@@ -93,9 +91,6 @@ func (s *IntegrationTestSuite) TestErc20Deposit() {
 	destBalanceBefore, err := calls.GetERC20Balance(s.client2, s.erc20ContractAddr, dstAddr)
 	s.Nil(err)
 
-	b, err := s.client2.LatestBlock()
-	s.Nil(err)
-
 	amountToDeposit := big.NewInt(1000000)
 	data := calls.ConstructErc20DepositData(dstAddr.Bytes(), amountToDeposit)
 	err = calls.Deposit(s.client, s.fabric1, s.bridgeAddr, s.erc20RID, 2, data)
@@ -107,39 +102,6 @@ func (s *IntegrationTestSuite) TestErc20Deposit() {
 	senderBalAfter, err := calls.GetERC20Balance(s.client, s.erc20ContractAddr, s.adminKey.CommonAddress())
 	s.Nil(err)
 	s.Equal(-1, senderBalAfter.Cmp(senderBalBefore))
-
-	ba, err := s.client2.LatestBlock()
-	s.Nil(err)
-
-	//wait for vote log event
-	proposalEvent := "ProposalEvent(uint8,uint64,uint8,bytes32,bytes32)"
-	evts, _ := s.client2.FetchEventLogs(context.Background(), s.bridgeAddr, proposalEvent, b, ba)
-	var passedEventFound bool
-	for _, evt := range evts {
-		status := evt.Topics[3].Big().Uint64()
-		if uint8(relayer.ProposalStatusPassed) == uint8(status) {
-			passedEventFound = true
-		}
-	}
-	s.True(passedEventFound)
-	s.Equal(senderBalBefore.Cmp(big.NewInt(0).Add(senderBalAfter, amountToDeposit)), 0)
-
-	//Wait 30 seconds for relayer to execute
-	time.Sleep(30 * time.Second)
-
-	ba, err = s.client2.LatestBlock()
-	s.Nil(err)
-
-	queryExecute, err := s.client2.FetchEventLogs(context.Background(), s.bridgeAddr, proposalEvent, b, ba)
-	s.Nil(err)
-	var executedEventFound bool
-	for _, evt := range queryExecute {
-		status := evt.Topics[3].Big().Uint64()
-		if uint8(relayer.ProposalStatusExecuted) == uint8(status) {
-			executedEventFound = true
-		}
-	}
-	s.True(executedEventFound)
 
 	destBalanceAfter, err := calls.GetERC20Balance(s.client2, s.erc20ContractAddr, dstAddr)
 	s.Nil(err)
@@ -164,22 +126,6 @@ func (s *IntegrationTestSuite) TestGenericDeposit() {
 	s.Nil(err)
 
 	time.Sleep(120 * time.Second)
-
-	ba, err := s.client2.LatestBlock()
-	s.Nil(err)
-
-	proposalEvent := "ProposalEvent(uint8,uint64,uint8,bytes32,bytes32)"
-	evts, err := s.client2.FetchEventLogs(context.Background(), s.bridgeAddr, proposalEvent, b, ba)
-	s.Nil(err)
-
-	var executedEventFound bool
-	for _, evt := range evts {
-		status := evt.Topics[3].Big().Uint64()
-		if uint8(relayer.ProposalStatusExecuted) == uint8(status) {
-			executedEventFound = true
-		}
-	}
-	s.True(executedEventFound)
 
 	exists, err := calls.IsCentrifugeAssetStored(
 		s.client2,
