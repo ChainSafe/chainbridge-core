@@ -52,8 +52,6 @@ func validateAddMinterFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-var minterAddr common.Address
-
 func processAddMinterFlags(cmd *cobra.Command, args []string) {
 	erc20Addr = common.HexToAddress(Erc20Address)
 	minterAddr = common.HexToAddress(Minter)

@@ -9,6 +9,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 
 	"github.com/ChainSafe/chainbridge-core/keystore"
+	"github.com/ChainSafe/chainbridge-core/types"
 
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/rs/zerolog/log"
@@ -61,7 +62,7 @@ func defineSender(cmd *cobra.Command) (*secp256k1.Keypair, error) {
 	return AliceKp, nil
 }
 
-func ProcessResourceID(resourceID string) ([32]byte, error) {
+func ProcessResourceID(resourceID string) (types.ResourceID, error) {
 	if resourceID[0:2] == "0x" {
 		resourceID = resourceID[2:]
 	}

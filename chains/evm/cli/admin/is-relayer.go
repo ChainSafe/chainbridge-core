@@ -37,7 +37,6 @@ func BindIsRelayerFlags() {
 	isRelayerCmd.Flags().StringVarP(&Relayer, "relayer", "r", "", "address to check")
 	isRelayerCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
 	flags.MarkFlagsAsRequired(isRelayerCmd, "relayer", "bridge")
-
 }
 
 func init() {

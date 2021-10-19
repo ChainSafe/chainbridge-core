@@ -1,6 +1,7 @@
 package bridge
 
 import (
+	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -22,7 +23,8 @@ var (
 //processed flag vars
 var (
 	bridgeAddr         common.Address
-	resourceIdBytesArr [32]byte
+	resourceIdBytesArr types.ResourceID
 	handlerAddr        common.Address
 	targetContractAddr common.Address
+	tokenContractAddr  common.Address
 )

@@ -3,6 +3,7 @@ package erc20
 import (
 	"math/big"
 
+	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -24,7 +25,10 @@ var (
 
 //processed flag vars
 var (
-	recipientAddress common.Address
-	realAmount       *big.Int
-	erc20Addr        common.Address
+	recipientAddress   common.Address
+	realAmount         *big.Int
+	erc20Addr          common.Address
+	minterAddr         common.Address
+	bridgeAddr         common.Address
+	resourceIdBytesArr types.ResourceID
 )

@@ -60,11 +60,6 @@ func validateDepositFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-var (
-	bridgeAddr         common.Address
-	resourceIdBytesArr [32]byte
-)
-
 func processDepositFlags(cmd *cobra.Command, args []string) error {
 	var err error
 

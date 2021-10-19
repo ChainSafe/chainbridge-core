@@ -56,8 +56,6 @@ func validateSetBurnFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-var tokenContractAddr common.Address
-
 func processSetBurnFlags(cmd *cobra.Command, args []string) {
 	handlerAddr = common.HexToAddress(Handler)
 	bridgeAddr = common.HexToAddress(Bridge)
