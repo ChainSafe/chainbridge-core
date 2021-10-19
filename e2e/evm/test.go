@@ -110,12 +110,9 @@ func (s *IntegrationTestSuite) TestErc20Deposit() {
 }
 
 func (s *IntegrationTestSuite) TestGenericDeposit() {
-	b, err := s.client2.LatestBlock()
-	s.Nil(err)
-
 	hash, _ := substrateTypes.GetHash(substrateTypes.NewI64(int64(1)))
 	data := calls.ConstructGenericDepositData(hash[:])
-	err = calls.Deposit(
+	err := calls.Deposit(
 		s.client,
 		s.fabric1,
 		s.bridgeAddr,
@@ -127,6 +124,7 @@ func (s *IntegrationTestSuite) TestGenericDeposit() {
 
 	time.Sleep(120 * time.Second)
 
+	// Asset hash sent is stored in centrifuge asset store contract
 	exists, err := calls.IsCentrifugeAssetStored(
 		s.client2,
 		s.assetStoreAddr,

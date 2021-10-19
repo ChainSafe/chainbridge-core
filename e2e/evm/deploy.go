@@ -124,12 +124,13 @@ func PrepareGenericEVME2EEnv(ethClient calls.ChainClient, fabric calls.TxFabric,
 		resourceID,
 		assetStoreAddr,
 		[4]byte{0x65, 0x4c, 0xf8, 0x8c},
+		big.NewInt(0),
 		[4]byte{0x65, 0x4c, 0xf8, 0x8c},
 	)
 	if err != nil {
 		return common.Address{}, common.Address{}, err
 	}
-	_, err = calls.Transact(ethClient, fabric, &bridgeAddr, setGenericResourceInput, gasLimit)
+	_, err = calls.Transact(ethClient, fabric, &bridgeAddr, setGenericResourceInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		return common.Address{}, common.Address{}, err
 	}

@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-var errIncorrectCalldataLen = errors.New("invalid calldata length: less than 84 bytes")
+var errIncorrectDataLen = errors.New("invalid calldata length: less than 84 bytes")
 
 type Erc20HandlerTestSuite struct {
 	suite.Suite
@@ -41,12 +41,12 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleEvent() {
 	calldata = append(calldata, recipientByteSlice...)
 
 	depositLog := &listener.DepositLogs{
-		DestinationID:   0,
-		ResourceID:      [32]byte{0},
-		DepositNonce:    1,
-		SenderAddress:   common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
-		Calldata:        calldata,
-		HandlerResponse: []byte{},
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		Data:                calldata,
+		HandlerResponse:     []byte{},
 	}
 
 	sourceID := uint8(1)
@@ -55,7 +55,7 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleEvent() {
 
 	expected := &relayer.Message{
 		Source:       sourceID,
-		Destination:  depositLog.DestinationID,
+		Destination:  depositLog.DestinationDomainID,
 		DepositNonce: depositLog.DepositNonce,
 		ResourceId:   depositLog.ResourceID,
 		Type:         relayer.FungibleTransfer,
@@ -65,14 +65,14 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleEvent() {
 		},
 	}
 
-	message, err := listener.Erc20EventHandler(sourceID, depositLog.DestinationID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Calldata, depositLog.HandlerResponse)
+	message, err := listener.Erc20EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
 
 	s.Nil(err)
 	s.NotNil(message)
 	s.Equal(message, expected)
 }
 
-func (s *Erc20HandlerTestSuite) TestErc20HandleEventIncorrectCalldataLen() {
+func (s *Erc20HandlerTestSuite) TestErc20HandleEventIncorrectDataLen() {
 	metadata := []byte("0xdeadbeef")
 
 	var calldata []byte
@@ -80,20 +80,20 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleEventIncorrectCalldataLen() {
 	calldata = append(calldata, metadata...)
 
 	depositLog := &listener.DepositLogs{
-		DestinationID:   0,
-		ResourceID:      [32]byte{0},
-		DepositNonce:    1,
-		SenderAddress:   common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
-		Calldata:        calldata,
-		HandlerResponse: []byte{},
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		Data:                calldata,
+		HandlerResponse:     []byte{},
 	}
 
 	sourceID := uint8(1)
 
-	message, err := listener.Erc20EventHandler(sourceID, depositLog.DestinationID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Calldata, depositLog.HandlerResponse)
+	message, err := listener.Erc20EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
 
 	s.Nil(message)
-	s.EqualError(err, errIncorrectCalldataLen.Error())
+	s.EqualError(err, errIncorrectDataLen.Error())
 }
 
 type GenericHandlerTestSuite struct {
@@ -109,7 +109,7 @@ func (s *GenericHandlerTestSuite) TearDownSuite() {}
 func (s *GenericHandlerTestSuite) SetupTest()     {}
 func (s *GenericHandlerTestSuite) TearDownTest()  {}
 
-func (s *GenericHandlerTestSuite) TestGenericHandleEventIncorrectCalldataLen() {
+func (s *GenericHandlerTestSuite) TestGenericHandleEventIncorrectDataLen() {
 	metadata := []byte("0xdeadbeef")
 
 	var calldata []byte
@@ -117,21 +117,21 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEventIncorrectCalldataLen() {
 	calldata = append(calldata, metadata...)
 
 	depositLog := &listener.DepositLogs{
-		DestinationID:   0,
-		ResourceID:      [32]byte{0},
-		DepositNonce:    1,
-		SenderAddress:   common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
-		Calldata:        calldata,
-		HandlerResponse: []byte{},
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		Data:                calldata,
+		HandlerResponse:     []byte{},
 	}
 
 	sourceID := uint8(1)
 	message, err := listener.GenericEventHandler(
 		sourceID,
-		depositLog.DestinationID,
+		depositLog.DestinationDomainID,
 		depositLog.DepositNonce,
 		depositLog.ResourceID,
-		depositLog.Calldata,
+		depositLog.Data,
 		depositLog.HandlerResponse,
 	)
 
@@ -144,18 +144,18 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEventEmptyMetadata() {
 	calldata := calls.ConstructGenericDepositData(metadata)
 
 	depositLog := &listener.DepositLogs{
-		DestinationID:   0,
-		ResourceID:      [32]byte{0},
-		DepositNonce:    1,
-		SenderAddress:   common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
-		Calldata:        calldata,
-		HandlerResponse: []byte{},
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		Data:                calldata,
+		HandlerResponse:     []byte{},
 	}
 
 	sourceID := uint8(1)
 	expected := &relayer.Message{
 		Source:       sourceID,
-		Destination:  depositLog.DestinationID,
+		Destination:  depositLog.DestinationDomainID,
 		DepositNonce: depositLog.DepositNonce,
 		ResourceId:   depositLog.ResourceID,
 		Type:         relayer.GenericTransfer,
@@ -166,10 +166,10 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEventEmptyMetadata() {
 
 	message, err := listener.GenericEventHandler(
 		sourceID,
-		depositLog.DestinationID,
+		depositLog.DestinationDomainID,
 		depositLog.DepositNonce,
 		depositLog.ResourceID,
-		depositLog.Calldata,
+		depositLog.Data,
 		depositLog.HandlerResponse,
 	)
 
@@ -183,18 +183,18 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEvent() {
 	calldata := calls.ConstructGenericDepositData(metadata)
 
 	depositLog := &listener.DepositLogs{
-		DestinationID:   0,
-		ResourceID:      [32]byte{0},
-		DepositNonce:    1,
-		SenderAddress:   common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
-		Calldata:        calldata,
-		HandlerResponse: []byte{},
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		Data:                calldata,
+		HandlerResponse:     []byte{},
 	}
 
 	sourceID := uint8(1)
 	expected := &relayer.Message{
 		Source:       sourceID,
-		Destination:  depositLog.DestinationID,
+		Destination:  depositLog.DestinationDomainID,
 		DepositNonce: depositLog.DepositNonce,
 		ResourceId:   depositLog.ResourceID,
 		Type:         relayer.GenericTransfer,
@@ -205,10 +205,10 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEvent() {
 
 	message, err := listener.GenericEventHandler(
 		sourceID,
-		depositLog.DestinationID,
+		depositLog.DestinationDomainID,
 		depositLog.DepositNonce,
 		depositLog.ResourceID,
-		depositLog.Calldata,
+		depositLog.Data,
 		depositLog.HandlerResponse,
 	)
 
