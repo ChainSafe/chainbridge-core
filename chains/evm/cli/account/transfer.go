@@ -58,10 +58,7 @@ func processTransferBaseCurrencyFlags(cmd *cobra.Command, args []string) error {
 	recipientAddress = common.HexToAddress(Recipient)
 	decimals := big.NewInt(int64(Decimals))
 	weiAmount, err = calls.UserAmountToWei(Amount, decimals)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 func transferBaseCurrency(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 

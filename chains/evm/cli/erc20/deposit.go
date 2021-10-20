@@ -71,11 +71,7 @@ func processDepositFlags(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	resourceIdBytesArr, err = flags.ProcessResourceID(ResourceID)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {

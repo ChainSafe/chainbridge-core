@@ -30,10 +30,7 @@ var mintCmd = &cobra.Command{
 		}
 
 		err = processMintFlags(cmd, args)
-		if err != nil {
-			return err
-		}
-		return nil
+		return err
 	},
 }
 
