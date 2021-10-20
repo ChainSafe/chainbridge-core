@@ -24,6 +24,13 @@ func NewStaticGasPriceDeterminant(client GasPriceClient, opts *GasPricerOpts) *S
 
 }
 
+func (gasPricer *StaticGasPriceDeterminant) SetClient(client LondonGasClient) {
+	gasPricer.client = client
+}
+func (gasPricer *StaticGasPriceDeterminant) SetOpts(opts *GasPricerOpts) {
+	gasPricer.opts = opts
+}
+
 func (gasPricer *StaticGasPriceDeterminant) GasPrice() ([]*big.Int, error) {
 	gp, err := gasPricer.client.SuggestGasPrice(context.TODO())
 	log.Debug().Msgf("Suggested GP %s", gp.String())

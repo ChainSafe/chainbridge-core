@@ -2,17 +2,16 @@ package evmgaspricer
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 )
 
 type LondonGasPriceDeterminant struct {
-	client              LondonGasClient
-	upperLimitFeePerGas *big.Int
+	client LondonGasClient
+	opts   *GasPricerOpts
 }
 
 func NewLondonGasPriceClient(client LondonGasClient, opts *GasPricerOpts) *LondonGasPriceDeterminant {
-	return &LondonGasPriceDeterminant{client: client, upperLimitFeePerGas: opts.UpperLimitFeePerGas}
+	return &LondonGasPriceDeterminant{client: client, opts: opts}
 }
 
 func (gasPricer *LondonGasPriceDeterminant) GasPrice() ([]*big.Int, error) {
@@ -20,12 +19,12 @@ func (gasPricer *LondonGasPriceDeterminant) GasPrice() ([]*big.Int, error) {
 	if err != nil {
 		return nil, err
 	}
-	var gasPrices []*big.Int
+	gasPrices := make([]*big.Int, 2)
 	// BaseFee could be nil if eip1559 is not implemented or did not started working on the current chain
 	if baseFee == nil {
 		// we are using staticGasPriceDeterminant because it counts configs in its gasPrice calculations
 		// and seem to be the most favorable option
-		staticGasPricer := NewStaticGasPriceDeterminant(gasPricer.client, &GasPricerOpts{GasPriceFactor: nil, UpperLimitFeePerGas: gasPricer.upperLimitFeePerGas})
+		staticGasPricer := NewStaticGasPriceDeterminant(gasPricer.client, gasPricer.opts)
 		return staticGasPricer.GasPrice()
 	}
 	gasTipCap, gasFeeCap, err := gasPricer.estimateGasLondon(baseFee)
@@ -38,13 +37,13 @@ func (gasPricer *LondonGasPriceDeterminant) GasPrice() ([]*big.Int, error) {
 }
 
 func (gasPricer *LondonGasPriceDeterminant) SetClient(client LondonGasClient) {
-
+	gasPricer.client = client
 }
 func (gasPricer *LondonGasPriceDeterminant) SetOpts(opts *GasPricerOpts) {
-
+	gasPricer.opts = opts
 }
 
-const TwoAndTheHalfGwei = 2500000000
+const TwoAndTheHalfGwei = 2500000000 // Lowest MaxPriorityFee. Defined by some researches...
 
 func (gasPricer *LondonGasPriceDeterminant) estimateGasLondon(baseFee *big.Int) (*big.Int, *big.Int, error) {
 	var maxPriorityFeePerGas *big.Int
@@ -53,7 +52,7 @@ func (gasPricer *LondonGasPriceDeterminant) estimateGasLondon(baseFee *big.Int) 
 	// if gasPriceLimit is set and lower than networks baseFee then
 	// maxPriorityFee is set to 3 GWEI because that was practically and theoretically defined as optimum
 	// and Max Fee set to baseFee + maxPriorityFeePerGas
-	if gasPricer.upperLimitFeePerGas != nil && gasPricer.upperLimitFeePerGas.Cmp(baseFee) < 0 {
+	if gasPricer.opts != nil && gasPricer.opts.UpperLimitFeePerGas != nil && gasPricer.opts.UpperLimitFeePerGas.Cmp(baseFee) < 0 {
 		maxPriorityFeePerGas = big.NewInt(TwoAndTheHalfGwei)
 		maxFeePerGas = new(big.Int).Add(baseFee, maxPriorityFeePerGas)
 		return maxPriorityFeePerGas, maxFeePerGas, nil
@@ -68,13 +67,10 @@ func (gasPricer *LondonGasPriceDeterminant) estimateGasLondon(baseFee *big.Int) 
 		new(big.Int).Mul(baseFee, big.NewInt(2)),
 	)
 
-	if maxFeePerGas.Cmp(maxPriorityFeePerGas) < 0 {
-		return nil, nil, fmt.Errorf("maxFeePerGas (%v) < maxPriorityFeePerGas (%v)", maxFeePerGas, maxPriorityFeePerGas)
-	}
 	// Check we aren't exceeding our limit if gasPriceLimit set
-	if gasPricer.upperLimitFeePerGas != nil && maxFeePerGas.Cmp(gasPricer.upperLimitFeePerGas) == 1 {
-		maxPriorityFeePerGas.Sub(gasPricer.upperLimitFeePerGas, baseFee)
-		maxFeePerGas = gasPricer.upperLimitFeePerGas
+	if gasPricer.opts != nil && gasPricer.opts.UpperLimitFeePerGas != nil && maxFeePerGas.Cmp(gasPricer.opts.UpperLimitFeePerGas) == 1 {
+		maxPriorityFeePerGas.Sub(gasPricer.opts.UpperLimitFeePerGas, baseFee)
+		maxFeePerGas = gasPricer.opts.UpperLimitFeePerGas
 	}
 	return maxPriorityFeePerGas, maxFeePerGas, nil
 }
