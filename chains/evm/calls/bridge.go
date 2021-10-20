@@ -66,12 +66,12 @@ func PrepareExecuteProposalInput(sourceDomainID uint8, depositNonce uint64, reso
 	return input, nil
 }
 
-func PrepareVoteProposalInput(sourceDomainID uint8, resourceID types.ResourceID, calldata []byte) ([]byte, error) {
+func PrepareVoteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID types.ResourceID, calldata []byte) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
 	}
-	input, err := a.Pack("voteProposal", sourceDomainID, resourceID, calldata)
+	input, err := a.Pack("voteProposal", sourceDomainID, depositNonce, resourceID, calldata)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -151,7 +151,7 @@ func ExecuteProposal(client ClientDispatcher, fabric TxFabric, proposal *proposa
 
 func VoteProposal(client ClientDispatcher, fabric TxFabric, proposal *proposal.Proposal) (common.Hash, error) {
 	// revertOnFail should be constantly false, true is used only for internal contract calls when you need to execute proposal in voteProposal function right after it becomes Passed becouse of votes
-	input, err := PrepareVoteProposalInput(proposal.Source, proposal.ResourceId, proposal.Data)
+	input, err := PrepareVoteProposalInput(proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -184,7 +184,7 @@ func ProposalStatus(evmCaller ContractCallerClient, p *proposal.Proposal) (relay
 	if err != nil {
 		return relayer.ProposalStatusInactive, err
 	}
-	input, err := a.Pack("getProposal", p.Source, p.DepositNonce, p.Data)
+	input, err := a.Pack("getProposal", p.Source, p.DepositNonce, SliceTo32Bytes(p.Data))
 	if err != nil {
 		return relayer.ProposalStatusInactive, err
 	}
@@ -194,18 +194,18 @@ func ProposalStatus(evmCaller ContractCallerClient, p *proposal.Proposal) (relay
 	if err != nil {
 		return relayer.ProposalStatusInactive, err
 	}
+
 	type bridgeProposal struct {
-		ResourceID    types.ResourceID
-		DataHash      [32]byte
-		YesVotes      []common.Address
-		NoVotes       []common.Address
 		Status        uint8
+		YesVotes      *big.Int
+		YesVotesTotal uint8
 		ProposedBlock *big.Int
 	}
 	res, err := a.Unpack("getProposal", out)
 	if err != nil {
 		return relayer.ProposalStatusInactive, err
 	}
+
 	out0 := *abi.ConvertType(res[0], new(bridgeProposal)).(*bridgeProposal)
 	return relayer.ProposalStatus(out0.Status), nil
 }
