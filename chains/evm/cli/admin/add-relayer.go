@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
@@ -60,7 +61,6 @@ func ProcessAddRelayerFlags(cmd *cobra.Command, args []string) {
 }
 
 func AddRelayerEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
-
 	log.Debug().Msgf(`
 Adding relayer
 Relayer address: %s
