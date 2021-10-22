@@ -5,13 +5,15 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/relayer"
+
 	internalTypes "github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 type EventHandlers map[common.Address]EventHandlerFunc
@@ -20,10 +22,10 @@ type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID inte
 type ETHEventHandler struct {
 	bridgeAddress common.Address
 	eventHandlers EventHandlers
-	client        ChainClient
+	client        evmclient.ChainClient
 }
 
-func NewETHEventHandler(address common.Address, client ChainClient) *ETHEventHandler {
+func NewETHEventHandler(address common.Address, client evmclient.ChainClient) *ETHEventHandler {
 	return &ETHEventHandler{
 		bridgeAddress: address,
 		client:        client,
@@ -55,7 +57,7 @@ func (e *ETHEventHandler) matchResourceIDToHandlerAddress(resourceID internalTyp
 		return common.Address{}, err
 	}
 	msg := ethereum.CallMsg{From: common.Address{}, To: &e.bridgeAddress, Data: input}
-	out, err := e.client.CallContract(context.TODO(), toCallArg(msg), nil)
+	out, err := e.client.CallContract(context.TODO(), calls.ToCallArg(msg), nil)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -82,26 +84,6 @@ func (e *ETHEventHandler) RegisterEventHandler(handlerAddress string, handler Ev
 		e.eventHandlers = make(map[common.Address]EventHandlerFunc)
 	}
 	e.eventHandlers[common.HexToAddress(handlerAddress)] = handler
-}
-
-func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
-	arg := map[string]interface{}{
-		"from": msg.From,
-		"to":   msg.To,
-	}
-	if len(msg.Data) > 0 {
-		arg["data"] = hexutil.Bytes(msg.Data)
-	}
-	if msg.Value != nil {
-		arg["value"] = (*hexutil.Big)(msg.Value)
-	}
-	if msg.Gas != 0 {
-		arg["gas"] = hexutil.Uint64(msg.Gas)
-	}
-	if msg.GasPrice != nil {
-		arg["gasPrice"] = (*hexutil.Big)(msg.GasPrice)
-	}
-	return arg
 }
 
 // Erc20EventHandler converts data pulled from event logs into message
