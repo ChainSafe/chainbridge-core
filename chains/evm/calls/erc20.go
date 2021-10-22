@@ -8,7 +8,6 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/types"
-
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -40,7 +39,7 @@ func PrepareErc20ApproveInput(target common.Address, amount *big.Int) ([]byte, e
 	return input, nil
 }
 
-func PrepareErc20AddMinterInput(client ChainClient, erc20Contract, handler common.Address) ([]byte, error) {
+func PrepareErc20AddMinterInput(client ContractCallerClient, erc20Contract, handler common.Address) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
 	if err != nil {
 		return []byte{}, err
@@ -97,7 +96,7 @@ func ParseERC20BalanceOutput(output []byte) (*big.Int, error) {
 	return balance, nil
 }
 
-func MinterRole(chainClient ChainClient, erc20Contract common.Address) ([32]byte, error) {
+func MinterRole(chainClient ContractCallerClient, erc20Contract common.Address) ([32]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
 	if err != nil {
 		return [32]byte{}, err
@@ -119,7 +118,7 @@ func MinterRole(chainClient ChainClient, erc20Contract common.Address) ([32]byte
 	return out0, nil
 }
 
-func GetERC20Balance(ethClient ChainClient, erc20Addr, address common.Address) (*big.Int, error) {
+func GetERC20Balance(ethClient ContractCheckerCallerClient, erc20Addr, address common.Address) (*big.Int, error) {
 	input, err := PrepareERC20BalanceInput(address)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("prepare input error: %v", err))

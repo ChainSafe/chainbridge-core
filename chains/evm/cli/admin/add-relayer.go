@@ -3,11 +3,14 @@ package admin
 import (
 	"errors"
 	"fmt"
+
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -19,8 +22,7 @@ var addRelayerCmd = &cobra.Command{
 	Short: "Add a new relayer",
 	Long:  "Add a new relayer",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return AddRelayerEVMCMD(cmd, args, txFabric)
+		return AddRelayerEVMCMD(cmd, args, evmtransaction.NewTransaction, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 }
 
@@ -33,7 +35,7 @@ func init() {
 	BindAddRelayerFlags(addRelayerCmd)
 }
 
-func AddRelayerEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func AddRelayerEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 	relayerAddress := cmd.Flag("relayer").Value.String()
 	bridgeAddress := cmd.Flag("bridge").Value.String()
 	log.Debug().Msgf(`
@@ -42,7 +44,7 @@ Relayer address: %s
 Bridge address: %s`, relayerAddress, bridgeAddress)
 
 	// fetch global flag values
-	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	url, gasLimit, limitGasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
@@ -60,11 +62,13 @@ Bridge address: %s`, relayerAddress, bridgeAddress)
 	}
 	relayer := common.HexToAddress(relayerAddress)
 	bridge := common.HexToAddress(bridgeAddress)
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(err)
 		return err
 	}
+	gasPricer.SetClient(ethClient)
+	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: limitGasPrice})
 	log.Info().Msgf("Setting address %s as relayer on bridge %s", relayer.String(), bridge.String())
 	addRelayerInput, err := calls.PrepareAddRelayerInput(relayer)
 	if err != nil {
@@ -72,7 +76,7 @@ Bridge address: %s`, relayerAddress, bridgeAddress)
 		return err
 	}
 
-	_, err = calls.Transact(ethClient, txFabric, &bridge, addRelayerInput, gasLimit, big.NewInt(0))
+	_, err = calls.Transact(ethClient, txFabric, gasPricer, &bridge, addRelayerInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Info().Msgf("%s added as relayer", relayerAddress)
 		return err

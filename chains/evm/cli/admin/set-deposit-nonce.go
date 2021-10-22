@@ -7,7 +7,9 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -22,7 +24,7 @@ var setDepositNonceCmd = &cobra.Command{
 This nonce cannot be less than what is currently stored in the contract`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return SetDepositNonceEVMCMD(cmd, args, txFabric)
+		return SetDepositNonceEVMCMD(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 }
 
@@ -44,7 +46,7 @@ func init() {
 	BindSetDepositNonceFlags(setDepositNonceCmd)
 }
 
-func SetDepositNonceEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func SetDepositNonceEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 	domainId, err := cmd.Flags().GetUint8("domainId")
 	if err != nil {
 		return err
@@ -74,19 +76,20 @@ Bridge Address: %s`, domainId, depositNonce, bridgeAddress)
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
-
+	gasPricer.SetClient(ethClient)
+	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 	setDepositNonceInput, err := calls.PrepareSetDepositNonceInput(domainId, depositNonce)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("prepare set deposit nonce input error: %v", err))
 		return err
 	}
 
-	_, err = calls.Transact(ethClient, txFabric, &bridgeAddr, setDepositNonceInput, gasLimit, big.NewInt(0))
+	_, err = calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddr, setDepositNonceInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Error().Err(fmt.Errorf("transact error: %v", err))
 		return err

@@ -9,7 +9,9 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -17,7 +19,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var ErrNoDeploymentFalgsProvided = errors.New("provide at least one deployment flag. For help use --help.")
+var ErrNoDeploymentFlagsProvided = errors.New("provide at least one deployment flag. For help use --help.")
 var ErrErc20TokenAndSymbolNotProvided = errors.New("erc20Name and erc20Symbol flags should be provided")
 
 var DeployEVM = &cobra.Command{
@@ -66,10 +68,10 @@ func init() {
 
 func CallDeployCLI(cmd *cobra.Command, args []string) error {
 	txFabric := evmtransaction.NewTransaction
-	return DeployCLI(cmd, args, txFabric)
+	return DeployCLI(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 }
 
-func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 	// fetch global flag values
 	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
@@ -77,11 +79,14 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 	}
 	log.Debug().Msgf("url: %s gas limit: %v gas price: %v", url, gasLimit, gasPrice)
 	log.Debug().Msgf("SENDER Private key 0x%s", hex.EncodeToString(crypto.FromECDSA(senderKeyPair.PrivateKey())))
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("ethereum client error: %v", err)).Msg("error initializing new EVM client")
 		return err
 	}
+	gasPricer.SetClient(ethClient)
+	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
+
 	relayerThreshold, err := cmd.Flags().GetUint64("relayerThreshold")
 	if err != nil {
 		log.Error().Err(fmt.Errorf("relayer threshold error: %v", err)).Msg("error parsing relayersTreshold")
@@ -143,7 +148,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 		}
 	}
 	if len(deployments) == 0 {
-		log.Error().Err(ErrNoDeploymentFalgsProvided)
+		log.Error().Err(ErrNoDeploymentFlagsProvided)
 		return err
 	}
 	domainId := cmd.Flag("domainId").Value.String()
@@ -158,7 +163,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 				log.Error().Err(fmt.Errorf("domain ID flag error: %v", err))
 				return err
 			}
-			bridgeAddr, err = calls.DeployBridge(ethClient, txFabric, uint8(domainIdInt), relayerAddresses, big.NewInt(0).SetUint64(relayerThreshold))
+			bridgeAddr, err = calls.DeployBridge(ethClient, txFabric, gasPricer, uint8(domainIdInt), relayerAddresses, big.NewInt(0).SetUint64(relayerThreshold))
 			if err != nil {
 				log.Error().Err(fmt.Errorf("bridge deploy failed: %w", err))
 				return err
@@ -174,7 +179,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 				return err
 			}
 
-			erc20HandlerAddr, err := calls.DeployErc20Handler(ethClient, txFabric, bridgeAddr)
+			erc20HandlerAddr, err := calls.DeployErc20Handler(ethClient, txFabric, gasPricer, bridgeAddr)
 			if err != nil {
 				log.Error().Err(fmt.Errorf("ERC20 handler deploy failed: %w", err))
 				return err
@@ -189,7 +194,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 				return ErrErc20TokenAndSymbolNotProvided
 			}
 
-			erc20Addr, err := calls.DeployErc20(ethClient, txFabric, name, symbol)
+			erc20Addr, err := calls.DeployErc20(ethClient, txFabric, gasPricer, name, symbol)
 			if err != nil {
 				log.Error().Err(fmt.Errorf("erc 20 deploy failed: %w", err))
 				return err

@@ -3,7 +3,6 @@ package evmclient
 import (
 	"context"
 	"crypto/ecdsa"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -31,10 +30,9 @@ import (
 type EVMClient struct {
 	*ethclient.Client
 	rpClient  *rpc.Client
-	nonceLock sync.Mutex
 	config    *EVMConfig
 	nonce     *big.Int
-	gasPrice  *big.Int
+	nonceLock sync.Mutex
 }
 
 type CommonTransaction interface {
@@ -49,7 +47,7 @@ func NewEVMClient() *EVMClient {
 	return &EVMClient{}
 }
 
-func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey, gasPrice *big.Int) (*EVMClient, error) {
+func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey) (*EVMClient, error) {
 	rpcClient, err := rpc.DialContext(context.TODO(), url)
 	if err != nil {
 		return nil, err
@@ -60,7 +58,6 @@ func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey, gasPrice *
 	c.rpClient = rpcClient
 	c.config = &EVMConfig{}
 	c.config.kp = kp
-	c.gasPrice = gasPrice
 	return c, nil
 }
 
@@ -98,9 +95,7 @@ func (c *EVMClient) Configurate(path string, name string) error {
 		}
 		cfg.SharedEVMConfig.StartBlock = curr
 	}
-
 	return nil
-
 }
 
 type headerNumber struct {
@@ -247,11 +242,11 @@ func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransac
 		// Probably chain does not support chainID eg. CELO
 		id = nil
 	}
-	rawTX, err := tx.RawWithSignature(c.config.kp.PrivateKey(), id)
+	rawTx, err := tx.RawWithSignature(c.config.kp.PrivateKey(), id)
 	if err != nil {
 		return common.Hash{}, err
 	}
-	err = c.SendRawTransaction(ctx, rawTX)
+	err = c.SendRawTransaction(ctx, rawTx)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -296,42 +291,12 @@ func (c *EVMClient) UnsafeIncreaseNonce() error {
 	return nil
 }
 
-func (c *EVMClient) GasPrice() (*big.Int, error) {
-	if c.gasPrice != nil {
-		return c.gasPrice, nil
-	}
-	gasPrice, err := c.SafeEstimateGas(context.TODO())
+func (c *EVMClient) BaseFee() (*big.Int, error) {
+	head, err := c.HeaderByNumber(context.TODO(), nil)
 	if err != nil {
 		return nil, err
 	}
-	return gasPrice, nil
-}
-
-func (c *EVMClient) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
-	suggestedGasPrice, err := c.SuggestGasPrice(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-	log.Debug().Msgf("Suggested GP %s", suggestedGasPrice.String())
-	var gasPrice *big.Int
-	if c.config.SharedEVMConfig.GasMultiplier != nil {
-		gasPrice = multiplyGasPrice(suggestedGasPrice, c.config.SharedEVMConfig.GasMultiplier)
-	}
-	// Check we aren't exceeding our limit
-	if c.config.SharedEVMConfig.MaxGasPrice != nil {
-		if gasPrice.Cmp(c.config.SharedEVMConfig.MaxGasPrice) == 1 {
-			return c.config.SharedEVMConfig.MaxGasPrice, nil
-		}
-	}
-	return gasPrice, nil
-}
-
-func multiplyGasPrice(gasEstimate *big.Int, gasMultiplier *big.Float) *big.Int {
-	gasEstimateFloat := new(big.Float).SetInt(gasEstimate)
-	result := gasEstimateFloat.Mul(gasEstimateFloat, gasMultiplier)
-	gasPrice := new(big.Int)
-	result.Int(gasPrice)
-	return gasPrice
+	return head.BaseFee, nil
 }
 
 func toBlockNumArg(number *big.Int) string {
@@ -356,37 +321,4 @@ func buildQuery(contract common.Address, sig string, startBlock *big.Int, endBlo
 
 func (c *EVMClient) GetConfig() *EVMConfig {
 	return c.config
-}
-
-// Simulate function gets transaction info by hash and then executes a message call transaction, which is directly executed in the VM
-// of the node, but never mined into the blockchain. Execution happens against provided block.
-func (c *EVMClient) Simulate(block *big.Int, txHash common.Hash, from common.Address) ([]byte, error) {
-	tx, _, err := c.Client.TransactionByHash(context.TODO(), txHash)
-	if err != nil {
-		log.Debug().Msgf("[client] tx by hash error: %v", err)
-		return nil, err
-	}
-
-	log.Debug().Msgf("from: %v to: %v gas: %v gasPrice: %v value: %v data: %v", from, tx.To(), tx.Gas(), tx.GasPrice(), tx.Value(), tx.Data())
-
-	msg := ethereum.CallMsg{
-		From:     from,
-		To:       tx.To(),
-		Gas:      tx.Gas(),
-		GasPrice: tx.GasPrice(),
-		Value:    tx.Value(),
-		Data:     tx.Data(),
-	}
-	res, err := c.Client.CallContract(context.TODO(), msg, block)
-	if err != nil {
-		log.Debug().Msgf("[client] call contract error: %v", err)
-		return nil, err
-	}
-	bs, err := hex.DecodeString(common.Bytes2Hex(res))
-	if err != nil {
-		log.Debug().Msgf("[client] decode string error: %v", err)
-		return nil, err
-	}
-	log.Debug().Msg(string(bs))
-	return bs, nil
 }

@@ -5,7 +5,8 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
+
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
@@ -18,7 +19,7 @@ import (
 )
 
 type TestClient interface {
-	calls.ChainClient
+	E2EClient
 	LatestBlock() (*big.Int, error)
 	FetchEventLogs(ctx context.Context, contractAddress common.Address, event string, startBlock *big.Int, endBlock *big.Int) ([]types.Log, error)
 }
@@ -50,11 +51,11 @@ type IntegrationTestSuite struct {
 func (s *IntegrationTestSuite) SetupSuite()    {}
 func (s *IntegrationTestSuite) TearDownSuite() {}
 func (s *IntegrationTestSuite) SetupTest() {
-	ethClient, err := evmclient.NewEVMClientFromParams(s.endpoint1, s.adminKey.PrivateKey(), big.NewInt(consts.DefaultGasPrice))
+	ethClient, err := evmclient.NewEVMClientFromParams(s.endpoint1, s.adminKey.PrivateKey())
 	if err != nil {
 		panic(err)
 	}
-	ethClient2, err := evmclient.NewEVMClientFromParams(s.endpoint2, s.adminKey.PrivateKey(), big.NewInt(consts.DefaultGasPrice))
+	ethClient2, err := evmclient.NewEVMClientFromParams(s.endpoint2, s.adminKey.PrivateKey())
 	if err != nil {
 		panic(err)
 	}
@@ -88,7 +89,8 @@ func (s *IntegrationTestSuite) TestErc20Deposit() {
 
 	amountToDeposit := big.NewInt(1000000)
 	resourceID := calls.SliceTo32Bytes(append(common.LeftPadBytes(s.erc20ContractAddr.Bytes(), 31), uint8(0)))
-	err = calls.Deposit(s.client, s.fabric1, s.bridgeAddr, dstAddr, amountToDeposit, resourceID, 2)
+	gasPricer := evmgaspricer.NewStaticGasPriceDeterminant(s.client, nil)
+	err = calls.Deposit(s.client, s.fabric1, gasPricer, s.bridgeAddr, dstAddr, amountToDeposit, resourceID, 2)
 	s.Nil(err)
 
 	//Wait 120 seconds for relayer vote
