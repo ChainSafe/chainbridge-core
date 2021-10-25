@@ -94,7 +94,7 @@ Decimals: %v`,
 	}
 	gasPricer.SetClient(ethClient)
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-	i, err := calls.PrepareErc20ApproveInput(recipientAddr, realAmount)
+	i, err := calls.PrepareErc20ApproveInput(recipientAddress, realAmount)
 	if err != nil {
 		log.Fatal().Err(err)
 		return err
