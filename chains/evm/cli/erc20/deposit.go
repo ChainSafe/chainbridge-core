@@ -94,7 +94,7 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasP
 
 	data := calls.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
 
-	input, err := calls.PrepareErc20DepositInput(uint8(DomainId), resourceIdBytesArr, data)
+	input, err := calls.PrepareErc20DepositInput(uint8(DomainID), resourceIdBytesArr, data)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit input error: %v", err))
 		return err
