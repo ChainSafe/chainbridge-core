@@ -7,7 +7,9 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -19,8 +21,7 @@ var depositCmd = &cobra.Command{
 	Short: "Initiate a transfer of ERC20 tokens",
 	Long:  "Initiate a transfer of ERC20 tokens",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return DepositCmd(cmd, args, txFabric)
+		return DepositCmd(cmd, args, evmtransaction.NewTransaction, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := validateDepositFlags(cmd, args)
@@ -74,7 +75,7 @@ func processDepositFlags(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 
 	// fetch global flag values
 	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
@@ -82,15 +83,18 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
 
+	gasPricer.SetClient(ethClient)
+	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
+
 	data := calls.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
-	// TODO: confirm correct arguments
-	input, err := calls.PrepareErc20DepositInput(uint8(DomainID), resourceIdBytesArr, data)
+
+	input, err := calls.PrepareErc20DepositInput(uint8(DomainId), resourceIdBytesArr, data)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit input error: %v", err))
 		return err
@@ -105,7 +109,7 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 	log.Debug().Msgf("blockNum: %v", blockNum)
 
 	// destinationId
-	txHash, err := calls.Transact(ethClient, txFabric, &bridgeAddr, input, gasLimit, big.NewInt(0))
+	txHash, err := calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddr, input, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit error: %v", err))
 		return err

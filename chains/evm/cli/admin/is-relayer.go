@@ -7,7 +7,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -19,8 +18,7 @@ var isRelayerCmd = &cobra.Command{
 	Short: "Check if an address is registered as a relayer",
 	Long:  "Check if an address is registered as a relayer",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return IsRelayer(cmd, args, txFabric)
+		return IsRelayer(cmd, args)
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := validateIsRelayerFlags(cmd, args)
@@ -58,20 +56,19 @@ func processIsRelayerFlags(cmd *cobra.Command, args []string) {
 	bridgeAddr = common.HexToAddress(Bridge)
 }
 
-func IsRelayer(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-
+func IsRelayer(cmd *cobra.Command, args []string) error {
 	log.Debug().Msgf(`
 	Checking relayer
 	Relayer address: %s
 	Bridge address: %s`, Relayer, Bridge)
 
 	// fetch global flag values
-	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(err)
 		return err

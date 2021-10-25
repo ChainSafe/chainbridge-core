@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -19,7 +22,7 @@ var registerResourceCmd = &cobra.Command{
 	Long:  "Register a resource ID with a contract address for a handler",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return RegisterResourceCmd(cmd, args, txFabric)
+		return RegisterResourceCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := validateRegisterResourceFlags(cmd, args)
@@ -67,7 +70,7 @@ func processRegisterResourceFlags(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func RegisterResourceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func RegisterResourceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 	log.Debug().Msgf(`
 Registering resource
 Handler address: %s
@@ -84,11 +87,13 @@ Bridge address: %s
 
 	fmt.Printf("Registering contract %s with resource ID %s on handler %s", Target, ResourceID, handlerAddr)
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
+	gasPricer.SetClient(ethClient)
+	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
 	registerResourceInput, err := calls.PrepareAdminSetResourceInput(handlerAddr, resourceIdBytesArr, targetContractAddr)
 	if err != nil {
@@ -96,7 +101,7 @@ Bridge address: %s
 		return err
 	}
 
-	_, err = calls.Transact(ethClient, txFabric, &bridgeAddr, registerResourceInput, gasLimit, big.NewInt(0))
+	_, err = calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddr, registerResourceInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Error().Err(err)
 		return err

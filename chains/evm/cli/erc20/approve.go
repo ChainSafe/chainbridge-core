@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
@@ -20,7 +23,7 @@ var approveCmd = &cobra.Command{
 	Long:  "Approve tokens in an ERC20 contract for transfer",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return ApproveCmd(cmd, args, txFabric)
+		return ApproveCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := validateApproveFlags(cmd, args)
@@ -69,7 +72,7 @@ func processApproveFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func ApproveCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func ApproveCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 	log.Debug().Msgf(`
 Approving ERC20
 ERC20 address: %s
@@ -84,17 +87,19 @@ Decimals: %v`,
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
-	i, err := calls.PrepareErc20ApproveInput(recipientAddress, realAmount)
+	gasPricer.SetClient(ethClient)
+	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
+	i, err := calls.PrepareErc20ApproveInput(recipientAddr, realAmount)
 	if err != nil {
 		log.Fatal().Err(err)
 		return err
 	}
-	_, err = calls.Transact(ethClient, txFabric, &erc20Addr, i, gasLimit, big.NewInt(0))
+	_, err = calls.Transact(ethClient, txFabric, gasPricer, &erc20Addr, i, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Fatal().Err(err)
 		return err

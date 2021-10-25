@@ -31,7 +31,7 @@ type Relayer struct {
 	messageProcessors []MessageProcessor
 }
 
-// Starts the relayer. Relayer routine is starting all the chains
+// Start function starts the relayer. Relayer routine is starting all the chains
 // and passing them with a channel that accepts unified cross chain message format
 func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 	log.Debug().Msgf("Starting relayer")

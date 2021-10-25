@@ -22,6 +22,7 @@ var EvmRootCLI = &cobra.Command{
 	Short: "EVM CLI",
 	Long:  "Root command for starting EVM CLI",
 }
+
 var (
 	// Flags for all EVM CLI commands
 	UrlFlagName                = "url"
@@ -36,7 +37,7 @@ var (
 func BindEVMCLIFlags(evmRootCLI *cobra.Command) {
 	evmRootCLI.PersistentFlags().String(UrlFlagName, "ws://localhost:8545", "node url")
 	evmRootCLI.PersistentFlags().Uint64(GasLimitFlagName, 6721975, "gasLimit used in transactions")
-	evmRootCLI.PersistentFlags().Uint64(GasPriceFlagName, 20000000000, "gasPrice used for transactions")
+	evmRootCLI.PersistentFlags().Uint64(GasPriceFlagName, 0, "used as upperLimitGasPrice for transactions if not 0. Transactions gasPrice is defined by estimating it on network for pre London fork networks and by estimating BaseFee and MaxTipFeePerGas in post London networks")
 	evmRootCLI.PersistentFlags().Uint64(NetworkIdFlagName, 0, "networkid")
 	evmRootCLI.PersistentFlags().String(PrivateKeyFlagName, "", "Private key to use")
 	evmRootCLI.PersistentFlags().String(JsonWalletFlagName, "", "Encrypted JSON wallet")

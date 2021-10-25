@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
@@ -19,7 +23,7 @@ var setBurnCmd = &cobra.Command{
 	Long:  "Set a token contract as mintable/burnable in a handler",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return SetBurnCmd(cmd, args, txFabric)
+		return SetBurnCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := validateSetBurnFlags(cmd, args)
@@ -61,18 +65,20 @@ func processSetBurnFlags(cmd *cobra.Command, args []string) {
 	bridgeAddr = common.HexToAddress(Bridge)
 	tokenContractAddr = common.HexToAddress(TokenContract)
 }
-func SetBurnCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func SetBurnCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 	// fetch global flag values
 	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
+	gasPricer.SetClient(ethClient)
+	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
 	log.Info().Msgf("Setting contract %s as burnable on handler %s", tokenContractAddr.String(), handlerAddr.String())
 	setBurnableInput, err := calls.PrepareSetBurnableInput(handlerAddr, tokenContractAddr)
@@ -81,7 +87,7 @@ func SetBurnCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 		return err
 	}
 
-	_, err = calls.Transact(ethClient, txFabric, &bridgeAddr, setBurnableInput, gasLimit, big.NewInt(0))
+	_, err = calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddr, setBurnableInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Error().Err(err)
 		return err
