@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"errors"
 	"fmt"
 
 	"math/big"
@@ -24,24 +23,49 @@ var addRelayerCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return AddRelayerEVMCMD(cmd, args, evmtransaction.NewTransaction, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := validateAddRelayerFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+
+		processAddRelayerFlags(cmd, args)
+		return nil
+	},
 }
 
-func BindAddRelayerFlags(cli *cobra.Command) {
-	cli.Flags().String("relayer", "", "address to add")
-	cli.Flags().String("bridge", "", "bridge contract address")
+func BindAddRelayerFlags() {
+	addRelayerCmd.Flags().StringVarP(&Relayer, "relayer", "r", "", "address to add")
+	addRelayerCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	flags.MarkFlagsAsRequired(addRelayerCmd, "relayer", "bridge")
+
 }
 
 func init() {
-	BindAddRelayerFlags(addRelayerCmd)
+	BindAddRelayerFlags()
+}
+
+func validateAddRelayerFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Relayer) {
+		return fmt.Errorf("invalid relayer address %s", Relayer)
+	}
+	if !common.IsHexAddress(Bridge) {
+		return fmt.Errorf("invalid bridge address %s", Bridge)
+	}
+	return nil
+}
+
+func processAddRelayerFlags(cmd *cobra.Command, args []string) {
+	relayerAddr = common.HexToAddress(Relayer)
+	bridgeAddr = common.HexToAddress(Bridge)
 }
 
 func AddRelayerEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
-	relayerAddress := cmd.Flag("relayer").Value.String()
-	bridgeAddress := cmd.Flag("bridge").Value.String()
+
 	log.Debug().Msgf(`
 Adding relayer 
 Relayer address: %s
-Bridge address: %s`, relayerAddress, bridgeAddress)
+Bridge address: %s`, Relayer, Bridge)
 
 	// fetch global flag values
 	url, gasLimit, limitGasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
@@ -49,19 +73,6 @@ Bridge address: %s`, relayerAddress, bridgeAddress)
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	if !common.IsHexAddress(relayerAddress) {
-		err := errors.New("handler address is incorrect format")
-		log.Error().Err(err)
-		return err
-	}
-
-	if !common.IsHexAddress(bridgeAddress) {
-		err := errors.New("tokenContract address is incorrect format")
-		log.Error().Err(err)
-		return err
-	}
-	relayer := common.HexToAddress(relayerAddress)
-	bridge := common.HexToAddress(bridgeAddress)
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(err)
@@ -69,16 +80,16 @@ Bridge address: %s`, relayerAddress, bridgeAddress)
 	}
 	gasPricer.SetClient(ethClient)
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: limitGasPrice})
-	log.Info().Msgf("Setting address %s as relayer on bridge %s", relayer.String(), bridge.String())
-	addRelayerInput, err := calls.PrepareAddRelayerInput(relayer)
+	log.Info().Msgf("Setting address %s as relayer on bridge %s", relayerAddr.String(), bridgeAddr.String())
+	addRelayerInput, err := calls.PrepareAddRelayerInput(relayerAddr)
 	if err != nil {
 		log.Error().Err(err)
 		return err
 	}
 
-	_, err = calls.Transact(ethClient, txFabric, gasPricer, &bridge, addRelayerInput, gasLimit, big.NewInt(0))
+	_, err = calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddr, addRelayerInput, gasLimit, big.NewInt(0))
 	if err != nil {
-		log.Info().Msgf("%s added as relayer", relayerAddress)
+		log.Info().Msgf("%s added as relayer", relayerAddr)
 		return err
 	}
 	return nil

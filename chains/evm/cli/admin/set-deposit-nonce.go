@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"errors"
 	"fmt"
 	"math/big"
 
@@ -26,49 +25,46 @@ This nonce cannot be less than what is currently stored in the contract`,
 		txFabric := evmtransaction.NewTransaction
 		return SetDepositNonceEVMCMD(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := validateSetDepositNonceFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+
+		processSetDepositNonceFlags(cmd, args)
+		return nil
+	},
 }
 
-func BindSetDepositNonceFlags(cli *cobra.Command) {
-	cli.Flags().Uint8("domainId", 0, "domain ID of chain")
-	cli.Flags().Uint64("depositNonce", 0, "deposit nonce to set (does not decrement)")
-	cli.Flags().String("bridgeAddress", "", "bridge contract address")
-	err := cli.MarkFlagRequired("domainId")
-	if err != nil {
-		panic(err)
-	}
-	err = cli.MarkFlagRequired("depositNonce")
-	if err != nil {
-		panic(err)
-	}
+func BindSetDepositNonceFlags() {
+	setDepositNonceCmd.Flags().Uint8VarP(&DomainID, "domainId", "dID", 0, "domain ID of chain")
+	setDepositNonceCmd.Flags().Uint64VarP(&DepositNonce, "depositNonce", "dn", 0, "deposit nonce to set (does not decrement)")
+	setDepositNonceCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	flags.MarkFlagsAsRequired(setDepositNonceCmd, "domainId", "depositNonce", "bridge")
 }
 
 func init() {
-	BindSetDepositNonceFlags(setDepositNonceCmd)
+	BindSetDepositNonceFlags()
+}
+
+func validateSetDepositNonceFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Bridge) {
+		return fmt.Errorf("invalid bridge address %s", Bridge)
+	}
+	return nil
+}
+
+func processSetDepositNonceFlags(cmd *cobra.Command, args []string) {
+	bridgeAddr = common.HexToAddress(Bridge)
 }
 
 func SetDepositNonceEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
-	domainId, err := cmd.Flags().GetUint8("domainId")
-	if err != nil {
-		return err
-	}
-
-	depositNonce, err := cmd.Flags().GetUint64("depositNonce")
-	if err != nil {
-		return err
-	}
-
-	bridgeAddress := cmd.Flag("bridgeAddress").Value.String()
 
 	log.Debug().Msgf(`
 Set Deposit Nonce
 Domain ID: %v
 Deposit Nonce: %v
-Bridge Address: %s`, domainId, depositNonce, bridgeAddress)
-
-	if !common.IsHexAddress(bridgeAddress) {
-		return errors.New("invalid bridge address")
-	}
-	bridgeAddr := common.HexToAddress(bridgeAddress)
+Bridge Address: %s`, DomainID, DepositNonce, Bridge)
 
 	// fetch global flag values
 	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
@@ -83,7 +79,7 @@ Bridge Address: %s`, domainId, depositNonce, bridgeAddress)
 	}
 	gasPricer.SetClient(ethClient)
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-	setDepositNonceInput, err := calls.PrepareSetDepositNonceInput(domainId, depositNonce)
+	setDepositNonceInput, err := calls.PrepareSetDepositNonceInput(DomainID, DepositNonce)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("prepare set deposit nonce input error: %v", err))
 		return err
@@ -94,6 +90,6 @@ Bridge Address: %s`, domainId, depositNonce, bridgeAddress)
 		log.Error().Err(fmt.Errorf("transact error: %v", err))
 		return err
 	}
-	log.Info().Msgf("[domain ID: %v] successfully set nonce: %v at address: %s", domainId, depositNonce, bridgeAddr.String())
+	log.Info().Msgf("[domain ID: %v] successfully set nonce: %v at address: %s", DomainID, DepositNonce, bridgeAddr.String())
 	return nil
 }

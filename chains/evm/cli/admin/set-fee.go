@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -13,17 +14,16 @@ var setFeeCmd = &cobra.Command{
 }
 
 func init() {
-	setFeeCmd.Flags().String("fee", "", "New fee (in ether)")
-	setFeeCmd.Flags().String("bridge", "", "bridge contract address")
+	setFeeCmd.Flags().StringVarP(&Fee, "fee", "f", "", "New fee (in ether)")
+	setFeeCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	flags.MarkFlagsAsRequired(setFeeCmd, "fee", "bridge")
 }
 
 func setFee(cmd *cobra.Command, args []string) {
-	feeAmount := cmd.Flag("fee").Value
-	bridgeAddress := cmd.Flag("bridge").Value
 	log.Debug().Msgf(`
 Setting new fee
 Fee amount: %s
-Bridge address: %s`, feeAmount, bridgeAddress)
+Bridge address: %s`, Fee, Bridge)
 }
 
 /*

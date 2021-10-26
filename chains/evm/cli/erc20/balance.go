@@ -2,7 +2,6 @@ package erc20
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
@@ -23,36 +22,50 @@ var balanceCmd = &cobra.Command{
 		txFabric := evmtransaction.NewTransaction
 		return BalanceCmd(cmd, args, txFabric)
 	},
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := validateBalanceFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+
+		processBalanceFlags(cmd, args)
+		return nil
+	},
 }
 
-func BindBalanceCmdFlags(cli *cobra.Command) {
-	cli.Flags().String("erc20Address", "", "ERC20 contract address")
-	cli.Flags().String("accountAddress", "", "address to receive balance of")
+func BindBalanceCmdFlags() {
+	balanceCmd.Flags().StringVarP(&Erc20Address, "erc20Address", "erc20add", "", "ERC20 contract address")
+	balanceCmd.Flags().StringVarP(&AccountAddress, "accountAddress", "accAdd", "", "address to receive balance of")
+	flags.MarkFlagsAsRequired(balanceCmd, "erc20Address", "accountAddress")
 }
 
 func init() {
-	BindBalanceCmdFlags(balanceCmd)
+	BindBalanceCmdFlags()
+}
+
+var accountAddr common.Address
+
+func validateBalanceFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Erc20Address) {
+		return fmt.Errorf("invalid recipient address %s", Recipient)
+	}
+	if !common.IsHexAddress(AccountAddress) {
+		return fmt.Errorf("invalid account address %s", AccountAddress)
+	}
+	return nil
+}
+
+func processBalanceFlags(cmd *cobra.Command, args []string) {
+	erc20Addr = common.HexToAddress(Erc20Address)
+	accountAddr = common.HexToAddress(AccountAddress)
 }
 
 func BalanceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	erc20Address := cmd.Flag("erc20Address").Value.String()
-	accountAddress := cmd.Flag("accountAddress").Value.String()
-
 	// fetch global flag values
 	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
-
-	if !common.IsHexAddress(erc20Address) {
-		return errors.New("invalid erc20Address address")
-	}
-	erc20Addr := common.HexToAddress(erc20Address)
-
-	if !common.IsHexAddress(accountAddress) {
-		return errors.New("invalid account address")
-	}
-	accountAddr := common.HexToAddress(accountAddress)
 
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {

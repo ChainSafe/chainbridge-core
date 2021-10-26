@@ -1,12 +1,15 @@
 package flags
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/big"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 
 	"github.com/ChainSafe/chainbridge-core/keystore"
+	"github.com/ChainSafe/chainbridge-core/types"
 
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/rs/zerolog/log"
@@ -59,4 +62,24 @@ func defineSender(cmd *cobra.Command) (*secp256k1.Keypair, error) {
 	}
 	var AliceKp = keystore.TestKeyRing.EthereumKeys[keystore.AliceKey]
 	return AliceKp, nil
+}
+
+func ProcessResourceID(resourceID string) (types.ResourceID, error) {
+	if resourceID[0:2] == "0x" {
+		resourceID = resourceID[2:]
+	}
+	resourceIdBytes, err := hex.DecodeString(resourceID)
+	if err != nil {
+		return [32]byte{}, err
+	}
+	return calls.SliceTo32Bytes(resourceIdBytes), nil
+}
+
+func MarkFlagsAsRequired(cmd *cobra.Command, flags ...string) {
+	for _, flag := range flags {
+		err := cmd.MarkFlagRequired(flag)
+		if err != nil {
+			panic(err)
+		}
+	}
 }

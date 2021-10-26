@@ -1,7 +1,6 @@
 package bridge
 
 import (
-	"errors"
 	"fmt"
 	"math/big"
 
@@ -26,43 +25,52 @@ var setBurnCmd = &cobra.Command{
 		txFabric := evmtransaction.NewTransaction
 		return SetBurnCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := validateSetBurnFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+
+		processSetBurnFlags(cmd, args)
+		return nil
+	},
 }
 
-func BindSetBurnCmdFlags(cli *cobra.Command) {
-	cli.Flags().String("handler", "", "ERC20 handler contract address")
-	cli.Flags().String("bridge", "", "bridge contract address")
-	cli.Flags().String("tokenContract", "", "token contract to be registered")
+func BindSetBurnCmdFlags() {
+	setBurnCmd.Flags().StringVarP(&Handler, "handler", "h", "", "ERC20 handler contract address")
+	setBurnCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	setBurnCmd.Flags().StringVarP(&TokenContract, "tokenContract", "tc", "", "token contract to be registered")
+	flags.MarkFlagsAsRequired(setBurnCmd, "handler", "bridge", "tokenContract")
 }
 
 func init() {
-	BindSetBurnCmdFlags(setBurnCmd)
+	BindSetBurnCmdFlags()
+}
+func validateSetBurnFlags(cmd *cobra.Command, args []string) error {
+
+	if !common.IsHexAddress(Handler) {
+		return fmt.Errorf("invalid handler address %s", Handler)
+	}
+	if !common.IsHexAddress(TokenContract) {
+		return fmt.Errorf("invalid token contract address %s", TokenContract)
+	}
+	if !common.IsHexAddress(Bridge) {
+		return fmt.Errorf("invalid bridge address %s", Bridge)
+	}
+	return nil
 }
 
+func processSetBurnFlags(cmd *cobra.Command, args []string) {
+	handlerAddr = common.HexToAddress(Handler)
+	bridgeAddr = common.HexToAddress(Bridge)
+	tokenContractAddr = common.HexToAddress(TokenContract)
+}
 func SetBurnCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
-	handlerAddress := cmd.Flag("handler").Value.String()
-	bridgeAddress := cmd.Flag("bridge").Value.String()
-	tokenAddress := cmd.Flag("tokenContract").Value.String()
-
 	// fetch global flag values
 	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
-
-	if !common.IsHexAddress(handlerAddress) {
-		err := errors.New("handler address is incorrect format")
-		log.Error().Err(err)
-		return err
-	}
-
-	if !common.IsHexAddress(tokenAddress) {
-		err := errors.New("tokenContract address is incorrect format")
-		log.Error().Err(err)
-		return err
-	}
-	handlerAddr := common.HexToAddress(handlerAddress)
-	bridgeAddr := common.HexToAddress(bridgeAddress)
-	tokenContractAddr := common.HexToAddress(tokenAddress)
 
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
