@@ -24,30 +24,47 @@ var (
 	}
 )
 
+type EVME2EConfig struct {
+	bridgeAddr         common.Address
+	erc20Addr          common.Address
+	erc20HandlerAddr   common.Address
+	assetStoreAddr     common.Address
+	genericHandlerAddr common.Address
+}
+
 func PrepareEVME2EEnv(
 	ethClient calls.ChainClient,
 	fabric calls.TxFabric,
 	domainID uint8,
 	treshHold *big.Int,
 	mintTo common.Address,
-) (common.Address, common.Address, common.Address, common.Address, common.Address, error) {
+) (EVME2EConfig, error) {
 	bridgeAddr, err := deployBridgeForTest(ethClient, fabric, domainID, treshHold)
 	if err != nil {
-		return common.Address{}, common.Address{}, common.Address{}, common.Address{}, common.Address{}, err
+		return EVME2EConfig{}, err
 	}
 
 	erc20Addr, erc20HandlerAddr, err := PrepareErc20EVME2EEnv(ethClient, fabric, bridgeAddr, mintTo)
 	if err != nil {
-		return common.Address{}, common.Address{}, common.Address{}, common.Address{}, common.Address{}, err
+		return EVME2EConfig{}, err
 	}
 
 	assetStoreAddr, genericHandlerAddr, err := PrepareGenericEVME2EEnv(ethClient, fabric, bridgeAddr)
 	if err != nil {
-		return common.Address{}, common.Address{}, common.Address{}, common.Address{}, common.Address{}, err
+		return EVME2EConfig{}, err
 	}
 
 	log.Debug().Msgf("All deployments and preparations are done")
-	return bridgeAddr, erc20Addr, erc20HandlerAddr, assetStoreAddr, genericHandlerAddr, nil
+
+	return EVME2EConfig{
+		bridgeAddr: bridgeAddr,
+
+		erc20Addr:        erc20Addr,
+		erc20HandlerAddr: erc20HandlerAddr,
+
+		genericHandlerAddr: genericHandlerAddr,
+		assetStoreAddr:     assetStoreAddr,
+	}, nil
 }
 
 func PrepareErc20EVME2EEnv(ethClient calls.ChainClient, fabric calls.TxFabric, bridgeAddr, mintTo common.Address) (common.Address, common.Address, error) {

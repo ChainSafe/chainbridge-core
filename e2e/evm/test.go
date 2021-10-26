@@ -5,8 +5,6 @@ import (
 	"math/big"
 	"time"
 
-	substrateTypes "github.com/centrifuge/go-substrate-rpc-client/types"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
@@ -54,31 +52,41 @@ type IntegrationTestSuite struct {
 
 func (s *IntegrationTestSuite) SetupSuite() {
 	ethClient, err := evmclient.NewEVMClientFromParams(s.endpoint1, s.adminKey.PrivateKey(), big.NewInt(consts.DefaultGasPrice))
-	s.Nil(err)
+	if err != nil {
+		panic(err)
+	}
 	s.client = ethClient
 
 	ethClient2, err := evmclient.NewEVMClientFromParams(s.endpoint2, s.adminKey.PrivateKey(), big.NewInt(consts.DefaultGasPrice))
-	s.Nil(err)
+	if err != nil {
+		panic(err)
+	}
 	s.client2 = ethClient2
 
 	b, err := ethClient.LatestBlock()
-	s.Nil(err)
+	if err != nil {
+		panic(err)
+	}
 
 	log.Debug().Msgf("Latest block %s", b.String())
 
-	bridgeAddr, erc20Addr, erc20HandlerAddr, assetStoreAddr, genericHandlerAddr, err := PrepareEVME2EEnv(ethClient, s.fabric1, 1, big.NewInt(1), s.adminKey.CommonAddress())
-	s.Nil(err)
+	config, err := PrepareEVME2EEnv(ethClient, s.fabric1, 1, big.NewInt(1), s.adminKey.CommonAddress())
+	if err != nil {
+		panic(err)
+	}
 
-	s.bridgeAddr = bridgeAddr
-	s.erc20ContractAddr = erc20Addr
-	s.erc20HandlerAddr = erc20HandlerAddr
-	s.genericHandlerAddr = genericHandlerAddr
-	s.assetStoreAddr = assetStoreAddr
-	_, _, _, _, _, err = PrepareEVME2EEnv(ethClient2, s.fabric2, 2, big.NewInt(1), s.adminKey.CommonAddress())
-	s.Nil(err)
+	s.bridgeAddr = config.bridgeAddr
+	s.erc20ContractAddr = config.erc20Addr
+	s.erc20HandlerAddr = config.erc20HandlerAddr
+	s.genericHandlerAddr = config.genericHandlerAddr
+	s.assetStoreAddr = config.assetStoreAddr
+	_, err = PrepareEVME2EEnv(ethClient2, s.fabric2, 2, big.NewInt(1), s.adminKey.CommonAddress())
+	if err != nil {
+		panic(err)
+	}
 
-	s.erc20RID = calls.SliceTo32Bytes(append(common.LeftPadBytes(genericHandlerAddr.Bytes(), 31), 1))
-	s.genericRID = calls.SliceTo32Bytes(append(common.LeftPadBytes(genericHandlerAddr.Bytes(), 31), 1))
+	s.erc20RID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.genericHandlerAddr.Bytes(), 31), 1))
+	s.genericRID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.genericHandlerAddr.Bytes(), 31), 1))
 }
 func (s *IntegrationTestSuite) TearDownSuite() {}
 func (s *IntegrationTestSuite) SetupTest()     {}
