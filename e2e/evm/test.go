@@ -10,6 +10,8 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
+
+	substrateTypes "github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/rs/zerolog/log"
@@ -85,8 +87,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		panic(err)
 	}
 
-	s.erc20RID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.genericHandlerAddr.Bytes(), 31), 1))
-	s.genericRID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.genericHandlerAddr.Bytes(), 31), 1))
+	s.erc20RID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.genericHandlerAddr.Bytes(), 31), uint8(0)))
+	s.genericRID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.genericHandlerAddr.Bytes(), 31), uint8(1)))
 }
 func (s *IntegrationTestSuite) TearDownSuite() {}
 func (s *IntegrationTestSuite) SetupTest()     {}
