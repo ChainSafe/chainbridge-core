@@ -15,4 +15,5 @@ func init() {
 	ERC721Cmd.AddCommand(approveCmd)
 	ERC721Cmd.AddCommand(ownerCmd)
 	ERC721Cmd.AddCommand(depositCmd)
+	ERC721Cmd.AddCommand(addMinterCmd)
 }
