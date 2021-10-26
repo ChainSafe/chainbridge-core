@@ -4,203 +4,107 @@ import (
 	"errors"
 	"math/big"
 	"testing"
-	"time"
 
-	mock_blockstore "github.com/ChainSafe/chainbridge-core/blockstore/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	mock_listener "github.com/ChainSafe/chainbridge-core/chains/evm/listener/mock"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
 )
 
-type EVMListenerTestSuite struct {
+var errIncorrectCalldataLen = errors.New("invalid calldata length: less than 84 bytes")
+
+type ListenerTestSuite struct {
 	suite.Suite
-	chainReaderMock    *mock_listener.MockChainClient
-	eventHandlerMock   *mock_listener.MockEventHandler
-	keyValueWriterMock *mock_blockstore.MockKeyValueWriter
-	gomockController   *gomock.Controller
+	mockEventHandler *mock_listener.MockEventHandler
 }
 
 func TestRunTestSuite(t *testing.T) {
-	suite.Run(t, new(EVMListenerTestSuite))
+	suite.Run(t, new(ListenerTestSuite))
 }
 
-func (s *EVMListenerTestSuite) SetupSuite()    {}
-func (s *EVMListenerTestSuite) TearDownSuite() {}
-func (s *EVMListenerTestSuite) SetupTest() {
-	s.gomockController = gomock.NewController(s.T())
-	s.chainReaderMock = mock_listener.NewMockChainClient(s.gomockController)
-	s.eventHandlerMock = mock_listener.NewMockEventHandler(s.gomockController)
-	s.keyValueWriterMock = mock_blockstore.NewMockKeyValueWriter(s.gomockController)
+func (s *ListenerTestSuite) SetupSuite()    {}
+func (s *ListenerTestSuite) TearDownSuite() {}
+func (s *ListenerTestSuite) SetupTest() {
+	gomockController := gomock.NewController(s.T())
+	s.mockEventHandler = mock_listener.NewMockEventHandler(gomockController)
 }
-func (s *EVMListenerTestSuite) TearDownTest() {}
+func (s *ListenerTestSuite) TearDownTest() {}
 
-var (
-	testBridgeAddress     = common.HexToAddress("")
-	testDomainID          = uint8(0)
-	testLogsForStartBlock = &listener.DepositLogs{
-		DestinationID: 0,
-		ResourceID:    [32]byte{},
-		DepositNonce:  5,
+func (s *ListenerTestSuite) TestErc20HandleEvent() {
+	// 0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b
+	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}
+
+	// construct ERC20 deposit data
+	// follows behavior of solidity tests
+	// https://github.com/ChainSafe/chainbridge-solidity/blob/develop/test/contractBridge/depositERC20.js#L46-L50
+	var calldata []byte
+	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(2), 32)...)
+	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(recipientByteSlice))), 32)...)
+	calldata = append(calldata, recipientByteSlice...)
+
+	depositLog := &listener.DepositLogs{
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		Data:                calldata,
+		HandlerResponse:     []byte{},
 	}
-	testMessage = &relayer.Message{
-		Source:       0,
-		Destination:  1,
-		DepositNonce: 5,
-		ResourceId:   [32]byte{},
-		Payload:      []interface{}{},
-		Type:         relayer.NonFungibleTransfer,
+
+	sourceID := uint8(1)
+	amountParsed := calldata[:32]
+	recipientAddressParsed := calldata[64:]
+
+	expected := &relayer.Message{
+		Source:       sourceID,
+		Destination:  depositLog.DestinationDomainID,
+		DepositNonce: depositLog.DepositNonce,
+		ResourceId:   depositLog.ResourceID,
+		Type:         relayer.FungibleTransfer,
+		Payload: []interface{}{
+			amountParsed,
+			recipientAddressParsed,
+		},
 	}
-)
 
-func (s *EVMListenerTestSuite) TestValidMessageIsReturned() {
-	latestBlock := big.NewInt(100)
-	startBlock := big.NewInt(0).Sub(latestBlock, listener.BlockDelay)
+	message, err := listener.Erc20EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
 
-	// Define mocks
+	s.Nil(err)
 
-	s.chainReaderMock.EXPECT().LatestBlock().Return(latestBlock, nil).AnyTimes()
+	s.NotNil(message)
 
-	s.chainReaderMock.EXPECT().FetchDepositLogs(
-		gomock.Any(),
-		gomock.Eq(testBridgeAddress),
-		gomock.Eq(startBlock),
-		gomock.Eq(startBlock),
-	).Return([]*listener.DepositLogs{testLogsForStartBlock}, nil).AnyTimes()
-
-	s.eventHandlerMock.EXPECT().HandleEvent(
-		gomock.Eq(testDomainID),
-		gomock.Eq(testLogsForStartBlock.DestinationID),
-		gomock.Eq(testLogsForStartBlock.DepositNonce),
-		gomock.Eq(testLogsForStartBlock.ResourceID),
-	).Return(testMessage, nil).AnyTimes()
-
-	s.keyValueWriterMock.EXPECT().SetByKey(
-		gomock.Any(),
-		gomock.Any(),
-	).Return(nil).AnyTimes()
-
-	// Start EVMListener
-
-	l := listener.NewEVMListener(
-		s.chainReaderMock, s.eventHandlerMock, testBridgeAddress,
-	)
-
-	stopCh := make(chan struct{})
-	errCh := make(chan error)
-
-	messageCh := l.ListenToEvents(
-		startBlock,
-		testDomainID,
-		s.keyValueWriterMock,
-		stopCh,
-		errCh,
-	)
-
-	// Check that message is sent to message channel
-	s.Equal(testMessage, <-messageCh)
-	stopCh <- struct{}{}
+	s.Equal(message, expected)
 }
 
-func (s *EVMListenerTestSuite) TestBlockDelay() {
-	latestBlock := big.NewInt(100)
-	delta := big.NewInt(0).Sub(listener.BlockDelay, big.NewInt(1))
-	startBlock := big.NewInt(0).Sub(latestBlock, delta)
+func (s *ListenerTestSuite) TestErc20HandleEventIncorrectCalldataLen() {
+	// 0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b
+	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}
 
-	// Define mocks
+	// construct ERC20 deposit data
+	// follows behavior of solidity tests
+	// https://github.com/ChainSafe/chainbridge-solidity/blob/develop/test/contractBridge/depositERC20.js#L46-L50
+	var calldata []byte
+	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(2), 16)...)
+	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(recipientByteSlice))), 16)...)
+	calldata = append(calldata, recipientByteSlice...)
 
-	s.chainReaderMock.EXPECT().LatestBlock().Return(latestBlock, nil).AnyTimes()
-
-	s.chainReaderMock.EXPECT().FetchDepositLogs(
-		gomock.Any(),
-		gomock.Eq(testBridgeAddress),
-		gomock.Eq(startBlock),
-		gomock.Eq(startBlock),
-	).Return([]*listener.DepositLogs{testLogsForStartBlock}, nil).AnyTimes()
-
-	s.eventHandlerMock.EXPECT().HandleEvent(
-		gomock.Eq(testDomainID),
-		gomock.Eq(testLogsForStartBlock.DestinationID),
-		gomock.Eq(testLogsForStartBlock.DepositNonce),
-		gomock.Eq(testLogsForStartBlock.ResourceID),
-	).Return(testMessage, nil).AnyTimes()
-
-	s.keyValueWriterMock.EXPECT().SetByKey(
-		gomock.Any(),
-		gomock.Any(),
-	).Return(nil).AnyTimes()
-
-	// Start EVMListener
-
-	l := listener.NewEVMListener(
-		s.chainReaderMock, s.eventHandlerMock, testBridgeAddress,
-	)
-
-	stopCh := make(chan struct{})
-	errCh := make(chan error)
-
-	messageCh := l.ListenToEvents(
-		startBlock,
-		testDomainID,
-		s.keyValueWriterMock,
-		stopCh,
-		errCh,
-	)
-
-	time.Sleep(listener.BlockRetryInterval * 2)
-
-	// Check that message and error channels didn't recieve anything
-	select {
-	case m := <-messageCh:
-		s.Fail("", m)
-	case e := <-errCh:
-		s.Fail("", e)
-	default:
-		stopCh <- struct{}{}
+	depositLog := &listener.DepositLogs{
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		Data:                calldata,
+		HandlerResponse:     []byte{},
 	}
-}
 
-func (s *EVMListenerTestSuite) TestErrorOnHandleEventReturnsError() {
-	latestBlock := big.NewInt(100)
-	startBlock := big.NewInt(0).Sub(latestBlock, listener.BlockDelay)
+	sourceID := uint8(1)
 
-	// Define mocks
+	message, err := listener.Erc20EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
 
-	s.chainReaderMock.EXPECT().LatestBlock().Return(latestBlock, nil)
+	s.Nil(message)
 
-	s.chainReaderMock.EXPECT().FetchDepositLogs(
-		gomock.Any(),
-		gomock.Eq(testBridgeAddress),
-		gomock.Eq(startBlock),
-		gomock.Eq(startBlock),
-	).Return([]*listener.DepositLogs{testLogsForStartBlock}, nil)
-
-	s.eventHandlerMock.EXPECT().HandleEvent(
-		gomock.Eq(testDomainID),
-		gomock.Eq(testLogsForStartBlock.DestinationID),
-		gomock.Eq(testLogsForStartBlock.DepositNonce),
-		gomock.Eq(testLogsForStartBlock.ResourceID),
-	).Return(nil, errors.New(""))
-
-	// Start EVMListener
-
-	l := listener.NewEVMListener(
-		s.chainReaderMock, s.eventHandlerMock, testBridgeAddress,
-	)
-
-	stopCh := make(chan struct{})
-	errCh := make(chan error)
-
-	_ = l.ListenToEvents(
-		startBlock,
-		testDomainID,
-		s.keyValueWriterMock,
-		stopCh,
-		errCh,
-	)
-
-	// Check that error from event handler is propagated
-	s.Error(<-errCh)
+	s.EqualError(err, errIncorrectCalldataLen.Error())
 }

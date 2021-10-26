@@ -60,6 +60,7 @@ Usage:
 Available Commands:
   generate    Generate bridge keystore (Secp256k1)
   import      Import bridge keystore
+  transfer    Transfer base currency
 
 Flags:
   -h, --help   help for accounts
@@ -86,6 +87,20 @@ Usage:
 Flags:
   -h, --help              help for import
       --password string   password to encrypt with
+```
+
+#### transfer
+The generate subcommand is used to transfer the base currency.
+
+```bash
+Usage:
+   evm-cli accounts transfer [flags]
+
+Flags:
+      --amount string      transfer amount
+      --decimals uint      base token decimals (default 18)
+  -h, --help               help for transfer
+      --recipient string   recipient address
 ```
 
 ### Admin
@@ -408,7 +423,7 @@ Usage:
 Flags:
       --erc20Address string   ERC20 contract address
   -h, --help                  help for add-minter
-      --minter string         address of minter
+      --minter string         handler contract address
 
 ```
 

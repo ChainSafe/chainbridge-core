@@ -13,14 +13,10 @@ import (
 type EVMConfig struct {
 	SharedEVMConfig config.SharedEVMConfig
 	kp              *secp256k1.Keypair
-	EgsApiKey       string // API key for ethgasstation to query gas prices
-	EgsSpeed        string // The speed which a transaction should be processed: average, fast, fastest. Default: fast
 }
 
 type RawEVMConfig struct {
 	config.RawSharedEVMConfig `mapstructure:",squash"`
-	EgsApiKey                 string `mapstructure:"egsApiKey"`
-	EgsSpeed                  string `mapstructure:"egsSpeed"`
 }
 
 func NewConfig() *EVMConfig {
@@ -58,8 +54,6 @@ func ParseConfig(rawConfig *RawEVMConfig) (*EVMConfig, error) {
 
 	config := &EVMConfig{
 		SharedEVMConfig: *cfg,
-		EgsApiKey:       "",
-		EgsSpeed:        "",
 	}
 
 	return config, nil

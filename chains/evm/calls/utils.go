@@ -2,6 +2,7 @@ package calls
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	gomath "math"
 	"math/big"
@@ -16,20 +17,43 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type TxFabric func(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) evmclient.CommonTransaction
+type TxFabric func(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrices []*big.Int, data []byte) (evmclient.CommonTransaction, error)
 
-type ChainClient interface {
-	SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error)
-	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
-	WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error)
+type ClientContractChecker interface {
 	CodeAt(ctx context.Context, contract common.Address, blockNumber *big.Int) ([]byte, error)
+}
+
+type ContractCallerClient interface {
+	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
+}
+
+type ContractCheckerCallerClient interface {
+	ContractCallerClient
+	ClientContractChecker
+}
+
+type ClientDeployer interface {
+	ClientDispatcher
+	ClientContractChecker
+}
+
+type GasPricer interface {
+	GasPrice() ([]*big.Int, error)
+}
+
+type ClientDispatcher interface {
+	WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error)
+	SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error)
 	UnsafeNonce() (*big.Int, error)
 	LockNonce()
 	UnlockNonce()
 	UnsafeIncreaseNonce() error
-	GasPrice() (*big.Int, error)
 	From() common.Address
-	Simulate(block *big.Int, txHash common.Hash, fromAddress common.Address) ([]byte, error)
+}
+
+type SimulateCallerClient interface {
+	ContractCallerClient
+	TransactionByHash(ctx context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error)
 }
 
 func SliceTo32Bytes(in []byte) [32]byte {
@@ -38,6 +62,8 @@ func SliceTo32Bytes(in []byte) [32]byte {
 	return res
 }
 
+// ToCallArg is the function that converts ethereum.CallMsg into more abstract map
+// This is done for matter of  making EVMClient more abstract since some go-ethereum forks uses different messages types
 func ToCallArg(msg ethereum.CallMsg) map[string]interface{} {
 	arg := map[string]interface{}{
 		"from": msg.From,
@@ -76,34 +102,24 @@ func UserAmountToWei(amount string, decimal *big.Int) (*big.Int, error) {
 	return i, nil
 }
 
-
-type ClientDispatcher interface {
-	GasPrice() (*big.Int, error)
-	WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error)
-	SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error)
-	UnsafeNonce() (*big.Int, error)
-	LockNonce()
-	UnlockNonce()
-	UnsafeIncreaseNonce() error
-	From() common.Address
-}
-
-func Transact(client ClientDispatcher, txFabric TxFabric, to *common.Address, data []byte, gasLimit uint64) (common.Hash, error) {
-	gp, err := client.GasPrice()
-	if err != nil {
-		return common.Hash{}, err
-	}
+func Transact(client ClientDispatcher, txFabric TxFabric, gasPriceClient GasPricer, to *common.Address, data []byte, gasLimit uint64, value *big.Int) (common.Hash, error) {
 	client.LockNonce()
 	n, err := client.UnsafeNonce()
 	if err != nil {
+		return common.Hash{}, nil
+	}
+	gp, err := gasPriceClient.GasPrice()
+	if err != nil {
 		return common.Hash{}, err
 	}
-	tx := txFabric(n.Uint64(), to, big.NewInt(0), gasLimit, gp, data)
+	tx, err := txFabric(n.Uint64(), to, big.NewInt(0), gasLimit, gp, data)
+	if err != nil {
+		return common.Hash{}, err
+	}
 	_, err = client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		return common.Hash{}, err
 	}
-
 	log.Debug().Msgf("hash: %v from: %s", tx.Hash(), client.From())
 	_, err = client.WaitAndReturnTxReceipt(tx.Hash())
 	if err != nil {
@@ -123,4 +139,37 @@ func ConstructErc20DepositData(destRecipient []byte, amount *big.Int) []byte {
 	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(destRecipient))), 32)...)
 	data = append(data, destRecipient...)
 	return data
+}
+
+// Simulate function gets transaction info by hash and then executes a message call transaction, which is directly executed in the VM
+// of the node, but never mined into the blockchain. Execution happens against provided block.
+func Simulate(c SimulateCallerClient, block *big.Int, txHash common.Hash, from common.Address) ([]byte, error) {
+	tx, _, err := c.TransactionByHash(context.TODO(), txHash)
+	if err != nil {
+		log.Debug().Msgf("[client] tx by hash error: %v", err)
+		return nil, err
+	}
+
+	log.Debug().Msgf("from: %v to: %v gas: %v gasPrice: %v value: %v data: %v", from, tx.To(), tx.Gas(), tx.GasPrice(), tx.Value(), tx.Data())
+
+	msg := ethereum.CallMsg{
+		From:     from,
+		To:       tx.To(),
+		Gas:      tx.Gas(),
+		GasPrice: tx.GasPrice(),
+		Value:    tx.Value(),
+		Data:     tx.Data(),
+	}
+	res, err := c.CallContract(context.TODO(), ToCallArg(msg), block)
+	if err != nil {
+		log.Debug().Msgf("[client] call contract error: %v", err)
+		return nil, err
+	}
+	bs, err := hex.DecodeString(common.Bytes2Hex(res))
+	if err != nil {
+		log.Debug().Msgf("[client] decode string error: %v", err)
+		return nil, err
+	}
+	log.Debug().Msg(string(bs))
+	return bs, nil
 }

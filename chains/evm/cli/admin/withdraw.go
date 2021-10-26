@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -13,32 +14,26 @@ var withdrawCmd = &cobra.Command{
 }
 
 func init() {
-	withdrawCmd.Flags().String("amount", "", "token amount to withdraw. Should be set or ID or amount if both set error will occur")
-	withdrawCmd.Flags().String("id", "", "token ID to withdraw. Should be set or ID or amount if both set error will occur")
-	withdrawCmd.Flags().String("bridge", "", "bridge contract address")
-	withdrawCmd.Flags().String("handler", "", "handler contract address")
-	withdrawCmd.Flags().String("token", "", "ERC20 or ERC721 token contract address")
-	withdrawCmd.Flags().String("recipient", "", "address to withdraw to")
-	withdrawCmd.Flags().Uint64("decimals", 0, "ERC20 token decimals")
+	withdrawCmd.Flags().StringVarP(&Amount, "amount", "a", "", "token amount to withdraw. Should be set or ID or amount if both set error will occur")
+	withdrawCmd.Flags().StringVarP(&TokenID, "tokenId", "id", "", "token ID to withdraw. Should be set or ID or amount if both set error will occur")
+	withdrawCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	withdrawCmd.Flags().StringVarP(&Handler, "handler", "h", "", "handler contract address")
+	withdrawCmd.Flags().StringVarP(&Token, "token", "t", "", "ERC20 or ERC721 token contract address")
+	withdrawCmd.Flags().StringVarP(&Recipient, "recipient", "r", "", "address to withdraw to")
+	withdrawCmd.Flags().Uint64VarP(&Decimals, "decimals", "d", 0, "ERC20 token decimals")
+	flags.MarkFlagsAsRequired(withdrawCmd, "amount", "tokenId", "bridge", "handler", "token", "recipient", "decimals")
 }
 
 func withdraw(cmd *cobra.Command, args []string) {
-	amount := cmd.Flag("amount").Value
-	id := cmd.Flag("id").Value
-	bridgeAddress := cmd.Flag("bridge").Value
-	handler := cmd.Flag("handler").Value
-	token := cmd.Flag("token").Value
-	recipient := cmd.Flag("recipient").Value
-	decimals := cmd.Flag("decimals").Value
 	log.Debug().Msgf(`
 Withdrawing
 Amount: %s
-ID: %s
+TokenID: %s
 Bridge address: %s
 Handler: %s
 Token: %s
 Recipient: %s
-Decimals: %v`, amount, id, bridgeAddress, handler, token, recipient, decimals)
+Decimals: %v`, Amount, TokenID, Bridge, Handler, Token, Recipient, Decimals)
 }
 
 /*

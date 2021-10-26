@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -13,14 +14,14 @@ var pauseCmd = &cobra.Command{
 }
 
 func init() {
-	pauseCmd.Flags().String("bridge", "", "bridge contract address")
+	pauseCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	flags.MarkFlagsAsRequired(pauseCmd, "bridge")
 }
 
 func pause(cmd *cobra.Command, args []string) {
-	bridgeAddress := cmd.Flag("bridge").Value
 	log.Debug().Msgf(`
 Pausing
-Bridge address: %s`, bridgeAddress)
+Bridge address: %s`, Bridge)
 }
 
 /*

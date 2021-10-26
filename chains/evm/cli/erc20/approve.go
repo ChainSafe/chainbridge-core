@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
@@ -21,40 +23,63 @@ var approveCmd = &cobra.Command{
 	Long:  "Approve tokens in an ERC20 contract for transfer",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return ApproveCmd(cmd, args, txFabric)
+		return ApproveCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+	},
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := validateApproveFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+
+		err = processApproveFlags(cmd, args)
+		return err
 	},
 }
 
-func BindApproveCmdFlags(cli *cobra.Command) {
-	cli.Flags().String("erc20address", "", "ERC20 contract address")
-	cli.Flags().String("amount", "", "amount to grant allowance")
-	cli.Flags().String("recipient", "", "address of recipient")
-	cli.Flags().Uint64("decimals", 18, "ERC20 token decimals")
-	err := cli.MarkFlagRequired("decimals")
-	if err != nil {
-		panic(err)
-	}
+func BindApproveCmdFlags() {
+	balanceCmd.Flags().StringVarP(&Erc20Address, "erc20Address", "erc20add", "", "ERC20 contract address")
+	depositCmd.Flags().StringVarP(&Amount, "amount", "a", "", "amount to grant allowance")
+	depositCmd.Flags().StringVarP(&Recipient, "recipient", "r", "", "address of recipient")
+	depositCmd.Flags().Uint64VarP(&Decimals, "decimals", "r", 18, "ERC20 token decimals")
+	flags.MarkFlagsAsRequired(depositCmd, "erc20Address", "amount", "recipient")
 }
 
 func init() {
-	BindApproveCmdFlags(approveCmd)
+	BindApproveCmdFlags()
 }
 
-func ApproveCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	erc20Address := cmd.Flag("erc20address").Value.String()
-	recipientAddress := cmd.Flag("recipient").Value.String()
-	amount := cmd.Flag("amount").Value.String()
-	decimals, err := cmd.Flags().GetUint64("decimals")
+func validateApproveFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Erc20Address) {
+		return errors.New("invalid erc20Address address")
+	}
+	if !common.IsHexAddress(Recipient) {
+		return errors.New("invalid minter address")
+	}
+	return nil
+}
+
+func processApproveFlags(cmd *cobra.Command, args []string) error {
+	var err error
+
+	decimals := big.NewInt(int64(Decimals))
+	erc20Addr = common.HexToAddress(Erc20Address)
+	recipientAddress = common.HexToAddress(Recipient)
+	realAmount, err = calls.UserAmountToWei(Amount, decimals)
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func ApproveCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 	log.Debug().Msgf(`
 Approving ERC20
 ERC20 address: %s
 Recipient address: %s
 Amount: %s
 Decimals: %v`,
-		erc20Address, recipientAddress, amount, decimals)
+		Erc20Address, Recipient, Amount, Decimals)
 
 	// fetch global flag values
 	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
@@ -62,39 +87,23 @@ Decimals: %v`,
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	decimalsBigInt := big.NewInt(0).SetUint64(decimals)
-
-	if !common.IsHexAddress(erc20Address) {
-		return errors.New("invalid erc20Address address")
-	}
-	erc20Addr := common.HexToAddress(erc20Address)
-
-	if !common.IsHexAddress(recipientAddress) {
-		return errors.New("invalid minter address")
-	}
-	recipientAddr := common.HexToAddress(recipientAddress)
-
-	realAmount, err := utils.UserAmountToWei(amount, decimalsBigInt)
-	if err != nil {
-		log.Fatal().Err(err)
-		return err
-	}
-
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
-	i, err := calls.PrepareErc20ApproveInput(recipientAddr, realAmount)
+	gasPricer.SetClient(ethClient)
+	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
+	i, err := calls.PrepareErc20ApproveInput(recipientAddress, realAmount)
 	if err != nil {
 		log.Fatal().Err(err)
 		return err
 	}
-	_, err = calls.Transact(ethClient, txFabric, &erc20Addr, i, gasLimit)
+	_, err = calls.Transact(ethClient, txFabric, gasPricer, &erc20Addr, i, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Fatal().Err(err)
 		return err
 	}
-	log.Info().Msgf("%s account granted allowance on %v tokens of %s", recipientAddr.String(), amount, recipientAddr.String())
+	log.Info().Msgf("%s account granted allowance on %v tokens of %s", recipientAddress.String(), Amount, recipientAddress.String())
 	return nil
 }

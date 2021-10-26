@@ -2,6 +2,7 @@ package erc20
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -17,26 +18,24 @@ var allowanceCmd = &cobra.Command{
 	},
 }
 
-func BindAllowanceCmdFlags(cli *cobra.Command) {
-	cli.Flags().String("erc20Address", "", "ERC20 contract address")
-	cli.Flags().String("owner", "", "address of token owner")
-	cli.Flags().String("spender", "", "address of spender")
+func BindAllowanceCmdFlags() {
+	allowanceCmd.Flags().StringVarP(&Erc20Address, "erc20Address", "erc20add", "", "ERC20 contract address")
+	allowanceCmd.Flags().StringVarP(&OwnerAddress, "owner", "o", "", "address of token owner")
+	allowanceCmd.Flags().StringVarP(&SpenderAddress, "spender", "s", "", "address of spender")
+	flags.MarkFlagsAsRequired(allowanceCmd, "erc20Address", "owner", "spender")
 }
 
 func init() {
-	BindAllowanceCmdFlags(allowanceCmd)
+	BindAllowanceCmdFlags()
 }
 
 func AllowanceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	erc20Address := cmd.Flag("erc20Address").Value.String()
-	ownerAddress := cmd.Flag("owner").Value.String()
-	spenderAddress := cmd.Flag("spender").Value.String()
 	log.Debug().Msgf(`
 Determing allowance
 ERC20 address: %s
 Owner address: %s
 Spender address: %s`,
-		erc20Address, ownerAddress, spenderAddress)
+		Erc20Address, OwnerAddress, SpenderAddress)
 	return nil
 
 	/*
