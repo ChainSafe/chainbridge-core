@@ -87,7 +87,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		panic(err)
 	}
 
-	s.erc20RID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.genericHandlerAddr.Bytes(), 31), uint8(0)))
+	s.erc20RID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.erc20Addr.Bytes(), 31), uint8(0)))
 	s.genericRID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.genericHandlerAddr.Bytes(), 31), uint8(1)))
 }
 func (s *IntegrationTestSuite) TearDownSuite() {}
