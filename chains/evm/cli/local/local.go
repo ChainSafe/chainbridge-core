@@ -5,7 +5,6 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
@@ -31,13 +30,13 @@ var (
 
 func localSetup(cmd *cobra.Command, args []string) error {
 	// init client1
-	ethClient, err := evmclient.NewEVMClientFromParams(localEndpoint1, evm.AliceKp.PrivateKey(), big.NewInt(consts.DefaultGasPrice))
+	ethClient, err := evmclient.NewEVMClientFromParams(localEndpoint1, evm.AliceKp.PrivateKey())
 	if err != nil {
 		return err
 	}
 
 	// init client2
-	ethClient2, err := evmclient.NewEVMClientFromParams(localEndpoint2, evm.AliceKp.PrivateKey(), big.NewInt(consts.DefaultGasPrice))
+	ethClient2, err := evmclient.NewEVMClientFromParams(localEndpoint2, evm.AliceKp.PrivateKey())
 	if err != nil {
 		return err
 	}
