@@ -56,12 +56,6 @@ type DepositLogs struct {
 	HandlerResponse []byte
 }
 
-type ChainClient interface {
-	LatestBlock() (*big.Int, error)
-	FetchDepositLogs(ctx context.Context, address common.Address, startBlock *big.Int, endBlock *big.Int) ([]*DepositLogs, error)
-	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
-}
-
 type CommonTransaction interface {
 	// Hash returns the transaction hash.
 	Hash() common.Hash

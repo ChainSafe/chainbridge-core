@@ -23,14 +23,19 @@ var BlockDelay = big.NewInt(10) //TODO: move to config
 type EventHandler interface {
 	HandleEvent(sourceID, destID uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error)
 }
+type ChainClient interface {
+	LatestBlock() (*big.Int, error)
+	FetchDepositLogs(ctx context.Context, address common.Address, startBlock *big.Int, endBlock *big.Int) ([]*evmclient.DepositLogs, error)
+	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
+}
 
 type EVMListener struct {
-	chainReader   evmclient.ChainClient
+	chainReader   ChainClient
 	eventHandler  EventHandler
 	bridgeAddress common.Address
 }
 
-func NewEVMListener(chainReader evmclient.ChainClient, handler EventHandler, bridgeAddress common.Address) *EVMListener {
+func NewEVMListener(chainReader ChainClient, handler EventHandler, bridgeAddress common.Address) *EVMListener {
 	return &EVMListener{chainReader: chainReader, eventHandler: handler, bridgeAddress: bridgeAddress}
 }
 

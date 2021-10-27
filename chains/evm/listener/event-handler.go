@@ -7,7 +7,6 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 
 	internalTypes "github.com/ChainSafe/chainbridge-core/types"
@@ -22,10 +21,10 @@ type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID inte
 type ETHEventHandler struct {
 	bridgeAddress common.Address
 	eventHandlers EventHandlers
-	client        evmclient.ChainClient
+	client        ChainClient
 }
 
-func NewETHEventHandler(address common.Address, client evmclient.ChainClient) *ETHEventHandler {
+func NewETHEventHandler(address common.Address, client ChainClient) *ETHEventHandler {
 	return &ETHEventHandler{
 		bridgeAddress: address,
 		client:        client,
