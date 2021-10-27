@@ -2,13 +2,11 @@ package admin
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -19,55 +17,64 @@ var isRelayerCmd = &cobra.Command{
 	Use:   "is-relayer",
 	Short: "Check if an address is registered as a relayer",
 	Long:  "Check if an address is registered as a relayer",
-	RunE:   func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return IsRelayer(cmd, args, txFabric)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return IsRelayer(cmd, args)
+	},
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := ValidateIsRelayerFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+
+		ProcessIsRelayerFlags(cmd, args)
+		return nil
 	},
 }
 
-func BindIsRelayerFlags(cli *cobra.Command) {
-	cli.Flags().String("relayer", "", "address to check")
-	cli.Flags().String("bridge", "", "bridge contract address")
+func BindIsRelayerFlags() {
+	isRelayerCmd.Flags().StringVar(&Relayer, "relayer", "", "address to check")
+	isRelayerCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	flags.MarkFlagsAsRequired(isRelayerCmd, "relayer", "bridge")
 }
 
 func init() {
-	BindIsRelayerFlags(isRelayerCmd)
+	BindIsRelayerFlags()
 }
 
-func IsRelayer(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	relayerAddress := cmd.Flag("relayer").Value.String()
-	bridgeAddress := cmd.Flag("bridge").Value.String()
+func ValidateIsRelayerFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Relayer) {
+		return fmt.Errorf("invalid relayer address %s", Relayer)
+	}
+	if !common.IsHexAddress(Bridge) {
+		return fmt.Errorf("invalid bridge address %s", Bridge)
+	}
+	return nil
+}
+
+func ProcessIsRelayerFlags(cmd *cobra.Command, args []string) {
+	relayerAddr = common.HexToAddress(Relayer)
+	bridgeAddr = common.HexToAddress(Bridge)
+}
+
+func IsRelayer(cmd *cobra.Command, args []string) error {
 	log.Debug().Msgf(`
 	Checking relayer
 	Relayer address: %s
-	Bridge address: %s`, relayerAddress, bridgeAddress)
+	Bridge address: %s`, Relayer, Bridge)
 
 	// fetch global flag values
-	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	if !common.IsHexAddress(relayerAddress) {
-		err := errors.New("handler address is incorrect format")
-		log.Error().Err(err)
-		return err
-	}
-
-	if !common.IsHexAddress(bridgeAddress) {
-		err := errors.New("tokenContract address is incorrect format")
-		log.Error().Err(err)
-		return err
-	}
-	relayer := common.HexToAddress(relayerAddress)
-	bridge := common.HexToAddress(bridgeAddress)
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(err)
 		return err
 	}
 	// erc20Addr, accountAddr
-	input, err := calls.PrepareIsRelayerInput(relayer)
+	input, err := calls.PrepareIsRelayerInput(relayerAddr)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("prepare input error: %v", err))
 		return err
@@ -75,7 +82,7 @@ func IsRelayer(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 
 	msg := ethereum.CallMsg{
 		From: common.Address{},
-		To:   &bridge,
+		To:   &bridgeAddr,
 		Data: input,
 	}
 
@@ -87,10 +94,10 @@ func IsRelayer(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 
 	if len(out) == 0 {
 		// Make sure we have a contract to operate on, and bail out otherwise.
-		if code, err := ethClient.CodeAt(context.Background(), bridge, nil); err != nil {
+		if code, err := ethClient.CodeAt(context.Background(), bridgeAddr, nil); err != nil {
 			return err
 		} else if len(code) == 0 {
-			return fmt.Errorf("no code at provided address %s", bridge.String())
+			return fmt.Errorf("no code at provided address %s", bridgeAddr.String())
 		}
 	}
 	b, err := calls.ParseIsRelayerOutput(out)
@@ -99,10 +106,9 @@ func IsRelayer(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error
 		return err
 	}
 	if !b {
-		log.Info().Msgf("Address %s is NOT relayer", relayer.String())
+		log.Info().Msgf("Address %s is NOT relayer", relayerAddr.String())
 	} else {
-		log.Info().Msgf("Address %s is relayer", relayer.String())
+		log.Info().Msgf("Address %s is relayer", relayerAddr.String())
 	}
 	return nil
 }
-

@@ -7,7 +7,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -18,50 +17,68 @@ var simulateCmd = &cobra.Command{
 	Short: "Simulate transaction invocation",
 	Long:  "Replay a failed transaction by simulating invocation; not state-altering",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return SimulateCmd(cmd, args, txFabric)
+		return SimulateCmd(cmd)
+	},
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := ValidateSimulateFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+
+		ProcessSimulateFlags(cmd, args)
+		return nil
 	},
 }
 
-func BindSimulateCmdFlags(cli *cobra.Command) {
-	cli.Flags().String("txHash", "", "transaction hash")
-	cli.Flags().String("blockNumber", "", "block number")
-	cli.Flags().String("fromAddress", "", "address of sender")
+func BindSimulateCmdFlags() {
+	simulateCmd.Flags().StringVar(&TxHash, "txHash", "", "transaction hash")
+	simulateCmd.Flags().StringVar(&BlockNumber, "blockNumber", "", "block number")
+	simulateCmd.Flags().StringVar(&FromAddress, "fromAddress", "", "address of sender")
+	flags.MarkFlagsAsRequired(simulateCmd, "txHash", "blockNumber", "fromAddress")
 }
 
 func init() {
-	BindSimulateCmdFlags(simulateCmd)
+	BindSimulateCmdFlags()
 }
 
-func SimulateCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	txHash := cmd.Flag("txHash").Value.String()
-	blockNumber := cmd.Flag("blockNumber").Value.String()
-	fromAddress := cmd.Flag("fromAddress").Value.String()
+func ValidateSimulateFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(TxHash) {
+		return fmt.Errorf("invalid tx hash %s", TxHash)
+	}
+	if !common.IsHexAddress(FromAddress) {
+		return fmt.Errorf("invalid from address %s", FromAddress)
+	}
+	return nil
+}
 
+func ProcessSimulateFlags(cmd *cobra.Command, args []string) {
+	txHash = common.HexToHash(TxHash)
+	fromAddr = common.HexToAddress(FromAddress)
+}
+
+func SimulateCmd(cmd *cobra.Command) error {
 	// fetch global flag values
-	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
 	// convert string block number to big.Int
-	// ignore success bool
-	blockNumberBigInt, _ := new(big.Int).SetString(blockNumber, 10)
+	blockNumberBigInt, _ := new(big.Int).SetString(BlockNumber, 10)
 
 	log.Debug().Msgf(`
 Simulating transaction
 Tx hash: %s
 Block number: %v
 From address: %s`,
-		txHash, blockNumberBigInt, fromAddress)
+		TxHash, blockNumberBigInt, FromAddress)
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
-
-	data, err := ethClient.Simulate(blockNumberBigInt, common.HexToHash(txHash), common.HexToAddress(fromAddress))
+	data, err := calls.Simulate(ethClient, blockNumberBigInt, txHash, fromAddr)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("[utils] simulate transact error: %v", err))
 		return err

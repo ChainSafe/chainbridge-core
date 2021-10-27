@@ -8,9 +8,8 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -29,35 +28,38 @@ type MessageHandler interface {
 }
 
 type EVMVoter struct {
-	mh     MessageHandler
-	client ChainClient
-	fabric calls.TxFabric
+	mh             MessageHandler
+	client         ChainClient
+	fabric         calls.TxFabric
+	gasPriceClient calls.GasPricer
 }
 
-func NewVoter(mh MessageHandler, client ChainClient, fabric calls.TxFabric) *EVMVoter {
+func NewVoter(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasPriceClient calls.GasPricer) *EVMVoter {
 	return &EVMVoter{
-		mh:     mh,
-		client: client,
-		fabric: fabric,
+		mh:             mh,
+		client:         client,
+		fabric:         fabric,
+		gasPriceClient: gasPriceClient,
 	}
 }
 
-func (w *EVMVoter) VoteProposal(m *relayer.Message) error {
-	prop, err := w.mh.HandleMessage(m)
+func (v *EVMVoter) VoteProposal(m *relayer.Message) error {
+	prop, err := v.mh.HandleMessage(m)
 	if err != nil {
 		return err
 	}
-	ps, err := calls.ProposalStatus(w.client, prop)
+	ps, err := calls.ProposalStatus(v.client, prop)
 	if err != nil {
 		return fmt.Errorf("error getting proposal: %+v status %w", prop, err)
 	}
-	votedByTheRelayer, err := calls.IsProposalVotedBy(w.client, w.client.RelayerAddress(), prop)
+	votedByTheRelayer, err := calls.IsProposalVotedBy(v.client, v.client.RelayerAddress(), prop)
 	if err != nil {
 		return err
 	}
-	// if this relayer had not voted for proposal and proposal in Active status then we need to vote for
-	if !votedByTheRelayer && ps == relayer.ProposalStatusActive {
-		hash, err := calls.VoteProposal(w.client, w.fabric, prop)
+	// if this relayer had not voted for proposal and proposal is in Active or Inactive status
+	// we need to vote for it
+	if !votedByTheRelayer && (ps == relayer.ProposalStatusActive || ps == relayer.ProposalStatusInactive) {
+		hash, err := calls.VoteProposal(v.client, v.fabric, v.gasPriceClient, prop)
 		log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
 		if err != nil {
 			return fmt.Errorf("voting failed. Err: %w", err)

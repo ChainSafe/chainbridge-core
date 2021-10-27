@@ -107,13 +107,22 @@ func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
 // Erc20EventHandler converts data pulled from event logs into message
 // handlerResponse can be an empty slice
 func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID internalTypes.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error) {
-	if len(calldata) == 0 {
-		err := errors.New("missing calldata")
+	if len(calldata) < 84 {
+		err := errors.New("invalid calldata length: less than 84 bytes")
 		return nil, err
 	}
 
+	// @dev
+	// amount: first 32 bytes of calldata
 	amount := calldata[:32]
-	recipientAddress := calldata[65:]
+
+	// lenRecipientAddress: second 32 bytes of calldata [32:64]
+	// does not need to be derived because it is being calculated
+	// within ERC20MessageHandler
+	// https://github.com/ChainSafe/chainbridge-core/blob/main/chains/evm/voter/message-handler.go#L108
+
+	// recipientAddress: last 20 bytes of calldata
+	recipientAddress := calldata[64:]
 
 	return &relayer.Message{
 		Source:       sourceID,
