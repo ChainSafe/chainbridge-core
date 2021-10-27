@@ -1,3 +1,6 @@
+// Copyright 2021 ChainSafe Systems
+// SPDX-License-Identifier: LGPL-3.0-only
+
 package evm
 
 import (
@@ -91,12 +94,12 @@ func deployForTest(c calls.ChainClient, fabric calls.TxFabric, domainID uint8, t
 
 	bridgeAdrr, err := calls.DeployBridge(c, fabric, domainID, DefaultRelayerAddresses, treshHold)
 	if err != nil {
-		return common.Address{}, common.Address{}, common.Address{}, fmt.Errorf("Bridge deploy failed: %w", err)
+		return common.Address{}, common.Address{}, common.Address{}, fmt.Errorf("bridge deploy failed: %w", err)
 	}
 
 	erc20HandlerAddr, err := calls.DeployErc20Handler(c, fabric, bridgeAdrr)
 	if err != nil {
-		return common.Address{}, common.Address{}, common.Address{}, fmt.Errorf("Bridge deploy failed: %w", err)
+		return common.Address{}, common.Address{}, common.Address{}, fmt.Errorf("bridge deploy failed: %w", err)
 	}
 
 	log.Debug().Msgf("Smart contracts deployed.\n Bridge: %s; \n ERC20: %s;\n ERC20Handler: %s;\n", bridgeAdrr, erc20Addr, erc20HandlerAddr)

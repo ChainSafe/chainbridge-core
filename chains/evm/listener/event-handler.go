@@ -15,7 +15,7 @@ import (
 )
 
 type EventHandlers map[common.Address]EventHandlerFunc
-type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID [32]byte, calldata, handlerResponse []byte) (*relayer.Message, error)
+type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID internalTypes.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error)
 
 type ETHEventHandler struct {
 	bridgeAddress common.Address
