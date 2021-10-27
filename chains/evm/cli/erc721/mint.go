@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
@@ -17,29 +18,36 @@ import (
 
 var mintCmd = &cobra.Command{
 	Use:   "mint",
-	Short: "Mint ERC721 token",
-	Long:  "Mint ERC721 token",
+	Short: "Mint tokens on an ERC721 mintable contract",
+	Long:  "Mint tokens on an ERC721 mintable contract",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
 		return MintCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := validateFlags(cmd, args)
+		err := ValidateMintFlags(cmd, args)
 		if err != nil {
 			return err
 		}
-		return nil
+
+		err = ProcessMintFlags(cmd, args)
+		return err
 	},
 }
 
 func init() {
-	mintCmd.Flags().StringVarP(&Erc721Address, "contract-address", "con", "", "address of contract")
-	mintCmd.Flags().StringVarP(&DstAddress, "destination-address", "dest", "", "address of recipient")
-	mintCmd.Flags().StringVarP(&TokenId, "token-id", "tid", "", "token id")
-	mintCmd.Flags().StringVarP(&Metadata, "metadata", "met", "", "token metadata")
+	BindMintFlags()
 }
 
-func validateFlags(cmd *cobra.Command, args []string) error {
+func BindMintFlags() {
+	mintCmd.Flags().StringVar(&Erc721Address, "contract-address", "", "address of contract")
+	mintCmd.Flags().StringVar(&DstAddress, "destination-address", "", "address of recipient")
+	mintCmd.Flags().StringVar(&TokenId, "token-id", "", "token id")
+	mintCmd.Flags().StringVar(&Metadata, "metadata", "", "token metadata")
+	flags.MarkFlagsAsRequired(mintCmd, "contract-address", "destination-address", "token-id", "metadata", "contract-address")
+}
+
+func ValidateMintFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Erc721Address) {
 		return fmt.Errorf("invalid ERC721 contract address %s", Erc721Address)
 	}
@@ -49,10 +57,9 @@ func validateFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func processMintFlags(cmd *cobra.Command, args []string) error {
+func ProcessMintFlags(cmd *cobra.Command, args []string) error {
 	var err error
-
-	erc721Addr = common.HexToAddress(DstAddress)
+	erc721Addr = common.HexToAddress(Erc721Address)
 
 	if !common.IsHexAddress(DstAddress) {
 		dstAddress = senderKeyPair.CommonAddress()
