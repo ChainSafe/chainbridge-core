@@ -14,13 +14,13 @@ var registerGenericResourceCmd = &cobra.Command{
 }
 
 func init() {
-	registerGenericResourceCmd.Flags().StringVarP(&Handler, "handler", "h", "", "handler contract address")
-	registerGenericResourceCmd.Flags().StringVarP(&ResourceID, "resourceId", "rID", "", "resource ID to query")
-	registerGenericResourceCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
-	registerGenericResourceCmd.Flags().StringVarP(&Target, "target", "t", "", "contract address to be registered") // TODO change the description (target is not necessary a contract address, could be hash storage)
-	registerGenericResourceCmd.Flags().StringVarP(&Deposit, "deposit", "d", "0x00000000", "deposit function signature")
-	registerGenericResourceCmd.Flags().StringVarP(&Execute, "execute", "e", "0x00000000", "execute proposal function signature")
-	registerGenericResourceCmd.Flags().BoolVarP(&Hash, "hash", "hsh", false, "treat signature inputs as function prototype strings, hash and take the first 4 bytes")
+	registerGenericResourceCmd.Flags().StringVar(&Handler, "handler", "", "handler contract address")
+	registerGenericResourceCmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID to query")
+	registerGenericResourceCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	registerGenericResourceCmd.Flags().StringVar(&Target, "target", "", "contract address to be registered") // TODO change the description (target is not necessary a contract address, could be hash storage)
+	registerGenericResourceCmd.Flags().StringVar(&Deposit, "deposit", "0x00000000", "deposit function signature")
+	registerGenericResourceCmd.Flags().StringVar(&Execute, "execute", "0x00000000", "execute proposal function signature")
+	registerGenericResourceCmd.Flags().BoolVar(&Hash, "hash", false, "treat signature inputs as function prototype strings, hash and take the first 4 bytes")
 	flags.MarkFlagsAsRequired(registerGenericResourceCmd, "handler", "resourceId", "bridge", "target")
 }
 

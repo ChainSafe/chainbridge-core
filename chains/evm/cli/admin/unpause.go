@@ -14,7 +14,7 @@ var unpauseCmd = &cobra.Command{
 }
 
 func init() {
-	unpauseCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	unpauseCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
 	flags.MarkFlagsAsRequired(unpauseCmd, "bridge")
 }
 

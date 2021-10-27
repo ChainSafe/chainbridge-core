@@ -17,8 +17,8 @@ var importPrivKeyCmd = &cobra.Command{
 }
 
 func BindImportPrivKeyFlags() {
-	importPrivKeyCmd.Flags().StringVarP(&PrivateKey, "privateKey", "pk", "", "Private key to encrypt")
-	importPrivKeyCmd.Flags().StringVarP(&Pass, "password", "p", "", "password to encrypt with")
+	importPrivKeyCmd.Flags().StringVar(&PrivateKey, "privateKey", "", "Private key to encrypt")
+	importPrivKeyCmd.Flags().StringVar(&Pass, "password", "", "password to encrypt with")
 	flags.MarkFlagsAsRequired(importPrivKeyCmd, "privateKey", "password")
 }
 

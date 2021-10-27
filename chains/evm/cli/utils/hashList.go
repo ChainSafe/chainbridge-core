@@ -22,7 +22,7 @@ var hashListCmd = &cobra.Command{
 }
 
 func BindHashListCmdFlags() {
-	hashListCmd.Flags().StringVarP(&BlockNumber, "blockNumber", "bn", "", "block number")
+	hashListCmd.Flags().StringVar(&BlockNumber, "blockNumber", "", "block number")
 }
 
 func init() {

@@ -25,18 +25,18 @@ var addMinterCmd = &cobra.Command{
 		return AddMinterCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := validateAddMinterFlags(cmd, args)
+		err := ValidateAddMinterFlags(cmd, args)
 		if err != nil {
 			return err
 		}
-		processAddMinterFlags(cmd, args)
+		ProcessAddMinterFlags(cmd, args)
 		return nil
 	},
 }
 
 func BindAddMinterCmdFlags() {
-	addMinterCmd.Flags().StringVarP(&Erc20Address, "erc20Address", "erc20add", "", "ERC20 contract address")
-	addMinterCmd.Flags().StringVarP(&Minter, "minter", "h", "", "handler contract address")
+	addMinterCmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
+	addMinterCmd.Flags().StringVar(&Minter, "minter", "", "handler contract address")
 	flags.MarkFlagsAsRequired(addMinterCmd, "erc20Address", "minter")
 }
 
@@ -44,7 +44,7 @@ func init() {
 	BindAddMinterCmdFlags()
 }
 
-func validateAddMinterFlags(cmd *cobra.Command, args []string) error {
+func ValidateAddMinterFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Erc20Address) {
 		return errors.New("invalid erc20Address address")
 	}
@@ -54,7 +54,7 @@ func validateAddMinterFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func processAddMinterFlags(cmd *cobra.Command, args []string) {
+func ProcessAddMinterFlags(cmd *cobra.Command, args []string) {
 	erc20Addr = common.HexToAddress(Erc20Address)
 	minterAddr = common.HexToAddress(Minter)
 }

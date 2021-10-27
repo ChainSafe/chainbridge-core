@@ -26,21 +26,21 @@ var approveCmd = &cobra.Command{
 		return ApproveCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := validateApproveFlags(cmd, args)
+		err := ValidateApproveFlags(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		err = processApproveFlags(cmd, args)
+		err = ProcessApproveFlags(cmd, args)
 		return err
 	},
 }
 
 func BindApproveCmdFlags() {
-	balanceCmd.Flags().StringVarP(&Erc20Address, "erc20Address", "erc20add", "", "ERC20 contract address")
-	depositCmd.Flags().StringVarP(&Amount, "amount", "a", "", "amount to grant allowance")
-	depositCmd.Flags().StringVarP(&Recipient, "recipient", "r", "", "address of recipient")
-	depositCmd.Flags().Uint64VarP(&Decimals, "decimals", "r", 18, "ERC20 token decimals")
+	balanceCmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
+	depositCmd.Flags().StringVar(&Amount, "amount", "", "amount to grant allowance")
+	depositCmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
+	depositCmd.Flags().Uint64Var(&Decimals, "decimals", 18, "ERC20 token decimals")
 	flags.MarkFlagsAsRequired(depositCmd, "erc20Address", "amount", "recipient")
 }
 
@@ -48,7 +48,7 @@ func init() {
 	BindApproveCmdFlags()
 }
 
-func validateApproveFlags(cmd *cobra.Command, args []string) error {
+func ValidateApproveFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Erc20Address) {
 		return errors.New("invalid erc20Address address")
 	}
@@ -58,7 +58,7 @@ func validateApproveFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func processApproveFlags(cmd *cobra.Command, args []string) error {
+func ProcessApproveFlags(cmd *cobra.Command, args []string) error {
 	var err error
 
 	decimals := big.NewInt(int64(Decimals))
