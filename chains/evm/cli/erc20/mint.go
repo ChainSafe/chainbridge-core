@@ -26,12 +26,12 @@ var mintCmd = &cobra.Command{
 		return MintCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := validateMintFlags(cmd, args)
+		err := ValidateMintFlags(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		err = processMintFlags(cmd, args)
+		err = ProcessMintFlags(cmd, args)
 		return err
 	},
 }
@@ -47,7 +47,7 @@ func BindMintCmdFlags(cli *cobra.Command) {
 	flags.MarkFlagsAsRequired(mintCmd, "amount", "decimals", "dstAddress", "erc20Address")
 }
 
-func validateMintFlags(cmd *cobra.Command, args []string) error {
+func ValidateMintFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Erc20Address) {
 		return fmt.Errorf("invalid erc20address %s", Erc20Address)
 	}
@@ -62,7 +62,7 @@ var (
 	senderKeyPair *secp256k1.Keypair
 )
 
-func processMintFlags(cmd *cobra.Command, args []string) error {
+func ProcessMintFlags(cmd *cobra.Command, args []string) error {
 	var err error
 	decimals := big.NewInt(int64(Decimals))
 	erc20Addr = common.HexToAddress(Erc20Address)

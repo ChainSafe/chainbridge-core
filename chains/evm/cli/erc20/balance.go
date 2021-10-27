@@ -23,12 +23,12 @@ var balanceCmd = &cobra.Command{
 		return BalanceCmd(cmd, args, txFabric)
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := validateBalanceFlags(cmd, args)
+		err := ValidateBalanceFlags(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		processBalanceFlags(cmd, args)
+		ProcessBalanceFlags(cmd, args)
 		return nil
 	},
 }
@@ -45,7 +45,7 @@ func init() {
 
 var accountAddr common.Address
 
-func validateBalanceFlags(cmd *cobra.Command, args []string) error {
+func ValidateBalanceFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Erc20Address) {
 		return fmt.Errorf("invalid recipient address %s", Recipient)
 	}
@@ -55,7 +55,7 @@ func validateBalanceFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func processBalanceFlags(cmd *cobra.Command, args []string) {
+func ProcessBalanceFlags(cmd *cobra.Command, args []string) {
 	erc20Addr = common.HexToAddress(Erc20Address)
 	accountAddr = common.HexToAddress(AccountAddress)
 }

@@ -24,12 +24,12 @@ var depositCmd = &cobra.Command{
 		return DepositCmd(cmd, args, evmtransaction.NewTransaction, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := validateDepositFlags(cmd, args)
+		err := ValidateDepositFlags(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		err = processDepositFlags(cmd, args)
+		err = ProcessDepositFlags(cmd, args)
 		if err != nil {
 			return err
 		}
@@ -51,7 +51,7 @@ func BindDepositCmdFlags() {
 	flags.MarkFlagsAsRequired(depositCmd, "recipient", "bridge", "amount", "destId", "resourceId", "decimals")
 }
 
-func validateDepositFlags(cmd *cobra.Command, args []string) error {
+func ValidateDepositFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Recipient) {
 		return fmt.Errorf("invalid recipient address %s", Recipient)
 	}
@@ -61,7 +61,7 @@ func validateDepositFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func processDepositFlags(cmd *cobra.Command, args []string) error {
+func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 	var err error
 
 	recipientAddress = common.HexToAddress(Recipient)

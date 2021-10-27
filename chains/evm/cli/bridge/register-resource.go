@@ -25,12 +25,12 @@ var registerResourceCmd = &cobra.Command{
 		return RegisterResourceCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := validateRegisterResourceFlags(cmd, args)
+		err := ValidateRegisterResourceFlags(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		err = processRegisterResourceFlags(cmd, args)
+		err = ProcessRegisterResourceFlags(cmd, args)
 		return err
 	},
 }
@@ -47,7 +47,7 @@ func init() {
 	BindRegisterResourceCmdFlags()
 }
 
-func validateRegisterResourceFlags(cmd *cobra.Command, args []string) error {
+func ValidateRegisterResourceFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Handler) {
 		return fmt.Errorf("invalid handler address %s", Handler)
 	}
@@ -60,7 +60,7 @@ func validateRegisterResourceFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func processRegisterResourceFlags(cmd *cobra.Command, args []string) error {
+func ProcessRegisterResourceFlags(cmd *cobra.Command, args []string) error {
 	var err error
 	handlerAddr = common.HexToAddress(Handler)
 	targetContractAddr = common.HexToAddress(Target)

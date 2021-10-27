@@ -21,12 +21,12 @@ var isRelayerCmd = &cobra.Command{
 		return IsRelayer(cmd, args)
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := validateIsRelayerFlags(cmd, args)
+		err := ValidateIsRelayerFlags(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		processIsRelayerFlags(cmd, args)
+		ProcessIsRelayerFlags(cmd, args)
 		return nil
 	},
 }
@@ -41,7 +41,7 @@ func init() {
 	BindIsRelayerFlags()
 }
 
-func validateIsRelayerFlags(cmd *cobra.Command, args []string) error {
+func ValidateIsRelayerFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Relayer) {
 		return fmt.Errorf("invalid relayer address %s", Relayer)
 	}
@@ -51,7 +51,7 @@ func validateIsRelayerFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func processIsRelayerFlags(cmd *cobra.Command, args []string) {
+func ProcessIsRelayerFlags(cmd *cobra.Command, args []string) {
 	relayerAddr = common.HexToAddress(Relayer)
 	bridgeAddr = common.HexToAddress(Bridge)
 }

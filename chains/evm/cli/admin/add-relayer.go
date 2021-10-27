@@ -24,12 +24,12 @@ var addRelayerCmd = &cobra.Command{
 		return AddRelayerEVMCMD(cmd, args, evmtransaction.NewTransaction, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := validateAddRelayerFlags(cmd, args)
+		err := ValidateAddRelayerFlags(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		processAddRelayerFlags(cmd, args)
+		ProcessAddRelayerFlags(cmd, args)
 		return nil
 	},
 }
@@ -45,7 +45,7 @@ func init() {
 	BindAddRelayerFlags()
 }
 
-func validateAddRelayerFlags(cmd *cobra.Command, args []string) error {
+func ValidateAddRelayerFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Relayer) {
 		return fmt.Errorf("invalid relayer address %s", Relayer)
 	}
@@ -55,7 +55,7 @@ func validateAddRelayerFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func processAddRelayerFlags(cmd *cobra.Command, args []string) {
+func ProcessAddRelayerFlags(cmd *cobra.Command, args []string) {
 	relayerAddr = common.HexToAddress(Relayer)
 	bridgeAddr = common.HexToAddress(Bridge)
 }

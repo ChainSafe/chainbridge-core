@@ -26,12 +26,12 @@ This nonce cannot be less than what is currently stored in the contract`,
 		return SetDepositNonceEVMCMD(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := validateSetDepositNonceFlags(cmd, args)
+		err := ValidateSetDepositNonceFlags(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		processSetDepositNonceFlags(cmd, args)
+		ProcessSetDepositNonceFlags(cmd, args)
 		return nil
 	},
 }
@@ -47,14 +47,14 @@ func init() {
 	BindSetDepositNonceFlags()
 }
 
-func validateSetDepositNonceFlags(cmd *cobra.Command, args []string) error {
+func ValidateSetDepositNonceFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Bridge) {
 		return fmt.Errorf("invalid bridge address %s", Bridge)
 	}
 	return nil
 }
 
-func processSetDepositNonceFlags(cmd *cobra.Command, args []string) {
+func ProcessSetDepositNonceFlags(cmd *cobra.Command, args []string) {
 	bridgeAddr = common.HexToAddress(Bridge)
 }
 

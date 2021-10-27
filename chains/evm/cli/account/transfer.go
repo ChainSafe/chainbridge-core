@@ -28,12 +28,12 @@ var transferBaseCurrencyCmd = &cobra.Command{
 		return TransferBaseCurrency(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := validateTransferBaseCurrencyFlags(cmd, args)
+		err := ValidateTransferBaseCurrencyFlags(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		err = processTransferBaseCurrencyFlags(cmd, args)
+		err = ProcessTransferBaseCurrencyFlags(cmd, args)
 		return err
 	},
 }
@@ -48,14 +48,14 @@ func BindTransferCmdFlags() {
 func init() {
 	BindTransferCmdFlags()
 }
-func validateTransferBaseCurrencyFlags(cmd *cobra.Command, args []string) error {
+func ValidateTransferBaseCurrencyFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Recipient) {
 		return fmt.Errorf("invalid recipient address %s", Recipient)
 	}
 	return nil
 }
 
-func processTransferBaseCurrencyFlags(cmd *cobra.Command, args []string) error {
+func ProcessTransferBaseCurrencyFlags(cmd *cobra.Command, args []string) error {
 	var err error
 	recipientAddress = common.HexToAddress(Recipient)
 	decimals := big.NewInt(int64(Decimals))

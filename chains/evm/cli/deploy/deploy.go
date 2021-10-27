@@ -27,12 +27,12 @@ var DeployEVM = &cobra.Command{
 	Long:  "This command can be used to deploy all or some of the contracts required for bridging. Selection of contracts can be made by either specifying --all or a subset of flags",
 	RunE:  CallDeployCLI,
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := validateDeployFlags(cmd, args)
+		err := ValidateDeployFlags(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		err = processDeployFlags(cmd, args)
+		err = ProcessDeployFlags(cmd, args)
 		return err
 	},
 }
@@ -76,7 +76,7 @@ func BindDeployEVMFlags(deployCmd *cobra.Command) {
 func init() {
 	BindDeployEVMFlags(DeployEVM)
 }
-func validateDeployFlags(cmd *cobra.Command, args []string) error {
+func ValidateDeployFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(BridgeAddress) {
 		return fmt.Errorf("invalid bridge address %s", BridgeAddress)
 	}
@@ -86,7 +86,7 @@ func validateDeployFlags(cmd *cobra.Command, args []string) error {
 var bridgeAddr common.Address
 var relayerAddresses []common.Address
 
-func processDeployFlags(cmd *cobra.Command, args []string) error {
+func ProcessDeployFlags(cmd *cobra.Command, args []string) error {
 	bridgeAddr = common.HexToAddress(BridgeAddress)
 
 	for _, addr := range Relayers {
