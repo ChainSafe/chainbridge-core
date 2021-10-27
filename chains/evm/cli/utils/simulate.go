@@ -31,9 +31,9 @@ var simulateCmd = &cobra.Command{
 }
 
 func BindSimulateCmdFlags() {
-	simulateCmd.Flags().StringVarP(&TxHash, "txHash", "th", "", "transaction hash")
-	simulateCmd.Flags().StringVarP(&BlockNumber, "blockNumber", "bn", "", "block number")
-	simulateCmd.Flags().StringVarP(&FromAddress, "fromAddress", "fAddr", "", "address of sender")
+	simulateCmd.Flags().StringVar(&TxHash, "txHash", "", "transaction hash")
+	simulateCmd.Flags().StringVar(&BlockNumber, "blockNumber", "", "block number")
+	simulateCmd.Flags().StringVar(&FromAddress, "fromAddress", "", "address of sender")
 	flags.MarkFlagsAsRequired(simulateCmd, "txHash", "blockNumber", "fromAddress")
 }
 

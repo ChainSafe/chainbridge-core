@@ -35,8 +35,8 @@ var addRelayerCmd = &cobra.Command{
 }
 
 func BindAddRelayerFlags() {
-	addRelayerCmd.Flags().StringVarP(&Relayer, "relayer", "r", "", "address to add")
-	addRelayerCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	addRelayerCmd.Flags().StringVar(&Relayer, "relayer", "", "address to add")
+	addRelayerCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
 	flags.MarkFlagsAsRequired(addRelayerCmd, "relayer", "bridge")
 
 }
@@ -63,7 +63,7 @@ func processAddRelayerFlags(cmd *cobra.Command, args []string) {
 func AddRelayerEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 
 	log.Debug().Msgf(`
-Adding relayer 
+Adding relayer
 Relayer address: %s
 Bridge address: %s`, Relayer, Bridge)
 

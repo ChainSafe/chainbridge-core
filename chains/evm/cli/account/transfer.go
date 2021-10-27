@@ -39,9 +39,9 @@ var transferBaseCurrencyCmd = &cobra.Command{
 }
 
 func BindTransferCmdFlags() {
-	transferBaseCurrencyCmd.Flags().StringVarP(&Recipient, "recipient", "r", "", "recipient address")
-	transferBaseCurrencyCmd.Flags().StringVarP(&Amount, "amount", "a", "", "transfer amount")
-	transferBaseCurrencyCmd.Flags().Uint64VarP(&Decimals, "decimals", "d", 18, "base token decimals")
+	transferBaseCurrencyCmd.Flags().StringVar(&Recipient, "recipient", "", "recipient address")
+	transferBaseCurrencyCmd.Flags().StringVar(&Amount, "amount", "", "transfer amount")
+	transferBaseCurrencyCmd.Flags().Uint64Var(&Decimals, "decimals", 18, "base token decimals")
 	flags.MarkFlagsAsRequired(transferBaseCurrencyCmd, "recipient", "amount")
 }
 

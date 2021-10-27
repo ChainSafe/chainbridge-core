@@ -37,10 +37,10 @@ var approveCmd = &cobra.Command{
 }
 
 func BindApproveCmdFlags() {
-	balanceCmd.Flags().StringVarP(&Erc20Address, "erc20Address", "erc20add", "", "ERC20 contract address")
-	depositCmd.Flags().StringVarP(&Amount, "amount", "a", "", "amount to grant allowance")
-	depositCmd.Flags().StringVarP(&Recipient, "recipient", "r", "", "address of recipient")
-	depositCmd.Flags().Uint64VarP(&Decimals, "decimals", "r", 18, "ERC20 token decimals")
+	balanceCmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
+	depositCmd.Flags().StringVar(&Amount, "amount", "", "amount to grant allowance")
+	depositCmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
+	depositCmd.Flags().Uint64Var(&Decimals, "decimals", 18, "ERC20 token decimals")
 	flags.MarkFlagsAsRequired(depositCmd, "erc20Address", "amount", "recipient")
 }
 

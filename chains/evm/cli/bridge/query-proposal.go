@@ -14,10 +14,10 @@ var queryProposalCmd = &cobra.Command{
 }
 
 func init() {
-	queryProposalCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
-	queryProposalCmd.Flags().StringVarP(&DataHash, "dataHash", "dh", "", "hash of proposal metadata")
-	queryProposalCmd.Flags().Uint64VarP(&DomainID, "domainId", "dID", 0, "source domain ID of proposal")
-	queryProposalCmd.Flags().Uint64VarP(&DepositNonce, "depositNonce", "dn", 0, "	deposit nonce of proposal")
+	queryProposalCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	queryProposalCmd.Flags().StringVar(&DataHash, "dataHash", "", "hash of proposal metadata")
+	queryProposalCmd.Flags().Uint64Var(&DomainID, "domainId", 0, "source domain ID of proposal")
+	queryProposalCmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "	deposit nonce of proposal")
 	flags.MarkFlagsAsRequired(queryProposalCmd, "bridge", "dataHash", "domainId", "depositNonce")
 }
 

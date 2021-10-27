@@ -36,10 +36,10 @@ var registerResourceCmd = &cobra.Command{
 }
 
 func BindRegisterResourceCmdFlags() {
-	registerResourceCmd.Flags().StringVarP(&Handler, "handler", "h", "", "handler contract address")
-	registerResourceCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
-	registerResourceCmd.Flags().StringVarP(&Target, "target", "t", "", "contract address to be registered")
-	registerResourceCmd.Flags().StringVarP(&ResourceID, "resourceId", "rID", "", "resource ID to be registered")
+	registerResourceCmd.Flags().StringVar(&Handler, "handler", "", "handler contract address")
+	registerResourceCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	registerResourceCmd.Flags().StringVar(&Target, "target", "", "contract address to be registered")
+	registerResourceCmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID to be registered")
 	flags.MarkFlagsAsRequired(registerResourceCmd, "handler", "bridge", "target", "resourceId")
 }
 

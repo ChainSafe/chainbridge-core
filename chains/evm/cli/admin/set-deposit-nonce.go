@@ -37,9 +37,9 @@ This nonce cannot be less than what is currently stored in the contract`,
 }
 
 func BindSetDepositNonceFlags() {
-	setDepositNonceCmd.Flags().Uint8VarP(&DomainID, "domainId", "dID", 0, "domain ID of chain")
-	setDepositNonceCmd.Flags().Uint64VarP(&DepositNonce, "depositNonce", "dn", 0, "deposit nonce to set (does not decrement)")
-	setDepositNonceCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
+	setDepositNonceCmd.Flags().Uint8Var(&DomainID, "domainId", 0, "domain ID of chain")
+	setDepositNonceCmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "deposit nonce to set (does not decrement)")
+	setDepositNonceCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
 	flags.MarkFlagsAsRequired(setDepositNonceCmd, "domainId", "depositNonce", "bridge")
 }
 
