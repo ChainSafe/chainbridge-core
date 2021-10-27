@@ -6,19 +6,13 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-)
-
-var (
-	Erc721ContractAddressForMint string
-	DestinationAddressForMint    string
-	TokenIdForMint               string
-	MetadataForMint              string
 )
 
 var mintCmd = &cobra.Command{
@@ -27,7 +21,7 @@ var mintCmd = &cobra.Command{
 	Long:  "Mint ERC721 token",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return MintCmd(cmd, args, txFabric)
+		return MintCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := validateFlags(cmd, args)
@@ -39,80 +33,69 @@ var mintCmd = &cobra.Command{
 }
 
 func init() {
-	mintCmd.Flags().StringVarP(&Erc721ContractAddressForMint, "contract-address", "con", "", "address of contract")
-	mintCmd.Flags().StringVarP(&DestinationAddressForMint, "destination-address", "dest", "", "address of recipient")
-	mintCmd.Flags().StringVarP(&TokenIdForMint, "token-id", "tid", "", "token id")
-	mintCmd.Flags().StringVarP(&MetadataForMint, "metadata", "met", "", "token metadata")
+	mintCmd.Flags().StringVarP(&Erc721Address, "contract-address", "con", "", "address of contract")
+	mintCmd.Flags().StringVarP(&DstAddress, "destination-address", "dest", "", "address of recipient")
+	mintCmd.Flags().StringVarP(&TokenId, "token-id", "tid", "", "token id")
+	mintCmd.Flags().StringVarP(&Metadata, "metadata", "met", "", "token metadata")
 }
 
 func validateFlags(cmd *cobra.Command, args []string) error {
-	if !common.IsHexAddress(Erc721ContractAddressForMint) {
-		return fmt.Errorf("invalid ERC721 contract address %s", Erc721ContractAddressForMint)
+	if !common.IsHexAddress(Erc721Address) {
+		return fmt.Errorf("invalid ERC721 contract address %s", Erc721Address)
 	}
-	if !common.IsHexAddress(DestinationAddressForMint) {
-		return fmt.Errorf("invalid recipient address %s", DestinationAddressForMint)
+	if !common.IsHexAddress(DstAddress) {
+		return fmt.Errorf("invalid recipient address %s", DstAddress)
 	}
 	return nil
 }
 
-type MintFlags struct {
-	erc721ContractAddress common.Address
-	destinationAddress    common.Address
-	tokenId               *big.Int
-	metadata              []byte
-}
+func processMintFlags(cmd *cobra.Command, args []string) error {
+	var err error
 
-var (
-	mintFlags MintFlags
-)
+	erc721Addr = common.HexToAddress(DstAddress)
 
-func MintCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	// fetch global flag values
-	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
-	if err != nil {
-		return fmt.Errorf("could not get global flags: %v", err)
-	}
-
-	mintFlags.erc721ContractAddress = common.HexToAddress(Erc721ContractAddressForMint)
-
-	if !common.IsHexAddress(DestinationAddressForMint) {
-		mintFlags.destinationAddress = senderKeyPair.CommonAddress()
+	if !common.IsHexAddress(DstAddress) {
+		dstAddress = senderKeyPair.CommonAddress()
 	} else {
-		mintFlags.destinationAddress = common.HexToAddress(DestinationAddressForMint)
+		dstAddress = common.HexToAddress(DstAddress)
 	}
 
 	var ok bool
-	if mintFlags.tokenId, ok = big.NewInt(0).SetString(TokenIdForMint, 10); !ok {
+	if tokenId, ok = big.NewInt(0).SetString(TokenId, 10); !ok {
 		return fmt.Errorf("invalid token id value")
 	}
 
-	if MetadataForMint[0:2] == "0x" {
-		MetadataForMint = MetadataForMint[2:]
+	if Metadata[0:2] == "0x" {
+		Metadata = Metadata[2:]
 	}
-	mintFlags.metadata, err = hex.DecodeString(MetadataForMint)
-	if err != nil {
-		return err
-	}
+	metadata, err = hex.DecodeString(Metadata)
+	return err
+}
 
-	ethclient, err := evmclient.NewEVMClientFromParams(
-		url, senderKeyPair.PrivateKey(), gasPrice)
+func MintCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
+
+	ethClient, err := evmclient.NewEVMClientFromParams(
+		url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
 
-	mintTokenInput, err := calls.PrepareERC721MintTokensInput(mintFlags.destinationAddress, mintFlags.tokenId, mintFlags.metadata)
+	gasPricer.SetClient(ethClient)
+	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
+
+	mintTokenInput, err := calls.PrepareERC721MintTokensInput(dstAddress, tokenId, metadata)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc721 mint input error: %v", err))
 		return err
 	}
 
-	_, err = calls.Transact(ethclient, txFabric, &mintFlags.erc721ContractAddress, mintTokenInput, gasLimit)
+	_, err = calls.Transact(ethClient, txFabric, gasPricer, &erc721Addr, mintTokenInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Error().Err(err)
 		return err
 	}
 
-	log.Info().Msgf("%v token minted", mintFlags.tokenId)
+	log.Info().Msgf("%v token minted", tokenId)
 	return nil
 }
