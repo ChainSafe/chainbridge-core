@@ -26,27 +26,27 @@ var setBurnCmd = &cobra.Command{
 		return SetBurnCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := validateSetBurnFlags(cmd, args)
+		err := ValidateSetBurnFlags(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		processSetBurnFlags(cmd, args)
+		ProcessSetBurnFlags(cmd, args)
 		return nil
 	},
 }
 
 func BindSetBurnCmdFlags() {
-	setBurnCmd.Flags().StringVarP(&Handler, "handler", "h", "", "ERC20 handler contract address")
-	setBurnCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
-	setBurnCmd.Flags().StringVarP(&TokenContract, "tokenContract", "tc", "", "token contract to be registered")
+	setBurnCmd.Flags().StringVar(&Handler, "handler", "", "ERC20 handler contract address")
+	setBurnCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	setBurnCmd.Flags().StringVar(&TokenContract, "tokenContract", "", "token contract to be registered")
 	flags.MarkFlagsAsRequired(setBurnCmd, "handler", "bridge", "tokenContract")
 }
 
 func init() {
 	BindSetBurnCmdFlags()
 }
-func validateSetBurnFlags(cmd *cobra.Command, args []string) error {
+func ValidateSetBurnFlags(cmd *cobra.Command, args []string) error {
 
 	if !common.IsHexAddress(Handler) {
 		return fmt.Errorf("invalid handler address %s", Handler)
@@ -60,7 +60,7 @@ func validateSetBurnFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func processSetBurnFlags(cmd *cobra.Command, args []string) {
+func ProcessSetBurnFlags(cmd *cobra.Command, args []string) {
 	handlerAddr = common.HexToAddress(Handler)
 	bridgeAddr = common.HexToAddress(Bridge)
 	tokenContractAddr = common.HexToAddress(TokenContract)

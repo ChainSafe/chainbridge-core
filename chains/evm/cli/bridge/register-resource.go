@@ -25,21 +25,21 @@ var registerResourceCmd = &cobra.Command{
 		return RegisterResourceCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := validateRegisterResourceFlags(cmd, args)
+		err := ValidateRegisterResourceFlags(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		err = processRegisterResourceFlags(cmd, args)
+		err = ProcessRegisterResourceFlags(cmd, args)
 		return err
 	},
 }
 
 func BindRegisterResourceCmdFlags() {
-	registerResourceCmd.Flags().StringVarP(&Handler, "handler", "h", "", "handler contract address")
-	registerResourceCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "bridge contract address")
-	registerResourceCmd.Flags().StringVarP(&Target, "target", "t", "", "contract address to be registered")
-	registerResourceCmd.Flags().StringVarP(&ResourceID, "resourceId", "rID", "", "resource ID to be registered")
+	registerResourceCmd.Flags().StringVar(&Handler, "handler", "", "handler contract address")
+	registerResourceCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	registerResourceCmd.Flags().StringVar(&Target, "target", "", "contract address to be registered")
+	registerResourceCmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID to be registered")
 	flags.MarkFlagsAsRequired(registerResourceCmd, "handler", "bridge", "target", "resourceId")
 }
 
@@ -47,7 +47,7 @@ func init() {
 	BindRegisterResourceCmdFlags()
 }
 
-func validateRegisterResourceFlags(cmd *cobra.Command, args []string) error {
+func ValidateRegisterResourceFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Handler) {
 		return fmt.Errorf("invalid handler address %s", Handler)
 	}
@@ -60,7 +60,7 @@ func validateRegisterResourceFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func processRegisterResourceFlags(cmd *cobra.Command, args []string) error {
+func ProcessRegisterResourceFlags(cmd *cobra.Command, args []string) error {
 	var err error
 	handlerAddr = common.HexToAddress(Handler)
 	targetContractAddr = common.HexToAddress(Target)

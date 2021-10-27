@@ -24,12 +24,12 @@ var depositCmd = &cobra.Command{
 		return DepositCmd(cmd, args, evmtransaction.NewTransaction, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := validateDepositFlags(cmd, args)
+		err := ValidateDepositFlags(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		err = processDepositFlags(cmd, args)
+		err = ProcessDepositFlags(cmd, args)
 		if err != nil {
 			return err
 		}
@@ -42,16 +42,16 @@ func init() {
 }
 
 func BindDepositCmdFlags() {
-	depositCmd.Flags().StringVarP(&Recipient, "recipient", "r", "", "address of recipient")
-	depositCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "address of bridge contract")
-	depositCmd.Flags().StringVarP(&Amount, "amount", "a", "", "amount to deposit")
-	depositCmd.Flags().Uint64VarP(&DomainID, "destId", "did", 0, "destination domain ID")
-	depositCmd.Flags().StringVarP(&ResourceID, "resourceId", "rid", "", "resource ID for transfer")
-	depositCmd.Flags().Uint64VarP(&Decimals, "decimals", "r", 0, "ERC20 token decimals")
+	depositCmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
+	depositCmd.Flags().StringVar(&Bridge, "bridge", "", "address of bridge contract")
+	depositCmd.Flags().StringVar(&Amount, "amount", "", "amount to deposit")
+	depositCmd.Flags().Uint64Var(&DomainID, "destId", 0, "destination domain ID")
+	depositCmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID for transfer")
+	depositCmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
 	flags.MarkFlagsAsRequired(depositCmd, "recipient", "bridge", "amount", "destId", "resourceId", "decimals")
 }
 
-func validateDepositFlags(cmd *cobra.Command, args []string) error {
+func ValidateDepositFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Recipient) {
 		return fmt.Errorf("invalid recipient address %s", Recipient)
 	}
@@ -61,7 +61,7 @@ func validateDepositFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func processDepositFlags(cmd *cobra.Command, args []string) error {
+func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 	var err error
 
 	recipientAddress = common.HexToAddress(Recipient)

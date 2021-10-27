@@ -26,12 +26,12 @@ var mintCmd = &cobra.Command{
 		return MintCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := validateMintFlags(cmd, args)
+		err := ValidateMintFlags(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		err = processMintFlags(cmd, args)
+		err = ProcessMintFlags(cmd, args)
 		return err
 	},
 }
@@ -40,14 +40,14 @@ func init() {
 	BindMintCmdFlags(mintCmd)
 }
 func BindMintCmdFlags(cli *cobra.Command) {
-	mintCmd.Flags().StringVarP(&Amount, "amount", "a", "", "amount to deposit")
-	mintCmd.Flags().Uint64VarP(&Decimals, "decimals", "d", 18, "ERC20 token decimals")
-	mintCmd.Flags().StringVarP(&DstAddress, "dstAddress", "dstAddr", "", "Where tokens should be minted. Defaults to TX sender")
-	mintCmd.Flags().StringVarP(&Erc20Address, "erc20Address", "erc20add", "", "ERC20 contract address")
+	mintCmd.Flags().StringVar(&Amount, "amount", "", "amount to deposit")
+	mintCmd.Flags().Uint64Var(&Decimals, "decimals", 18, "ERC20 token decimals")
+	mintCmd.Flags().StringVar(&DstAddress, "dstAddress", "", "Where tokens should be minted. Defaults to TX sender")
+	mintCmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
 	flags.MarkFlagsAsRequired(mintCmd, "amount", "decimals", "dstAddress", "erc20Address")
 }
 
-func validateMintFlags(cmd *cobra.Command, args []string) error {
+func ValidateMintFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Erc20Address) {
 		return fmt.Errorf("invalid erc20address %s", Erc20Address)
 	}
@@ -62,7 +62,7 @@ var (
 	senderKeyPair *secp256k1.Keypair
 )
 
-func processMintFlags(cmd *cobra.Command, args []string) error {
+func ProcessMintFlags(cmd *cobra.Command, args []string) error {
 	var err error
 	decimals := big.NewInt(int64(Decimals))
 	erc20Addr = common.HexToAddress(Erc20Address)

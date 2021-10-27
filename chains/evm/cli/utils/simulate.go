@@ -20,20 +20,20 @@ var simulateCmd = &cobra.Command{
 		return SimulateCmd(cmd)
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := validateSimulateFlags(cmd, args)
+		err := ValidateSimulateFlags(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		processSimulateFlags(cmd, args)
+		ProcessSimulateFlags(cmd, args)
 		return nil
 	},
 }
 
 func BindSimulateCmdFlags() {
-	simulateCmd.Flags().StringVarP(&TxHash, "txHash", "th", "", "transaction hash")
-	simulateCmd.Flags().StringVarP(&BlockNumber, "blockNumber", "bn", "", "block number")
-	simulateCmd.Flags().StringVarP(&FromAddress, "fromAddress", "fAddr", "", "address of sender")
+	simulateCmd.Flags().StringVar(&TxHash, "txHash", "", "transaction hash")
+	simulateCmd.Flags().StringVar(&BlockNumber, "blockNumber", "", "block number")
+	simulateCmd.Flags().StringVar(&FromAddress, "fromAddress", "", "address of sender")
 	flags.MarkFlagsAsRequired(simulateCmd, "txHash", "blockNumber", "fromAddress")
 }
 
@@ -41,7 +41,7 @@ func init() {
 	BindSimulateCmdFlags()
 }
 
-func validateSimulateFlags(cmd *cobra.Command, args []string) error {
+func ValidateSimulateFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(TxHash) {
 		return fmt.Errorf("invalid tx hash %s", TxHash)
 	}
@@ -51,7 +51,7 @@ func validateSimulateFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func processSimulateFlags(cmd *cobra.Command, args []string) {
+func ProcessSimulateFlags(cmd *cobra.Command, args []string) {
 	txHash = common.HexToHash(TxHash)
 	fromAddr = common.HexToAddress(FromAddress)
 }
