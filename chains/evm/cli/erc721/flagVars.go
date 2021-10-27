@@ -4,23 +4,32 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
+	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 // flag vars
 var (
-	Erc721Address string
-	DstAddress    string
-	TokenId       string
-	Metadata      string
+	Erc721Address  string
+	DstAddress     string
+	TokenId        string
+	Metadata       string
+	Recipient      string
+	Bridge         string
+	DestionationID string
+	ResourceID     string
 )
 
 // processed flag vars
 var (
-	erc721Addr common.Address
-	dstAddress common.Address
-	tokenId    *big.Int
-	metadata   []byte
+	erc721Addr    common.Address
+	dstAddress    common.Address
+	tokenId       *big.Int
+	metadata      []byte
+	recipientAddr common.Address
+	bridgeAddr    common.Address
+	destinationID int
+	resourceId    types.ResourceID
 )
 
 // global flags
