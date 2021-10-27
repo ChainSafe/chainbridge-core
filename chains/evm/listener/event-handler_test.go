@@ -32,14 +32,7 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleEvent() {
 	// 0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b
 	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}
 
-	// construct ERC20 deposit data
-	// follows behavior of solidity tests
-	// https://github.com/ChainSafe/chainbridge-solidity/blob/develop/test/contractBridge/depositERC20.js#L46-L50
-	var calldata []byte
-	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(2), 32)...)
-	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(recipientByteSlice))), 32)...)
-	calldata = append(calldata, recipientByteSlice...)
-
+	calldata := calls.ConstructErc20DepositData(recipientByteSlice, big.NewInt(2))
 	depositLog := &listener.DepositLogs{
 		DestinationDomainID: 0,
 		ResourceID:          [32]byte{0},
