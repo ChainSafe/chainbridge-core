@@ -5,8 +5,9 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -19,40 +20,50 @@ var ownerCmd = &cobra.Command{
 	Long:  "Mint ERC721 token",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return OwnerCmd(cmd, args, txFabric)
+		return OwnerCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+	},
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := ValidateOwnerFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+
+		err = ProcessOwnerFlags(cmd, args)
+		return err
 	},
 }
 
 func BindOwnerCmdFlags(cli *cobra.Command) {
-	cli.Flags().String("erc721Address", "", "ERC721 contract address")
-	cli.Flags().Uint64("tokenId", 0, "ERC721 token id")
+	mintCmd.Flags().StringVar(&Erc721Address, "contract-address", "", "address of contract")
+	mintCmd.Flags().StringVar(&TokenId, "token-id", "", "token id")
 }
 
 func init() {
 	BindOwnerCmdFlags(approveCmd)
 }
 
-func OwnerCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	// fetch global flag values
-	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
-	if err != nil {
-		return fmt.Errorf("could not get global flags: %v", err)
+func ValidateOwnerFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Erc721Address) {
+		return fmt.Errorf("invalid ERC721 contract address %s", Erc721Address)
 	}
+	return nil
+}
 
-	erc721Address := cmd.Flag("erc721Address").Value.String()
-	if !common.IsHexAddress(erc721Address) {
-		return fmt.Errorf("invalid erc20Address address")
-	}
-	erc721Addr := common.HexToAddress(erc721Address)
+func ProcessOwnerFlags(cmd *cobra.Command, args []string) error {
+	erc721Addr = common.HexToAddress(Erc721Address)
 
-	tokenIdAsString := cmd.Flag("tokenId").Value.String()
-	tokenId, ok := big.NewInt(0).SetString(tokenIdAsString, 10)
-	if !ok {
+	var ok bool
+	if tokenId, ok = big.NewInt(0).SetString(TokenId, 10); !ok {
 		return fmt.Errorf("invalid token id value")
 	}
 
-	ethclient, err := evmclient.NewEVMClientFromParams(
-		url, senderKeyPair.PrivateKey(), gasPrice)
+	return nil
+}
+
+func OwnerCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
+
+	ethClient, err := evmclient.NewEVMClientFromParams(
+		url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
@@ -64,7 +75,10 @@ func OwnerCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error 
 		return err
 	}
 
-	_, err = calls.Transact(ethclient, txFabric, &erc721Addr, ownerOfTokenInput, gasLimit)
+	gasPricer.SetClient(ethClient)
+	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
+
+	_, err = calls.Transact(ethClient, txFabric, gasPricer, &erc721Addr, ownerOfTokenInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Error().Err(err)
 		return err
