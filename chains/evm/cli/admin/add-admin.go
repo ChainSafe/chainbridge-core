@@ -17,7 +17,6 @@ func init() {
 	addAdminCmd.Flags().StringVar(&Admin, "admin", "", "address to add")
 	addAdminCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
 	flags.MarkFlagsAsRequired(addAdminCmd, "admin", "bridge")
-
 }
 
 func addAdmin(cmd *cobra.Command, args []string) {
