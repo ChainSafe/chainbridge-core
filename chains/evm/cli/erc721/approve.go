@@ -5,8 +5,9 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -19,47 +20,53 @@ var approveCmd = &cobra.Command{
 	Long:  "Mint ERC721 token",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return ApproveCmd(cmd, args, txFabric)
+		return ApproveCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+	},
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := ValidateApproveFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+
+		err = ProcessApproveFlags(cmd, args)
+		return err
 	},
 }
 
 func BindApproveCmdFlags(cli *cobra.Command) {
-	cli.Flags().String("erc721Address", "", "ERC721 contract address")
-	cli.Flags().String("recipientAddress", "", "todo")
-	cli.Flags().Uint64("tokenId", 0, "ERC721 token id")
+	mintCmd.Flags().StringVar(&Erc721Address, "contract-address", "", "address of contract")
+	mintCmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
+	mintCmd.Flags().StringVar(&TokenId, "token-id", "", "token id")
 }
 
 func init() {
 	BindApproveCmdFlags(approveCmd)
 }
 
-func ApproveCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	// fetch global flag values
-	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
-	if err != nil {
-		return fmt.Errorf("could not get global flags: %v", err)
+func ValidateApproveFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Erc721Address) {
+		return fmt.Errorf("invalid ERC721 contract address %s", Erc721Address)
 	}
-
-	erc721Address := cmd.Flag("erc721Address").Value.String()
-	if !common.IsHexAddress(erc721Address) {
-		return fmt.Errorf("invalid erc20Address address")
-	}
-	erc721Addr := common.HexToAddress(erc721Address)
-
-	recipientAddress := cmd.Flag("recipient").Value.String()
-	if !common.IsHexAddress(recipientAddress) {
+	if !common.IsHexAddress(Recipient) {
 		return fmt.Errorf("invalid recipient address")
 	}
-	recipientAddr := common.HexToAddress(recipientAddress)
+	return nil
+}
 
-	tokenIdAsString := cmd.Flag("tokenId").Value.String()
-	tokenId, ok := big.NewInt(0).SetString(tokenIdAsString, 10)
-	if !ok {
+func ProcessApproveFlags(cmd *cobra.Command, args []string) error {
+	recipientAddr = common.HexToAddress(Recipient)
+	erc721Addr = common.HexToAddress(Erc721Address)
+
+	var ok bool
+	if tokenId, ok = big.NewInt(0).SetString(TokenId, 10); !ok {
 		return fmt.Errorf("invalid token id value")
 	}
+	return nil
+}
 
+func ApproveCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 	ethclient, err := evmclient.NewEVMClientFromParams(
-		url, senderKeyPair.PrivateKey(), gasPrice)
+		url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
@@ -71,7 +78,7 @@ func ApproveCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 		return err
 	}
 
-	_, err = calls.Transact(ethclient, txFabric, &erc721Addr, approveTokenInput, gasLimit)
+	_, err = calls.Transact(ethclient, txFabric, gasPricer, &erc721Addr, approveTokenInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Error().Err(err)
 		return err
