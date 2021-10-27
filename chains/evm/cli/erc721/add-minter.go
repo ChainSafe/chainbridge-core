@@ -2,10 +2,12 @@ package erc721
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -18,47 +20,61 @@ var addMinterCmd = &cobra.Command{
 	Long:  "Add a minter to an ERC721 mintable contract",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return AddMinterCmd(cmd, args, txFabric)
+		return AddMinterCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+	},
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := ValidateAddMinterFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+
+		err = ProcessAddMinterFlags(cmd, args)
+		return err
 	},
 }
 
-func init() {
-	addMinterCmd.Flags().String("erc721Address", "", "ERC721 contract address")
-	addMinterCmd.Flags().String("minter", "", "address of minter")
+func BindAddMinterCmdFlags() {
+	addMinterCmd.Flags().StringVar(&Erc721Address, "contract-address", "", "address of contract")
+	addMinterCmd.Flags().StringVar(&Minter, "minter", "", "minter address")
 }
 
-func AddMinterCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	// fetch global flag values
-	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
-	if err != nil {
-		return fmt.Errorf("could not get global flags: %v", err)
-	}
+func init() {
+	BindAddMinterCmdFlags()
+}
 
+func ValidateAddMinterFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Erc721Address) {
+		return fmt.Errorf("invalid ERC721 contract address %s", Erc721Address)
+	}
+	if !common.IsHexAddress(Minter) {
+		return fmt.Errorf("invalid minter address %s", Minter)
+	}
+	return nil
+}
+
+func ProcessAddMinterFlags(cmd *cobra.Command, args []string) error {
+	erc721Addr = common.HexToAddress(Erc721Address)
+	minterAddr = common.HexToAddress(Minter)
+	return nil
+}
+
+func AddMinterCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 	ethClient, err := evmclient.NewEVMClientFromParams(
-		url, senderKeyPair.PrivateKey(), gasPrice)
+		url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
 
-	erc721Address := cmd.Flag("erc721Address").Value.String()
-	if !common.IsHexAddress(erc721Address) {
-		return fmt.Errorf("invalid erc20Address address")
-	}
-	erc721Addr := common.HexToAddress(erc721Address)
-
-	minterAddress := cmd.Flag("minter").Value.String()
-	if !common.IsHexAddress(minterAddress) {
-		return fmt.Errorf("invalid erc20Address address")
-	}
-	minterAddr := common.HexToAddress(minterAddress)
+	gasPricer.SetClient(ethClient)
+	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
 	addMinterInput, err := calls.PrepareErc721AddMinterInput(ethClient, erc721Addr, minterAddr)
 	if err != nil {
 		log.Error().Err(err)
 		return err
 	}
-	_, err = calls.Transact(ethClient, txFabric, &erc721Addr, addMinterInput, gasLimit)
+	_, err = calls.Transact(ethClient, txFabric, gasPricer, &erc721Addr, addMinterInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Error().Err(err)
 		return err
@@ -68,7 +84,7 @@ func AddMinterCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) er
 	Adding minter
 	Minter address: %s
 	ERC721 address: %s`,
-		minterAddress, erc721Address)
+		minterAddr, erc721Addr)
 
 	return nil
 }

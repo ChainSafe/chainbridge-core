@@ -18,6 +18,7 @@ var (
 	Bridge         string
 	DestionationID string
 	ResourceID     string
+	Minter         string
 )
 
 // processed flag vars
@@ -30,6 +31,7 @@ var (
 	bridgeAddr    common.Address
 	destinationID int
 	resourceId    types.ResourceID
+	minterAddr    common.Address
 )
 
 // global flags
