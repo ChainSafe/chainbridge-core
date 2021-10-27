@@ -61,7 +61,7 @@ func BindDeployEVMFlags(deployCmd *cobra.Command) {
 	deployCmd.Flags().BoolVar(&Erc20, "erc20", false, "deploy ERC20")
 	deployCmd.Flags().BoolVar(&Erc721, "erc721", false, "deploy ERC721")
 	deployCmd.Flags().BoolVar(&DeployAll, "all", false, "deploy all")
-	deployCmd.Flags().Uint64Var(&RelayerThreshold, "relayerTreshold", 1, "number of votes required for a proposal to pass")
+	deployCmd.Flags().Uint64Var(&RelayerThreshold, "relayerThreshold", 1, "number of votes required for a proposal to pass")
 	deployCmd.Flags().Uint8Var(&DomainId, "domainId", 1, "domain ID for the instance")
 	deployCmd.Flags().StringSliceVar(&Relayers, "relayers", []string{}, "list of initial relayers")
 	deployCmd.Flags().StringVar(&Fee, "fee", "0", "fee to be taken when making a deposit (in ETH, decimas are allowed)")
@@ -69,7 +69,7 @@ func BindDeployEVMFlags(deployCmd *cobra.Command) {
 	deployCmd.Flags().StringVar(&Erc20Symbol, "erc20Symbol", "", "ERC20 contract symbol")
 	deployCmd.Flags().StringVar(&Erc20Name, "erc20Name", "", "ERC20 contract name")
 	flags.MarkFlagsAsRequired(deployCmd,
-		"bridge", "erc20Handler", "erc20", "erc721", "all", "relayerTreshold", "domainId",
+		"bridge", "erc20Handler", "erc20", "erc721", "all", "relayerThreshold", "domainId",
 		"relayers", "fee", "bridgeAddress", "erc20Symbol", "erc20Name")
 }
 

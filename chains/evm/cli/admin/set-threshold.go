@@ -14,16 +14,16 @@ var setThresholdCmd = &cobra.Command{
 }
 
 func init() {
-	setThresholdCmd.Flags().Uint64Var(&RelayerTreshold, "threshold", 0, "new relayer threshold")
+	setThresholdCmd.Flags().Uint64Var(&RelayerThreshold, "threshold", 0, "new relayer threshold")
 	setThresholdCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	flags.MarkFlagsAsRequired(setThresholdCmd, "treshold", "bridge")
+	flags.MarkFlagsAsRequired(setThresholdCmd, "threshold", "bridge")
 }
 
 func setThreshold(cmd *cobra.Command, args []string) {
 	log.Debug().Msgf(`
 Setting new threshold
 Threshold: %d
-Bridge address: %s`, RelayerTreshold, Bridge)
+Bridge address: %s`, RelayerThreshold, Bridge)
 }
 
 /*
