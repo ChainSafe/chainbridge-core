@@ -2,14 +2,15 @@ package erc721
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"math/big"
 	"strconv"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -22,74 +23,74 @@ var depositCmd = &cobra.Command{
 	Long:  "Deposit ERC721 token",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return DepositCmd(cmd, args, txFabric)
+		return DepositCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+	},
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := ValidateDepositFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+
+		err = ProcessDepositFlags(cmd, args)
+		return err
 	},
 }
 
-func BindDepositCmdFlags(cli *cobra.Command) {
-	cli.Flags().String("recipient", "", "address of recipient")
-	cli.Flags().String("bridge", "", "address of bridge contract")
-	cli.Flags().String("destId", "", "destination domain ID")
-	cli.Flags().String("resourceId", "", "resource ID for transfer")
-	cli.Flags().Uint64("tokenId", 0, "ERC721 token id")
+func BindDepositCmdFlags() {
+	mintCmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
+	mintCmd.Flags().StringVar(&Bridge, "bridge", "", "address of bridge contract")
+	mintCmd.Flags().StringVar(&DestionationID, "destId", "", "destination domain ID")
+	mintCmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID for transfer")
+	mintCmd.Flags().StringVar(&TokenId, "tokenId", "", "ERC721 token id")
 }
 
 func init() {
-	BindDepositCmdFlags(approveCmd)
+	BindDepositCmdFlags()
 }
 
-func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	// fetch global flag values
-	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
-	if err != nil {
-		return fmt.Errorf("could not get global flags: %v", err)
-	}
-
-	ethClient, err := evmclient.NewEVMClientFromParams(
-		url, senderKeyPair.PrivateKey(), gasPrice)
-	if err != nil {
-		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
-		return err
-	}
-
-	recipientAddress := cmd.Flag("recipient").Value.String()
-	if !common.IsHexAddress(recipientAddress) {
+func ValidateDepositFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Recipient) {
 		return fmt.Errorf("invalid recipient address")
 	}
-	recipientAddr := common.HexToAddress(recipientAddress)
-
-	bridgeAddress := cmd.Flag("bridge").Value.String()
-	if !common.IsHexAddress(bridgeAddress) {
+	if !common.IsHexAddress(Bridge) {
 		return fmt.Errorf("invalid bridge address")
 	}
-	bridgeAddr := common.HexToAddress(bridgeAddress)
+	return nil
+}
 
-	destinationId := cmd.Flag("destId").Value.String()
-	destinationIdInt, err := strconv.Atoi(destinationId)
+func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
+	var err error
+
+	recipientAddr = common.HexToAddress(Recipient)
+	bridgeAddr = common.HexToAddress(Bridge)
+
+	destinationID, err = strconv.Atoi(DestionationID)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("destination ID conversion error: %v", err))
 		return err
 	}
 
-	resourceId := cmd.Flag("resourceId").Value.String()
-	if resourceId[0:2] == "0x" {
-		resourceId = resourceId[2:]
-	}
-	resourceIdBytes, err := hex.DecodeString(resourceId)
-	if err != nil {
-		return err
-	}
-	resourceIdBytesArr := calls.SliceTo32Bytes(resourceIdBytes)
-
-	tokenIdAsString := cmd.Flag("tokenId").Value.String()
-	tokenId, ok := big.NewInt(0).SetString(tokenIdAsString, 10)
+	var ok bool
+	tokenId, ok = big.NewInt(0).SetString(TokenId, 10)
 	if !ok {
 		return fmt.Errorf("invalid token id value")
 	}
 
+	resourceId, err = flags.ProcessResourceID(ResourceID)
+	return err
+}
+
+func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
+	ethClient, err := evmclient.NewEVMClientFromParams(
+		url, senderKeyPair.PrivateKey())
+	if err != nil {
+		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
+		return err
+	}
+
 	data := calls.ConstructErc721DepositData(tokenId, recipientAddr.Bytes())
 
-	input, err := calls.PrepareErc20DepositInput(uint8(destinationIdInt), resourceIdBytesArr, data)
+	depositInput, err := calls.PrepareErc20DepositInput(uint8(destinationID), resourceId, data)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit input error: %v", err))
 		return err
@@ -103,7 +104,7 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 
 	log.Debug().Msgf("blockNum: %v", blockNum)
 
-	txHash, err := calls.Transact(ethClient, txFabric, &bridgeAddr, input, gasLimit)
+	txHash, err := calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddr, depositInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Error().Err(err)
 		return err
