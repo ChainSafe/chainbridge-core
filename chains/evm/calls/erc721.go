@@ -38,7 +38,7 @@ func PrepareERC721OwnerInput(tokenId *big.Int) ([]byte, error) {
 	return res, err
 }
 
-func PrepareErc721AddMinterInput(client ChainClient, erc721Contract, handler common.Address) ([]byte, error) {
+func PrepareErc721AddMinterInput(client ContractCallerClient, erc721Contract, handler common.Address) ([]byte, error) {
 	role, err := MinterRole(client, erc721Contract)
 	if err != nil {
 		return []byte{}, err
