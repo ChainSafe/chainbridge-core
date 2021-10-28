@@ -382,12 +382,16 @@ Flags:
       --all                     deploy all
       --bridge                  deploy bridge
       --bridgeAddress string    bridge contract address. Should be provided if handlers are deployed separately
-      --chainId string          chain ID for the instance (default "1")
+      --domainId string          domain ID for the instance (default "1")
       --erc20                   deploy ERC20
       --erc20Handler            deploy ERC20 handler
       --erc20Name string        ERC20 contract name
       --erc20Symbol string      ERC20 contract symbol
       --erc721                  deploy ERC721
+      --erc721Handler           deploy ERC721 handler
+      --erc721Name string       ERC721 contract name
+      --erc721Symbol string     ERC721 contract symbol
+      --erc721BaseURI           ERC721 base URI
       --fee string              fee to be taken when making a deposit (in ETH, decimas are allowed) (default "0")
   -h, --help                    help for deploy
       --relayerThreshold uint   number of votes required for a proposal to pass (default 1)
@@ -756,6 +760,10 @@ Flags:
       --erc20Name string        ERC20 contract name
       --erc20Symbol string      ERC20 contract symbol
       --erc721                  deploy ERC721
+      --erc721Handler           deploy ERC721 handler
+      --erc721Name string       ERC721 contract name
+      --erc721Symbol string     ERC721 contract symbol
+      --erc721BaseURI           ERC721 base URI
       --fee string              fee to be taken when making a deposit (in ETH, decimas are allowed) (default "0")
   -h, --help                    help for deploy
       --relayerThreshold uint   number of votes required for a proposal to pass (default 1)

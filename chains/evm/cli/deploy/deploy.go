@@ -81,7 +81,7 @@ func BindDeployEVMFlags(deployCmd *cobra.Command) {
 	deployCmd.Flags().Uint64Var(&RelayerThreshold, "relayerTreshold", 1, "number of votes required for a proposal to pass")
 	flags.MarkFlagsAsRequired(deployCmd,
 		"bridge", "erc20Handler", "erc20", "erc721", "erc721Handler", "all", "relayerTreshold", "domainId",
-		"relayers", "fee", "bridgeAddress", "erc20Symbol", "erc20Name")
+		"relayers", "fee", "bridgeAddress", "erc20Symbol", "erc20Name", "erc721Symbol", "erc721Name", "erc721BaseURI")
 }
 
 func init() {
