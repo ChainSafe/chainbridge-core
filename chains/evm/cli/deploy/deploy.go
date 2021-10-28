@@ -43,36 +43,44 @@ var DeployEVM = &cobra.Command{
 var (
 	// Flags for all EVM Deploy CLI commands
 	Bridge           bool
-	Erc20Handler     bool
-	Erc20            bool
-	Erc721           bool
-	DeployAll        bool
-	RelayerThreshold uint64
-	DomainId         uint8
-	Relayers         []string
-	Fee              string
 	BridgeAddress    string
-	Erc20Symbol      string
+	DeployAll        bool
+	DomainId         uint8
+	Erc20            bool
+	Erc20Handler     bool
 	Erc20Name        string
+	Erc20Symbol      string
+	Erc721           bool
+	Erc721Handler    bool
+	Erc721Name       string
+	Erc721Symbol     string
+	Erc721BaseURI    string
+	Fee              string
+	RelayerThreshold uint64
+	Relayers         []string
 )
 
 func BindDeployEVMFlags(deployCmd *cobra.Command) {
 	deployCmd.Flags().BoolVar(&Bridge, "bridge", false, "deploy bridge")
-	deployCmd.Flags().BoolVar(&Erc20Handler, "erc20Handler", false, "deploy ERC20 handler")
+	deployCmd.Flags().StringVar(&BridgeAddress, "bridgeAddress", "", "bridge contract address. Should be provided if handlers are deployed separately")
 	//deployCmd.Flags().Bool("erc721Handler", false, "deploy ERC721 handler")
 	//deployCmd.Flags().Bool("genericHandler", false, "deploy generic handler")
-	deployCmd.Flags().BoolVar(&Erc20, "erc20", false, "deploy ERC20")
-	deployCmd.Flags().BoolVar(&Erc721, "erc721", false, "deploy ERC721")
 	deployCmd.Flags().BoolVar(&DeployAll, "all", false, "deploy all")
-	deployCmd.Flags().Uint64Var(&RelayerThreshold, "relayerTreshold", 1, "number of votes required for a proposal to pass")
 	deployCmd.Flags().Uint8Var(&DomainId, "domainId", 1, "domain ID for the instance")
-	deployCmd.Flags().StringSliceVar(&Relayers, "relayers", []string{}, "list of initial relayers")
-	deployCmd.Flags().StringVar(&Fee, "fee", "0", "fee to be taken when making a deposit (in ETH, decimas are allowed)")
-	deployCmd.Flags().StringVar(&BridgeAddress, "bridgeAddress", "", "bridge contract address. Should be provided if handlers are deployed separately")
-	deployCmd.Flags().StringVar(&Erc20Symbol, "erc20Symbol", "", "ERC20 contract symbol")
+	deployCmd.Flags().BoolVar(&Erc20, "erc20", false, "deploy ERC20")
+	deployCmd.Flags().BoolVar(&Erc20Handler, "erc20Handler", false, "deploy ERC20 handler")
 	deployCmd.Flags().StringVar(&Erc20Name, "erc20Name", "", "ERC20 contract name")
+	deployCmd.Flags().StringVar(&Erc20Symbol, "erc20Symbol", "", "ERC20 contract symbol")
+	deployCmd.Flags().BoolVar(&Erc721, "erc721", false, "deploy ERC721")
+	deployCmd.Flags().BoolVar(&Erc721Handler, "erc721Handler", false, "deploy ERC721 handler")
+	deployCmd.Flags().StringVar(&Erc721Name, "erc721Name", "", "ERC721 contract name")
+	deployCmd.Flags().StringVar(&Erc721Symbol, "erc721Symbol", "", "ERC721 contract symbol")
+	deployCmd.Flags().StringVar(&Erc721BaseURI, "erc721BaseURI", "", "ERC721 base URI")
+	deployCmd.Flags().StringVar(&Fee, "fee", "0", "fee to be taken when making a deposit (in ETH, decimas are allowed)")
+	deployCmd.Flags().StringSliceVar(&Relayers, "relayers", []string{}, "list of initial relayers")
+	deployCmd.Flags().Uint64Var(&RelayerThreshold, "relayerTreshold", 1, "number of votes required for a proposal to pass")
 	flags.MarkFlagsAsRequired(deployCmd,
-		"bridge", "erc20Handler", "erc20", "erc721", "all", "relayerTreshold", "domainId",
+		"bridge", "erc20Handler", "erc20", "erc721", "erc721Handler", "all", "relayerTreshold", "domainId",
 		"relayers", "fee", "bridgeAddress", "erc20Symbol", "erc20Name")
 }
 
@@ -131,16 +139,16 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPr
 		if Bridge {
 			deployments = append(deployments, "bridge")
 		}
-		if Erc20Handler {
-			deployments = append(deployments, "erc20Handler")
-		}
 		if Erc20 {
 			deployments = append(deployments, "erc20")
 		}
-		if erc721Bool {
+		if Erc20Handler {
+			deployments = append(deployments, "erc20Handler")
+		}
+		if Erc721 {
 			deployments = append(deployments, "erc721")
 		}
-		if erc721HandlerBool {
+		if Erc721Handler {
 			deployments = append(deployments, "erc721Handler")
 		}
 	}
@@ -162,6 +170,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPr
 			deployedContracts["bridge"] = bridgeAddr.String()
 
 			log.Debug().Msgf("bridge address; %v", bridgeAddr.String())
+
 		case "erc20Handler":
 			log.Debug().Msgf("deploying ERC20 handler..")
 			emptyAddr := common.Address{}
@@ -176,6 +185,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPr
 				return err
 			}
 			deployedContracts["erc20Handler"] = erc20HandlerAddr.String()
+
 		case "erc20":
 			log.Debug().Msgf("deploying ERC20..")
 			if Erc20Name == "" || Erc20Symbol == "" {
@@ -189,14 +199,23 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPr
 				return err
 			}
 			deployedContracts["erc20Token"] = erc20Addr.String()
-			if err != nil {
-				log.Error().Err(err)
-				return err
-			}
-			if Erc20Name == "" || Erc20Symbol == "" {
+
+		case "erc721":
+			log.Debug().Msgf("deploying ERC721..")
+
+			if Erc721Name == "" || Erc721Symbol == "" {
 				log.Error().Err(ErrErc20TokenAndSymbolNotProvided)
 				return ErrErc20TokenAndSymbolNotProvided
 			}
+
+			erc721Addr, err := calls.DeployErc721(ethClient, txFabric, gasPricer, Erc721Name, Erc721Symbol, Erc721BaseURI)
+			if err != nil {
+				log.Error().Err(fmt.Errorf("ERC721 deploy failed: %w", err))
+				return err
+			}
+
+			deployedContracts["erc721Token"] = erc721Addr.String()
+
 		case "erc721Handler":
 			log.Debug().Msgf("deploying ERC721 handler..")
 
@@ -206,7 +225,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPr
 				return err
 			}
 
-			erc721HandlerAddr, err := calls.DeployErc20Handler(ethClient, txFabric, bridgeAddr)
+			erc721HandlerAddr, err := calls.DeployErc721Handler(ethClient, txFabric, gasPricer, bridgeAddr)
 			if err != nil {
 				log.Error().Err(fmt.Errorf("ERC721 handler deploy failed: %w", err))
 				return err
