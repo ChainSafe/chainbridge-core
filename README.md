@@ -539,7 +539,7 @@ Usage:
 Flags:
       --contract-address string   ERC721 contract address
       --recipient string          address of recipient
-      --tokenId string           ERC721 token ID
+      --tokenId string            ERC721 token ID
   -h, --help                      help for add-minter
 ```
 
@@ -556,7 +556,7 @@ Flags:
       --bridge string             address of bridge contract
       --destId string             destination domain ID
       --resourceId string         resource ID for transfer
-      --tokenId string           ERC721 token ID
+      --tokenId string            ERC721 token ID
   -h, --help                      help for add-minter
 ```
 
