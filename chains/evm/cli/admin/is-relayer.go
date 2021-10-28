@@ -6,6 +6,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/writer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -110,5 +111,6 @@ func IsRelayer(cmd *cobra.Command, args []string) error {
 	} else {
 		log.Info().Msgf("Address %s is relayer", relayerAddr.String())
 	}
+	writer.WriteCliDataToFile(cmd)
 	return nil
 }

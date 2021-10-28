@@ -7,6 +7,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/writer"
 
 	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ChainSafe/chainbridge-core/types"
@@ -44,7 +45,7 @@ func GlobalFlagValues(cmd *cobra.Command) (string, uint64, *big.Int, *secp256k1.
 		log.Error().Err(fmt.Errorf("define sender error: %v", err))
 		return "", consts.DefaultGasLimit, nil, nil, err
 	}
-
+	writer.WriteCliDataToFile(cmd)
 	return url, gasLimitInt, gasPrice, senderKeyPair, nil
 }
 
@@ -61,6 +62,7 @@ func defineSender(cmd *cobra.Command) (*secp256k1.Keypair, error) {
 		return kp, nil
 	}
 	var AliceKp = keystore.TestKeyRing.EthereumKeys[keystore.AliceKey]
+	writer.WriteCliDataToFile(cmd)
 	return AliceKp, nil
 }
 

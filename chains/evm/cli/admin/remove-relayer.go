@@ -2,6 +2,7 @@ package admin
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/writer"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -24,6 +25,7 @@ func removeRelayer(cmd *cobra.Command, args []string) {
 Removing relayer
 Relayer address: %s
 Bridge address: %s`, Relayer, Bridge)
+	writer.WriteCliDataToFile(cmd)
 }
 
 /*

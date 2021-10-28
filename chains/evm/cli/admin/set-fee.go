@@ -2,6 +2,7 @@ package admin
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/writer"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -24,6 +25,7 @@ func setFee(cmd *cobra.Command, args []string) {
 Setting new fee
 Fee amount: %s
 Bridge address: %s`, Fee, Bridge)
+	writer.WriteCliDataToFile(cmd)
 }
 
 /*

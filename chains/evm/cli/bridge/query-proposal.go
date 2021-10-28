@@ -2,6 +2,7 @@ package bridge
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/writer"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -28,6 +29,7 @@ Chain ID: %d
 Deposit nonce: %d
 Data hash: %s
 Bridge address: %s`, DomainID, DepositNonce, DataHash, Bridge)
+	writer.WriteCliDataToFile(cmd)
 }
 
 /*

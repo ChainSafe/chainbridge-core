@@ -2,6 +2,7 @@ package bridge
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/writer"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -35,6 +36,7 @@ Deposit: %s
 Execute: %s
 Hash: %v
 `, Handler, ResourceID, Bridge, Target, Deposit, Execute, Hash)
+	writer.WriteCliDataToFile(cmd)
 }
 
 /*

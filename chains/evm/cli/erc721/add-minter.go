@@ -1,6 +1,7 @@
 package erc721
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/writer"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -24,6 +25,7 @@ func addMinter(cmd *cobra.Command, args []string) {
 Adding minter
 Minter address: %s
 ERC721 address: %s`, minterAddress, erc721Address)
+	writer.WriteCliDataToFile(cmd)
 }
 
 /*

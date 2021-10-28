@@ -2,6 +2,7 @@ package admin
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/writer"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -22,6 +23,7 @@ func pause(cmd *cobra.Command, args []string) {
 	log.Debug().Msgf(`
 Pausing
 Bridge address: %s`, Bridge)
+	writer.WriteCliDataToFile(cmd)
 }
 
 /*

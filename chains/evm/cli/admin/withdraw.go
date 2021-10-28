@@ -2,6 +2,7 @@ package admin
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/writer"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -34,6 +35,7 @@ Handler: %s
 Token: %s
 Recipient: %s
 Decimals: %v`, Amount, TokenID, Bridge, Handler, Token, Recipient, Decimals)
+	writer.WriteCliDataToFile(cmd)
 }
 
 /*

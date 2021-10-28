@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/writer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -74,6 +75,6 @@ func HashListCmd(cmd *cobra.Command, args []string) error {
 
 		log.Debug().Msgf("block: %v", block)
 	}
-
+	writer.WriteCliDataToFile(cmd)
 	return nil
 }

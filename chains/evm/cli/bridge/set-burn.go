@@ -10,6 +10,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/writer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
@@ -93,5 +94,6 @@ func SetBurnCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasP
 		return err
 	}
 	log.Info().Msg("Burnable set")
+	writer.WriteCliDataToFile(cmd)
 	return nil
 }

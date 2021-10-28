@@ -3,6 +3,7 @@ package erc20
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/writer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -36,6 +37,7 @@ ERC20 address: %s
 Owner address: %s
 Spender address: %s`,
 		Erc20Address, OwnerAddress, SpenderAddress)
+	writer.WriteCliDataToFile(cmd)
 	return nil
 
 	/*

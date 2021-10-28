@@ -2,6 +2,7 @@ package bridge
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/writer"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -24,6 +25,7 @@ func queryResource(cmd *cobra.Command, args []string) {
 Querying resource
 Handler address: %s
 Resource ID: %s`, Handler, ResourceID)
+	writer.WriteCliDataToFile(cmd)
 }
 
 /*
