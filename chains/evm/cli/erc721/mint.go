@@ -18,8 +18,8 @@ import (
 
 var mintCmd = &cobra.Command{
 	Use:   "mint",
-	Short: "Mint tokens on an ERC721 mintable contract",
-	Long:  "Mint tokens on an ERC721 mintable contract",
+	Short: "Mint token on an ERC721 mintable contract",
+	Long:  "Mint token on an ERC721 mintable contract",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
 		return MintCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
@@ -42,9 +42,9 @@ func init() {
 func BindMintFlags() {
 	mintCmd.Flags().StringVar(&Erc721Address, "contract-address", "", "address of contract")
 	mintCmd.Flags().StringVar(&DstAddress, "destination-address", "", "address of recipient")
-	mintCmd.Flags().StringVar(&TokenId, "token-id", "", "token id")
-	mintCmd.Flags().StringVar(&Metadata, "metadata", "", "token metadata")
-	flags.MarkFlagsAsRequired(mintCmd, "contract-address", "destination-address", "token-id", "metadata", "contract-address")
+	mintCmd.Flags().StringVar(&TokenId, "tokenId", "", "ERC721 token ID")
+	mintCmd.Flags().StringVar(&Metadata, "metadata", "", "ERC721 token metadata")
+	flags.MarkFlagsAsRequired(mintCmd, "contract-address", "destination-address", "tokenId", "metadata", "contract-address")
 }
 
 func ValidateMintFlags(cmd *cobra.Command, args []string) error {

@@ -41,7 +41,8 @@ func BindDepositCmdFlags() {
 	mintCmd.Flags().StringVar(&Bridge, "bridge", "", "address of bridge contract")
 	mintCmd.Flags().StringVar(&DestionationID, "destId", "", "destination domain ID")
 	mintCmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID for transfer")
-	mintCmd.Flags().StringVar(&TokenId, "tokenId", "", "ERC721 token id")
+	mintCmd.Flags().StringVar(&TokenId, "tokenId", "", "ERC721 token ID")
+	flags.MarkFlagsAsRequired(mintCmd, "recipient", "bridge", "destId", "resourceId", "tokenId")
 }
 
 func init() {

@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
@@ -16,8 +17,8 @@ import (
 
 var ownerCmd = &cobra.Command{
 	Use:   "owner",
-	Short: "Mint ERC721 token",
-	Long:  "Mint ERC721 token",
+	Short: "Get token owner from an ERC721 mintable contract",
+	Long:  "Get token owner from an ERC721 mintable contract",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
 		return OwnerCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
@@ -35,7 +36,8 @@ var ownerCmd = &cobra.Command{
 
 func BindOwnerCmdFlags(cli *cobra.Command) {
 	mintCmd.Flags().StringVar(&Erc721Address, "contract-address", "", "address of contract")
-	mintCmd.Flags().StringVar(&TokenId, "token-id", "", "token id")
+	mintCmd.Flags().StringVar(&TokenId, "tokenId", "", "ERC721 token ID")
+	flags.MarkFlagsAsRequired(mintCmd, "contract-address", "tokenId")
 }
 
 func init() {
