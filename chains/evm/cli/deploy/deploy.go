@@ -27,12 +27,7 @@ var DeployEVM = &cobra.Command{
 	Long:  "This command can be used to deploy all or some of the contracts required for bridging. Selection of contracts can be made by either specifying --all or a subset of flags",
 	RunE:  CallDeployCLI,
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := ValidateDeployFlags(cmd, args)
-		if err != nil {
-			return err
-		}
-
-		err = ProcessDeployFlags(cmd, args)
+		err := ProcessDeployFlags(cmd, args)
 		return err
 	},
 }
@@ -68,27 +63,21 @@ func BindDeployEVMFlags(deployCmd *cobra.Command) {
 	deployCmd.Flags().StringVar(&BridgeAddress, "bridgeAddress", "", "bridge contract address. Should be provided if handlers are deployed separately")
 	deployCmd.Flags().StringVar(&Erc20Symbol, "erc20Symbol", "", "ERC20 contract symbol")
 	deployCmd.Flags().StringVar(&Erc20Name, "erc20Name", "", "ERC20 contract name")
-	flags.MarkFlagsAsRequired(deployCmd,
-		"bridge", "erc20Handler", "erc20", "erc721", "all", "relayerThreshold", "domainId",
-		"relayers", "fee", "bridgeAddress", "erc20Symbol", "erc20Name")
+	flags.MarkFlagsAsRequired(deployCmd, "relayerThreshold", "domainId", "fee", "erc20Symbol", "erc20Name")
 }
 
 func init() {
 	BindDeployEVMFlags(DeployEVM)
-}
-func ValidateDeployFlags(cmd *cobra.Command, args []string) error {
-	if !common.IsHexAddress(BridgeAddress) {
-		return fmt.Errorf("invalid bridge address %s", BridgeAddress)
-	}
-	return nil
 }
 
 var bridgeAddr common.Address
 var relayerAddresses []common.Address
 
 func ProcessDeployFlags(cmd *cobra.Command, args []string) error {
-	bridgeAddr = common.HexToAddress(BridgeAddress)
 
+	if common.IsHexAddress(BridgeAddress) {
+		bridgeAddr = common.HexToAddress(BridgeAddress)
+	}
 	for _, addr := range Relayers {
 		if !common.IsHexAddress(addr) {
 			return fmt.Errorf("invalid relayer address %s", addr)
