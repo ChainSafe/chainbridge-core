@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
@@ -30,27 +29,27 @@ var (
 
 func localSetup(cmd *cobra.Command, args []string) error {
 	// init client1
-	ethClient, err := evmclient.NewEVMClientFromParams(localEndpoint1, evm.AliceKp.PrivateKey())
+	ethClient, err := evmclient.NewEVMClientFromParams(localEndpoint1, AliceKp.PrivateKey())
 	if err != nil {
 		return err
 	}
 
 	// init client2
-	ethClient2, err := evmclient.NewEVMClientFromParams(localEndpoint2, evm.AliceKp.PrivateKey())
+	ethClient2, err := evmclient.NewEVMClientFromParams(localEndpoint2, AliceKp.PrivateKey())
 	if err != nil {
 		return err
 	}
 
 	// chain 1
 	// domainsId: 0
-	bridgeAddr, erc20Addr, erc20HandlerAddr, err := evm.PrepareEVME2EEnv(ethClient, fabric1, uint8(localDomainId1), big.NewInt(1), evm.AliceKp.CommonAddress())
+	bridgeAddr, erc20Addr, erc20HandlerAddr, err := PrepareLocalEnv(ethClient, fabric1, uint8(localDomainId1), big.NewInt(1), AliceKp.CommonAddress())
 	if err != nil {
 		return err
 	}
 
 	// chain 2
 	// domainId: 1
-	bridgeAddr2, erc20Addr2, erc20HandlerAddr2, err := evm.PrepareEVME2EEnv(ethClient2, fabric2, uint8(localDomainId2), big.NewInt(1), evm.AliceKp.CommonAddress())
+	bridgeAddr2, erc20Addr2, erc20HandlerAddr2, err := PrepareLocalEnv(ethClient2, fabric2, uint8(localDomainId2), big.NewInt(1), AliceKp.CommonAddress())
 	if err != nil {
 		return err
 	}

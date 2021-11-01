@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/local"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
@@ -20,7 +20,7 @@ import (
 )
 
 type TestClient interface {
-	evm.E2EClient
+	local.E2EClient
 	LatestBlock() (*big.Int, error)
 	FetchEventLogs(ctx context.Context, contractAddress common.Address, event string, startBlock *big.Int, endBlock *big.Int) ([]types.Log, error)
 }
@@ -65,7 +65,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 		panic(err)
 	}
 	log.Debug().Msgf("Latest block %s", b.String())
-	bridgeAddr, erc20Addr, erc20HandlerAddr, err := evm.PrepareEVME2EEnv(ethClient, s.fabric1, 1, big.NewInt(1), s.adminKey.CommonAddress())
+	bridgeAddr, erc20Addr, erc20HandlerAddr, err := local.PrepareLocalEnv(ethClient, s.fabric1, 1, big.NewInt(1), s.adminKey.CommonAddress())
 	if err != nil {
 		panic(err)
 	}
@@ -75,7 +75,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 	s.erc20ContractAddr = erc20Addr
 	s.erc20HandlerAddr = erc20HandlerAddr
 	//Contract addresses should be the same
-	_, _, _, err = evm.PrepareEVME2EEnv(ethClient2, s.fabric2, 2, big.NewInt(1), s.adminKey.CommonAddress())
+	_, _, _, err = local.PrepareLocalEnv(ethClient2, s.fabric2, 2, big.NewInt(1), s.adminKey.CommonAddress())
 	if err != nil {
 		panic(err)
 	}
@@ -83,7 +83,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 
 func (s *IntegrationTestSuite) TestErc20Deposit() {
 	dstAddr := keystore.TestKeyRing.EthereumKeys[keystore.BobKey].CommonAddress()
-	senderBalBefore, err := calls.GetERC20Balance(s.client, s.erc20ContractAddr, evm.EveKp.CommonAddress())
+	senderBalBefore, err := calls.GetERC20Balance(s.client, s.erc20ContractAddr, local.EveKp.CommonAddress())
 	s.Nil(err)
 	destBalanceBefore, err := calls.GetERC20Balance(s.client2, s.erc20ContractAddr, dstAddr)
 	s.Nil(err)
