@@ -13,7 +13,7 @@ import (
 )
 
 func DeployCentrifugeAssetStore(c ChainClient, txFabric TxFabric) (common.Address, error) {
-	log.Debug().Msgf("Deployng Centrifuge asset store")
+	log.Debug().Msgf("Deploying Centrifuge asset store")
 	parsed, err := abi.JSON(strings.NewReader(consts.CentrifugeAssetStoreABI))
 	if err != nil {
 		return common.Address{}, err

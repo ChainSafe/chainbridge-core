@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/rs/zerolog/log"
 )
 
@@ -47,49 +48,14 @@ func PrepareAdminSetGenericResourceInput(
 	rId [32]byte,
 	addr common.Address,
 	depositFunctionSig [4]byte,
+	depositerOffset *big.Int,
 	executeFunctionSig [4]byte,
 ) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
 	}
-	input, err := a.Pack("adminSetGenericResource", handler, rId, addr, depositFunctionSig, executeFunctionSig)
-	if err != nil {
-		return []byte{}, err
-	}
-	return input, nil
-}
-
-func PrepareErc20DepositInput(destDomainID uint8, resourceID [32]byte, data []byte) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
-	if err != nil {
-		return []byte{}, err
-	}
-	input, err := a.Pack("deposit", destDomainID, resourceID, data)
-	if err != nil {
-		return []byte{}, err
-	}
-	return input, nil
-}
-
-func PrepareExecuteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID types.ResourceID, calldata []byte, revertOnFail bool) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
-	if err != nil {
-		return []byte{}, err
-	}
-	input, err := a.Pack("executeProposal", sourceDomainID, depositNonce, calldata, resourceID, revertOnFail)
-	if err != nil {
-		return []byte{}, err
-	}
-	return input, nil
-}
-
-func PrepareVoteProposalInput(sourceDomainID uint8, resourceID types.ResourceID, calldata []byte) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
-	if err != nil {
-		return []byte{}, err
-	}
-	input, err := a.Pack("voteProposal", sourceDomainID, resourceID, calldata)
+	input, err := a.Pack("adminSetGenericResource", handler, rId, addr, depositFunctionSig, depositerOffset, executeFunctionSig)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -138,12 +104,39 @@ func ParseIsRelayerOutput(output []byte) (bool, error) {
 	return *b, nil
 }
 
-func Deposit(client ChainClient, fabric TxFabric, bridgeAddress, recipient common.Address, amount *big.Int, resourceID types.ResourceID, destDomainID uint8) error {
-	data := ConstructErc20DepositData(recipient.Bytes(), amount)
-	input, err := PrepareErc20DepositInput(destDomainID, resourceID, data)
+func ConstructErc20DepositData(destRecipient []byte, amount *big.Int) []byte {
+	var data []byte
+	data = append(data, math.PaddedBigBytes(amount, 32)...)
+	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(destRecipient))), 32)...)
+	data = append(data, destRecipient...)
+	return data
+}
+
+func ConstructGenericDepositData(metadata []byte) []byte {
+	var data []byte
+	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(metadata))), 32)...)
+	data = append(data, metadata...)
+	return data
+}
+
+func PrepareDepositInput(destDomainID uint8, resourceID [32]byte, data []byte) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("deposit", destDomainID, resourceID, data)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
+}
+
+func Deposit(client ChainClient, fabric TxFabric, bridgeAddress common.Address, resourceID [32]byte, destDomainID uint8, data []byte) error {
+	input, err := PrepareDepositInput(destDomainID, resourceID, data)
 	if err != nil {
 		return err
 	}
+
 	gasLimit := uint64(2000000)
 	h, err := Transact(client, fabric, &bridgeAddress, input, gasLimit, big.NewInt(0))
 	if err != nil {
@@ -151,6 +144,18 @@ func Deposit(client ChainClient, fabric TxFabric, bridgeAddress, recipient commo
 	}
 	log.Debug().Str("hash", h.String()).Msgf("Deposit sent")
 	return nil
+}
+
+func PrepareExecuteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID types.ResourceID, calldata []byte, revertOnFail bool) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("executeProposal", sourceDomainID, depositNonce, calldata, resourceID, revertOnFail)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
 }
 
 func ExecuteProposal(client ClientDispatcher, fabric TxFabric, proposal *proposal.Proposal) (common.Hash, error) {
@@ -167,9 +172,21 @@ func ExecuteProposal(client ClientDispatcher, fabric TxFabric, proposal *proposa
 	return h, nil
 }
 
+func PrepareVoteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID types.ResourceID, calldata []byte) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("voteProposal", sourceDomainID, depositNonce, resourceID, calldata)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
+}
+
 func VoteProposal(client ClientDispatcher, fabric TxFabric, proposal *proposal.Proposal) (common.Hash, error) {
 	// revertOnFail should be constantly false, true is used only for internal contract calls when you need to execute proposal in voteProposal function right after it becomes Passed becouse of votes
-	input, err := PrepareVoteProposalInput(proposal.Source, proposal.ResourceId, proposal.Data)
+	input, err := PrepareVoteProposalInput(proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -202,7 +219,7 @@ func ProposalStatus(evmCaller ContractCallerClient, p *proposal.Proposal) (relay
 	if err != nil {
 		return relayer.ProposalStatusInactive, err
 	}
-	input, err := a.Pack("getProposal", p.Source, p.DepositNonce, p.Data)
+	input, err := a.Pack("getProposal", p.Source, p.DepositNonce, SliceTo32Bytes(p.Data))
 	if err != nil {
 		return relayer.ProposalStatusInactive, err
 	}
@@ -212,18 +229,18 @@ func ProposalStatus(evmCaller ContractCallerClient, p *proposal.Proposal) (relay
 	if err != nil {
 		return relayer.ProposalStatusInactive, err
 	}
+
 	type bridgeProposal struct {
-		ResourceID    types.ResourceID
-		DataHash      [32]byte
-		YesVotes      []common.Address
-		NoVotes       []common.Address
 		Status        uint8
+		YesVotes      *big.Int
+		YesVotesTotal uint8
 		ProposedBlock *big.Int
 	}
 	res, err := a.Unpack("getProposal", out)
 	if err != nil {
 		return relayer.ProposalStatusInactive, err
 	}
+
 	out0 := *abi.ConvertType(res[0], new(bridgeProposal)).(*bridgeProposal)
 	return relayer.ProposalStatus(out0.Status), nil
 }
