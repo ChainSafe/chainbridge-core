@@ -16,8 +16,8 @@ import (
 
 var setBurnCmd = &cobra.Command{
 	Use:   "set-burn",
-	Short: "Set a token contract as mintable/burnable",
-	Long:  "Set a token contract as mintable/burnable in a handler",
+	Short: "Set a token contract as burnable",
+	Long:  "Set a token contract as burnable by the handler contract",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
 		return SetBurnCmd(cmd, args, txFabric)
