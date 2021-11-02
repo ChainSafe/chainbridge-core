@@ -80,7 +80,6 @@ func ProcessMintFlags(cmd *cobra.Command, args []string) error {
 }
 
 func MintCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
-
 	ethClient, err := evmclient.NewEVMClientFromParams(
 		url, senderKeyPair.PrivateKey())
 	if err != nil {
@@ -91,18 +90,9 @@ func MintCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPric
 	gasPricer.SetClient(ethClient)
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
-	mintTokenInput, err := calls.PrepareERC721MintTokensInput(dstAddress, tokenId, metadata)
-	if err != nil {
-		log.Error().Err(fmt.Errorf("erc721 mint input error: %v", err))
-		return err
+	_, err = calls.ERC721Mint(ethClient, txFabric, gasPricer.(calls.GasPricer), gasLimit, tokenId, metadata, erc721Addr, dstAddress)
+	if err == nil {
+		log.Info().Msgf("%v token minted", tokenId)
 	}
-
-	_, err = calls.Transact(ethClient, txFabric, gasPricer, &erc721Addr, mintTokenInput, gasLimit, big.NewInt(0))
-	if err != nil {
-		log.Error().Err(err)
-		return err
-	}
-
-	log.Info().Msgf("%v token minted", tokenId)
-	return nil
+	return err
 }

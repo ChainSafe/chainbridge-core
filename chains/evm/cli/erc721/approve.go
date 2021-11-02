@@ -67,25 +67,19 @@ func ProcessApproveFlags(cmd *cobra.Command, args []string) error {
 }
 
 func ApproveCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
-	ethclient, err := evmclient.NewEVMClientFromParams(
+	ethClient, err := evmclient.NewEVMClientFromParams(
 		url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
 
-	approveTokenInput, err := calls.PrepareERC721ApproveInput(recipientAddr, tokenId)
-	if err != nil {
-		log.Error().Err(fmt.Errorf("erc721 approve input error: %v", err))
-		return err
-	}
+	gasPricer.SetClient(ethClient)
+	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
-	_, err = calls.Transact(ethclient, txFabric, gasPricer, &erc721Addr, approveTokenInput, gasLimit, big.NewInt(0))
-	if err != nil {
-		log.Error().Err(err)
-		return err
+	_, err = calls.ERC721Approve(ethClient, txFabric, gasPricer.(calls.GasPricer), gasLimit, tokenId, erc721Addr, recipientAddr)
+	if err == nil {
+		log.Info().Msgf("%v token approved", tokenId)
 	}
-
-	log.Info().Msgf("%v token approved", tokenId)
-	return nil
+	return err
 }

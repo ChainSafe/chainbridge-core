@@ -1,7 +1,6 @@
 package erc721
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -89,30 +88,12 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasP
 		return err
 	}
 
-	data := calls.ConstructErc721DepositData(tokenId, recipientAddr.Bytes())
-
-	depositInput, err := calls.PrepareErc20DepositInput(uint8(destinationID), resourceId, data)
-	if err != nil {
-		log.Error().Err(fmt.Errorf("erc20 deposit input error: %v", err))
-		return err
+	txHash, err := calls.ERC721Deposit(
+		ethClient, txFabric, gasPricer.(calls.GasPricer), gasLimit, tokenId, destinationID, resourceId, bridgeAddr, recipientAddr,
+	)
+	if err == nil {
+		log.Debug().Msgf("erc721 deposit hash: %s", txHash.Hex())
+		log.Info().Msgf("%s token were transferred to %s from %s", tokenId.String(), recipientAddr.Hex(), senderKeyPair.CommonAddress().String())
 	}
-
-	blockNum, err := ethClient.BlockNumber(context.Background())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("block fetch error: %v", err))
-		return err
-	}
-
-	log.Debug().Msgf("blockNum: %v", blockNum)
-
-	txHash, err := calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddr, depositInput, gasLimit, big.NewInt(0))
-	if err != nil {
-		log.Error().Err(err)
-		return err
-	}
-
-	log.Debug().Msgf("erc721 deposit hash: %s", txHash.Hex())
-
-	log.Info().Msgf("%s token were transferred to %s from %s", tokenId.String(), recipientAddr.Hex(), senderKeyPair.CommonAddress().String())
-	return nil
+	return err
 }

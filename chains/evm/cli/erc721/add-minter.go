@@ -2,7 +2,6 @@ package erc721
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
@@ -69,22 +68,13 @@ func AddMinterCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, ga
 	gasPricer.SetClient(ethClient)
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
-	addMinterInput, err := calls.PrepareErc721AddMinterInput(ethClient, erc721Addr, minterAddr)
-	if err != nil {
-		log.Error().Err(err)
-		return err
+	_, err = calls.ERC721AddMinter(ethClient, txFabric, gasPricer.(calls.GasPricer), gasLimit, erc721Addr, minterAddr)
+	if err == nil {
+		log.Debug().Msgf(`
+		Adding minter
+		Minter address: %s
+		ERC721 address: %s`,
+			minterAddr, erc721Addr)
 	}
-	_, err = calls.Transact(ethClient, txFabric, gasPricer, &erc721Addr, addMinterInput, gasLimit, big.NewInt(0))
-	if err != nil {
-		log.Error().Err(err)
-		return err
-	}
-
-	log.Debug().Msgf(`
-	Adding minter
-	Minter address: %s
-	ERC721 address: %s`,
-		minterAddr, erc721Addr)
-
-	return nil
+	return err
 }

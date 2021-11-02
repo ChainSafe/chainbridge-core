@@ -63,7 +63,6 @@ func ProcessOwnerFlags(cmd *cobra.Command, args []string) error {
 }
 
 func OwnerCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
-
 	ethClient, err := evmclient.NewEVMClientFromParams(
 		url, senderKeyPair.PrivateKey())
 	if err != nil {
@@ -71,21 +70,12 @@ func OwnerCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPri
 		return err
 	}
 
-	ownerOfTokenInput, err := calls.PrepareERC721OwnerInput(tokenId)
-	if err != nil {
-		log.Error().Err(fmt.Errorf("erc721 approve input error: %v", err))
-		return err
-	}
-
 	gasPricer.SetClient(ethClient)
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
-	_, err = calls.Transact(ethClient, txFabric, gasPricer, &erc721Addr, ownerOfTokenInput, gasLimit, big.NewInt(0))
-	if err != nil {
-		log.Error().Err(err)
-		return err
+	_, err = calls.ERC721Owner(ethClient, txFabric, gasPricer.(calls.GasPricer), gasLimit, tokenId, erc721Addr)
+	if err == nil {
+		log.Info().Msgf("%v token owner", tokenId)
 	}
-
-	log.Info().Msgf("%v token owner", tokenId)
-	return nil
+	return err
 }
