@@ -42,7 +42,7 @@ func (s *LoggerTestSuite) TestWriteCliDataToFile() {
 	}
 
 	cli.EvmRootCLI.SetArgs(rootCmdArgs)
-	cli.EvmRootCLI.Execute()
+	_ = cli.EvmRootCLI.Execute()
 
 	data, _ := os.ReadFile(logger.CliLogsFilename)
 	s.Equal(expectedLog, string(data))
