@@ -1,7 +1,6 @@
 package calls
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 	"strings"
@@ -44,29 +43,12 @@ func ERC721Approve(client *evmclient.EVMClient, txFabric TxFabric, gasPricer Gas
 }
 
 func ERC721Deposit(client *evmclient.EVMClient, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, tokenId *big.Int, destinationId int, resourceId types.ResourceID, bridgeContract, recipient common.Address) (*common.Hash, error) {
-	data := ConstructErc721DepositData(tokenId, recipient.Bytes())
-
-	depositInput, err := PrepareErc20DepositInput(uint8(destinationId), resourceId, data)
-	if err != nil {
-		log.Error().Err(fmt.Errorf("erc20 deposit input error: %v", err))
-		return nil, err
-	}
-
-	blockNum, err := client.BlockNumber(context.Background())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("block fetch error: %v", err))
-		return nil, err
-	}
-
-	log.Debug().Msgf("blockNum: %v", blockNum)
-
-	txHash, err := Transact(client, txFabric, gasPricer, &bridgeContract, depositInput, gasLimit, big.NewInt(0))
+	txHash, err := Deposit(client, txFabric, gasPricer, bridgeContract, recipient, tokenId, resourceId, uint8(destinationId))
 	if err != nil {
 		log.Error().Err(err)
 		return nil, err
 	}
-
-	return &txHash, err
+	return txHash, err
 }
 
 func ERC721Mint(client *evmclient.EVMClient, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, tokenId *big.Int, metadata []byte, erc721Contract, destination common.Address) (*common.Hash, error) {

@@ -90,7 +90,7 @@ func (s *IntegrationTestSuite) TestErc20Deposit() {
 	amountToDeposit := big.NewInt(1000000)
 	resourceID := calls.SliceTo32Bytes(append(common.LeftPadBytes(s.erc20ContractAddr.Bytes(), 31), uint8(0)))
 	gasPricer := evmgaspricer.NewStaticGasPriceDeterminant(s.client, nil)
-	err = calls.Deposit(s.client, s.fabric1, gasPricer, s.bridgeAddr, dstAddr, amountToDeposit, resourceID, 2)
+	_, err = calls.Deposit(s.client, s.fabric1, gasPricer, s.bridgeAddr, dstAddr, amountToDeposit, resourceID, 2)
 	s.Nil(err)
 
 	//Wait 120 seconds for relayer vote
