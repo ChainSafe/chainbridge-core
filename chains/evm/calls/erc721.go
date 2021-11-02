@@ -27,7 +27,7 @@ func ERC721AddMinter(client *evmclient.EVMClient, txFabric TxFabric, gasPricer G
 	return &txHash, err
 }
 
-func ERC721Approve(client *evmclient.EVMClient, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, tokenId *big.Int, erc721Contract, recipient common.Address) (*common.Hash, error) {
+func ERC721Approve(client ClientDispatcher, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, tokenId *big.Int, erc721Contract, recipient common.Address) (*common.Hash, error) {
 	approveTokenInput, err := prepareERC721ApproveInput(recipient, tokenId)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc721 approve input error: %v", err))
@@ -42,7 +42,7 @@ func ERC721Approve(client *evmclient.EVMClient, txFabric TxFabric, gasPricer Gas
 	return &txHash, err
 }
 
-func ERC721Deposit(client *evmclient.EVMClient, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, tokenId *big.Int, destinationId int, resourceId types.ResourceID, bridgeContract, recipient common.Address) (*common.Hash, error) {
+func ERC721Deposit(client ClientDispatcher, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, tokenId *big.Int, destinationId int, resourceId types.ResourceID, bridgeContract, recipient common.Address) (*common.Hash, error) {
 	txHash, err := Deposit(client, txFabric, gasPricer, bridgeContract, recipient, tokenId, resourceId, uint8(destinationId))
 	if err != nil {
 		log.Error().Err(err)
@@ -51,7 +51,7 @@ func ERC721Deposit(client *evmclient.EVMClient, txFabric TxFabric, gasPricer Gas
 	return txHash, err
 }
 
-func ERC721Mint(client *evmclient.EVMClient, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, tokenId *big.Int, metadata []byte, erc721Contract, destination common.Address) (*common.Hash, error) {
+func ERC721Mint(client ClientDispatcher, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, tokenId *big.Int, metadata []byte, erc721Contract, destination common.Address) (*common.Hash, error) {
 	mintTokenInput, err := prepareERC721MintTokensInput(destination, tokenId, metadata)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc721 mint input error: %v", err))
@@ -66,7 +66,7 @@ func ERC721Mint(client *evmclient.EVMClient, txFabric TxFabric, gasPricer GasPri
 	return &txHash, err
 }
 
-func ERC721Owner(client *evmclient.EVMClient, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, tokenId *big.Int, erc721Contract common.Address) (*common.Hash, error) {
+func ERC721Owner(client ClientDispatcher, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, tokenId *big.Int, erc721Contract common.Address) (*common.Hash, error) {
 	ownerOfTokenInput, err := prepareERC721OwnerInput(tokenId)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc721 approve input error: %v", err))
@@ -81,9 +81,21 @@ func ERC721Owner(client *evmclient.EVMClient, txFabric TxFabric, gasPricer GasPr
 	return &txHash, err
 }
 
+func PackERC721Method(method string, args ...interface{}) (abi.ABI, []byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.ERC721PresetMinterPauserABI))
+	if err != nil {
+		return a, []byte{}, err
+	}
+	input, err := a.Pack(method, args...)
+	if err != nil {
+		return a, []byte{}, err
+	}
+	return a, input, nil
+}
+
 func prepareERC721MintTokensInput(destAddr common.Address, tokenId *big.Int, metadata []byte) ([]byte, error) {
 	log.Debug().Msgf("")
-	_, res, err := packERC721Method(
+	_, res, err := PackERC721Method(
 		"mint",
 		destAddr,
 		tokenId,
@@ -93,7 +105,7 @@ func prepareERC721MintTokensInput(destAddr common.Address, tokenId *big.Int, met
 }
 
 func prepareERC721ApproveInput(recipientAddr common.Address, tokenId *big.Int) ([]byte, error) {
-	_, res, err := packERC721Method(
+	_, res, err := PackERC721Method(
 		"approve",
 		recipientAddr,
 		tokenId,
@@ -102,7 +114,7 @@ func prepareERC721ApproveInput(recipientAddr common.Address, tokenId *big.Int) (
 }
 
 func prepareERC721OwnerInput(tokenId *big.Int) ([]byte, error) {
-	_, res, err := packERC721Method(
+	_, res, err := PackERC721Method(
 		"ownerOf",
 		tokenId,
 	)
@@ -115,18 +127,6 @@ func prepareErc721AddMinterInput(client ContractCallerClient, erc721Contract, mi
 		return []byte{}, err
 	}
 
-	_, res, err := packERC721Method("grantRole", role, minter)
+	_, res, err := PackERC721Method("grantRole", role, minter)
 	return res, err
-}
-
-func packERC721Method(method string, args ...interface{}) (abi.ABI, []byte, error) {
-	a, err := abi.JSON(strings.NewReader(consts.ERC721PresetMinterPauserABI))
-	if err != nil {
-		return a, []byte{}, err
-	}
-	input, err := a.Pack(method, args...)
-	if err != nil {
-		return a, []byte{}, err
-	}
-	return a, input, nil
 }
