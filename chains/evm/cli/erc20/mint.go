@@ -8,8 +8,8 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/writer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
@@ -22,6 +22,9 @@ var mintCmd = &cobra.Command{
 	Use:   "mint",
 	Short: "Mint tokens on an ERC20 mintable contract",
 	Long:  "Mint tokens on an ERC20 mintable contract",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
 		return MintCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
@@ -111,6 +114,5 @@ func MintCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPric
 		return err
 	}
 	log.Info().Msgf("%v tokens minted", Amount)
-	writer.WriteCliDataToFile(cmd)
 	return nil
 }

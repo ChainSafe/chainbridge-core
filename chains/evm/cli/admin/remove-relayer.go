@@ -2,7 +2,7 @@ package admin
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/writer"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -11,7 +11,10 @@ var removeRelayerCmd = &cobra.Command{
 	Use:   "remove-relayer",
 	Short: "Remove a relayer",
 	Long:  "Remove a relayer",
-	Run:   removeRelayer,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	Run: removeRelayer,
 }
 
 func init() {
@@ -25,7 +28,6 @@ func removeRelayer(cmd *cobra.Command, args []string) {
 Removing relayer
 Relayer address: %s
 Bridge address: %s`, Relayer, Bridge)
-	writer.WriteCliDataToFile(cmd)
 }
 
 /*

@@ -2,7 +2,7 @@ package admin
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/writer"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -11,7 +11,10 @@ var addAdminCmd = &cobra.Command{
 	Use:   "add-admin",
 	Short: "Add a new admin",
 	Long:  "Add a new admin",
-	Run:   addAdmin,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	Run: addAdmin,
 }
 
 func init() {
@@ -25,7 +28,6 @@ func addAdmin(cmd *cobra.Command, args []string) {
 Adding admin
 Admin address: %s
 Bridge address: %s`, Admin, Bridge)
-	writer.WriteCliDataToFile(cmd)
 }
 
 /*

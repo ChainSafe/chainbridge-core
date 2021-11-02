@@ -2,7 +2,7 @@ package admin
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/writer"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -11,7 +11,10 @@ var unpauseCmd = &cobra.Command{
 	Use:   "unpause",
 	Short: "Unpause deposits and proposals",
 	Long:  "Unpause deposits and proposals",
-	Run:   unpause,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	Run: unpause,
 }
 
 func init() {
@@ -23,7 +26,6 @@ func unpause(cmd *cobra.Command, args []string) {
 	log.Debug().Msgf(`
 Unpausing
 Bridge address: %s`, Bridge)
-	writer.WriteCliDataToFile(cmd)
 }
 
 /*
