@@ -16,7 +16,7 @@ import (
 )
 
 var approveCmd = &cobra.Command{
-	Use:   "mint",
+	Use:   "approve",
 	Short: "Approve token in an ERC721 contract for transfer.",
 	Long:  "Approve token in an ERC721 contract for transfer.",
 	RunE: func(cmd *cobra.Command, args []string) error {
