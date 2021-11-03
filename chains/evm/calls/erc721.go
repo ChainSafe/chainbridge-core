@@ -94,7 +94,6 @@ func PackERC721Method(method string, args ...interface{}) (abi.ABI, []byte, erro
 }
 
 func prepareERC721MintTokensInput(destAddr common.Address, tokenId *big.Int, metadata []byte) ([]byte, error) {
-	log.Debug().Msgf("")
 	_, res, err := PackERC721Method(
 		"mint",
 		destAddr,

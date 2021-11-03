@@ -91,9 +91,11 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasP
 	txHash, err := calls.ERC721Deposit(
 		ethClient, txFabric, gasPricer.(calls.GasPricer), gasLimit, tokenId, destinationID, resourceId, bridgeAddr, recipientAddr,
 	)
-	if err == nil {
-		log.Debug().Msgf("erc721 deposit hash: %s", txHash.Hex())
-		log.Info().Msgf("%s token were transferred to %s from %s", tokenId.String(), recipientAddr.Hex(), senderKeyPair.CommonAddress().String())
+	if err != nil {
+		return err
 	}
+
+	log.Debug().Msgf("erc721 deposit hash: %s", txHash.Hex())
+	log.Info().Msgf("%s token were transferred to %s from %s", tokenId.String(), recipientAddr.Hex(), senderKeyPair.CommonAddress().String())
 	return err
 }

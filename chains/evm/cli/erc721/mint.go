@@ -91,8 +91,10 @@ func MintCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPric
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
 	_, err = calls.ERC721Mint(ethClient, txFabric, gasPricer.(calls.GasPricer), gasLimit, tokenId, metadata, erc721Addr, dstAddress)
-	if err == nil {
-		log.Info().Msgf("%v token minted", tokenId)
+	if err != nil {
+		return err
 	}
+
+	log.Info().Msgf("%v token minted", tokenId)
 	return err
 }

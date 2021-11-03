@@ -78,8 +78,10 @@ func ApproveCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasP
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
 	_, err = calls.ERC721Approve(ethClient, txFabric, gasPricer.(calls.GasPricer), gasLimit, tokenId, erc721Addr, recipientAddr)
-	if err == nil {
-		log.Info().Msgf("%v token approved", tokenId)
+	if err != nil {
+		return err
 	}
+
+	log.Info().Msgf("%v token approved", tokenId)
 	return err
 }

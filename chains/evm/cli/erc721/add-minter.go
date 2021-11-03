@@ -69,12 +69,13 @@ func AddMinterCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, ga
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
 	_, err = calls.ERC721AddMinter(ethClient, txFabric, gasPricer.(calls.GasPricer), gasLimit, erc721Addr, minterAddr)
-	if err == nil {
-		log.Debug().Msgf(`
-		Adding minter
-		Minter address: %s
-		ERC721 address: %s`,
-			minterAddr, erc721Addr)
+	if err != nil {
+		return err
 	}
+	log.Debug().Msgf(`
+	Adding minter
+	Minter address: %s
+	ERC721 address: %s`,
+		minterAddr, erc721Addr)
 	return err
 }
