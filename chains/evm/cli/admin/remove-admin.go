@@ -1,6 +1,8 @@
 package admin
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -9,21 +11,24 @@ var removeAdminCmd = &cobra.Command{
 	Use:   "remove-admin",
 	Short: "Remove an existing admin",
 	Long:  "Remove an existing admin",
-	Run:   removeAdmin,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	Run: removeAdmin,
 }
 
 func init() {
-	removeAdminCmd.Flags().String("admin", "", "address to remove")
-	removeAdminCmd.Flags().String("bridge", "", "bridge contract address")
+	removeAdminCmd.Flags().StringVar(&Admin, "admin", "", "address to remove")
+	removeAdminCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	flags.MarkFlagsAsRequired(removeAdminCmd, "admin", "bridge")
 }
 
 func removeAdmin(cmd *cobra.Command, args []string) {
-	adminAddress := cmd.Flag("admin").Value
-	bridgeAddress := cmd.Flag("bridge").Value
+
 	log.Debug().Msgf(`
 Removing admin
 Admin address: %s
-Bridge address: %s`, adminAddress, bridgeAddress)
+Bridge address: %s`, Admin, Bridge)
 }
 
 /*

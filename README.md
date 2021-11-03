@@ -423,7 +423,7 @@ Usage:
 Flags:
       --erc20Address string   ERC20 contract address
   -h, --help                  help for add-minter
-      --minter string         address of minter
+      --minter string         handler contract address
 
 ```
 

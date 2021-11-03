@@ -6,6 +6,9 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
+
 	"github.com/spf13/cobra"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -84,4 +87,10 @@ func ConstructGenericDepositData(metadata []byte) []byte {
 	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(metadata))), 32)...)
 	data = append(data, metadata...)
 	return data
+}
+
+type GasPricerWithPostConfig interface {
+	calls.GasPricer
+	SetClient(client evmgaspricer.LondonGasClient)
+	SetOpts(opts *evmgaspricer.GasPricerOpts)
 }

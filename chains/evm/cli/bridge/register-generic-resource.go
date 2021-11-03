@@ -1,6 +1,8 @@
 package bridge
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -9,27 +11,24 @@ var registerGenericResourceCmd = &cobra.Command{
 	Use:   "register-generic-resource",
 	Short: "Register a generic resource ID",
 	Long:  "Register a resource ID with a contract address for a generic handler",
-	Run:   registerGenericResource,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	Run: registerGenericResource,
 }
 
 func init() {
-	registerGenericResourceCmd.Flags().String("handler", "", "handler contract address")
-	registerGenericResourceCmd.Flags().String("resourceId", "", "resource ID to query")
-	registerGenericResourceCmd.Flags().String("bridge", "", "bridge contract address")
-	registerGenericResourceCmd.Flags().String("target", "", "contract address to be registered")
-	registerGenericResourceCmd.Flags().String("deposit", "0x00000000", "deposit function signature")
-	registerGenericResourceCmd.Flags().String("execute", "0x00000000", "execute proposal function signature")
-	registerGenericResourceCmd.Flags().Bool("hash", false, "treat signature inputs as function prototype strings, hash and take the first 4 bytes")
+	registerGenericResourceCmd.Flags().StringVar(&Handler, "handler", "", "handler contract address")
+	registerGenericResourceCmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID to query")
+	registerGenericResourceCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	registerGenericResourceCmd.Flags().StringVar(&Target, "target", "", "contract address to be registered") // TODO change the description (target is not necessary a contract address, could be hash storage)
+	registerGenericResourceCmd.Flags().StringVar(&Deposit, "deposit", "0x00000000", "deposit function signature")
+	registerGenericResourceCmd.Flags().StringVar(&Execute, "execute", "0x00000000", "execute proposal function signature")
+	registerGenericResourceCmd.Flags().BoolVar(&Hash, "hash", false, "treat signature inputs as function prototype strings, hash and take the first 4 bytes")
+	flags.MarkFlagsAsRequired(registerGenericResourceCmd, "handler", "resourceId", "bridge", "target")
 }
 
 func registerGenericResource(cmd *cobra.Command, args []string) {
-	handlerAddress := cmd.Flag("handler").Value
-	resourceId := cmd.Flag("resourceId").Value
-	bridgeAddress := cmd.Flag("bridge").Value
-	targetAddress := cmd.Flag("target").Value
-	deposit := cmd.Flag("deposit").Value
-	execute := cmd.Flag("execute").Value
-	hash := cmd.Flag("hash").Value
 	log.Debug().Msgf(`
 Registering generic resource
 Handler address: %s
@@ -39,7 +38,7 @@ Target address: %s
 Deposit: %s
 Execute: %s
 Hash: %v
-`, handlerAddress, resourceId, bridgeAddress, targetAddress, deposit, execute, hash)
+`, Handler, ResourceID, Bridge, Target, Deposit, Execute, Hash)
 }
 
 /*

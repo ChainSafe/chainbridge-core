@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -16,35 +17,37 @@ var hashListCmd = &cobra.Command{
 	Use:   "hashList",
 	Short: "List tx hashes",
 	Long:  "List tx hashes",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return HashListCmd(cmd, args)
 	},
 }
 
-func BindHashListCmdFlags(cli *cobra.Command) {
-	cli.Flags().String("blockNumber", "", "block number")
+func BindHashListCmdFlags() {
+	hashListCmd.Flags().StringVar(&BlockNumber, "blockNumber", "", "block number")
 }
 
 func init() {
-	BindHashListCmdFlags(hashListCmd)
+	BindHashListCmdFlags()
 }
 
 func HashListCmd(cmd *cobra.Command, args []string) error {
-	blockNumber := cmd.Flag("blockNumber").Value.String()
 
 	// fetch global flag values
-	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
 
-	blockNum, err := strconv.Atoi(blockNumber)
+	blockNum, err := strconv.Atoi(BlockNumber)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("block string->int conversion error: %v", err))
 		return err
@@ -75,6 +78,5 @@ func HashListCmd(cmd *cobra.Command, args []string) error {
 
 		log.Debug().Msgf("block: %v", block)
 	}
-
 	return nil
 }
