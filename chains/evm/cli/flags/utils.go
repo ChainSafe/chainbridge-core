@@ -44,7 +44,6 @@ func GlobalFlagValues(cmd *cobra.Command) (string, uint64, *big.Int, *secp256k1.
 		log.Error().Err(fmt.Errorf("define sender error: %v", err))
 		return "", consts.DefaultGasLimit, nil, nil, err
 	}
-
 	return url, gasLimitInt, gasPrice, senderKeyPair, nil
 }
 
