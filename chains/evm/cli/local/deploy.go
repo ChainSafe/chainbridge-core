@@ -35,9 +35,9 @@ type E2EClient interface {
 	calls.ClientDeployer
 }
 
-func PrepareLocalEnv(ethClient E2EClient, fabric calls.TxFabric, domainID uint8, threshold *big.Int, mintTo common.Address) (common.Address, common.Address, common.Address, error) {
+func PrepareLocalEnv(ethClient E2EClient, fabric calls.TxFabric, domainID uint8, threshold *big.Int, mintTo common.Address, fee *big.Int) (common.Address, common.Address, common.Address, error) {
 	staticGasPricer := evmgaspricer.NewStaticGasPriceDeterminant(ethClient, nil)
-	bridgeAddr, erc20Addr, erc20HandlerAddr, err := deployForLocal(ethClient, fabric, staticGasPricer, domainID, threshold)
+	bridgeAddr, erc20Addr, erc20HandlerAddr, err := deployForLocal(ethClient, fabric, staticGasPricer, domainID, threshold, fee)
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, err
 	}
@@ -95,13 +95,13 @@ func PrepareLocalEnv(ethClient E2EClient, fabric calls.TxFabric, domainID uint8,
 	return bridgeAddr, erc20Addr, erc20HandlerAddr, nil
 }
 
-func deployForLocal(c E2EClient, fabric calls.TxFabric, gasPriceClient calls.GasPricer, domainID uint8, threshold *big.Int) (common.Address, common.Address, common.Address, error) {
+func deployForLocal(c E2EClient, fabric calls.TxFabric, gasPriceClient calls.GasPricer, domainID uint8, threshold *big.Int, fee *big.Int) (common.Address, common.Address, common.Address, error) {
 	erc20Addr, err := calls.DeployErc20(c, fabric, gasPriceClient, "Test", "TST")
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, fmt.Errorf("ERC20 deploy failed: %w", err)
 	}
 
-	bridgeAdrr, err := calls.DeployBridge(c, fabric, gasPriceClient, domainID, DefaultRelayerAddresses, threshold)
+	bridgeAdrr, err := calls.DeployBridge(c, fabric, gasPriceClient, domainID, DefaultRelayerAddresses, threshold, fee)
 	if err != nil {
 		return common.Address{}, common.Address{}, common.Address{}, fmt.Errorf("bridge deploy failed: %w", err)
 	}

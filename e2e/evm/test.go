@@ -65,7 +65,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 		panic(err)
 	}
 	log.Debug().Msgf("Latest block %s", b.String())
-	bridgeAddr, erc20Addr, erc20HandlerAddr, err := local.PrepareLocalEnv(ethClient, s.fabric1, 1, big.NewInt(1), s.adminKey.CommonAddress())
+	bridgeAddr, erc20Addr, erc20HandlerAddr, err := local.PrepareLocalEnv(ethClient, s.fabric1, 1, big.NewInt(1), s.adminKey.CommonAddress(), big.NewInt(0))
 	if err != nil {
 		panic(err)
 	}
@@ -75,7 +75,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 	s.erc20ContractAddr = erc20Addr
 	s.erc20HandlerAddr = erc20HandlerAddr
 	//Contract addresses should be the same
-	_, _, _, err = local.PrepareLocalEnv(ethClient2, s.fabric2, 2, big.NewInt(1), s.adminKey.CommonAddress())
+	_, _, _, err = local.PrepareLocalEnv(ethClient2, s.fabric2, 2, big.NewInt(1), s.adminKey.CommonAddress(), big.NewInt(0))
 	if err != nil {
 		panic(err)
 	}

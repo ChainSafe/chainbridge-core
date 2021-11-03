@@ -2,6 +2,7 @@ package admin
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -10,7 +11,10 @@ var withdrawCmd = &cobra.Command{
 	Use:   "withdraw",
 	Short: "Withdraw tokens from the handler contract",
 	Long:  "Withdraw tokens from the handler contract",
-	Run:   withdraw,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	Run: withdraw,
 }
 
 func init() {

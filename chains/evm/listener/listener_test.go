@@ -5,7 +5,9 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
+
 	mock_listener "github.com/ChainSafe/chainbridge-core/chains/evm/listener/mock"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum/common"
@@ -45,7 +47,7 @@ func (s *ListenerTestSuite) TestErc20HandleEvent() {
 	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(recipientByteSlice))), 32)...)
 	calldata = append(calldata, recipientByteSlice...)
 
-	depositLog := &listener.DepositLogs{
+	depositLog := &evmclient.DepositLogs{
 		DestinationDomainID: 0,
 		ResourceID:          [32]byte{0},
 		DepositNonce:        1,
@@ -91,7 +93,7 @@ func (s *ListenerTestSuite) TestErc20HandleEventIncorrectCalldataLen() {
 	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(recipientByteSlice))), 16)...)
 	calldata = append(calldata, recipientByteSlice...)
 
-	depositLog := &listener.DepositLogs{
+	depositLog := &evmclient.DepositLogs{
 		DestinationDomainID: 0,
 		ResourceID:          [32]byte{0},
 		DepositNonce:        1,
