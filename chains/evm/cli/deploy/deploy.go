@@ -58,7 +58,7 @@ var (
 	Erc721Name       string
 	Erc721Symbol     string
 	Erc721BaseURI    string
-	Fee              string
+	Fee              uint64
 	RelayerThreshold uint64
 	Relayers         []string
 )
@@ -77,7 +77,7 @@ func BindDeployEVMFlags() {
 	DeployEVM.Flags().StringVar(&Erc721Name, "erc721Name", "", "ERC721 contract name")
 	DeployEVM.Flags().StringVar(&Erc721Symbol, "erc721Symbol", "", "ERC721 contract symbol")
 	DeployEVM.Flags().StringVar(&Erc721BaseURI, "erc721BaseURI", "", "ERC721 base URI")
-	DeployEVM.Flags().StringVar(&Fee, "fee", "0", "fee to be taken when making a deposit (in ETH, decimas are allowed)")
+	DeployEVM.Flags().Uint64Var(&Fee, "fee", 0, "fee to be taken when making a deposit (in ETH, decimas are allowed)")
 	DeployEVM.Flags().StringSliceVar(&Relayers, "relayers", []string{}, "list of initial relayers")
 	DeployEVM.Flags().Uint64Var(&RelayerThreshold, "relayerTreshold", 1, "number of votes required for a proposal to pass")
 }
