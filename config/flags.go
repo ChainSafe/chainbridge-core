@@ -20,7 +20,7 @@ func BindFlags(rootCMD *cobra.Command) {
 	rootCMD.PersistentFlags().String(ChainConfigFlagName, ".", "Path to JSON configuration files directory")
 	_ = viper.BindPFlag(ChainConfigFlagName, rootCMD.PersistentFlags().Lookup(ChainConfigFlagName))
 
-	rootCMD.PersistentFlags().String(RelayerConfigFlagName, ".", "Path to relayer JSON file configuration")
+	rootCMD.PersistentFlags().String(RelayerConfigFlagName, "", "Path to relayer JSON file configuration")
 	_ = viper.BindPFlag(RelayerConfigFlagName, rootCMD.PersistentFlags().Lookup(RelayerConfigFlagName))
 
 	rootCMD.PersistentFlags().String(BlockstoreFlagName, "./lvldbdata", "Specify path for blockstore")
