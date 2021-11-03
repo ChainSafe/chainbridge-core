@@ -42,14 +42,14 @@ func localSetup(cmd *cobra.Command, args []string) error {
 
 	// chain 1
 	// domainsId: 0
-	bridgeAddr, erc20Addr, erc20HandlerAddr, err := PrepareLocalEnv(ethClient, fabric1, uint8(localDomainId1), big.NewInt(1), AliceKp.CommonAddress())
+	bridgeAddr, erc20Addr, erc20HandlerAddr, err := PrepareLocalEnv(ethClient, fabric1, uint8(localDomainId1), big.NewInt(1), AliceKp.CommonAddress(), big.NewInt(0))
 	if err != nil {
 		return err
 	}
 
 	// chain 2
 	// domainId: 1
-	bridgeAddr2, erc20Addr2, erc20HandlerAddr2, err := PrepareLocalEnv(ethClient2, fabric2, uint8(localDomainId2), big.NewInt(1), AliceKp.CommonAddress())
+	bridgeAddr2, erc20Addr2, erc20HandlerAddr2, err := PrepareLocalEnv(ethClient2, fabric2, uint8(localDomainId2), big.NewInt(1), AliceKp.CommonAddress(), big.NewInt(0))
 	if err != nil {
 		return err
 	}
