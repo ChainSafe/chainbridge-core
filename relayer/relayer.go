@@ -5,17 +5,17 @@ package relayer
 
 import (
 	"fmt"
-	"net/http"
-	"strconv"
 
 	"github.com/ChainSafe/chainbridge-core/config/relayer"
-	"github.com/ChainSafe/chainbridge-core/metrics"
-	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/ChainSafe/chainbridge-core/opentelemetry"
 	"github.com/rs/zerolog/log"
 )
 
 type MessageProcessor func(message *Message) error
+
+type Tracer interface {
+	TraceDepositEvent(m *Message)
+}
 
 type RelayedChain interface {
 	PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *Message)
@@ -40,20 +40,10 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 	log.Debug().Msgf("Starting relayer")
 	messagesChannel := make(chan *Message)
 
-	// init new instance of ChainMetrics
-	chainMetrics := metrics.NewChainMetrics()
-
-	// init new mux router
-	router := mux.NewRouter()
-
-	// register path + handler
-	router.Path(r.config.PrometheusEndpoint).Handler(promhttp.Handler())
-
-	// start http server in non-blocking goroutine
-	go func() {
-		log.Fatal().Err(http.ListenAndServe(":"+strconv.Itoa(int(r.config.PrometheusPort)), router))
-	}()
-	log.Debug().Msg("Started Prometheus server on: http://localhost:" + strconv.Itoa(int(r.config.PrometheusPort)) + r.config.PrometheusEndpoint)
+	telemetry, err := opentelemetry.NewOpenTelemetry(r.config)
+	if err != nil {
+		panic(err)
+	}
 
 	for _, c := range r.relayedChains {
 		log.Debug().Msgf("Starting chain %v", c.DomainID())
@@ -63,7 +53,7 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 	for {
 		select {
 		case m := <-messagesChannel:
-			go r.route(m, chainMetrics)
+			go r.route(m, telemetry)
 			continue
 		case <-stop:
 			return
@@ -72,24 +62,14 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 }
 
 // Route function winds destination writer by mapping DestinationID from message to registered writer.
-func (r *Relayer) route(m *Message, chainMetrics *metrics.ChainMetrics) {
+func (r *Relayer) route(m *Message, t Tracer) {
 	destChain, ok := r.registry[m.Destination]
 	if !ok {
 		log.Error().Msgf("no resolver for destID %v to send message registered", m.Destination)
 		return
 	}
 
-	// extract amount from Payload field
-	// TODO: if the message is not for ERC20 transfer that panics or errors could appear
-	payloadAmount, err := m.extractAmountTransferred()
-	if err != nil {
-		log.Error().Err(err)
-		return
-	}
-
-	// increment chain metrics
-	chainMetrics.AmountTransferred.Add(payloadAmount)
-	chainMetrics.NumberOfTransfers.Inc()
+	t.TraceDepositEvent(m)
 
 	for _, mp := range r.messageProcessors {
 		if err := mp(m); err != nil {
@@ -99,6 +79,7 @@ func (r *Relayer) route(m *Message, chainMetrics *metrics.ChainMetrics) {
 	}
 
 	log.Debug().Msgf("Sending message %+v to destination %v", m, m.Destination)
+
 	if err := destChain.Write(m); err != nil {
 		log.Error().Err(err).Msgf("writing message %+v", m)
 		return

@@ -7,8 +7,9 @@ import (
 )
 
 type RelayerConfig struct {
-	PrometheusEndpoint string `mapstructure:"PrometheusEndpoint"`
-	PrometheusPort     uint64 `mapstructure:"PrometheusPort"`
+	PrometheusEndpoint        string `mapstructure:"PrometheusEndpoint"`
+	PrometheusPort            uint64 `mapstructure:"PrometheusPort"`
+	OpenTelemetryCollectorURL string `mapstructure:"OpenTelemetryCollectorURL"`
 }
 
 func (c *RelayerConfig) Validate() error {
