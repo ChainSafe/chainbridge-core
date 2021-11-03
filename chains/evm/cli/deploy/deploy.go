@@ -118,7 +118,6 @@ var bridgeAddr common.Address
 var relayerAddresses []common.Address
 
 func ProcessDeployFlags(cmd *cobra.Command, args []string) error {
-
 	if common.IsHexAddress(BridgeAddress) {
 		bridgeAddr = common.HexToAddress(BridgeAddress)
 	}
@@ -203,12 +202,6 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPr
 
 		case "erc721Handler":
 			log.Debug().Msgf("deploying ERC721 handler..")
-
-			emptyAddress := common.Address{}
-			if bridgeAddr == emptyAddress {
-				log.Error().Err(errors.New("bridge flag or bridgeAddress param should be set for contracts deployments"))
-				return err
-			}
 
 			erc721HandlerAddr, err := calls.DeployErc721Handler(ethClient, txFabric, gasPricer, bridgeAddr)
 			if err != nil {
