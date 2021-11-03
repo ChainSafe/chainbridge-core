@@ -36,12 +36,12 @@ var depositCmd = &cobra.Command{
 }
 
 func BindDepositCmdFlags() {
-	mintCmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
-	mintCmd.Flags().StringVar(&Bridge, "bridge", "", "address of bridge contract")
-	mintCmd.Flags().StringVar(&DestionationID, "destId", "", "destination domain ID")
-	mintCmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID for transfer")
-	mintCmd.Flags().StringVar(&TokenId, "tokenId", "", "ERC721 token ID")
-	flags.MarkFlagsAsRequired(mintCmd, "recipient", "bridge", "destId", "resourceId", "tokenId")
+	depositCmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
+	depositCmd.Flags().StringVar(&Bridge, "bridge", "", "address of bridge contract")
+	depositCmd.Flags().StringVar(&DestionationID, "destId", "", "destination domain ID")
+	depositCmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID for transfer")
+	depositCmd.Flags().StringVar(&TokenId, "tokenId", "", "ERC721 token ID")
+	flags.MarkFlagsAsRequired(depositCmd, "recipient", "bridge", "destId", "resourceId", "tokenId")
 }
 
 func init() {
