@@ -9,7 +9,7 @@ import (
 	big "math/big"
 	reflect "reflect"
 
-	listener "github.com/ChainSafe/chainbridge-core/chains/evm/listener"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	relayer "github.com/ChainSafe/chainbridge-core/relayer"
 	types "github.com/ChainSafe/chainbridge-core/types"
 	common "github.com/ethereum/go-ethereum/common"
@@ -55,10 +55,10 @@ func (mr *MockChainClientMockRecorder) CallContract(ctx, callArgs, blockNumber i
 }
 
 // FetchDepositLogs mocks base method.
-func (m *MockChainClient) FetchDepositLogs(ctx context.Context, address common.Address, startBlock, endBlock *big.Int) ([]*listener.DepositLogs, error) {
+func (m *MockChainClient) FetchDepositLogs(ctx context.Context, address common.Address, startBlock, endBlock *big.Int) ([]*evmclient.DepositLogs, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FetchDepositLogs", ctx, address, startBlock, endBlock)
-	ret0, _ := ret[0].([]*listener.DepositLogs)
+	ret0, _ := ret[0].([]*evmclient.DepositLogs)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

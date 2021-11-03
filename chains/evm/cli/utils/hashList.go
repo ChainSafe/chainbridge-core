@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -16,6 +17,9 @@ var hashListCmd = &cobra.Command{
 	Use:   "hashList",
 	Short: "List tx hashes",
 	Long:  "List tx hashes",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return HashListCmd(cmd, args)
 	},
@@ -74,6 +78,5 @@ func HashListCmd(cmd *cobra.Command, args []string) error {
 
 		log.Debug().Msgf("block: %v", block)
 	}
-
 	return nil
 }

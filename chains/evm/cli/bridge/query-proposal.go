@@ -2,6 +2,7 @@ package bridge
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -10,7 +11,10 @@ var queryProposalCmd = &cobra.Command{
 	Use:   "query-proposal",
 	Short: "Query an inbound proposal",
 	Long:  "Query an inbound proposal",
-	Run:   queryProposal,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	Run: queryProposal,
 }
 
 func init() {
