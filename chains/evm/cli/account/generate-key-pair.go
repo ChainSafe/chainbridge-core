@@ -13,7 +13,6 @@ var generateKeyPairCmd = &cobra.Command{
 	Long:  "The generate subcommand is used to generate the bridge keystore. If no options are specified, a Secp256k1 key will be made.",
 	RunE:  generateKeyPair,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		confirmTransfer(cmd, args)
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
 }
