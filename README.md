@@ -480,7 +480,7 @@ Flags:
       --amount string       amount to deposit
       --bridge string       address of bridge contract
       --decimals uint       ERC20 token decimals
-      --destId string       destination domain ID
+      --domainId string     destination domain ID
   -h, --help                help for deposit
       --recipient string    address of recipient
       --resourceId string   resource ID for transfer
@@ -776,7 +776,7 @@ Flags:
       --amount string       amount to deposit
       --bridge string       address of bridge contract
       --decimals uint       ERC20 token decimals
-      --destId string       destination domain ID
+      --domainId string     destination domain ID
   -h, --help                help for deposit
       --recipient string    address of recipient
       --resourceId string   resource ID for transfer

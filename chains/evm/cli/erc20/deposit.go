@@ -30,7 +30,7 @@ func BindDepositCmdFlags(cli *cobra.Command) {
 	cli.Flags().String("recipient", "", "address of recipient")
 	cli.Flags().String("bridge", "", "address of bridge contract")
 	cli.Flags().String("amount", "", "amount to deposit")
-	cli.Flags().String("destId", "", "destination domain ID")
+	cli.Flags().String("domainId", "", "destination domain ID")
 	cli.Flags().String("resourceId", "", "resource ID for transfer")
 	cli.Flags().Uint64("decimals", 0, "ERC20 token decimals")
 	err := cli.MarkFlagRequired("decimals")
@@ -47,7 +47,7 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 	recipient := cmd.Flag("recipient").Value.String()
 	bridgeAddress := cmd.Flag("bridge").Value.String()
 	amount := cmd.Flag("amount").Value.String()
-	destinationId := cmd.Flag("destId").Value.String()
+	destinationId := cmd.Flag("domainId").Value.String()
 	resourceId := cmd.Flag("resourceId").Value.String()
 	if !common.IsHexAddress(recipient) {
 		return fmt.Errorf("invalid recipient address %s", recipient)
