@@ -41,10 +41,10 @@ func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, domainID *big.Int) ([]byte,
 // NewTransaction is the ethereum transaction constructor
 func NewTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrices []*big.Int, data []byte) (evmclient.CommonTransaction, error) {
 	// If there is more than one gas price returned we are sending with DynamicFeeTx's
-	if gasPrices[1] == nil {
-		return newTransaction(nonce, to, amount, gasLimit, gasPrices[0], data), nil
-	} else {
+	if len(gasPrices) > 1 {
 		return newDynamicFeeTransaction(nonce, to, amount, gasLimit, gasPrices[0], gasPrices[1], data), nil
+	} else {
+		return newTransaction(nonce, to, amount, gasLimit, gasPrices[0], data), nil
 	}
 }
 

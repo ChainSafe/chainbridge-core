@@ -1,0 +1,126 @@
+# Copyright 2020 ChainSafe Systems
+# SPDX-License-Identifier: LGPL-3.0-only
+version: '3'
+
+services:
+  evm1-1:
+    build:
+      context: ../geth-build
+      dockerfile: Dockerfile
+    container_name: evm1-1
+    networks:
+      - evm1
+    ports:
+      - "8545:8545"
+      - "8546:8546"
+    environment:
+      - NODEKEY=98ab333347a12cef869f92b3de44085f9e44891e513bcf1d76a99eecbcdd5e17
+      - NETWORKID=421
+      - MINE=true
+    entrypoint: "/root/entrypoint.sh"
+
+  evm1-2:
+    build:
+      context: ../geth-build
+      dockerfile: Dockerfile
+    container_name: evm1-2
+    networks:
+      - evm1
+    depends_on:
+      - evm1-1
+    ports:
+      - "8645:8545"
+      - "8646:8546"
+    environment:
+      - ACCOUNTS=0xff93B45308FD417dF303D6515aB04D9e89a750Ca
+      - BOOTNODE=enode://47eccabfa6fa81f7ae7d8c094485fd521789e22e529916a2409970b6e99b1d1b6c590ad71bd08f182071313b2e03d319f4f6b625b28b6ab7768bb2de3f2a6eed@evm1-1:30303
+      - NETWORKID=421
+    entrypoint: "/root/entrypoint.sh"
+
+  evm1-3:
+    build:
+      context: ../geth-build
+      dockerfile: Dockerfile
+    container_name: evm1-3
+    networks:
+      - evm1
+    depends_on:
+      - evm1-1
+    ports:
+      - "8745:8545"
+      - "8746:8546"
+    environment:
+      - ACCOUNTS=0xff93B45308FD417dF303D6515aB04D9e89a750Ca
+      - BOOTNODE=enode://47eccabfa6fa81f7ae7d8c094485fd521789e22e529916a2409970b6e99b1d1b6c590ad71bd08f182071313b2e03d319f4f6b625b28b6ab7768bb2de3f2a6eed@evm1-1:30303
+      - NETWORKID=421
+    entrypoint: "/root/entrypoint.sh"
+
+  # SECOND CHAIN
+  evm2-1:
+    build:
+      context: ../geth-build
+      dockerfile: Dockerfile
+    container_name: evm2-1
+    networks:
+      - evm2
+    ports:
+      - "8547:8545"
+      - "8548:8546"
+    environment:
+      - NODEKEY=98ab333347a12cef869f92b3de44085f9e44891e513bcf1d76a99eecbcdd5e17
+      - NETWORKID=420
+      - MINE=true
+    entrypoint: "/root/entrypoint.sh"
+  evm2-2:
+    build:
+      context: ../geth-build
+      dockerfile: Dockerfile
+    container_name: evm2-2
+    depends_on:
+      - evm2-1
+    networks:
+      - evm2
+    ports:
+      - "8647:8545"
+      - "8648:8546"
+    environment:
+      - ACCOUNTS=0xff93B45308FD417dF303D6515aB04D9e89a750Ca
+      - BOOTNODE=enode://47eccabfa6fa81f7ae7d8c094485fd521789e22e529916a2409970b6e99b1d1b6c590ad71bd08f182071313b2e03d319f4f6b625b28b6ab7768bb2de3f2a6eed@evm2-1:30303
+      - NETWORKID=420
+    entrypoint: "/root/entrypoint.sh"
+  evm2-3:
+    build:
+      context: ../geth-build
+      dockerfile: Dockerfile
+    container_name: evm2-3
+    networks:
+      - evm2
+    depends_on:
+      - evm2-1
+    ports:
+      - "8747:8545"
+      - "8748:8546"
+    environment:
+      - ACCOUNTS=0x8e0a907331554AF72563Bd8D43051C2E64Be5d35
+      - BOOTNODE=enode://47eccabfa6fa81f7ae7d8c094485fd521789e22e529916a2409970b6e99b1d1b6c590ad71bd08f182071313b2e03d319f4f6b625b28b6ab7768bb2de3f2a6eed@evm2-1:30303
+      - NETWORKID=420
+    entrypoint: "/root/entrypoint.sh"
+
+  relayer:
+    build:
+      context: ../../.
+      dockerfile: Dockerfile
+    container_name: "relayer"
+    command: run --config /cfg --testkey alice --fresh
+    depends_on:
+      - evm1-3
+      - evm2-3
+    networks:
+      - evm1
+      - evm2
+    volumes:
+      - ./example/cfg:/cfg
+
+networks:
+  evm2:
+  evm1:
