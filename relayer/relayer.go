@@ -4,6 +4,7 @@
 package relayer
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ChainSafe/chainbridge-core/config/relayer"
@@ -13,7 +14,7 @@ import (
 )
 
 type Tracer interface {
-	TraceDepositEvent(m *message.Message)
+	TraceDepositEvent(ctx context.Context, m *message.Message) context.Context
 }
 
 type RelayedChain interface {
@@ -68,7 +69,7 @@ func (r *Relayer) route(m *message.Message, t Tracer) {
 		return
 	}
 
-	t.TraceDepositEvent(m)
+	_ = t.TraceDepositEvent(context.Background(), m)
 
 	for _, mp := range r.messageProcessors {
 		if err := mp(m); err != nil {

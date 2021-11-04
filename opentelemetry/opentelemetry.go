@@ -1,12 +1,16 @@
 package opentelemetry
 
 import (
+	"context"
+	"encoding/hex"
 	"net/url"
 
 	"github.com/ChainSafe/chainbridge-core/config/relayer"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/trace"
 	tracer "go.opentelemetry.io/otel/trace"
 )
 
@@ -50,4 +54,26 @@ func NewOpenTelemetry(config relayer.RelayerConfig) (*telemetry, error) {
 	}, nil
 }
 
-func (t *telemetry) TraceDepositEvent(m *message.Message) {}
+func (t *telemetry) TraceDepositEvent(ctx context.Context, m *message.Message) context.Context {
+	if t.tracer != nil {
+		var span tracer.Span
+		ctx, span = t.tracer.Start(
+			context.Background(),
+			"deposit-event",
+			trace.WithAttributes(
+				attribute.String("Type", string(m.Type)),
+				attribute.Int("Source", int(m.Source)),
+				attribute.Int("Destination", int(m.Destination)),
+				attribute.Int("DepositNonce", int(m.DepositNonce)),
+				attribute.String("ResourceId", hex.EncodeToString(m.ResourceId[:])),
+			),
+		)
+		defer span.End()
+	}
+
+	if t.metrics != nil {
+		t.metrics.DepositEventCount.Add(ctx, 1)
+	}
+
+	return ctx
+}
