@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ChainSafe/chainbridge-core/config"
+	"github.com/ChainSafe/chainbridge-core/config/chain"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/spf13/viper"
 )
 
 type EVMConfig struct {
-	SharedEVMConfig config.SharedEVMConfig
+	SharedEVMConfig chain.SharedEVMConfig
 	kp              *secp256k1.Keypair
 }
 
 type RawEVMConfig struct {
-	config.RawSharedEVMConfig `mapstructure:",squash"`
+	chain.RawSharedEVMConfig `mapstructure:",squash"`
 }
 
 func NewConfig() *EVMConfig {
@@ -46,7 +46,6 @@ func GetConfig(path string, name string) (*RawEVMConfig, error) {
 }
 
 func ParseConfig(rawConfig *RawEVMConfig) (*EVMConfig, error) {
-
 	cfg, err := rawConfig.RawSharedEVMConfig.ParseConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse shared evm config, error: %w", err)

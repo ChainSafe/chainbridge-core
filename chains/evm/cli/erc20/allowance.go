@@ -3,6 +3,7 @@ package erc20
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -12,6 +13,9 @@ var allowanceCmd = &cobra.Command{
 	Use:   "allowance",
 	Short: "Get the allowance of a spender for an address",
 	Long:  "Get the allowance of a spender for an address",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
 		return AllowanceCmd(cmd, args, txFabric)

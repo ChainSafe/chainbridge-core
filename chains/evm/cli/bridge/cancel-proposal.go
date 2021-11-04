@@ -2,6 +2,7 @@ package bridge
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -10,7 +11,10 @@ var cancelProposalCmd = &cobra.Command{
 	Use:   "cancel-proposal",
 	Short: "Cancel an expired proposal",
 	Long:  "Cancel an expired proposal",
-	Run:   cancelProposal,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	Run: cancelProposal,
 }
 
 func init() {

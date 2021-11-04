@@ -7,6 +7,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
@@ -20,6 +21,9 @@ var depositCmd = &cobra.Command{
 	Use:   "deposit",
 	Short: "Initiate a transfer of ERC20 tokens",
 	Long:  "Initiate a transfer of ERC20 tokens",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return DepositCmd(cmd, args, evmtransaction.NewTransaction, &evmgaspricer.LondonGasPriceDeterminant{})
 	},
@@ -45,10 +49,10 @@ func BindDepositCmdFlags() {
 	depositCmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
 	depositCmd.Flags().StringVar(&Bridge, "bridge", "", "address of bridge contract")
 	depositCmd.Flags().StringVar(&Amount, "amount", "", "amount to deposit")
-	depositCmd.Flags().Uint64Var(&DomainID, "destId", 0, "destination domain ID")
+	depositCmd.Flags().Uint64Var(&DomainID, "domainId", 0, "destination domain ID")
 	depositCmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID for transfer")
 	depositCmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
-	flags.MarkFlagsAsRequired(depositCmd, "recipient", "bridge", "amount", "destId", "resourceId", "decimals")
+	flags.MarkFlagsAsRequired(depositCmd, "recipient", "bridge", "amount", "domainId", "resourceId", "decimals")
 }
 
 func ValidateDepositFlags(cmd *cobra.Command, args []string) error {
