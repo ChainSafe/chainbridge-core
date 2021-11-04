@@ -1,4 +1,4 @@
-package relayer
+package message
 
 import (
 	"errors"
