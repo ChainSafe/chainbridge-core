@@ -30,3 +30,4 @@ genmocks:
 	mockgen -destination=./chains/evm/evmgaspricer/mock/gas-pricer.go -source=./chains/evm/evmgaspricer/gas-pricer.go
 	mockgen -package mock_opentelemetry -destination=./opentelemetry/mock/trace.go "go.opentelemetry.io/otel/trace" Tracer,Span
 	mockgen -package mock_opentelemetry -destination=./opentelemetry/mock/metric.go "go.opentelemetry.io/otel/metric" MeterImpl
+	mockgen -destination=./relayer/mock/relayer.go -source=./relayer/relayer.go

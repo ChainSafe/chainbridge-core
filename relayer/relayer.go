@@ -63,13 +63,13 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 
 // Route function winds destination writer by mapping DestinationID from message to registered writer.
 func (r *Relayer) route(m *message.Message, t Tracer) {
+	_ = t.TraceDepositEvent(context.Background(), m)
+
 	destChain, ok := r.registry[m.Destination]
 	if !ok {
 		log.Error().Msgf("no resolver for destID %v to send message registered", m.Destination)
 		return
 	}
-
-	_ = t.TraceDepositEvent(context.Background(), m)
 
 	for _, mp := range r.messageProcessors {
 		if err := mp(m); err != nil {
