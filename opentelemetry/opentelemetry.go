@@ -20,38 +20,49 @@ type Telemetry struct {
 }
 
 func NewOpenTelemetry(config relayer.RelayerConfig) (*Telemetry, error) {
-	collectorURL, err := url.Parse(config.OpenTelemetryCollectorURL)
-	if err != nil {
-		return &Telemetry{}, err
-	}
+	if config.OpenTelemetryCollectorURL != "" {
+		collectorURL, err := url.Parse(config.OpenTelemetryCollectorURL)
+		if err != nil {
+			return &Telemetry{}, err
+		}
 
-	metricOptions := []otlpmetrichttp.Option{
-		otlpmetrichttp.WithURLPath(collectorURL.Path),
-		otlpmetrichttp.WithEndpoint(collectorURL.Host),
-	}
-	tracerOptions := []otlptracehttp.Option{
-		otlptracehttp.WithURLPath(collectorURL.Path),
-		otlptracehttp.WithEndpoint(collectorURL.Host),
-	}
-	if collectorURL.Scheme == "http" {
-		metricOptions = append(metricOptions, otlpmetrichttp.WithInsecure())
-		tracerOptions = append(tracerOptions, otlptracehttp.WithInsecure())
-	}
+		metricOptions := []otlpmetrichttp.Option{
+			otlpmetrichttp.WithURLPath(collectorURL.Path),
+			otlpmetrichttp.WithEndpoint(collectorURL.Host),
+		}
+		tracerOptions := []otlptracehttp.Option{
+			otlptracehttp.WithURLPath(collectorURL.Path),
+			otlptracehttp.WithEndpoint(collectorURL.Host),
+		}
+		if collectorURL.Scheme == "http" {
+			metricOptions = append(metricOptions, otlpmetrichttp.WithInsecure())
+			tracerOptions = append(tracerOptions, otlptracehttp.WithInsecure())
+		}
 
-	metrics, err := initOpenTelemetryMetrics(metricOptions...)
-	if err != nil {
-		return &Telemetry{}, err
-	}
+		metrics, err := initOpenTelemetryMetrics(metricOptions...)
+		if err != nil {
+			return &Telemetry{}, err
+		}
 
-	tracer, err := initOpenTelementryTracer(tracerOptions...)
-	if err != nil {
-		return &Telemetry{}, err
-	}
+		tracer, err := initOpenTelementryTracer(tracerOptions...)
+		if err != nil {
+			return &Telemetry{}, err
+		}
 
-	return &Telemetry{
-		metrics: metrics,
-		tracer:  tracer,
-	}, nil
+		return &Telemetry{
+			metrics: metrics,
+			tracer:  tracer,
+		}, nil
+	} else {
+		metrics, err := initPrometheusMetrics(config.PrometheusPort, config.PrometheusPath)
+		if err != nil {
+			return &Telemetry{}, err
+		}
+
+		return &Telemetry{
+			metrics: metrics,
+		}, nil
+	}
 }
 
 func (t *Telemetry) TraceDepositEvent(ctx context.Context, m *message.Message) context.Context {

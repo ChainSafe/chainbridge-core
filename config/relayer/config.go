@@ -7,7 +7,7 @@ import (
 )
 
 type RelayerConfig struct {
-	PrometheusEndpoint        string `mapstructure:"PrometheusEndpoint"`
+	PrometheusPath            string `mapstructure:"PrometheusPath"`
 	PrometheusPort            uint64 `mapstructure:"PrometheusPort"`
 	OpenTelemetryCollectorURL string `mapstructure:"OpenTelemetryCollectorURL"`
 }
@@ -21,7 +21,7 @@ func (c *RelayerConfig) Validate() error {
 }
 
 func setDefaultValues() {
-	viper.SetDefault("PrometheusEndpoint", "/metrics")
+	viper.SetDefault("PrometheusPath", "/metrics")
 	viper.SetDefault("PrometheusPort", 2112)
 }
 

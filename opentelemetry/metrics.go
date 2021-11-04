@@ -3,6 +3,7 @@ package opentelemetry
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
@@ -30,7 +31,7 @@ func newChainbridgeMetrics(meter metric.Meter) *ChainbridgeMetrics {
 	}
 }
 
-func initPrometheusMetrics(addr string) (*ChainbridgeMetrics, error) {
+func initPrometheusMetrics(port uint64, path string) (*ChainbridgeMetrics, error) {
 	config := prometheus.Config{}
 	c := controller.New(
 		processor.NewFactory(
@@ -48,8 +49,8 @@ func initPrometheusMetrics(addr string) (*ChainbridgeMetrics, error) {
 
 	global.SetMeterProvider(exp.MeterProvider())
 	go func() {
-		http.HandleFunc(addr, exp.ServeHTTP)
-		_ = http.ListenAndServe(addr, nil)
+		http.HandleFunc(path, exp.ServeHTTP)
+		_ = http.ListenAndServe(":"+strconv.Itoa(int(port)), nil)
 	}()
 
 	meter := c.Meter("")
