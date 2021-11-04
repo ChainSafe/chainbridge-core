@@ -233,3 +233,23 @@ func IsProposalVotedBy(evmCaller ContractCallerClient, by common.Address, p *pro
 	out0 := *abi.ConvertType(res[0], new(bool)).(*bool)
 	return out0, nil
 }
+
+// Public function to generate bytedata for adminWithdraw contract method
+// Used to manually withdraw funds from ERC safes
+// @dev data is ABI-encoded withdrawal parameters specific to the handler
+// https://github.com/ChainSafe/chainbridge-solidity/blob/anderson/add-erc1155-support/contracts/Bridge.sol#L304-L315
+func PrepareWithdrawInput(handlerAddress common.Address, data []byte) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack(
+		"adminWithdraw",
+		handlerAddress,
+		data,
+	)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
+}
