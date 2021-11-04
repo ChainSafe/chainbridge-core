@@ -8,7 +8,6 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/semconv"
 	tracer "go.opentelemetry.io/otel/trace"
 )
 
@@ -20,11 +19,7 @@ func initOpenTelementryTracer(opts ...otlptracehttp.Option) (tracer.Tracer, erro
 		return nil, err
 	}
 
-	res, err := resource.New(ctx,
-		resource.WithAttributes(
-			semconv.ServiceNameKey.String("chainbridge"),
-		),
-	)
+	res, err := resource.New(ctx)
 	if err != nil {
 		return nil, err
 	}
