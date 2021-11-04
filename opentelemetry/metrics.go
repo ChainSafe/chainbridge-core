@@ -53,7 +53,7 @@ func initPrometheusMetrics(port uint64, path string) (*ChainbridgeMetrics, error
 		_ = http.ListenAndServe(":"+strconv.Itoa(int(port)), nil)
 	}()
 
-	meter := c.Meter("")
+	meter := c.Meter("chainbridge")
 	return newChainbridgeMetrics(meter), nil
 }
 
@@ -76,7 +76,7 @@ func initOpenTelemetryMetrics(opts ...otlpmetrichttp.Option) (*ChainbridgeMetric
 		return nil, err
 	}
 
-	meter := cont.Meter("")
+	meter := cont.Meter("chainbridge")
 	metrics := newChainbridgeMetrics(meter)
 
 	return metrics, nil

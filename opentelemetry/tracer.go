@@ -34,6 +34,6 @@ func initOpenTelementryTracer(opts ...otlptracehttp.Option) (tracer.Tracer, erro
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 
-	tracer := otel.Tracer("")
+	tracer := otel.Tracer("chainbridge")
 	return tracer, nil
 }
