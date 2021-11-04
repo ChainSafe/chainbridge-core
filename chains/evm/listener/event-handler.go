@@ -3,6 +3,7 @@ package listener
 import (
 	"context"
 	"errors"
+	"math/big"
 	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
@@ -145,9 +146,18 @@ func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID interna
 		err := errors.New("invalid calldata length: less than 84 bytes")
 		return nil, err
 	}
-	// TODO
-	// first 32 bytes are metadata length
-	metadata := calldata[32:]
+
+	// first 32 bytes are tokenId
+	tokenId := calldata[:32]
+
+	// 32 - 64 is recipient address length
+	recipientAddressLength := big.NewInt(0).SetBytes(calldata[32:64]).Int64()
+
+	// 64 - (64 + recipient address length) is recipient address
+	recipientAddress := calldata[64:(64 + recipientAddressLength)]
+
+	// rest of bytes is metada
+	metadata := calldata[(64 + recipientAddressLength):]
 
 	return &relayer.Message{
 		Source:       sourceID,
@@ -156,6 +166,8 @@ func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID interna
 		ResourceId:   resourceID,
 		Type:         relayer.NonFungibleTransfer,
 		Payload: []interface{}{
+			tokenId,
+			recipientAddress,
 			metadata,
 		},
 	}, nil
