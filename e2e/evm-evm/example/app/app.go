@@ -15,6 +15,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 	"github.com/ChainSafe/chainbridge-core/config"
+	relayerConfig "github.com/ChainSafe/chainbridge-core/config/relayer"
 	"github.com/ChainSafe/chainbridge-core/lvldb"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum/common"
@@ -33,7 +34,7 @@ func Run() error {
 
 	//EVM1 setup
 	evm1Client := evmclient.NewEVMClient()
-	err = evm1Client.Configurate(viper.GetString(config.ConfigFlagName), "config_evm1.json")
+	err = evm1Client.Configurate(viper.GetString(config.ChainConfigFlagName), "config_evm1.json")
 	if err != nil {
 		panic(err)
 	}
@@ -48,7 +49,7 @@ func Run() error {
 
 	////EVM2 setup
 	evm2Client := evmclient.NewEVMClient()
-	err = evm2Client.Configurate(viper.GetString(config.ConfigFlagName), "config_evm2.json")
+	err = evm2Client.Configurate(viper.GetString(config.ChainConfigFlagName), "config_evm2.json")
 	if err != nil {
 		panic(err)
 	}
@@ -60,8 +61,7 @@ func Run() error {
 	mhEVM.RegisterMessageHandler(common.HexToAddress(evm2Config.SharedEVMConfig.Erc20Handler), voter.ERC20MessageHandler)
 	evm2Voter := voter.NewVoter(mhEVM, evm2Client, evmtransaction.NewTransaction, evmgaspricer.NewLondonGasPriceClient(evm2Client, nil))
 	evm2Chain := evm.NewEVMChain(evm2Listener, evm2Voter, db, *evm2Config.SharedEVMConfig.GeneralChainConfig.Id, &evm2Config.SharedEVMConfig)
-
-	r := relayer.NewRelayer([]relayer.RelayedChain{evm2Chain, evm1Chain})
+	r := relayer.NewRelayer(relayerConfig.RelayerConfig{PrometheusEndpoint: "/metrics", PrometheusPort: 2112}, []relayer.RelayedChain{evm2Chain, evm1Chain})
 
 	go r.Start(stopChn, errChn)
 
