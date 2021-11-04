@@ -14,15 +14,15 @@ import (
 	tracer "go.opentelemetry.io/otel/trace"
 )
 
-type telemetry struct {
+type Telemetry struct {
 	metrics *ChainbridgeMetrics
 	tracer  tracer.Tracer
 }
 
-func NewOpenTelemetry(config relayer.RelayerConfig) (*telemetry, error) {
+func NewOpenTelemetry(config relayer.RelayerConfig) (*Telemetry, error) {
 	collectorURL, err := url.Parse(config.OpenTelemetryCollectorURL)
 	if err != nil {
-		return &telemetry{}, err
+		return &Telemetry{}, err
 	}
 
 	metricOptions := []otlpmetrichttp.Option{
@@ -40,21 +40,21 @@ func NewOpenTelemetry(config relayer.RelayerConfig) (*telemetry, error) {
 
 	metrics, err := initOpenTelemetryMetrics(metricOptions...)
 	if err != nil {
-		return &telemetry{}, err
+		return &Telemetry{}, err
 	}
 
 	tracer, err := initOpenTelementryTracer(tracerOptions...)
 	if err != nil {
-		return &telemetry{}, err
+		return &Telemetry{}, err
 	}
 
-	return &telemetry{
+	return &Telemetry{
 		metrics: metrics,
 		tracer:  tracer,
 	}, nil
 }
 
-func (t *telemetry) TraceDepositEvent(ctx context.Context, m *message.Message) context.Context {
+func (t *Telemetry) TraceDepositEvent(ctx context.Context, m *message.Message) context.Context {
 	if t.tracer != nil {
 		var span tracer.Span
 		ctx, span = t.tracer.Start(
