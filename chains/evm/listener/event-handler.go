@@ -151,13 +151,18 @@ func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID interna
 	tokenId := calldata[:32]
 
 	// 32 - 64 is recipient address length
-	recipientAddressLength := big.NewInt(0).SetBytes(calldata[32:64]).Int64()
+	recipientAddressLength := big.NewInt(0).SetBytes(calldata[32:64])
 
 	// 64 - (64 + recipient address length) is recipient address
-	recipientAddress := calldata[64:(64 + recipientAddressLength)]
+	recipientAddress := calldata[64:(64 + recipientAddressLength.Int64())]
 
+	// if metadata present
+	metadata := []byte{}
+	metadataStart := big.NewInt(0).Add(big.NewInt(64), recipientAddressLength).Int64()
+	if metadataStart <= int64(len(calldata)) {
+		metadata = calldata[metadataStart:]
+	}
 	// rest of bytes is metada
-	metadata := calldata[(64 + recipientAddressLength):]
 
 	return &relayer.Message{
 		Source:       sourceID,
