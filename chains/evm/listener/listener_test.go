@@ -7,6 +7,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 
 	mock_listener "github.com/ChainSafe/chainbridge-core/chains/evm/listener/mock"
 	"github.com/ChainSafe/chainbridge-core/relayer"
@@ -60,7 +61,7 @@ func (s *ListenerTestSuite) TestErc20HandleEvent() {
 	amountParsed := calldata[:32]
 	recipientAddressParsed := calldata[64:]
 
-	expected := &relayer.Message{
+	expected := &message.Message{
 		Source:       sourceID,
 		Destination:  depositLog.DestinationDomainID,
 		DepositNonce: depositLog.DepositNonce,

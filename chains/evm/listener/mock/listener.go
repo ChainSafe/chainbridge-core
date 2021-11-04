@@ -108,10 +108,10 @@ func (m *MockEventHandler) EXPECT() *MockEventHandlerMockRecorder {
 }
 
 // HandleEvent mocks base method.
-func (m *MockEventHandler) HandleEvent(sourceID, destID uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error) {
+func (m *MockEventHandler) HandleEvent(sourceID, destID uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HandleEvent", sourceID, destID, nonce, resourceID, calldata, handlerResponse)
-	ret0, _ := ret[0].(*relayer.Message)
+	ret0, _ := ret[0].(*message.Message)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

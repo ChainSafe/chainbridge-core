@@ -6,16 +6,16 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/blockstore"
 	"github.com/ChainSafe/chainbridge-core/config/chain"
-	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/rs/zerolog/log"
 )
 
 type ProposalVoter interface {
-	VoteProposal(message *relayer.Message) error
+	VoteProposal(message *message.Message) error
 }
 
 type EventListener interface {
-	ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message
+	ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *message.Message
 }
 
 type SubstrateChain struct {
@@ -37,7 +37,7 @@ func NewSubstrateChain(listener EventListener, writer ProposalVoter, kvdb blocks
 	}
 }
 
-func (c *SubstrateChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *relayer.Message) {
+func (c *SubstrateChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *message.Message) {
 	log.Info().Msg("Polling Blocks...")
 	// Handler chain specific configs and flags
 	//b, err := blockstore.GetLastStoredBlock(c.kvdb, c.domainID)
@@ -59,7 +59,7 @@ func (c *SubstrateChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, e
 	}
 }
 
-func (c *SubstrateChain) Write(message *relayer.Message) error {
+func (c *SubstrateChain) Write(message *message.Message) error {
 	return c.writer.VoteProposal(message)
 
 }

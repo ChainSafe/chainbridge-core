@@ -8,6 +8,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 
 	internalTypes "github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum"
@@ -16,7 +17,7 @@ import (
 )
 
 type EventHandlers map[common.Address]EventHandlerFunc
-type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID internalTypes.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error)
+type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID internalTypes.ResourceID, calldata, handlerResponse []byte) (*message.Message, error)
 
 type ETHEventHandler struct {
 	bridgeAddress common.Address
@@ -31,7 +32,7 @@ func NewETHEventHandler(address common.Address, client ChainClient) *ETHEventHan
 	}
 }
 
-func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint64, resourceID internalTypes.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error) {
+func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint64, resourceID internalTypes.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
 	handlerAddr, err := e.matchResourceIDToHandlerAddress(resourceID)
 	if err != nil {
 		return nil, err
@@ -87,7 +88,7 @@ func (e *ETHEventHandler) RegisterEventHandler(handlerAddress string, handler Ev
 
 // Erc20EventHandler converts data pulled from event logs into message
 // handlerResponse can be an empty slice
-func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID internalTypes.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error) {
+func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID internalTypes.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
 	if len(calldata) < 84 {
 		err := errors.New("invalid calldata length: less than 84 bytes")
 		return nil, err
@@ -105,7 +106,7 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID internal
 	// recipientAddress: last 20 bytes of calldata
 	recipientAddress := calldata[64:]
 
-	return &relayer.Message{
+	return &message.Message{
 		Source:       sourceID,
 		Destination:  destId,
 		DepositNonce: nonce,

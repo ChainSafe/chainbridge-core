@@ -7,6 +7,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/substrate"
 	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	internalTypes "github.com/ChainSafe/chainbridge-core/types"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/rs/zerolog/log"
@@ -28,7 +29,7 @@ type Voter interface {
 	GetProposalStatus(sourceID, proposalBytes []byte) (bool, *substrate.VoteState, error)
 }
 
-type ProposalHandler func(msg *relayer.Message) []interface{}
+type ProposalHandler func(msg *message.Message) []interface{}
 type ProposalHandlers map[relayer.TransferType]ProposalHandler
 
 type SubstrateWriter struct {
@@ -48,7 +49,7 @@ func (w *SubstrateWriter) RegisterHandler(t relayer.TransferType, handler Propos
 	w.handlers[t] = handler
 }
 
-func (w *SubstrateWriter) VoteProposal(m *relayer.Message) error {
+func (w *SubstrateWriter) VoteProposal(m *message.Message) error {
 	handler, ok := w.handlers[m.Type]
 	if !ok {
 		return fmt.Errorf("no corresponding substrate handler found for message type %s", m.Type)

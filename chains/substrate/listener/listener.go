@@ -10,6 +10,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/blockstore"
 	"github.com/ChainSafe/chainbridge-core/chains/substrate"
 	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/rs/zerolog/log"
 )
@@ -25,7 +26,7 @@ type SubstrateReader interface {
 	UpdateMetatdata() error
 }
 
-type EventHandler func(uint8, interface{}) (*relayer.Message, error)
+type EventHandler func(uint8, interface{}) (*message.Message, error)
 
 func NewSubstrateListener(client SubstrateReader) *SubstrateListener {
 	return &SubstrateListener{
@@ -45,8 +46,8 @@ func (l *SubstrateListener) RegisterSubscription(tt relayer.TransferType, handle
 	l.eventHandlers[tt] = handler
 }
 
-func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message {
-	ch := make(chan *relayer.Message)
+func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *message.Message {
+	ch := make(chan *message.Message)
 	go func() {
 		for {
 			select {
@@ -103,8 +104,8 @@ func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, domainID uint8, 
 }
 
 // handleEvents calls the associated handler for all registered event types
-func (l *SubstrateListener) handleEvents(domainID uint8, evts *substrate.Events) ([]*relayer.Message, error) {
-	msgs := make([]*relayer.Message, 0)
+func (l *SubstrateListener) handleEvents(domainID uint8, evts *substrate.Events) ([]*message.Message, error) {
+	msgs := make([]*message.Message, 0)
 	if l.eventHandlers[relayer.FungibleTransfer] != nil {
 		for _, evt := range evts.ChainBridge_FungibleTransfer {
 			m, err := l.eventHandlers[relayer.FungibleTransfer](domainID, evt)

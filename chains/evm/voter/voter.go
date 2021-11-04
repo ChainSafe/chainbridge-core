@@ -11,6 +11,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
@@ -24,7 +25,7 @@ type ChainClient interface {
 }
 
 type MessageHandler interface {
-	HandleMessage(m *relayer.Message) (*proposal.Proposal, error)
+	HandleMessage(m *message.Message) (*proposal.Proposal, error)
 }
 
 type EVMVoter struct {
@@ -43,7 +44,7 @@ func NewVoter(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasP
 	}
 }
 
-func (v *EVMVoter) VoteProposal(m *relayer.Message) error {
+func (v *EVMVoter) VoteProposal(m *message.Message) error {
 	prop, err := v.mh.HandleMessage(m)
 	if err != nil {
 		return err
