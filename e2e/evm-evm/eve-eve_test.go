@@ -13,5 +13,5 @@ const ETHEndpoint2 = "http://localhost:8547"
 
 // Alice key is used by the relayer, Eve key is used as admin and depositter
 func TestRunE2ETests(t *testing.T) {
-	suite.Run(t, evm.PreSetupTestSuite(evmtransaction.NewTransaction, evmtransaction.NewTransaction, ETHEndpoint1, ETHEndpoint2, evm.EveKp))
+	suite.Run(t, evm.SetupEVM2EVEMTestSuite(evmtransaction.NewTransaction, evmtransaction.NewTransaction, ETHEndpoint1, ETHEndpoint2, evm.EveKp))
 }
