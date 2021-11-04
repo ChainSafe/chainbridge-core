@@ -4,7 +4,9 @@ import (
 	"net/url"
 
 	"github.com/ChainSafe/chainbridge-core/config/relayer"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	tracer "go.opentelemetry.io/otel/trace"
 )
 
@@ -19,20 +21,25 @@ func NewOpenTelemetry(config relayer.RelayerConfig) (*telemetry, error) {
 		return &telemetry{}, err
 	}
 
-	options := []otlpmetrichttp.Option{
+	metricOptions := []otlpmetrichttp.Option{
 		otlpmetrichttp.WithURLPath(collectorURL.Path),
 		otlpmetrichttp.WithEndpoint(collectorURL.Host),
 	}
+	tracerOptions := []otlptracehttp.Option{
+		otlptracehttp.WithURLPath(collectorURL.Path),
+		otlptracehttp.WithEndpoint(collectorURL.Host),
+	}
 	if collectorURL.Scheme == "http" {
-		options = append(options, otlpmetrichttp.WithInsecure())
+		metricOptions = append(metricOptions, otlpmetrichttp.WithInsecure())
+		tracerOptions = append(tracerOptions, otlptracehttp.WithInsecure())
 	}
 
-	metrics, err := initOpenTelemetryMetrics(options)
+	metrics, err := initOpenTelemetryMetrics(metricOptions...)
 	if err != nil {
 		return &telemetry{}, err
 	}
 
-	tracer, err := initOpenTelementryTracer(options)
+	tracer, err := initOpenTelementryTracer(tracerOptions...)
 	if err != nil {
 		return &telemetry{}, err
 	}
@@ -43,4 +50,4 @@ func NewOpenTelemetry(config relayer.RelayerConfig) (*telemetry, error) {
 	}, nil
 }
 
-func (t *telemetry) TraceDepositEvent() {}
+func (t *telemetry) TraceDepositEvent(m *message.Message) {}

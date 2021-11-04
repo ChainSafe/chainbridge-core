@@ -8,18 +8,19 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/config/relayer"
 	"github.com/ChainSafe/chainbridge-core/opentelemetry"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/rs/zerolog/log"
 )
 
-type MessageProcessor func(message *Message) error
+type MessageProcessor func(message *message.Message) error
 
 type Tracer interface {
-	TraceDepositEvent(m *Message)
+	TraceDepositEvent(m *message.Message)
 }
 
 type RelayedChain interface {
-	PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *Message)
-	Write(message *Message) error
+	PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *message.Message)
+	Write(message *message.Message) error
 	DomainID() uint8
 }
 
@@ -38,7 +39,7 @@ type Relayer struct {
 // and passing them with a channel that accepts unified cross chain message format
 func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 	log.Debug().Msgf("Starting relayer")
-	messagesChannel := make(chan *Message)
+	messagesChannel := make(chan *message.Message)
 
 	telemetry, err := opentelemetry.NewOpenTelemetry(r.config)
 	if err != nil {
