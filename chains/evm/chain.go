@@ -8,7 +8,7 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/blockstore"
-	"github.com/ChainSafe/chainbridge-core/config"
+	"github.com/ChainSafe/chainbridge-core/config/chain"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/rs/zerolog/log"
 )
@@ -27,10 +27,10 @@ type EVMChain struct {
 	writer   ProposalVoter
 	domainID uint8
 	kvdb     blockstore.KeyValueReaderWriter
-	config   *config.SharedEVMConfig
+	config   *chain.SharedEVMConfig
 }
 
-func NewEVMChain(dr EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, domainID uint8, config *config.SharedEVMConfig) *EVMChain {
+func NewEVMChain(dr EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, domainID uint8, config *chain.SharedEVMConfig) *EVMChain {
 	return &EVMChain{listener: dr, writer: writer, kvdb: kvdb, domainID: domainID, config: config}
 }
 
