@@ -7,7 +7,6 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 
 	internalTypes "github.com/ChainSafe/chainbridge-core/types"
@@ -111,7 +110,7 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID internal
 		Destination:  destId,
 		DepositNonce: nonce,
 		ResourceId:   resourceID,
-		Type:         relayer.FungibleTransfer,
+		Type:         message.FungibleTransfer,
 		Payload: []interface{}{
 			amount,
 			recipientAddress,

@@ -12,8 +12,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type MessageProcessor func(message *message.Message) error
-
 type Tracer interface {
 	TraceDepositEvent(m *message.Message)
 }
@@ -24,7 +22,7 @@ type RelayedChain interface {
 	DomainID() uint8
 }
 
-func NewRelayer(config relayer.RelayerConfig, chains []RelayedChain, messageProcessors ...MessageProcessor) *Relayer {
+func NewRelayer(config relayer.RelayerConfig, chains []RelayedChain, messageProcessors ...message.MessageProcessor) *Relayer {
 	return &Relayer{relayedChains: chains, messageProcessors: messageProcessors, config: config}
 }
 
@@ -32,7 +30,7 @@ type Relayer struct {
 	config            relayer.RelayerConfig
 	relayedChains     []RelayedChain
 	registry          map[uint8]RelayedChain
-	messageProcessors []MessageProcessor
+	messageProcessors []message.MessageProcessor
 }
 
 // Start function starts the relayer. Relayer routine is starting all the chains
@@ -63,7 +61,7 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 }
 
 // Route function winds destination writer by mapping DestinationID from message to registered writer.
-func (r *Relayer) route(m *Message, t Tracer) {
+func (r *Relayer) route(m *message.Message, t Tracer) {
 	destChain, ok := r.registry[m.Destination]
 	if !ok {
 		log.Error().Msgf("no resolver for destID %v to send message registered", m.Destination)

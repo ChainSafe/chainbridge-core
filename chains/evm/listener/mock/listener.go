@@ -10,7 +10,7 @@ import (
 	reflect "reflect"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	relayer "github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	types "github.com/ChainSafe/chainbridge-core/types"
 	common "github.com/ethereum/go-ethereum/common"
 	gomock "github.com/golang/mock/gomock"

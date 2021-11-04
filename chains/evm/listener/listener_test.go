@@ -10,7 +10,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 
 	mock_listener "github.com/ChainSafe/chainbridge-core/chains/evm/listener/mock"
-	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/golang/mock/gomock"
@@ -66,7 +65,7 @@ func (s *ListenerTestSuite) TestErc20HandleEvent() {
 		Destination:  depositLog.DestinationDomainID,
 		DepositNonce: depositLog.DepositNonce,
 		ResourceId:   depositLog.ResourceID,
-		Type:         relayer.FungibleTransfer,
+		Type:         message.FungibleTransfer,
 		Payload: []interface{}{
 			amountParsed,
 			recipientAddressParsed,

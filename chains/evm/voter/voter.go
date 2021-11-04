@@ -10,7 +10,6 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
-	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -59,7 +58,7 @@ func (v *EVMVoter) VoteProposal(m *message.Message) error {
 	}
 	// if this relayer had not voted for proposal and proposal is in Active or Inactive status
 	// we need to vote for it
-	if !votedByTheRelayer && (ps == relayer.ProposalStatusActive || ps == relayer.ProposalStatusInactive) {
+	if !votedByTheRelayer && (ps == message.ProposalStatusActive || ps == message.ProposalStatusInactive) {
 		hash, err := calls.VoteProposal(v.client, v.fabric, v.gasPriceClient, prop)
 		log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
 		if err != nil {

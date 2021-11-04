@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/substrate"
-	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	internalTypes "github.com/ChainSafe/chainbridge-core/types"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
@@ -30,7 +29,7 @@ type Voter interface {
 }
 
 type ProposalHandler func(msg *message.Message) []interface{}
-type ProposalHandlers map[relayer.TransferType]ProposalHandler
+type ProposalHandlers map[message.TransferType]ProposalHandler
 
 type SubstrateWriter struct {
 	client   Voter
@@ -42,9 +41,9 @@ func NewSubstrateWriter(domainID uint8, client Voter) *SubstrateWriter {
 	return &SubstrateWriter{domainID: domainID, client: client}
 }
 
-func (w *SubstrateWriter) RegisterHandler(t relayer.TransferType, handler ProposalHandler) {
+func (w *SubstrateWriter) RegisterHandler(t message.TransferType, handler ProposalHandler) {
 	if w.handlers == nil {
-		w.handlers = make(map[relayer.TransferType]ProposalHandler)
+		w.handlers = make(map[message.TransferType]ProposalHandler)
 	}
 	w.handlers[t] = handler
 }
