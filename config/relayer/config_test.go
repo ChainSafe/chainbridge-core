@@ -76,8 +76,8 @@ func (s *GetRelayerConfigTestSuite) TestInvalidConfig() {
 
 func (s *GetRelayerConfigTestSuite) TestValidConfig() {
 	data := RelayerConfig{
-		PrometheusPort:     3000,
-		PrometheusEndpoint: "/endpoint",
+		PrometheusPort: 3000,
+		PrometheusPath: "/endpoint",
 	}
 	file, _ := json.Marshal(data)
 	_ = ioutil.WriteFile("test.json", file, 0644)
@@ -87,7 +87,7 @@ func (s *GetRelayerConfigTestSuite) TestValidConfig() {
 	_ = os.Remove("test.json")
 	s.Nil(err)
 	s.Equal(config, RelayerConfig{
-		PrometheusPort:     3000,
-		PrometheusEndpoint: "/endpoint",
+		PrometheusPort: 3000,
+		PrometheusPath: "/endpoint",
 	})
 }
