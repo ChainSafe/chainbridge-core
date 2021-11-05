@@ -34,7 +34,7 @@ func (s *EVMTxTestSuite) TearDownTest() {}
 
 func (s *EVMTxTestSuite) TestNewTransactionWithStaticGasPricer() {
 	s.client.EXPECT().SuggestGasPrice(gomock.Any()).Return(big.NewInt(1000), nil)
-	txFabrid := NewTransaction
+	txFabric := NewTransaction
 	gasPriceClient := evmgaspricer.NewStaticGasPriceDeterminant(s.client, nil)
 	gp, err := gasPriceClient.GasPrice()
 	s.Nil(err)
