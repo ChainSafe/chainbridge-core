@@ -19,6 +19,9 @@ type Telemetry struct {
 	tracer  tracer.Tracer
 }
 
+// NewOpenTelemetry initializes OpenTelementry metrics and traces exporter to
+// OpenTelementry collector if set in relayer config or by default initializes
+// Prometheus on path and port setup by the relayer config
 func NewOpenTelemetry(config relayer.RelayerConfig) (*Telemetry, error) {
 	if config.OpenTelemetryCollectorURL != "" {
 		collectorURL, err := url.Parse(config.OpenTelemetryCollectorURL)
@@ -65,6 +68,7 @@ func NewOpenTelemetry(config relayer.RelayerConfig) (*Telemetry, error) {
 	}
 }
 
+// TraceDepositEvent traces deposit event and increases DepositEventCount metric
 func (t *Telemetry) TraceDepositEvent(ctx context.Context, m *message.Message) context.Context {
 	if t.tracer != nil {
 		var span tracer.Span
