@@ -38,7 +38,7 @@ func (s *EVMTxTestSuite) TestNewTransactionWithStaticGasPricer() {
 	gasPriceClient := evmgaspricer.NewStaticGasPriceDeterminant(s.client, nil)
 	gp, err := gasPriceClient.GasPrice()
 	s.Nil(err)
-	tx, err := txFabrid(1, &common.Address{}, big.NewInt(0), 10000, gp, []byte{})
+	tx, err := txFabric(1, &common.Address{}, big.NewInt(0), 10000, gp, []byte{})
 	s.Nil(err)
 	rawTx, err := tx.RawWithSignature(evm.AliceKp.PrivateKey(), big.NewInt(420))
 	s.Nil(err)
@@ -51,11 +51,11 @@ func (s *EVMTxTestSuite) TestNewTransactionWithStaticGasPricer() {
 func (s *EVMTxTestSuite) TestNewTransactionWithLondonGasPricer() {
 	s.client.EXPECT().BaseFee().Return(big.NewInt(1000), nil)
 	s.client.EXPECT().SuggestGasTipCap(gomock.Any()).Return(big.NewInt(1000), nil)
-	txFabrid := NewTransaction
+	txFabric := NewTransaction
 	gasPriceClient := evmgaspricer.NewLondonGasPriceClient(s.client, nil)
 	gp, err := gasPriceClient.GasPrice()
 	s.Nil(err)
-	tx, err := txFabrid(1, &common.Address{}, big.NewInt(0), 10000, gp, []byte{})
+	tx, err := txFabric(1, &common.Address{}, big.NewInt(0), 10000, gp, []byte{})
 	s.Nil(err)
 	rawTx, err := tx.RawWithSignature(evm.AliceKp.PrivateKey(), big.NewInt(420))
 	s.Nil(err)
