@@ -28,3 +28,6 @@ install-subkey:
 
 genmocks:
 	mockgen -destination=./chains/evm/evmgaspricer/mock/gas-pricer.go -source=./chains/evm/evmgaspricer/gas-pricer.go
+
+e2e-test:
+	./scripts/int_tests.sh
