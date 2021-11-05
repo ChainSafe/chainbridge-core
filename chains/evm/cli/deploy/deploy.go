@@ -20,10 +20,6 @@ import (
 )
 
 var ErrNoDeploymentFlagsProvided = errors.New("provide at least one deployment flag. For help use --help")
-var ErrErc20TokenAndSymbolNotProvided = errors.New("erc20Name and erc20Symbol flags should be provided")
-
-// TODO: Find a smarter way of handling this error creation
-var ErrErc721TokenSymbolAndBaseURINotProvided = errors.New("erc721Name and erc721Symbol flags should be provided")
 
 var DeployEVM = &cobra.Command{
 	Use:   "deploy",
@@ -104,6 +100,10 @@ func ValidateDeployFlags(cmd *cobra.Command, args []string) error {
 		if Erc20 {
 			flags.MarkFlagsAsRequired(cmd, "erc20Symbol", "erc20Name")
 			deployments = append(deployments, "erc20")
+		}
+		if Erc721 {
+			flags.MarkFlagsAsRequired(cmd, "erc721Name", "erc721Symbol", "erc721BaseURI")
+			deployments = append(deployments, "erc721")
 		}
 	}
 	if len(deployments) == 0 {
@@ -186,12 +186,6 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPr
 
 		case "erc721":
 			log.Debug().Msgf("deploying ERC721..")
-
-			if Erc721Name == "" || Erc721Symbol == "" {
-				log.Error().Err(ErrErc20TokenAndSymbolNotProvided)
-				return ErrErc20TokenAndSymbolNotProvided
-			}
-
 			erc721Addr, err := calls.DeployErc721(ethClient, txFabric, gasPricer, Erc721Name, Erc721Symbol, Erc721BaseURI)
 			if err != nil {
 				log.Error().Err(fmt.Errorf("ERC721 deploy failed: %w", err))
@@ -202,7 +196,6 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPr
 
 		case "erc721Handler":
 			log.Debug().Msgf("deploying ERC721 handler..")
-
 			erc721HandlerAddr, err := calls.DeployErc721Handler(ethClient, txFabric, gasPricer, bridgeAddr)
 			if err != nil {
 				log.Error().Err(fmt.Errorf("ERC721 handler deploy failed: %w", err))

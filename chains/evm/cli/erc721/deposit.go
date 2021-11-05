@@ -95,7 +95,13 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasP
 		return err
 	}
 
-	log.Debug().Msgf("erc721 deposit hash: %s", txHash.Hex())
-	log.Info().Msgf("%s token were transferred to %s from %s", tokenId.String(), recipientAddr.Hex(), senderKeyPair.CommonAddress().String())
+	log.Info().Msgf(
+		`erc721 deposit hash: %s
+		%s token were transferred to %s from %s`,
+		txHash.Hex(),
+		tokenId.String(),
+		recipientAddr.Hex(),
+		senderKeyPair.CommonAddress().String(),
+	)
 	return err
 }
