@@ -72,7 +72,10 @@ func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	resourceIdBytesArr, err = flags.ProcessResourceID(ResourceID)
-	return err
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
