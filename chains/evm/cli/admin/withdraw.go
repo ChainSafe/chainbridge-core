@@ -108,15 +108,15 @@ func WithdrawCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gas
 	gasPricer.SetClient(ethClient)
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
-	// address tokenAddress
-	// address recipient
-	// uint256 amountOrTokenID
+	// @dev withdrawal data should include:
+	// tokenAddr => common.Address
+	// recipientAddr => common.Address
+	// amountOrTokenID => uint256 (*big.Int)
 	withdrawalData := bytes.Buffer{}
 	withdrawalData.Write(common.LeftPadBytes(tokenAddr.Bytes(), 32))
 	withdrawalData.Write(common.LeftPadBytes(recipientAddr.Bytes(), 32))
 	withdrawalData.Write(common.LeftPadBytes(realAmount.Bytes(), 32))
 
-	// withdrawalData := abi.
 	input, err := calls.PrepareWithdrawInput(handlerAddr, withdrawalData.Bytes())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("admin withdrawal input error: %v", err))
