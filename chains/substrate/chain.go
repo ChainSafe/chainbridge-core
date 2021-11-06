@@ -5,7 +5,7 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/blockstore"
-	"github.com/ChainSafe/chainbridge-core/config"
+	"github.com/ChainSafe/chainbridge-core/config/chain"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/rs/zerolog/log"
 )
@@ -24,10 +24,10 @@ type SubstrateChain struct {
 	listener EventListener
 	writer   ProposalVoter
 	kvdb     blockstore.KeyValueReaderWriter
-	config   *config.SharedSubstrateConfig
+	config   *chain.SharedSubstrateConfig
 }
 
-func NewSubstrateChain(listener EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, domainID uint8, config *config.SharedSubstrateConfig) *SubstrateChain {
+func NewSubstrateChain(listener EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, domainID uint8, config *chain.SharedSubstrateConfig) *SubstrateChain {
 	return &SubstrateChain{
 		listener: listener,
 		writer:   writer,
