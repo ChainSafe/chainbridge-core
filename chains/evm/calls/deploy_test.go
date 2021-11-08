@@ -34,7 +34,26 @@ func (s *DeployTestSuite) TearDownSuite() {}
 func (s *DeployTestSuite) SetupTest()     {}
 func (s *DeployTestSuite) TearDownTest()  {}
 
-func (s *DeployTestSuite) TestDeployErc20NonceUnlockCall() {
+func (s *DeployTestSuite) TestDeployErc20NonceUnlockCallWithErrorThrown() {
+	s.mockClientDeployer.EXPECT().LockNonce().Times(1)
+	s.mockClientDeployer.EXPECT().UnsafeNonce().Return(big.NewInt(1), nil)
+	s.mockgasPricer.EXPECT().GasPrice().Return([]*big.Int{big.NewInt(10)}, nil)
+	s.mockClientDeployer.EXPECT().SignAndSendTransaction(gomock.Any(), gomock.Any()).Times(1).Return(common.Hash{}, nil)
+	s.mockClientDeployer.EXPECT().WaitAndReturnTxReceipt(gomock.Any()).Times(1).Return(nil, nil)
+	s.mockClientDeployer.EXPECT().From().Times(1).Return(common.Address{})
+	s.mockClientDeployer.EXPECT().UnsafeIncreaseNonce().Times(1)
+	s.mockClientDeployer.EXPECT().CodeAt(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+	s.mockClientDeployer.EXPECT().UnlockNonce().Times(1)
+
+	_, _ = calls.DeployErc20(
+		s.mockClientDeployer,
+		evmtransaction.NewTransaction,
+		s.mockgasPricer,
+		"TEST",
+		"TST")
+}
+
+func (s *DeployTestSuite) TestDeployErc20NonceUnlockCallWithoutErrorsThrown() {
 	s.mockClientDeployer.EXPECT().LockNonce().Times(1)
 	s.mockClientDeployer.EXPECT().UnsafeNonce().Return(big.NewInt(1), nil)
 	s.mockgasPricer.EXPECT().GasPrice().Return([]*big.Int{big.NewInt(10)}, nil)
@@ -72,7 +91,46 @@ func (s *DeployTestSuite) TestDeployBridgeNonceUnlockCall() {
 		big.NewInt(10))
 }
 
-func (s *DeployTestSuite) TestDeployErc20HandlerNonceUnlockCall() {
+func (s *DeployTestSuite) TestDeployBridgeNonceUnlockCallWithoutErrorsThrown() {
+	s.mockClientDeployer.EXPECT().LockNonce().Times(1)
+	s.mockClientDeployer.EXPECT().UnsafeNonce().Return(big.NewInt(1), nil)
+	s.mockgasPricer.EXPECT().GasPrice().Return([]*big.Int{big.NewInt(10)}, nil)
+	s.mockClientDeployer.EXPECT().SignAndSendTransaction(gomock.Any(), gomock.Any()).Times(1).Return(common.Hash{}, errors.New("error"))
+	s.mockClientDeployer.EXPECT().UnlockNonce().Times(1)
+	s.mockClientDeployer.EXPECT().WaitAndReturnTxReceipt(gomock.Any()).Times(0)
+	s.mockClientDeployer.EXPECT().UnsafeIncreaseNonce().Times(0)
+
+	toAddress := common.HexToAddress("0xtest1")
+
+	_, _ = calls.DeployBridge(
+		s.mockClientDeployer,
+		evmtransaction.NewTransaction,
+		s.mockgasPricer,
+		0x1,
+		[]common.Address{toAddress},
+		big.NewInt(2),
+		big.NewInt(10))
+}
+
+func (s *DeployTestSuite) TestDeployErc20HandlerNonceUnlockCallWithErrorThrown() {
+	s.mockClientDeployer.EXPECT().LockNonce().Times(1)
+	s.mockClientDeployer.EXPECT().UnsafeNonce().Return(big.NewInt(1), nil)
+	s.mockgasPricer.EXPECT().GasPrice().Return([]*big.Int{big.NewInt(10)}, nil)
+	s.mockClientDeployer.EXPECT().SignAndSendTransaction(gomock.Any(), gomock.Any()).Times(1).Return(common.Hash{}, errors.New("error"))
+	s.mockClientDeployer.EXPECT().UnlockNonce().Times(1)
+	s.mockClientDeployer.EXPECT().WaitAndReturnTxReceipt(gomock.Any()).Times(0)
+	s.mockClientDeployer.EXPECT().UnsafeIncreaseNonce().Times(0)
+
+	toAddress := common.HexToAddress("0xtest1")
+
+	_, _ = calls.DeployErc20Handler(
+		s.mockClientDeployer,
+		evmtransaction.NewTransaction,
+		s.mockgasPricer,
+		toAddress)
+}
+
+func (s *DeployTestSuite) TestDeployErc20HandlerNonceUnlockCallWithoutErrorsThrown() {
 	s.mockClientDeployer.EXPECT().LockNonce().Times(1)
 	s.mockClientDeployer.EXPECT().UnsafeNonce().Return(big.NewInt(1), nil)
 	s.mockgasPricer.EXPECT().GasPrice().Return([]*big.Int{big.NewInt(10)}, nil)
