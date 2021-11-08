@@ -38,7 +38,6 @@ func (gasPricer *StaticGasPriceDeterminant) GasPrice() ([]*big.Int, error) {
 		return nil, err
 	}
 	if gasPricer.opts != nil {
-
 		if gasPricer.opts.GasPriceFactor != nil {
 			gp = multiplyGasPrice(gp, gasPricer.opts.GasPriceFactor)
 		}

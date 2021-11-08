@@ -62,25 +62,14 @@ func newDynamicFeeTransaction(nonce uint64, to *common.Address, amount *big.Int,
 }
 
 func newTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *TX {
-	var tx *types.Transaction
-	if to == nil {
-		tx = types.NewTx(&types.LegacyTx{
-			Nonce:    nonce,
-			Value:    amount,
-			Gas:      gasLimit,
-			GasPrice: gasPrice,
-			Data:     data,
-		})
-	} else {
-		tx = types.NewTx(&types.LegacyTx{
-			Nonce:    nonce,
-			To:       to,
-			Value:    amount,
-			Gas:      gasLimit,
-			GasPrice: gasPrice,
-			Data:     data,
-		})
-	}
+	tx := types.NewTx(&types.LegacyTx{
+		Nonce:    nonce,
+		To:       to,
+		Value:    amount,
+		Gas:      gasLimit,
+		GasPrice: gasPrice,
+		Data:     data,
+	})
 	return &TX{tx: tx}
 }
 
