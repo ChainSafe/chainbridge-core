@@ -19,6 +19,7 @@ func init() {
 	AdminCmd.AddCommand(removeRelayerCmd)
 	AdminCmd.AddCommand(setFeeCmd)
 	AdminCmd.AddCommand(setThresholdCmd)
+	AdminCmd.AddCommand(getThresholdCmd)
 	AdminCmd.AddCommand(unpauseCmd)
 	AdminCmd.AddCommand(withdrawCmd)
 	AdminCmd.AddCommand(setDepositNonceCmd)
