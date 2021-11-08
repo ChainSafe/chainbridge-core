@@ -1,13 +1,15 @@
 package admin
 
 import (
-	"errors"
 	"fmt"
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -20,53 +22,53 @@ var setDepositNonceCmd = &cobra.Command{
 	Long: `Set the deposit nonce
 
 This nonce cannot be less than what is currently stored in the contract`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
-		return SetDepositNonceEVMCMD(cmd, args, txFabric)
+		return SetDepositNonceEVMCMD(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+	},
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := ValidateSetDepositNonceFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+
+		ProcessSetDepositNonceFlags(cmd, args)
+		return nil
 	},
 }
 
-func BindSetDepositNonceFlags(cli *cobra.Command) {
-	cli.Flags().Uint8("domainId", 0, "domain ID of chain")
-	cli.Flags().Uint64("depositNonce", 0, "deposit nonce to set (does not decrement)")
-	cli.Flags().String("bridgeAddress", "", "bridge contract address")
-	err := cli.MarkFlagRequired("domainId")
-	if err != nil {
-		panic(err)
-	}
-	err = cli.MarkFlagRequired("depositNonce")
-	if err != nil {
-		panic(err)
-	}
+func BindSetDepositNonceFlags() {
+	setDepositNonceCmd.Flags().Uint8Var(&DomainID, "domainId", 0, "domain ID of chain")
+	setDepositNonceCmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "deposit nonce to set (does not decrement)")
+	setDepositNonceCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	flags.MarkFlagsAsRequired(setDepositNonceCmd, "domainId", "depositNonce", "bridge")
 }
 
 func init() {
-	BindSetDepositNonceFlags(setDepositNonceCmd)
+	BindSetDepositNonceFlags()
 }
 
-func SetDepositNonceEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	domainId, err := cmd.Flags().GetUint8("domainId")
-	if err != nil {
-		return err
+func ValidateSetDepositNonceFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Bridge) {
+		return fmt.Errorf("invalid bridge address %s", Bridge)
 	}
+	return nil
+}
 
-	depositNonce, err := cmd.Flags().GetUint64("depositNonce")
-	if err != nil {
-		return err
-	}
+func ProcessSetDepositNonceFlags(cmd *cobra.Command, args []string) {
+	bridgeAddr = common.HexToAddress(Bridge)
+}
 
-	bridgeAddress := cmd.Flag("bridgeAddress").Value.String()
+func SetDepositNonceEVMCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 
 	log.Debug().Msgf(`
 Set Deposit Nonce
 Domain ID: %v
 Deposit Nonce: %v
-Bridge Address: %s`, domainId, depositNonce, bridgeAddress)
-
-	if !common.IsHexAddress(bridgeAddress) {
-		return errors.New("invalid bridge address")
-	}
-	bridgeAddr := common.HexToAddress(bridgeAddress)
+Bridge Address: %s`, DomainID, DepositNonce, Bridge)
 
 	// fetch global flag values
 	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
@@ -74,23 +76,24 @@ Bridge Address: %s`, domainId, depositNonce, bridgeAddress)
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
-
-	setDepositNonceInput, err := calls.PrepareSetDepositNonceInput(domainId, depositNonce)
+	gasPricer.SetClient(ethClient)
+	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
+	setDepositNonceInput, err := calls.PrepareSetDepositNonceInput(DomainID, DepositNonce)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("prepare set deposit nonce input error: %v", err))
 		return err
 	}
 
-	_, err = calls.Transact(ethClient, txFabric, &bridgeAddr, setDepositNonceInput, gasLimit, big.NewInt(0))
+	_, err = calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddr, setDepositNonceInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Error().Err(fmt.Errorf("transact error: %v", err))
 		return err
 	}
-	log.Info().Msgf("[domain ID: %v] successfully set nonce: %v at address: %s", domainId, depositNonce, bridgeAddr.String())
+	log.Info().Msgf("[domain ID: %v] successfully set nonce: %v at address: %s", DomainID, DepositNonce, bridgeAddr.String())
 	return nil
 }

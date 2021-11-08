@@ -8,6 +8,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/deploy"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/erc721"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -22,7 +23,13 @@ var EvmRootCLI = &cobra.Command{
 	Use:   "evm-cli",
 	Short: "EVM CLI",
 	Long:  "Root command for starting EVM CLI",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	// empty Run function to enable cobra PreRun - without this PreRun is never executed
+	Run: func(cmd *cobra.Command, args []string) {},
 }
+
 var (
 	// Flags for all EVM CLI commands
 	UrlFlagName                = "url"
@@ -37,7 +44,7 @@ var (
 func BindEVMCLIFlags(evmRootCLI *cobra.Command) {
 	evmRootCLI.PersistentFlags().String(UrlFlagName, "ws://localhost:8545", "node url")
 	evmRootCLI.PersistentFlags().Uint64(GasLimitFlagName, 6721975, "gasLimit used in transactions")
-	evmRootCLI.PersistentFlags().Uint64(GasPriceFlagName, 20000000000, "gasPrice used for transactions")
+	evmRootCLI.PersistentFlags().Uint64(GasPriceFlagName, 0, "used as upperLimitGasPrice for transactions if not 0. Transactions gasPrice is defined by estimating it on network for pre London fork networks and by estimating BaseFee and MaxTipFeePerGas in post London networks")
 	evmRootCLI.PersistentFlags().Uint64(NetworkIdFlagName, 0, "networkid")
 	evmRootCLI.PersistentFlags().String(PrivateKeyFlagName, "", "Private key to use")
 	evmRootCLI.PersistentFlags().String(JsonWalletFlagName, "", "Encrypted JSON wallet")
@@ -50,7 +57,6 @@ func BindEVMCLIFlags(evmRootCLI *cobra.Command) {
 	_ = viper.BindPFlag(PrivateKeyFlagName, evmRootCLI.PersistentFlags().Lookup(PrivateKeyFlagName))
 	_ = viper.BindPFlag(JsonWalletFlagName, evmRootCLI.PersistentFlags().Lookup(JsonWalletFlagName))
 	_ = viper.BindPFlag(JsonWalletPasswordFlagName, evmRootCLI.PersistentFlags().Lookup(JsonWalletPasswordFlagName))
-
 }
 
 func init() {

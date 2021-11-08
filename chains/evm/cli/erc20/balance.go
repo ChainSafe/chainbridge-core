@@ -1,11 +1,11 @@
 package erc20
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
@@ -17,42 +17,59 @@ var balanceCmd = &cobra.Command{
 	Use:   "balance",
 	Short: "Query balance of an account in an ERC20 contract",
 	Long:  "Query balance of an account in an ERC20 contract",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
 		return BalanceCmd(cmd, args, txFabric)
 	},
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := ValidateBalanceFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+
+		ProcessBalanceFlags(cmd, args)
+		return nil
+	},
 }
 
-func BindBalanceCmdFlags(cli *cobra.Command) {
-	cli.Flags().String("erc20Address", "", "ERC20 contract address")
-	cli.Flags().String("accountAddress", "", "address to receive balance of")
+func BindBalanceCmdFlags() {
+	balanceCmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
+	balanceCmd.Flags().StringVar(&AccountAddress, "accountAddress", "", "address to receive balance of")
+	flags.MarkFlagsAsRequired(balanceCmd, "erc20Address", "accountAddress")
 }
 
 func init() {
-	BindBalanceCmdFlags(balanceCmd)
+	BindBalanceCmdFlags()
+}
+
+var accountAddr common.Address
+
+func ValidateBalanceFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Erc20Address) {
+		return fmt.Errorf("invalid recipient address %s", Recipient)
+	}
+	if !common.IsHexAddress(AccountAddress) {
+		return fmt.Errorf("invalid account address %s", AccountAddress)
+	}
+	return nil
+}
+
+func ProcessBalanceFlags(cmd *cobra.Command, args []string) {
+	erc20Addr = common.HexToAddress(Erc20Address)
+	accountAddr = common.HexToAddress(AccountAddress)
 }
 
 func BalanceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	erc20Address := cmd.Flag("erc20Address").Value.String()
-	accountAddress := cmd.Flag("accountAddress").Value.String()
-
 	// fetch global flag values
-	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	if !common.IsHexAddress(erc20Address) {
-		return errors.New("invalid erc20Address address")
-	}
-	erc20Addr := common.HexToAddress(erc20Address)
-
-	if !common.IsHexAddress(accountAddress) {
-		return errors.New("invalid account address")
-	}
-	accountAddr := common.HexToAddress(accountAddress)
-
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey(), gasPrice)
+	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err

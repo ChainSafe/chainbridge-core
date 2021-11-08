@@ -6,11 +6,10 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
-	"github.com/ChainSafe/chainbridge-core/types"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -60,6 +59,31 @@ func PrepareAdminSetGenericResourceInput(
 		return []byte{}, err
 	}
 	return input, nil
+}
+
+func AdminSetGenericResource(
+	client ClientDispatcher,
+	fabric TxFabric,
+	gasPriceClient GasPricer,
+	handler common.Address,
+	rID [32]byte,
+	addr common.Address,
+	depositFunctionSig [4]byte,
+	depositerOffset *big.Int,
+	executeFunctionSig [4]byte,
+) (common.Hash, error) {
+	input, err := PrepareAdminSetGenericResourceInput(handler, rID, addr, depositFunctionSig, depositerOffset, executeFunctionSig)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	gasLimit := uint64(2000000)
+	h, err := Transact(client, fabric, gasPriceClient, &handler, input, gasLimit, big.NewInt(0))
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("settings generic resource failed %w", err)
+	}
+
+	return h, nil
 }
 
 func PrepareAddRelayerInput(relayer common.Address) ([]byte, error) {
@@ -131,14 +155,14 @@ func PrepareDepositInput(destDomainID uint8, resourceID [32]byte, data []byte) (
 	return input, nil
 }
 
-func Deposit(client ChainClient, fabric TxFabric, bridgeAddress common.Address, resourceID [32]byte, destDomainID uint8, data []byte) error {
+func Deposit(client ClientDispatcher, fabric TxFabric, gasPriceClient GasPricer, bridgeAddress common.Address, resourceID [32]byte, destDomainID uint8, data []byte) error {
 	input, err := PrepareDepositInput(destDomainID, resourceID, data)
 	if err != nil {
 		return err
 	}
 
 	gasLimit := uint64(2000000)
-	h, err := Transact(client, fabric, &bridgeAddress, input, gasLimit, big.NewInt(0))
+	h, err := Transact(client, fabric, gasPriceClient, &bridgeAddress, input, gasLimit, big.NewInt(0))
 	if err != nil {
 		return fmt.Errorf("deposit failed %w", err)
 	}
@@ -158,14 +182,14 @@ func PrepareExecuteProposalInput(sourceDomainID uint8, depositNonce uint64, reso
 	return input, nil
 }
 
-func ExecuteProposal(client ClientDispatcher, fabric TxFabric, proposal *proposal.Proposal) (common.Hash, error) {
+func ExecuteProposal(client ClientDispatcher, fabric TxFabric, gasPriceClient GasPricer, proposal *proposal.Proposal) (common.Hash, error) {
 	// revertOnFail should be constantly false, true is used only for internal contract calls when you need to execute proposal in voteProposal function right after it becomes Passed becouse of votes
 	input, err := PrepareExecuteProposalInput(proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data, true)
 	if err != nil {
 		return common.Hash{}, err
 	}
 	gasLimit := uint64(300000)
-	h, err := Transact(client, fabric, &proposal.BridgeAddress, input, gasLimit, big.NewInt(0))
+	h, err := Transact(client, fabric, gasPriceClient, &proposal.BridgeAddress, input, gasLimit, big.NewInt(0))
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("execute proposal failed %w", err)
 	}
@@ -184,14 +208,14 @@ func PrepareVoteProposalInput(sourceDomainID uint8, depositNonce uint64, resourc
 	return input, nil
 }
 
-func VoteProposal(client ClientDispatcher, fabric TxFabric, proposal *proposal.Proposal) (common.Hash, error) {
+func VoteProposal(client ClientDispatcher, fabric TxFabric, gasPriceClient GasPricer, proposal *proposal.Proposal) (common.Hash, error) {
 	// revertOnFail should be constantly false, true is used only for internal contract calls when you need to execute proposal in voteProposal function right after it becomes Passed becouse of votes
 	input, err := PrepareVoteProposalInput(proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data)
 	if err != nil {
 		return common.Hash{}, err
 	}
 	gasLimit := uint64(300000)
-	h, err := Transact(client, fabric, &proposal.BridgeAddress, input, gasLimit, big.NewInt(0))
+	h, err := Transact(client, fabric, gasPriceClient, &proposal.BridgeAddress, input, gasLimit, big.NewInt(0))
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("vote proposal failed %w", err)
 	}
@@ -208,10 +232,6 @@ func PrepareSetDepositNonceInput(domainID uint8, depositNonce uint64) ([]byte, e
 		return []byte{}, err
 	}
 	return input, nil
-}
-
-type ContractCallerClient interface {
-	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
 }
 
 func ProposalStatus(evmCaller ContractCallerClient, p *proposal.Proposal) (relayer.ProposalStatus, error) {

@@ -288,7 +288,7 @@ Usage:
 
 Flags:
       --bridge string       bridge contract address
-      --chainId uint        chain ID of proposal to cancel
+      --domainId uint       domain ID of proposal to cancel
       --dataHash string     hash of proposal metadata
       --depositNonce uint   deposit nonce of proposal to cancel
   -h, --help                help for cancel-proposal
@@ -303,7 +303,7 @@ Usage:
 
 Flags:
       --bridge string       bridge contract address
-      --chainId uint        source chain ID of proposal
+      --domainId uint       source domain ID of proposal
       --dataHash string     hash of proposal metadata
       --depositNonce uint   deposit nonce of proposal
   -h, --help                help for query-proposal
@@ -425,7 +425,7 @@ Usage:
 Flags:
       --erc20Address string   ERC20 contract address
   -h, --help                  help for add-minter
-      --minter string         address of minter
+      --minter string         handler contract address
 
 ```
 
@@ -482,7 +482,7 @@ Flags:
       --amount string       amount to deposit
       --bridge string       address of bridge contract
       --decimals uint       ERC20 token decimals
-      --destId string       destination chain ID
+      --domainId string     destination domain ID
   -h, --help                help for deposit
       --recipient string    address of recipient
       --resourceId string   resource ID for transfer
@@ -805,7 +805,7 @@ Flags:
       --amount string       amount to deposit
       --bridge string       address of bridge contract
       --decimals uint       ERC20 token decimals
-      --destId string       destination chain ID
+      --domainId string     destination domain ID
   -h, --help                help for deposit
       --recipient string    address of recipient
       --resourceId string   resource ID for transfer

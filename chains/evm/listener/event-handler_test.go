@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum/common"
@@ -33,7 +34,7 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleEvent() {
 	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}
 
 	calldata := calls.ConstructErc20DepositData(recipientByteSlice, big.NewInt(2))
-	depositLog := &listener.DepositLogs{
+	depositLog := &evmclient.DepositLogs{
 		DestinationDomainID: 0,
 		ResourceID:          [32]byte{0},
 		DepositNonce:        1,
@@ -72,7 +73,7 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleEventIncorrectDataLen() {
 	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(metadata))), 32)...)
 	calldata = append(calldata, metadata...)
 
-	depositLog := &listener.DepositLogs{
+	depositLog := &evmclient.DepositLogs{
 		DestinationDomainID: 0,
 		ResourceID:          [32]byte{0},
 		DepositNonce:        1,
@@ -109,7 +110,7 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEventIncorrectDataLen() {
 	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(metadata))), 16)...)
 	calldata = append(calldata, metadata...)
 
-	depositLog := &listener.DepositLogs{
+	depositLog := &evmclient.DepositLogs{
 		DestinationDomainID: 0,
 		ResourceID:          [32]byte{0},
 		DepositNonce:        1,
@@ -136,7 +137,7 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEventEmptyMetadata() {
 	metadata := []byte("")
 	calldata := calls.ConstructGenericDepositData(metadata)
 
-	depositLog := &listener.DepositLogs{
+	depositLog := &evmclient.DepositLogs{
 		DestinationDomainID: 0,
 		ResourceID:          [32]byte{0},
 		DepositNonce:        1,
@@ -175,7 +176,7 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEvent() {
 	metadata := []byte("0xdeadbeef")
 	calldata := calls.ConstructGenericDepositData(metadata)
 
-	depositLog := &listener.DepositLogs{
+	depositLog := &evmclient.DepositLogs{
 		DestinationDomainID: 0,
 		ResourceID:          [32]byte{0},
 		DepositNonce:        1,

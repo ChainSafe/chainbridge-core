@@ -25,3 +25,9 @@ test:
 install-subkey:
 	curl https://getsubstrate.io -sSf | bash -s -- --fast
 	cargo install --force --git https://github.com/paritytech/substrate subkey
+
+genmocks:
+	mockgen -destination=./chains/evm/evmgaspricer/mock/gas-pricer.go -source=./chains/evm/evmgaspricer/gas-pricer.go
+
+e2e-test:
+	./scripts/int_tests.sh

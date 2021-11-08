@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/config"
+	"github.com/ChainSafe/chainbridge-core/config/chain"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
@@ -58,7 +58,7 @@ func GetLastStoredBlock(db KeyValueReader, domainID uint8) (*big.Int, error) {
 
 // SetupBlockstore queries the blockstore for the latest known block. If the latest block is
 // greater than config.StartBlock, then config.StartBlock is replaced with the latest known block.
-func SetupBlockstore(generalConfig *config.GeneralChainConfig, kvdb KeyValueReaderWriter, startBlock *big.Int) (*big.Int, error) {
+func SetupBlockstore(generalConfig *chain.GeneralChainConfig, kvdb KeyValueReaderWriter, startBlock *big.Int) (*big.Int, error) {
 	latestBlock, err := GetLastStoredBlock(kvdb, *generalConfig.Id)
 	if err != nil {
 		return nil, err
@@ -71,5 +71,5 @@ func SetupBlockstore(generalConfig *config.GeneralChainConfig, kvdb KeyValueRead
 			return startBlock, nil
 		}
 	}
-	return big.NewInt(0), nil
+	return startBlock, nil
 }

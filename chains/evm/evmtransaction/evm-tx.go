@@ -5,12 +5,10 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/rlp"
 )
 
 type TX struct {
@@ -31,21 +29,47 @@ func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, domainID *big.Int) ([]byte,
 		return nil, err
 	}
 	a.tx = tx
-	rawTX, err := rlp.EncodeToBytes(tx)
+
+	data, err := tx.MarshalBinary()
 	if err != nil {
 		return nil, err
 	}
-	return rawTX, nil
 
+	return data, nil
 }
 
-func NewTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) evmclient.CommonTransaction {
-	var tx *types.Transaction
-	if to == nil {
-		tx = types.NewContractCreation(nonce, amount, gasLimit, gasPrice, data)
+// NewTransaction is the ethereum transaction constructor
+func NewTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrices []*big.Int, data []byte) (evmclient.CommonTransaction, error) {
+	// If there is more than one gas price returned we are sending with DynamicFeeTx's
+	if len(gasPrices) > 1 {
+		return newDynamicFeeTransaction(nonce, to, amount, gasLimit, gasPrices[0], gasPrices[1], data), nil
 	} else {
-		tx = types.NewTransaction(nonce, *to, amount, gasLimit, gasPrice, data)
+		return newTransaction(nonce, to, amount, gasLimit, gasPrices[0], data), nil
 	}
+}
+
+func newDynamicFeeTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasTipCap *big.Int, gasFeeCap *big.Int, data []byte) *TX {
+	tx := types.NewTx(&types.DynamicFeeTx{
+		Nonce:     nonce,
+		To:        to,
+		GasFeeCap: gasFeeCap,
+		GasTipCap: gasTipCap,
+		Gas:       gasLimit,
+		Value:     amount,
+		Data:      data,
+	})
+	return &TX{tx: tx}
+}
+
+func newTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *TX {
+	tx := types.NewTx(&types.LegacyTx{
+		Nonce:    nonce,
+		To:       to,
+		Value:    amount,
+		Gas:      gasLimit,
+		GasPrice: gasPrice,
+		Data:     data,
+	})
 	return &TX{tx: tx}
 }
 

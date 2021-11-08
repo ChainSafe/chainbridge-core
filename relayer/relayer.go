@@ -6,7 +6,9 @@ package relayer
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
+	"github.com/ChainSafe/chainbridge-core/config/relayer"
 	"github.com/ChainSafe/chainbridge-core/metrics"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -21,17 +23,18 @@ type RelayedChain interface {
 	DomainID() uint8
 }
 
-func NewRelayer(chains []RelayedChain, messageProcessors ...MessageProcessor) *Relayer {
-	return &Relayer{relayedChains: chains, messageProcessors: messageProcessors}
+func NewRelayer(config relayer.RelayerConfig, chains []RelayedChain, messageProcessors ...MessageProcessor) *Relayer {
+	return &Relayer{relayedChains: chains, messageProcessors: messageProcessors, config: config}
 }
 
 type Relayer struct {
+	config            relayer.RelayerConfig
 	relayedChains     []RelayedChain
 	registry          map[uint8]RelayedChain
 	messageProcessors []MessageProcessor
 }
 
-// Starts the relayer. Relayer routine is starting all the chains
+// Start function starts the relayer. Relayer routine is starting all the chains
 // and passing them with a channel that accepts unified cross chain message format
 func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 	log.Debug().Msgf("Starting relayer")
@@ -44,13 +47,13 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 	router := mux.NewRouter()
 
 	// register path + handler
-	router.Path("/metrics").Handler(promhttp.Handler())
+	router.Path(r.config.PrometheusEndpoint).Handler(promhttp.Handler())
 
 	// start http server in non-blocking goroutine
 	go func() {
-		log.Fatal().Err(http.ListenAndServe(":2112", router))
+		log.Fatal().Err(http.ListenAndServe(":"+strconv.Itoa(int(r.config.PrometheusPort)), router))
 	}()
-	log.Debug().Msg("listening on: http://localhost:2112/metrics")
+	log.Debug().Msg("Started Prometheus server on: http://localhost:" + strconv.Itoa(int(r.config.PrometheusPort)) + r.config.PrometheusEndpoint)
 
 	for _, c := range r.relayedChains {
 		log.Debug().Msgf("Starting chain %v", c.DomainID())

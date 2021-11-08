@@ -12,14 +12,14 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func DeployCentrifugeAssetStore(c ChainClient, txFabric TxFabric) (common.Address, error) {
+func DeployCentrifugeAssetStore(c ClientDeployer, txFabric TxFabric, gasPriceClient GasPricer) (common.Address, error) {
 	log.Debug().Msgf("Deploying Centrifuge asset store")
 	parsed, err := abi.JSON(strings.NewReader(consts.CentrifugeAssetStoreABI))
 	if err != nil {
 		return common.Address{}, err
 	}
 
-	address, err := deployContract(c, parsed, common.FromHex(consts.CentrifugeAssetStoreBin), txFabric)
+	address, err := deployContract(c, parsed, common.FromHex(consts.CentrifugeAssetStoreBin), txFabric, gasPriceClient)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -55,7 +55,7 @@ func parseIsAssetStoredOutput(output []byte) (bool, error) {
 	return isAssetStored, nil
 }
 
-func IsCentrifugeAssetStored(ethClient ChainClient, storeAddr common.Address, hash [32]byte) (bool, error) {
+func IsCentrifugeAssetStored(ethClient ContractCallerClient, storeAddr common.Address, hash [32]byte) (bool, error) {
 	input, err := prepareIsAssetStoredInput(hash)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("prepare input error: %v", err))
