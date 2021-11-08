@@ -3,15 +3,17 @@ package listener
 import (
 	"context"
 	"errors"
+	"math/big"
 	"strings"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/relayer"
+
 	internalTypes "github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 type EventHandlers map[common.Address]EventHandlerFunc
@@ -55,7 +57,7 @@ func (e *ETHEventHandler) matchResourceIDToHandlerAddress(resourceID internalTyp
 		return common.Address{}, err
 	}
 	msg := ethereum.CallMsg{From: common.Address{}, To: &e.bridgeAddress, Data: input}
-	out, err := e.client.CallContract(context.TODO(), toCallArg(msg), nil)
+	out, err := e.client.CallContract(context.TODO(), calls.ToCallArg(msg), nil)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -82,26 +84,6 @@ func (e *ETHEventHandler) RegisterEventHandler(handlerAddress string, handler Ev
 		e.eventHandlers = make(map[common.Address]EventHandlerFunc)
 	}
 	e.eventHandlers[common.HexToAddress(handlerAddress)] = handler
-}
-
-func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
-	arg := map[string]interface{}{
-		"from": msg.From,
-		"to":   msg.To,
-	}
-	if len(msg.Data) > 0 {
-		arg["data"] = hexutil.Bytes(msg.Data)
-	}
-	if msg.Value != nil {
-		arg["value"] = (*hexutil.Big)(msg.Value)
-	}
-	if msg.Gas != 0 {
-		arg["gas"] = hexutil.Uint64(msg.Gas)
-	}
-	if msg.GasPrice != nil {
-		arg["gasPrice"] = (*hexutil.Big)(msg.GasPrice)
-	}
-	return arg
 }
 
 // Erc20EventHandler converts data pulled from event logs into message
@@ -137,60 +119,61 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID internal
 	}, nil
 }
 
-func GenericEventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, client ChainClient) (*relayer.Message, error) {
-	type GenericHandlerDepositRecord struct {
-		DestinationChainID uint8
-		Depositer          common.Address
-		ResourceID         [32]byte
-		MetaData           []byte
-	}
-
-	rec, err := getDepositRecord(consts.GenericHandlerABI, nonce, destId, &handlerContractAddress, client)
-	if err != nil {
+// GenericEventHandler extracts metadata of generic deposit event log into message
+func GenericEventHandler(sourceID, destId uint8, nonce uint64, resourceID internalTypes.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error) {
+	if len(calldata) < 84 {
+		err := errors.New("invalid calldata length: less than 84 bytes")
 		return nil, err
 	}
 
-	out0 := *abi.ConvertType(rec, new(GenericHandlerDepositRecord)).(*GenericHandlerDepositRecord)
+	// first 32 bytes are metadata length
+	metadata := calldata[32:]
+
 	return &relayer.Message{
 		Source:       sourceID,
 		Destination:  destId,
 		DepositNonce: nonce,
-		ResourceId:   out0.ResourceID,
+		ResourceId:   resourceID,
 		Type:         relayer.GenericTransfer,
 		Payload: []interface{}{
-			out0.MetaData,
+			metadata,
 		},
 	}, nil
 }
 
-func Erc721EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, client ChainClient) (*relayer.Message, error) {
-	type Erc721HandlerDepositRecord struct {
-		TokenAddress                   common.Address
-		LenDestinationRecipientAddress uint8
-		DestinationDomainID            uint8
-		ResourceID                     [32]byte
-		DestinationRecipientAddress    []byte
-		Depositer                      common.Address
-		TokenId                        [32]byte
-		MetaData                       []byte
-	}
-
-	rec, err := getDepositRecord(consts.ERC721HandlerABI, nonce, destId, &handlerContractAddress, client)
-	if err != nil {
+func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID internalTypes.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error) {
+	if len(calldata) < 84 {
+		err := errors.New("invalid calldata length: less than 84 bytes")
 		return nil, err
 	}
 
-	out0 := *abi.ConvertType(rec, new(Erc721HandlerDepositRecord)).(*Erc721HandlerDepositRecord)
+	// first 32 bytes are tokenId
+	tokenId := calldata[:32]
+
+	// 32 - 64 is recipient address length
+	recipientAddressLength := big.NewInt(0).SetBytes(calldata[32:64])
+
+	// 64 - (64 + recipient address length) is recipient address
+	recipientAddress := calldata[64:(64 + recipientAddressLength.Int64())]
+
+	// if metadata present
+	metadata := []byte{}
+	metadataStart := big.NewInt(0).Add(big.NewInt(64), recipientAddressLength).Int64()
+	if metadataStart <= int64(len(calldata)) {
+		metadata = calldata[metadataStart:]
+	}
+	// rest of bytes is metada
+
 	return &relayer.Message{
 		Source:       sourceID,
 		Destination:  destId,
 		DepositNonce: nonce,
-		ResourceId:   out0.ResourceID,
+		ResourceId:   resourceID,
 		Type:         relayer.NonFungibleTransfer,
 		Payload: []interface{}{
-			out0.TokenId,
-			out0.DestinationRecipientAddress,
-			out0.MetaData,
+			tokenId,
+			recipientAddress,
+			metadata,
 		},
 	}, nil
 }

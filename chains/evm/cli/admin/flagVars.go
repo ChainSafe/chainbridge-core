@@ -6,19 +6,19 @@ import (
 
 //flag vars
 var (
-	Admin           string
-	Relayer         string
-	DepositNonce    uint64
-	DomainID        uint8
-	Fee             string
-	RelayerTreshold uint64
-	Amount          string
-	TokenID         string
-	Handler         string
-	Token           string
-	Decimals        uint64
-	Recipient       string
-	Bridge          string
+	Admin            string
+	Relayer          string
+	DepositNonce     uint64
+	DomainID         uint8
+	Fee              string
+	RelayerThreshold uint64
+	Amount           string
+	TokenID          string
+	Handler          string
+	Token            string
+	Decimals         uint64
+	Recipient        string
+	Bridge           string
 )
 
 //processed flag vars

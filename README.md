@@ -382,12 +382,16 @@ Flags:
       --all                     deploy all
       --bridge                  deploy bridge
       --bridgeAddress string    bridge contract address. Should be provided if handlers are deployed separately
-      --chainId string          chain ID for the instance (default "1")
+      --domainId string          domain ID for the instance (default "1")
       --erc20                   deploy ERC20
       --erc20Handler            deploy ERC20 handler
       --erc20Name string        ERC20 contract name
       --erc20Symbol string      ERC20 contract symbol
       --erc721                  deploy ERC721
+      --erc721Handler           deploy ERC721 handler
+      --erc721Name string       ERC721 contract name
+      --erc721Symbol string     ERC721 contract symbol
+      --erc721BaseURI           ERC721 base URI
       --fee string              fee to be taken when making a deposit (in ETH, decimas are allowed) (default "0")
   -h, --help                    help for deploy
       --relayerThreshold uint   number of votes required for a proposal to pass (default 1)
@@ -504,6 +508,18 @@ Flags:
 ### ERC721
 ERC721-related instructions.
 
+```bash
+Usage:
+   evm-cli erc721 [command]
+
+Available Commands:
+  add-minter  Add a minter to an Erc721 mintable contract
+  approve     Approve token in an ERC721 contract for transfer
+  deposit     Initiate a transfer of ERC721 token
+  mint        Mint token on an ERC721 mintable contract
+  owner       Get token owner from an ERC721 mintable contract
+```
+
 #### add-minter
 Add a minter to an ERC721 mintable contract.
 
@@ -515,6 +531,65 @@ Flags:
       --erc721Address string   ERC721 contract address
   -h, --help                   help for add-minter
       --minter string          address of minter
+```
+
+#### approve
+Approve token in an ERC721 contract for transfer.
+
+```bash
+Usage:
+   evm-cli erc721 approve [flags]
+
+Flags:
+      --contract-address string   ERC721 contract address
+      --recipient string          address of recipient
+      --tokenId string            ERC721 token ID
+  -h, --help                      help for add-minter
+```
+
+#### deposit
+Deposit ERC721 token.
+
+```bash
+Usage:
+   evm-cli erc721 deposit [flags]
+
+Flags:
+      --contract-address string   ERC721 contract address
+      --recipient string          address of recipient
+      --bridge string             address of bridge contract
+      --destId string             destination domain ID
+      --resourceId string         resource ID for transfer
+      --tokenId string            ERC721 token ID
+  -h, --help                      help for add-minter
+```
+
+#### mint
+Mint token on an ERC721 mintable contract.
+
+```bash
+Usage:
+   evm-cli erc721 mint [flags]
+
+Flags:
+      --contract-address string      ERC721 contract address
+      --destination-address string   address of token recipient
+      --tokenId string               ERC721 token ID
+      --metadata string              token metadata
+  -h, --help                         help for add-minter
+```
+
+#### owner
+Get token owner from an ERC721 mintable contract.
+
+```bash
+Usage:
+   evm-cli erc721 owner [flags]
+
+Flags:
+      --contract-address string      ERC721 contract address
+      --tokenId string               ERC721 token ID
+  -h, --help                         help for add-minter
 ```
 
 ### Utils
@@ -685,6 +760,10 @@ Flags:
       --erc20Name string        ERC20 contract name
       --erc20Symbol string      ERC20 contract symbol
       --erc721                  deploy ERC721
+      --erc721Handler           deploy ERC721 handler
+      --erc721Name string       ERC721 contract name
+      --erc721Symbol string     ERC721 contract symbol
+      --erc721BaseURI           ERC721 base URI
       --fee string              fee to be taken when making a deposit (in ETH, decimas are allowed) (default "0")
   -h, --help                    help for deploy
       --relayerThreshold uint   number of votes required for a proposal to pass (default 1)

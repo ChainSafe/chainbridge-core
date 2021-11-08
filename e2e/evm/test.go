@@ -64,7 +64,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 		panic(err)
 	}
 	log.Debug().Msgf("Latest block %s", b.String())
-	bridgeAddr, erc20Addr, erc20HandlerAddr, err := PrepareEVME2EEnv(ethClient, s.fabric1, 1, big.NewInt(1), s.adminKey.CommonAddress())
+	bridgeAddr, erc20Addr, erc20HandlerAddr, err := PrepareEVME2EEnv(ethClient, s.fabric1, 1, big.NewInt(1), s.adminKey.CommonAddress(), big.NewInt(0))
 	if err != nil {
 		panic(err)
 	}
@@ -74,7 +74,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 	s.erc20ContractAddr = erc20Addr
 	s.erc20HandlerAddr = erc20HandlerAddr
 	//Contract addresses should be the same
-	_, _, _, err = PrepareEVME2EEnv(ethClient2, s.fabric2, 2, big.NewInt(1), s.adminKey.CommonAddress())
+	_, _, _, err = PrepareEVME2EEnv(ethClient2, s.fabric2, 2, big.NewInt(1), s.adminKey.CommonAddress(), big.NewInt(0))
 	if err != nil {
 		panic(err)
 	}
@@ -90,7 +90,7 @@ func (s *IntegrationTestSuite) TestErc20Deposit() {
 	amountToDeposit := big.NewInt(1000000)
 	resourceID := calls.SliceTo32Bytes(append(common.LeftPadBytes(s.erc20ContractAddr.Bytes(), 31), uint8(0)))
 	gasPricer := evmgaspricer.NewStaticGasPriceDeterminant(s.client, nil)
-	err = calls.Deposit(s.client, s.fabric1, gasPricer, s.bridgeAddr, dstAddr, amountToDeposit, resourceID, 2)
+	_, err = calls.Deposit(s.client, s.fabric1, gasPricer, s.bridgeAddr, dstAddr, amountToDeposit, resourceID, 2)
 	s.Nil(err)
 
 	//Wait 120 seconds for relayer vote

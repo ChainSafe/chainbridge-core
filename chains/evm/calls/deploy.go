@@ -26,12 +26,12 @@ func DeployErc20(c ClientDeployer, txFabric TxFabric, gasPriceClient GasPricer, 
 	return address, nil
 }
 
-func DeployBridge(c ClientDeployer, txFabric TxFabric, gasPriceClient GasPricer, domainID uint8, relayerAddrs []common.Address, initialRelayerThreshold *big.Int) (common.Address, error) {
+func DeployBridge(c ClientDeployer, txFabric TxFabric, gasPriceClient GasPricer, domainID uint8, relayerAddrs []common.Address, initialRelayerThreshold *big.Int, fee *big.Int) (common.Address, error) {
 	parsed, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return common.Address{}, err
 	}
-	address, err := deployContract(c, parsed, common.FromHex(consts.BridgeBin), txFabric, gasPriceClient, domainID, relayerAddrs, initialRelayerThreshold, big.NewInt(0), big.NewInt(100))
+	address, err := deployContract(c, parsed, common.FromHex(consts.BridgeBin), txFabric, gasPriceClient, domainID, relayerAddrs, initialRelayerThreshold, fee, big.NewInt(100))
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -45,6 +45,31 @@ func DeployErc20Handler(c ClientDeployer, txFabric TxFabric, gasPriceClient GasP
 		return common.Address{}, err
 	}
 	address, err := deployContract(c, parsed, common.FromHex(consts.ERC20HandlerBin), txFabric, gasPriceClient, bridgeAddress, [][32]byte{}, []common.Address{}, []common.Address{})
+	if err != nil {
+		return common.Address{}, err
+	}
+	return address, nil
+}
+
+func DeployErc721(c ClientDeployer, txFabric TxFabric, gasPriceClient GasPricer, name, symbol, baseURI string) (common.Address, error) {
+	parsed, err := abi.JSON(strings.NewReader(consts.ERC721PresetMinterPauserABI))
+	if err != nil {
+		return common.Address{}, err
+	}
+	address, err := deployContract(c, parsed, common.FromHex(consts.ERC721PresetMinterPauserBin), txFabric, gasPriceClient, name, symbol, baseURI)
+	if err != nil {
+		return common.Address{}, err
+	}
+	return address, nil
+}
+
+func DeployErc721Handler(c ClientDeployer, txFabric TxFabric, gasPriceClient GasPricer, bridgeAddress common.Address) (common.Address, error) {
+	log.Debug().Msgf("Deployng ERC721 Handler with params: %s", bridgeAddress.String())
+	parsed, err := abi.JSON(strings.NewReader(consts.ERC721HandlerABI))
+	if err != nil {
+		return common.Address{}, err
+	}
+	address, err := deployContract(c, parsed, common.FromHex(consts.ERC721HandlerBin), txFabric, gasPriceClient, bridgeAddress, [][32]byte{}, []common.Address{}, []common.Address{})
 	if err != nil {
 		return common.Address{}, err
 	}

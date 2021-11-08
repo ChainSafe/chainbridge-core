@@ -2,6 +2,7 @@ package bridge
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -10,7 +11,10 @@ var queryResourceCmd = &cobra.Command{
 	Use:   "query-resource",
 	Short: "Query the contract address",
 	Long:  "Query the contract address with the provided resource ID for a specific handler contract",
-	Run:   queryResource,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	Run: queryResource,
 }
 
 func init() {

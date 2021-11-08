@@ -119,19 +119,19 @@ func ParseIsRelayerOutput(output []byte) (bool, error) {
 	return *b, nil
 }
 
-func Deposit(client ClientDispatcher, fabric TxFabric, gasPriceClient GasPricer, bridgeAddress, recipient common.Address, amount *big.Int, resourceID types.ResourceID, destDomainID uint8) error {
+func Deposit(client ClientDispatcher, fabric TxFabric, gasPriceClient GasPricer, bridgeAddress, recipient common.Address, amount *big.Int, resourceID types.ResourceID, destDomainID uint8) (*common.Hash, error) {
 	data := ConstructErc20DepositData(recipient.Bytes(), amount)
 	input, err := PrepareErc20DepositInput(destDomainID, resourceID, data)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	gasLimit := uint64(2000000)
 	h, err := Transact(client, fabric, gasPriceClient, &bridgeAddress, input, gasLimit, big.NewInt(0))
 	if err != nil {
-		return fmt.Errorf("deposit failed %w", err)
+		return nil, fmt.Errorf("deposit failed %w", err)
 	}
 	log.Debug().Str("hash", h.String()).Msgf("Deposit sent")
-	return nil
+	return &h, nil
 }
 
 func ExecuteProposal(client ClientDispatcher, fabric TxFabric, gasPriceClient GasPricer, proposal *proposal.Proposal) (common.Hash, error) {

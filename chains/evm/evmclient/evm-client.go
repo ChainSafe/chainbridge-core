@@ -12,10 +12,10 @@ import (
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
 
+	bridgeTypes "github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -33,6 +33,25 @@ type EVMClient struct {
 	config    *EVMConfig
 	nonce     *big.Int
 	nonceLock sync.Mutex
+}
+
+// DepositLogs struct holds event data with all necessary parameters and a handler response
+// https://github.com/ChainSafe/chainbridge-solidity/blob/develop/contracts/Bridge.sol#L47
+type DepositLogs struct {
+	// ID of chain deposit will be bridged to
+	DestinationDomainID uint8
+	// ResourceID used to find address of handler to be used for deposit
+	ResourceID bridgeTypes.ResourceID
+	// Nonce of deposit
+	DepositNonce uint64
+	// Address of sender (msg.sender: user)
+	SenderAddress common.Address
+	// Additional data to be passed to specified handler
+	Data []byte
+	// ERC20Handler: responds with empty data
+	// ERC721Handler: responds with deposited token metadata acquired by calling a tokenURI method in the token contract
+	// GenericHandler: responds with the raw bytes returned from the call to the target contract
+	HandlerResponse []byte
 }
 
 type CommonTransaction interface {
@@ -160,12 +179,12 @@ const (
 	DepositSignature string = "Deposit(uint8,bytes32,uint64,address,bytes,bytes)"
 )
 
-func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common.Address, startBlock *big.Int, endBlock *big.Int) ([]*listener.DepositLogs, error) {
+func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common.Address, startBlock *big.Int, endBlock *big.Int) ([]*DepositLogs, error) {
 	logs, err := c.FilterLogs(ctx, buildQuery(contractAddress, DepositSignature, startBlock, endBlock))
 	if err != nil {
 		return nil, err
 	}
-	depositLogs := make([]*listener.DepositLogs, 0)
+	depositLogs := make([]*DepositLogs, 0)
 
 	abi, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
@@ -185,12 +204,12 @@ func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common
 	return depositLogs, nil
 }
 
-func (c *EVMClient) UnpackDepositEventLog(abi abi.ABI, data []byte) (*listener.DepositLogs, error) {
-	var dl listener.DepositLogs
+func (c *EVMClient) UnpackDepositEventLog(abi abi.ABI, data []byte) (*DepositLogs, error) {
+	var dl DepositLogs
 
 	err := abi.UnpackIntoInterface(&dl, "Deposit", data)
 	if err != nil {
-		return &listener.DepositLogs{}, err
+		return &DepositLogs{}, err
 	}
 
 	return &dl, nil

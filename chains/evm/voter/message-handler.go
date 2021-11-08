@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"github.com/ChainSafe/chainbridge-core/types"
@@ -16,7 +17,6 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/rs/zerolog/log"
 )
 
@@ -64,7 +64,7 @@ func (mh *EVMMessageHandler) matchResourceIDToHandlerAddress(resourceID types.Re
 		return common.Address{}, err
 	}
 	msg := ethereum.CallMsg{From: common.Address{}, To: &mh.bridgeAddress, Data: input}
-	out, err := mh.client.CallContract(context.TODO(), toCallArg(msg), nil)
+	out, err := mh.client.CallContract(context.TODO(), calls.ToCallArg(msg), nil)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -154,24 +154,4 @@ func GenericMessageHandler(msg *relayer.Message, handlerAddr, bridgeAddress comm
 	data.Write(common.LeftPadBytes(metadataLen, 32)) // length of metadata (uint256)
 	data.Write(metadata)
 	return proposal.NewProposal(msg.Source, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress), nil
-}
-
-func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
-	arg := map[string]interface{}{
-		"from": msg.From,
-		"to":   msg.To,
-	}
-	if len(msg.Data) > 0 {
-		arg["data"] = hexutil.Bytes(msg.Data)
-	}
-	if msg.Value != nil {
-		arg["value"] = (*hexutil.Big)(msg.Value)
-	}
-	if msg.Gas != 0 {
-		arg["gas"] = hexutil.Uint64(msg.Gas)
-	}
-	if msg.GasPrice != nil {
-		arg["gasPrice"] = (*hexutil.Big)(msg.GasPrice)
-	}
-	return arg
 }
