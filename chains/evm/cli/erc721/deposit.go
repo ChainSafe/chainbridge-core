@@ -35,17 +35,17 @@ var depositCmd = &cobra.Command{
 	},
 }
 
-func BindDepositCmdFlags() {
-	depositCmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
-	depositCmd.Flags().StringVar(&Bridge, "bridge", "", "address of bridge contract")
-	depositCmd.Flags().StringVar(&DestionationID, "destId", "", "destination domain ID")
-	depositCmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID for transfer")
-	depositCmd.Flags().StringVar(&TokenId, "tokenId", "", "ERC721 token ID")
-	flags.MarkFlagsAsRequired(depositCmd, "recipient", "bridge", "destId", "resourceId", "tokenId")
+func BindDepositCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "address of bridge contract")
+	cmd.Flags().StringVar(&DestionationID, "destId", "", "destination domain ID")
+	cmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID for transfer")
+	cmd.Flags().StringVar(&TokenId, "tokenId", "", "ERC721 token ID")
+	flags.MarkFlagsAsRequired(cmd, "recipient", "bridge", "destId", "resourceId", "tokenId")
 }
 
 func init() {
-	BindDepositCmdFlags()
+	BindDepositCmdFlags(depositCmd)
 }
 
 func ValidateDepositFlags(cmd *cobra.Command, args []string) error {

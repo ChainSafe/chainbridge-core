@@ -34,15 +34,15 @@ var approveCmd = &cobra.Command{
 	},
 }
 
-func BindApproveCmdFlags() {
-	approveCmd.Flags().StringVar(&Erc721Address, "contract-address", "", "address of contract")
-	approveCmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
-	approveCmd.Flags().StringVar(&TokenId, "tokenId", "", "ERC721 token ID")
-	flags.MarkFlagsAsRequired(approveCmd, "contract-address", "recipient", "tokenId")
+func BindApproveCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Erc721Address, "contract-address", "", "address of contract")
+	cmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
+	cmd.Flags().StringVar(&TokenId, "tokenId", "", "ERC721 token ID")
+	flags.MarkFlagsAsRequired(cmd, "contract-address", "recipient", "tokenId")
 }
 
 func init() {
-	BindApproveCmdFlags()
+	BindApproveCmdFlags(approveCmd)
 }
 
 func ValidateApproveFlags(cmd *cobra.Command, args []string) error {
