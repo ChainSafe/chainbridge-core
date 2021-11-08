@@ -65,6 +65,8 @@ func DeployGenericHandler(c ClientDeployer, txFabric TxFabric, gasPriceClient Ga
 }
 
 func deployContract(client ClientDeployer, abi abi.ABI, bytecode []byte, txFabric TxFabric, gasPriceClient GasPricer, params ...interface{}) (common.Address, error) {
+	defer client.UnlockNonce()
+
 	client.LockNonce()
 	n, err := client.UnsafeNonce()
 	if err != nil {
@@ -98,7 +100,6 @@ func deployContract(client ClientDeployer, abi abi.ABI, bytecode []byte, txFabri
 	if err != nil {
 		return common.Address{}, err
 	}
-	client.UnlockNonce()
 	// checks bytecode at address
 	// nil is latest block
 	if code, err := client.CodeAt(context.Background(), address, nil); err != nil {
