@@ -45,7 +45,7 @@ func BindApproveCmdFlags() {
 	approveCmd.Flags().StringVar(&Amount, "amount", "", "amount to grant allowance")
 	approveCmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
 	approveCmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
-	flags.MarkFlagsAsRequired(approveCmd, "erc20Address", "amount", "recipient")
+	flags.MarkFlagsAsRequired(approveCmd, "erc20Address", "amount", "recipient", "decimals")
 }
 
 func init() {

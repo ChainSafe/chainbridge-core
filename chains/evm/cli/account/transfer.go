@@ -46,7 +46,7 @@ func BindTransferCmdFlags() {
 	transferBaseCurrencyCmd.Flags().StringVar(&Recipient, "recipient", "", "recipient address")
 	transferBaseCurrencyCmd.Flags().StringVar(&Amount, "amount", "", "transfer amount")
 	transferBaseCurrencyCmd.Flags().Uint64Var(&Decimals, "decimals", 0, "base token decimals")
-	flags.MarkFlagsAsRequired(transferBaseCurrencyCmd, "recipient", "amount")
+	flags.MarkFlagsAsRequired(transferBaseCurrencyCmd, "recipient", "amount", "decimals")
 }
 
 func init() {
