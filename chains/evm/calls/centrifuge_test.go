@@ -14,7 +14,7 @@ import (
 type IsCentrifugeAssetStoredTestSuite struct {
 	suite.Suite
 	gomockController *gomock.Controller
-	clientMock       *mock_utils.MockChainClient
+	clientMock       *mock_utils.MockContractCallerClient
 }
 
 func TestRunIsCentrifugeAssetStoredTestSuite(t *testing.T) {
@@ -25,7 +25,7 @@ func (s *IsCentrifugeAssetStoredTestSuite) SetupSuite()    {}
 func (s *IsCentrifugeAssetStoredTestSuite) TearDownSuite() {}
 func (s *IsCentrifugeAssetStoredTestSuite) SetupTest() {
 	s.gomockController = gomock.NewController(s.T())
-	s.clientMock = mock_utils.NewMockChainClient(s.gomockController)
+	s.clientMock = mock_utils.NewMockContractCallerClient(s.gomockController)
 }
 func (s *IsCentrifugeAssetStoredTestSuite) TearDownTest() {}
 
