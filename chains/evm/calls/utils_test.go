@@ -73,7 +73,7 @@ func (s *UtilsTestSuite) TestToCallArgWithEmptyMessage() {
 	s.Equal(want, got)
 }
 
-func (s *UtilsTestSuite) TestTransactNonceUnlockCall() {
+func (s *UtilsTestSuite) TestTransactNonceUnlockCallWithErrorThrown() {
 	s.mockClientDispatcher.EXPECT().LockNonce().Times(1)
 	s.mockClientDispatcher.EXPECT().UnsafeNonce().Return(big.NewInt(1), nil)
 	s.mockgasPricer.EXPECT().GasPrice().Return([]*big.Int{big.NewInt(10)}, nil)
@@ -81,6 +81,30 @@ func (s *UtilsTestSuite) TestTransactNonceUnlockCall() {
 	s.mockClientDispatcher.EXPECT().UnlockNonce().Times(1)
 	s.mockClientDispatcher.EXPECT().WaitAndReturnTxReceipt(gomock.Any()).Times(0)
 	s.mockClientDispatcher.EXPECT().UnsafeIncreaseNonce().Times(0)
+
+	toAddress := common.HexToAddress("0xtest1")
+	gasLimit := uint64(250000)
+	amount := big.NewInt(10)
+
+	_, _ = calls.Transact(
+		s.mockClientDispatcher,
+		evmtransaction.NewTransaction,
+		s.mockgasPricer,
+		&toAddress,
+		[]byte("test"),
+		gasLimit,
+		amount)
+}
+
+func (s *UtilsTestSuite) TestTransactNonceUnlockCallWithoutErrorsThrown() {
+	s.mockClientDispatcher.EXPECT().LockNonce().Times(1)
+	s.mockClientDispatcher.EXPECT().UnsafeNonce().Return(big.NewInt(1), nil)
+	s.mockgasPricer.EXPECT().GasPrice().Return([]*big.Int{big.NewInt(10)}, nil)
+	s.mockClientDispatcher.EXPECT().SignAndSendTransaction(gomock.Any(), gomock.Any()).Times(1).Return(common.Hash{}, nil)
+	s.mockClientDispatcher.EXPECT().From().Times(1).Return(common.Address{})
+	s.mockClientDispatcher.EXPECT().WaitAndReturnTxReceipt(gomock.Any()).Times(1).Return(nil, nil)
+	s.mockClientDispatcher.EXPECT().UnsafeIncreaseNonce().Times(1)
+	s.mockClientDispatcher.EXPECT().UnlockNonce().Times(1)
 
 	toAddress := common.HexToAddress("0xtest1")
 	gasLimit := uint64(250000)
