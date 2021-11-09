@@ -60,7 +60,7 @@ var (
 func BindDeployEVMFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&Bridge, "bridge", false, "deploy bridge")
 	cmd.Flags().BoolVar(&Erc20Handler, "erc20Handler", false, "deploy ERC20 handler")
-	cmd.Flags().().BoolVar(&GenericHandler, "genericHandler", false, "deploy generic handler")
+	cmd.Flags().BoolVar(&GenericHandler, "genericHandler", false, "deploy generic handler")
 	//deployCmd.Flags().Bool("erc721Handler", false, "deploy ERC721 handler")
 	cmd.Flags().BoolVar(&Erc20, "erc20", false, "deploy ERC20")
 	cmd.Flags().BoolVar(&Erc721, "erc721", false, "deploy ERC721")
