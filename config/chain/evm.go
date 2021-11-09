@@ -1,4 +1,4 @@
-package config
+package chain
 
 import (
 	"fmt"
@@ -44,7 +44,6 @@ func (c *RawSharedEVMConfig) Validate() error {
 }
 
 func (c *RawSharedEVMConfig) ParseConfig() (*SharedEVMConfig, error) {
-
 	c.GeneralChainConfig.ParseConfig()
 
 	config := &SharedEVMConfig{

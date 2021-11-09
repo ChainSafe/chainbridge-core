@@ -22,15 +22,15 @@ var allowanceCmd = &cobra.Command{
 	},
 }
 
-func BindAllowanceCmdFlags() {
-	allowanceCmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
-	allowanceCmd.Flags().StringVar(&OwnerAddress, "owner", "", "address of token owner")
-	allowanceCmd.Flags().StringVar(&SpenderAddress, "spender", "", "address of spender")
-	flags.MarkFlagsAsRequired(allowanceCmd, "erc20Address", "owner", "spender")
+func BindAllowanceCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
+	cmd.Flags().StringVar(&OwnerAddress, "owner", "", "address of token owner")
+	cmd.Flags().StringVar(&SpenderAddress, "spender", "", "address of spender")
+	flags.MarkFlagsAsRequired(cmd, "erc20Address", "owner", "spender")
 }
 
 func init() {
-	BindAllowanceCmdFlags()
+	BindAllowanceCmdFlags(allowanceCmd)
 }
 
 func AllowanceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {

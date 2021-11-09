@@ -17,10 +17,13 @@ var setFeeCmd = &cobra.Command{
 	Run: setFee,
 }
 
+func BindSetFeeFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Fee, "fee", "", "New fee (in ether)")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	flags.MarkFlagsAsRequired(cmd, "fee", "bridge")
+}
 func init() {
-	setFeeCmd.Flags().StringVar(&Fee, "fee", "", "New fee (in ether)")
-	setFeeCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	flags.MarkFlagsAsRequired(setFeeCmd, "fee", "bridge")
+	BindSetFeeFlags(setFeeCmd)
 }
 
 func setFee(cmd *cobra.Command, args []string) {

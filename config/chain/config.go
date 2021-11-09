@@ -1,8 +1,9 @@
-package config
+package chain
 
 import (
 	"fmt"
 
+	"github.com/ChainSafe/chainbridge-core/config"
 	"github.com/spf13/viper"
 )
 
@@ -38,15 +39,14 @@ func (c *GeneralChainConfig) Validate() error {
 }
 
 func (c *GeneralChainConfig) ParseConfig() {
-
-	if path := viper.GetString(TestKeyFlagName); path != "" {
+	if path := viper.GetString(config.TestKeyFlagName); path != "" {
 		c.KeystorePath = path
 		c.Insecure = true
 	} else {
-		c.KeystorePath = viper.GetString(KeystoreFlagName)
+		c.KeystorePath = viper.GetString(config.KeystoreFlagName)
 	}
-	c.BlockstorePath = viper.GetString(BlockstoreFlagName)
-	c.FreshStart = viper.GetBool(FreshStartFlagName)
-	c.LatestBlock = viper.GetBool(LatestBlockFlagName)
+	c.BlockstorePath = viper.GetString(config.BlockstoreFlagName)
+	c.FreshStart = viper.GetBool(config.FreshStartFlagName)
+	c.LatestBlock = viper.GetBool(config.LatestBlockFlagName)
 
 }
