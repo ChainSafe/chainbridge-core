@@ -16,9 +16,13 @@ var addMinterCmd = &cobra.Command{
 	Run: addMinter,
 }
 
+func BindAddMinterFlags(cmd *cobra.Command) {
+	cmd.Flags().String("erc721Address", "", "ERC721 contract address")
+	cmd.Flags().String("minter", "", "address of minter")
+}
+
 func init() {
-	addMinterCmd.Flags().String("erc721Address", "", "ERC721 contract address")
-	addMinterCmd.Flags().String("minter", "", "address of minter")
+	BindAddMinterFlags(addMinterCmd)
 }
 
 func addMinter(cmd *cobra.Command, args []string) {
