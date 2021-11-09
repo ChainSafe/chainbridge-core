@@ -1,6 +1,7 @@
 package erc721
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -9,12 +10,19 @@ var addMinterCmd = &cobra.Command{
 	Use:   "add-minter",
 	Short: "Add a minter to an ERC721 mintable contract",
 	Long:  "Add a minter to an ERC721 mintable contract",
-	Run:   addMinter,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	Run: addMinter,
+}
+
+func BindAddMinterFlags(cmd *cobra.Command) {
+	cmd.Flags().String("erc721Address", "", "ERC721 contract address")
+	cmd.Flags().String("minter", "", "address of minter")
 }
 
 func init() {
-	addMinterCmd.Flags().String("erc721Address", "", "ERC721 contract address")
-	addMinterCmd.Flags().String("minter", "", "address of minter")
+	BindAddMinterFlags(addMinterCmd)
 }
 
 func addMinter(cmd *cobra.Command, args []string) {

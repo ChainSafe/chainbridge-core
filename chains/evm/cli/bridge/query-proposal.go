@@ -2,6 +2,7 @@ package bridge
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -10,15 +11,21 @@ var queryProposalCmd = &cobra.Command{
 	Use:   "query-proposal",
 	Short: "Query an inbound proposal",
 	Long:  "Query an inbound proposal",
-	Run:   queryProposal,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	Run: queryProposal,
 }
 
+func BindQueryProposalFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	cmd.Flags().StringVar(&DataHash, "dataHash", "", "hash of proposal metadata")
+	cmd.Flags().Uint64Var(&DomainID, "domainId", 0, "source domain ID of proposal")
+	cmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "	deposit nonce of proposal")
+	flags.MarkFlagsAsRequired(cmd, "bridge", "dataHash", "domainId", "depositNonce")
+}
 func init() {
-	queryProposalCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	queryProposalCmd.Flags().StringVar(&DataHash, "dataHash", "", "hash of proposal metadata")
-	queryProposalCmd.Flags().Uint64Var(&DomainID, "domainId", 0, "source domain ID of proposal")
-	queryProposalCmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "	deposit nonce of proposal")
-	flags.MarkFlagsAsRequired(queryProposalCmd, "bridge", "dataHash", "domainId", "depositNonce")
+	BindQueryProposalFlags(queryProposalCmd)
 }
 
 func queryProposal(cmd *cobra.Command, args []string) {

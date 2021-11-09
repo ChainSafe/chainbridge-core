@@ -2,6 +2,7 @@ package bridge
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -10,15 +11,22 @@ var cancelProposalCmd = &cobra.Command{
 	Use:   "cancel-proposal",
 	Short: "Cancel an expired proposal",
 	Long:  "Cancel an expired proposal",
-	Run:   cancelProposal,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	Run: cancelProposal,
+}
+
+func BindCancelProposalFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	cmd.Flags().StringVar(&DataHash, "dataHash", "", "hash of proposal metadata")
+	cmd.Flags().Uint64Var(&DomainID, "domainId", 0, "domain ID of proposal to cancel")
+	cmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "deposit nonce of proposal to cancel")
+	flags.MarkFlagsAsRequired(cmd, "bridge", "dataHash", "domainId", "depositNonce")
 }
 
 func init() {
-	cancelProposalCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	cancelProposalCmd.Flags().StringVar(&DataHash, "dataHash", "", "hash of proposal metadata")
-	cancelProposalCmd.Flags().Uint64Var(&DomainID, "domainId", 0, "domain ID of proposal to cancel")
-	cancelProposalCmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "deposit nonce of proposal to cancel")
-	flags.MarkFlagsAsRequired(cancelProposalCmd, "bridge", "dataHash", "domainId", "depositNonce")
+	BindCancelProposalFlags(cancelProposalCmd)
 }
 
 func cancelProposal(cmd *cobra.Command, args []string) {

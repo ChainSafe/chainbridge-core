@@ -103,6 +103,8 @@ func UserAmountToWei(amount string, decimal *big.Int) (*big.Int, error) {
 }
 
 func Transact(client ClientDispatcher, txFabric TxFabric, gasPriceClient GasPricer, to *common.Address, data []byte, gasLimit uint64, value *big.Int) (common.Hash, error) {
+	defer client.UnlockNonce()
+
 	client.LockNonce()
 	n, err := client.UnsafeNonce()
 	if err != nil {
@@ -112,7 +114,7 @@ func Transact(client ClientDispatcher, txFabric TxFabric, gasPriceClient GasPric
 	if err != nil {
 		return common.Hash{}, err
 	}
-	tx, err := txFabric(n.Uint64(), to, big.NewInt(0), gasLimit, gp, data)
+	tx, err := txFabric(n.Uint64(), to, value, gasLimit, gp, data)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -129,7 +131,6 @@ func Transact(client ClientDispatcher, txFabric TxFabric, gasPriceClient GasPric
 	if err != nil {
 		return common.Hash{}, err
 	}
-	client.UnlockNonce()
 	return tx.Hash(), nil
 }
 

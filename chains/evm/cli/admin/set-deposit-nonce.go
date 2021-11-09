@@ -6,6 +6,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
@@ -21,6 +22,9 @@ var setDepositNonceCmd = &cobra.Command{
 	Long: `Set the deposit nonce
 
 This nonce cannot be less than what is currently stored in the contract`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
 		return SetDepositNonceEVMCMD(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
@@ -36,15 +40,15 @@ This nonce cannot be less than what is currently stored in the contract`,
 	},
 }
 
-func BindSetDepositNonceFlags() {
-	setDepositNonceCmd.Flags().Uint8Var(&DomainID, "domainId", 0, "domain ID of chain")
-	setDepositNonceCmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "deposit nonce to set (does not decrement)")
-	setDepositNonceCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	flags.MarkFlagsAsRequired(setDepositNonceCmd, "domainId", "depositNonce", "bridge")
+func BindSetDepositNonceFlags(cmd *cobra.Command) {
+	cmd.Flags().Uint8Var(&DomainID, "domainId", 0, "domain ID of chain")
+	cmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "deposit nonce to set (does not decrement)")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	flags.MarkFlagsAsRequired(cmd, "domainId", "depositNonce", "bridge")
 }
 
 func init() {
-	BindSetDepositNonceFlags()
+	BindSetDepositNonceFlags(setDepositNonceCmd)
 }
 
 func ValidateSetDepositNonceFlags(cmd *cobra.Command, args []string) error {

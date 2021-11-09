@@ -6,6 +6,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum"
@@ -18,6 +19,9 @@ var balanceCmd = &cobra.Command{
 	Use:   "balance",
 	Short: "Query balance of an account in an ERC20 contract",
 	Long:  "Query balance of an account in an ERC20 contract",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
 		return BalanceCmd(cmd, args, txFabric)
@@ -33,14 +37,14 @@ var balanceCmd = &cobra.Command{
 	},
 }
 
-func BindBalanceCmdFlags() {
-	balanceCmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
-	balanceCmd.Flags().StringVar(&AccountAddress, "accountAddress", "", "address to receive balance of")
-	flags.MarkFlagsAsRequired(balanceCmd, "erc20Address", "accountAddress")
+func BindBalanceCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
+	cmd.Flags().StringVar(&AccountAddress, "accountAddress", "", "address to receive balance of")
+	flags.MarkFlagsAsRequired(cmd, "erc20Address", "accountAddress")
 }
 
 func init() {
-	BindBalanceCmdFlags()
+	BindBalanceCmdFlags(balanceCmd)
 }
 
 var accountAddr common.Address

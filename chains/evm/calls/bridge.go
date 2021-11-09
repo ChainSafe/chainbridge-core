@@ -174,6 +174,42 @@ func PrepareSetDepositNonceInput(domainID uint8, depositNonce uint64) ([]byte, e
 	return input, nil
 }
 
+func PrepareSetThresholdInput(threshold *big.Int) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("adminChangeRelayerThreshold", threshold)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
+}
+
+func GetThreshold(evmCaller ContractCallerClient, bridgeAddress *common.Address) (uint8, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return 0, err
+	}
+	input, err := a.Pack("_relayerThreshold")
+	if err != nil {
+		return 0, err
+	}
+	msg := ethereum.CallMsg{From: common.Address{}, To: bridgeAddress, Data: input}
+	out, err := evmCaller.CallContract(context.TODO(), ToCallArg(msg), nil)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := a.Unpack("_relayerThreshold", out)
+	if err != nil {
+		return 0, err
+	}
+
+	out0 := *abi.ConvertType(res[0], new(uint8)).(*uint8)
+	return out0, nil
+}
+
 func ProposalStatus(evmCaller ContractCallerClient, p *proposal.Proposal) (relayer.ProposalStatus, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {

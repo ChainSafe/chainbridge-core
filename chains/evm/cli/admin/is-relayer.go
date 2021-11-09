@@ -6,6 +6,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -17,6 +18,9 @@ var isRelayerCmd = &cobra.Command{
 	Use:   "is-relayer",
 	Short: "Check if an address is registered as a relayer",
 	Long:  "Check if an address is registered as a relayer",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return IsRelayer(cmd, args)
 	},
@@ -31,14 +35,14 @@ var isRelayerCmd = &cobra.Command{
 	},
 }
 
-func BindIsRelayerFlags() {
-	isRelayerCmd.Flags().StringVar(&Relayer, "relayer", "", "address to check")
-	isRelayerCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	flags.MarkFlagsAsRequired(isRelayerCmd, "relayer", "bridge")
+func BindIsRelayerFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Relayer, "relayer", "", "address to check")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	flags.MarkFlagsAsRequired(cmd, "relayer", "bridge")
 }
 
 func init() {
-	BindIsRelayerFlags()
+	BindIsRelayerFlags(isRelayerCmd)
 }
 
 func ValidateIsRelayerFlags(cmd *cobra.Command, args []string) error {

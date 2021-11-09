@@ -26,12 +26,12 @@ func DeployErc20(c ClientDeployer, txFabric TxFabric, gasPriceClient GasPricer, 
 	return address, nil
 }
 
-func DeployBridge(c ClientDeployer, txFabric TxFabric, gasPriceClient GasPricer, domainID uint8, relayerAddrs []common.Address, initialRelayerThreshold *big.Int) (common.Address, error) {
+func DeployBridge(c ClientDeployer, txFabric TxFabric, gasPriceClient GasPricer, domainID uint8, relayerAddrs []common.Address, initialRelayerThreshold *big.Int, fee *big.Int) (common.Address, error) {
 	parsed, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return common.Address{}, err
 	}
-	address, err := deployContract(c, parsed, common.FromHex(consts.BridgeBin), txFabric, gasPriceClient, domainID, relayerAddrs, initialRelayerThreshold, big.NewInt(0), big.NewInt(100))
+	address, err := deployContract(c, parsed, common.FromHex(consts.BridgeBin), txFabric, gasPriceClient, domainID, relayerAddrs, initialRelayerThreshold, fee, big.NewInt(100))
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -52,6 +52,8 @@ func DeployErc20Handler(c ClientDeployer, txFabric TxFabric, gasPriceClient GasP
 }
 
 func deployContract(client ClientDeployer, abi abi.ABI, bytecode []byte, txFabric TxFabric, gasPriceClient GasPricer, params ...interface{}) (common.Address, error) {
+	defer client.UnlockNonce()
+
 	client.LockNonce()
 	n, err := client.UnsafeNonce()
 	if err != nil {
@@ -85,7 +87,6 @@ func deployContract(client ClientDeployer, abi abi.ABI, bytecode []byte, txFabri
 	if err != nil {
 		return common.Address{}, err
 	}
-	client.UnlockNonce()
 	// checks bytecode at address
 	// nil is latest block
 	if code, err := client.CodeAt(context.Background(), address, nil); err != nil {

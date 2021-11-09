@@ -16,14 +16,14 @@ var importPrivKeyCmd = &cobra.Command{
 	RunE:  importPrivKey,
 }
 
-func BindImportPrivKeyFlags() {
-	importPrivKeyCmd.Flags().StringVar(&PrivateKey, "privateKey", "", "Private key to encrypt")
-	importPrivKeyCmd.Flags().StringVar(&Pass, "password", "", "password to encrypt with")
-	flags.MarkFlagsAsRequired(importPrivKeyCmd, "privateKey", "password")
+func BindImportPrivKeyFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&PrivateKey, "privateKey", "", "Private key to encrypt")
+	cmd.Flags().StringVar(&Pass, "password", "", "password to encrypt with")
+	flags.MarkFlagsAsRequired(cmd, "privateKey", "password")
 }
 
 func init() {
-	BindImportPrivKeyFlags()
+	BindImportPrivKeyFlags(importPrivKeyCmd)
 }
 
 func importPrivKey(cmd *cobra.Command, args []string) error {
