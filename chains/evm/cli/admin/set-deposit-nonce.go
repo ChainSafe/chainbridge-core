@@ -40,15 +40,15 @@ This nonce cannot be less than what is currently stored in the contract`,
 	},
 }
 
-func BindSetDepositNonceFlags() {
-	setDepositNonceCmd.Flags().Uint8Var(&DomainID, "domainId", 0, "domain ID of chain")
-	setDepositNonceCmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "deposit nonce to set (does not decrement)")
-	setDepositNonceCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	flags.MarkFlagsAsRequired(setDepositNonceCmd, "domainId", "depositNonce", "bridge")
+func BindSetDepositNonceFlags(cmd *cobra.Command) {
+	cmd.Flags().Uint8Var(&DomainID, "domainId", 0, "domain ID of chain")
+	cmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "deposit nonce to set (does not decrement)")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	flags.MarkFlagsAsRequired(cmd, "domainId", "depositNonce", "bridge")
 }
 
 func init() {
-	BindSetDepositNonceFlags()
+	BindSetDepositNonceFlags(setDepositNonceCmd)
 }
 
 func ValidateSetDepositNonceFlags(cmd *cobra.Command, args []string) error {

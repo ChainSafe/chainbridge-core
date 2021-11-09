@@ -39,15 +39,14 @@ var addRelayerCmd = &cobra.Command{
 	},
 }
 
-func BindAddRelayerFlags() {
-	addRelayerCmd.Flags().StringVar(&Relayer, "relayer", "", "address to add")
-	addRelayerCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	flags.MarkFlagsAsRequired(addRelayerCmd, "relayer", "bridge")
-
+func BindAddRelayerFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Relayer, "relayer", "", "address to add")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	flags.MarkFlagsAsRequired(cmd, "relayer", "bridge")
 }
 
 func init() {
-	BindAddRelayerFlags()
+	BindAddRelayerFlags(addRelayerCmd)
 }
 
 func ValidateAddRelayerFlags(cmd *cobra.Command, args []string) error {

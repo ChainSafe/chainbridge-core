@@ -37,12 +37,12 @@ var getThresholdCmd = &cobra.Command{
 	},
 }
 
-func BindGetThresholdFlags() {
-	getThresholdCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	flags.MarkFlagsAsRequired(getThresholdCmd, "bridge")
+func BindGetThresholdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	flags.MarkFlagsAsRequired(cmd, "bridge")
 }
 func init() {
-	BindGetThresholdFlags()
+	BindGetThresholdFlags(getThresholdCmd)
 }
 
 func ValidateGetThresholdFlags(cmd *cobra.Command, args []string) error {

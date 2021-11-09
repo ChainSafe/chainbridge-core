@@ -57,26 +57,27 @@ var (
 	Erc20Name        string
 )
 
-func BindDeployEVMFlags() {
-	DeployEVM.Flags().BoolVar(&Bridge, "bridge", false, "deploy bridge")
-	DeployEVM.Flags().BoolVar(&Erc20Handler, "erc20Handler", false, "deploy ERC20 handler")
-	DeployEVM.Flags().BoolVar(&GenericHandler, "genericHandler", false, "deploy generic handler")
+func BindDeployEVMFlags(cmd *cobra.Command) {
+	cmd.Flags().BoolVar(&Bridge, "bridge", false, "deploy bridge")
+	cmd.Flags().BoolVar(&Erc20Handler, "erc20Handler", false, "deploy ERC20 handler")
+	cmd.Flags().().BoolVar(&GenericHandler, "genericHandler", false, "deploy generic handler")
 	//deployCmd.Flags().Bool("erc721Handler", false, "deploy ERC721 handler")
-	DeployEVM.Flags().BoolVar(&Erc20, "erc20", false, "deploy ERC20")
-	DeployEVM.Flags().BoolVar(&Erc721, "erc721", false, "deploy ERC721")
-	DeployEVM.Flags().BoolVar(&DeployAll, "all", false, "deploy all")
-	DeployEVM.Flags().Uint64Var(&RelayerThreshold, "relayerThreshold", 1, "number of votes required for a proposal to pass")
-	DeployEVM.Flags().Uint8Var(&DomainId, "domainId", 1, "domain ID for the instance")
-	DeployEVM.Flags().StringSliceVar(&Relayers, "relayers", []string{}, "list of initial relayers")
-	DeployEVM.Flags().Uint64Var(&Fee, "fee", 0, "fee to be taken when making a deposit (in ETH, decimas are allowed)")
-	DeployEVM.Flags().StringVar(&BridgeAddress, "bridgeAddress", "", "bridge contract address. Should be provided if handlers are deployed separately")
-	DeployEVM.Flags().StringVar(&Erc20Symbol, "erc20Symbol", "", "ERC20 contract symbol")
-	DeployEVM.Flags().StringVar(&Erc20Name, "erc20Name", "", "ERC20 contract name")
+	cmd.Flags().BoolVar(&Erc20, "erc20", false, "deploy ERC20")
+	cmd.Flags().BoolVar(&Erc721, "erc721", false, "deploy ERC721")
+	cmd.Flags().BoolVar(&DeployAll, "all", false, "deploy all")
+	cmd.Flags().Uint64Var(&RelayerThreshold, "relayerThreshold", 1, "number of votes required for a proposal to pass")
+	cmd.Flags().Uint8Var(&DomainId, "domainId", 1, "domain ID for the instance")
+	cmd.Flags().StringSliceVar(&Relayers, "relayers", []string{}, "list of initial relayers")
+	cmd.Flags().Uint64Var(&Fee, "fee", 0, "fee to be taken when making a deposit (in ETH, decimas are allowed)")
+	cmd.Flags().StringVar(&BridgeAddress, "bridgeAddress", "", "bridge contract address. Should be provided if handlers are deployed separately")
+	cmd.Flags().StringVar(&Erc20Symbol, "erc20Symbol", "", "ERC20 contract symbol")
+	cmd.Flags().StringVar(&Erc20Name, "erc20Name", "", "ERC20 contract name")
 }
 
 func init() {
-	BindDeployEVMFlags()
+	BindDeployEVMFlags(DeployEVM)
 }
+
 func ValidateDeployFlags(cmd *cobra.Command, args []string) error {
 	deployments = make([]string, 0)
 	if DeployAll {

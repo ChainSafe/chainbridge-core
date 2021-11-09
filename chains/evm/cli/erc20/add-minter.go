@@ -38,14 +38,14 @@ var addMinterCmd = &cobra.Command{
 	},
 }
 
-func BindAddMinterCmdFlags() {
-	addMinterCmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
-	addMinterCmd.Flags().StringVar(&Minter, "minter", "", "handler contract address")
-	flags.MarkFlagsAsRequired(addMinterCmd, "erc20Address", "minter")
+func BindAddMinterCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
+	cmd.Flags().StringVar(&Minter, "minter", "", "handler contract address")
+	flags.MarkFlagsAsRequired(cmd, "erc20Address", "minter")
 }
 
 func init() {
-	BindAddMinterCmdFlags()
+	BindAddMinterCmdFlags(addMinterCmd)
 }
 
 func ValidateAddMinterFlags(cmd *cobra.Command, args []string) error {
