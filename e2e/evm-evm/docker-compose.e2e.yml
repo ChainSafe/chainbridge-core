@@ -37,6 +37,7 @@ services:
     entrypoint: "/root/entrypoint.sh"
 
   relayer1:
+    container_name: relayer1
     build:
       context: ../../.
       dockerfile: Dockerfile
@@ -51,6 +52,7 @@ services:
       - ./example/cfg:/cfg
 
   relayer2:
+    container_name: relayer2
     build:
       context: ../../.
       dockerfile: Dockerfile
@@ -65,6 +67,7 @@ services:
       - ./example/cfg:/cfg
 
   relayer3:
+    container_name: relayer3
     build:
       context: ../../.
       dockerfile: Dockerfile
