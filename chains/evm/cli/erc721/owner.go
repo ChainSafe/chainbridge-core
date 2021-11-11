@@ -6,6 +6,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
@@ -19,6 +20,9 @@ var ownerCmd = &cobra.Command{
 	Use:   "owner",
 	Short: "Get token owner from an ERC721 mintable contract",
 	Long:  "Get token owner from an ERC721 mintable contract",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
 		return OwnerCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
