@@ -44,7 +44,7 @@ func DeployErc20Handler(c ClientDeployer, txFabric TxFabric, gasPriceClient GasP
 	if err != nil {
 		return common.Address{}, err
 	}
-	address, err := deployContract(c, parsed, common.FromHex(consts.ERC20HandlerBin), txFabric, gasPriceClient, bridgeAddress, [][32]byte{}, []common.Address{}, []common.Address{})
+	address, err := deployContract(c, parsed, common.FromHex(consts.ERC20HandlerBin), txFabric, gasPriceClient, bridgeAddress)
 	if err != nil {
 		return common.Address{}, err
 	}
