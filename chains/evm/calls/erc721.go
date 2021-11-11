@@ -43,7 +43,8 @@ func ERC721Approve(client ClientDispatcher, txFabric TxFabric, gasPricer GasPric
 }
 
 func ERC721Deposit(client ClientDispatcher, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, tokenId *big.Int, destinationId int, resourceId types.ResourceID, bridgeContract, recipient common.Address) (*common.Hash, error) {
-	txHash, err := Deposit(client, txFabric, gasPricer, bridgeContract, recipient, tokenId, resourceId, uint8(destinationId))
+	data := ConstructErc721DepositData(tokenId, recipient.Bytes())
+	txHash, err := Deposit(client, txFabric, gasPricer, bridgeContract, resourceId, uint8(destinationId), data)
 	if err != nil {
 		log.Error().Err(err)
 		return nil, err

@@ -107,7 +107,7 @@ func (s *IntegrationTestSuite) TestErc20Deposit() {
 
 	amountToDeposit := big.NewInt(1000000)
 	data := calls.ConstructErc20DepositData(dstAddr.Bytes(), amountToDeposit)
-	err = calls.Deposit(s.client, s.fabric1, s.gasPricer, s.bridgeAddr, s.erc20RID, 2, data)
+	_, err = calls.Deposit(s.client, s.fabric1, s.gasPricer, s.bridgeAddr, s.erc20RID, 2, data)
 	s.Nil(err)
 
 	//Wait 120 seconds for relayer vote
@@ -126,7 +126,7 @@ func (s *IntegrationTestSuite) TestErc20Deposit() {
 func (s *IntegrationTestSuite) TestGenericDeposit() {
 	hash, _ := substrateTypes.GetHash(substrateTypes.NewI64(int64(1)))
 	data := calls.ConstructGenericDepositData(hash[:])
-	err := calls.Deposit(
+	_, err := calls.Deposit(
 		s.client,
 		s.fabric1,
 		s.gasPricer,

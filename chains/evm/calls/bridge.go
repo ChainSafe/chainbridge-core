@@ -136,6 +136,14 @@ func ConstructErc20DepositData(destRecipient []byte, amount *big.Int) []byte {
 	return data
 }
 
+func ConstructErc721DepositData(tokenId *big.Int, destRecipient []byte) []byte {
+	var data []byte
+	data = append(data, math.PaddedBigBytes(tokenId, 32)...)                               // Resource Id + Token Id
+	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(destRecipient))), 32)...) // Length of recipient
+	data = append(data, destRecipient...)                                                  // Recipient
+	return data
+}
+
 func ConstructGenericDepositData(metadata []byte) []byte {
 	var data []byte
 	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(metadata))), 32)...)
@@ -155,19 +163,19 @@ func PrepareDepositInput(destDomainID uint8, resourceID [32]byte, data []byte) (
 	return input, nil
 }
 
-func Deposit(client ClientDispatcher, fabric TxFabric, gasPriceClient GasPricer, bridgeAddress common.Address, resourceID [32]byte, destDomainID uint8, data []byte) error {
+func Deposit(client ClientDispatcher, fabric TxFabric, gasPriceClient GasPricer, bridgeAddress common.Address, resourceID [32]byte, destDomainID uint8, data []byte) (*common.Hash, error) {
 	input, err := PrepareDepositInput(destDomainID, resourceID, data)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	gasLimit := uint64(2000000)
 	h, err := Transact(client, fabric, gasPriceClient, &bridgeAddress, input, gasLimit, big.NewInt(0))
 	if err != nil {
-		return fmt.Errorf("deposit failed %w", err)
+		return nil, fmt.Errorf("deposit failed %w", err)
 	}
 	log.Debug().Str("hash", h.String()).Msgf("Deposit sent")
-	return nil
+	return &h, nil
 }
 
 func PrepareExecuteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID types.ResourceID, calldata []byte, revertOnFail bool) ([]byte, error) {
