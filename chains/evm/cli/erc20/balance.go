@@ -1,7 +1,6 @@
 package erc20
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
@@ -9,7 +8,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -37,14 +35,14 @@ var balanceCmd = &cobra.Command{
 	},
 }
 
-func BindBalanceCmdFlags() {
-	balanceCmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
-	balanceCmd.Flags().StringVar(&AccountAddress, "accountAddress", "", "address to receive balance of")
-	flags.MarkFlagsAsRequired(balanceCmd, "erc20Address", "accountAddress")
+func BindBalanceCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
+	cmd.Flags().StringVar(&AccountAddress, "accountAddress", "", "address to receive balance of")
+	flags.MarkFlagsAsRequired(cmd, "erc20Address", "accountAddress")
 }
 
 func init() {
-	BindBalanceCmdFlags()
+	BindBalanceCmdFlags(balanceCmd)
 }
 
 var accountAddr common.Address
@@ -77,37 +75,9 @@ func BalanceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 		return err
 	}
 
-	// erc20Addr, accountAddr
-	input, err := calls.PrepareERC20BalanceInput(accountAddr)
+	balance, err := calls.GetERC20Balance(ethClient, erc20Addr, accountAddr)
 	if err != nil {
-		log.Error().Err(fmt.Errorf("prepare input error: %v", err))
-		return err
-	}
-
-	msg := ethereum.CallMsg{
-		From: common.Address{},
-		To:   &erc20Addr,
-		Data: input,
-	}
-
-	out, err := ethClient.CallContract(context.TODO(), calls.ToCallArg(msg), nil)
-	if err != nil {
-		log.Error().Err(fmt.Errorf("call contract error: %v", err))
-		return err
-	}
-
-	if len(out) == 0 {
-		// Make sure we have a contract to operate on, and bail out otherwise.
-		if code, err := ethClient.CodeAt(context.Background(), erc20Addr, nil); err != nil {
-			return err
-		} else if len(code) == 0 {
-			return fmt.Errorf("no code at provided address %s", erc20Addr.String())
-		}
-	}
-
-	balance, err := calls.ParseERC20BalanceOutput(out)
-	if err != nil {
-		log.Error().Err(fmt.Errorf("prepare output error: %v", err))
+		log.Error().Err(fmt.Errorf("failed contract call error: %v", err))
 		return err
 	}
 

@@ -288,7 +288,7 @@ Usage:
 
 Flags:
       --bridge string       bridge contract address
-      --chainId uint        chain ID of proposal to cancel
+      --domainId uint       domain ID of proposal to cancel
       --dataHash string     hash of proposal metadata
       --depositNonce uint   deposit nonce of proposal to cancel
   -h, --help                help for cancel-proposal
@@ -303,7 +303,7 @@ Usage:
 
 Flags:
       --bridge string       bridge contract address
-      --chainId uint        source chain ID of proposal
+      --domainId uint       source domain ID of proposal
       --dataHash string     hash of proposal metadata
       --depositNonce uint   deposit nonce of proposal
   -h, --help                help for query-proposal
@@ -332,6 +332,7 @@ Usage:
 Flags:
       --bridge string       bridge contract address
       --deposit string      deposit function signature (default "0x00000000")
+      --depositerOffset int   depositer address position offset in the metadata, in bytes
       --execute string      execute proposal function signature (default "0x00000000")
       --handler string      handler contract address
       --hash                treat signature inputs as function prototype strings, hash and take the first 4 bytes
@@ -392,6 +393,7 @@ Flags:
       --erc721Name string       ERC721 contract name
       --erc721Symbol string     ERC721 contract symbol
       --erc721BaseURI           ERC721 base URI
+      --genericHandler          deploy generic handler
       --fee string              fee to be taken when making a deposit (in ETH, decimas are allowed) (default "0")
   -h, --help                    help for deploy
       --relayerThreshold uint   number of votes required for a proposal to pass (default 1)
@@ -484,7 +486,7 @@ Flags:
       --amount string       amount to deposit
       --bridge string       address of bridge contract
       --decimals uint       ERC20 token decimals
-      --destId string       destination chain ID
+      --domainId string     destination domain ID
   -h, --help                help for deposit
       --recipient string    address of recipient
       --resourceId string   resource ID for transfer
@@ -634,6 +636,32 @@ Flags:
       --txHash string        transaction hash
 ```
 
+### Centrifuge
+Centrifuge-related instructions.
+
+#### deploy
+
+This command can be used to deploy Centrifuge asset store contract that represents bridged Centrifuge assets.
+
+```bash
+Usage:
+   evm-cli centrifuge deploy [flags]
+```
+
+#### getHash
+Checks _assetsStored map on Centrifuge asset store contract to find if asset hash exists.
+
+```bash
+Usage:
+   evm-cli centrifuge getHash [flags]
+
+Flags:
+      --address string   Centrifuge asset store contract address
+      --hash string      A hash to lookup
+  -h, --help             help for getHash
+```
+
+
 ## Celo-CLI
 Though Celo is an EVM-compatible chain, it deviates in its implementation of the original Ethereum specifications, and therefore is deserving of its own separate module.
 
@@ -754,7 +782,7 @@ Flags:
       --all                     deploy all
       --bridge                  deploy bridge
       --bridgeAddress string    bridge contract address. Should be provided if handlers are deployed separately
-      --chainId string          chain ID for the instance (default "1")
+      --domainId string         domain ID for the instance (default "1")
       --erc20                   deploy ERC20
       --erc20Handler            deploy ERC20 handler
       --erc20Name string        ERC20 contract name
@@ -764,6 +792,7 @@ Flags:
       --erc721Name string       ERC721 contract name
       --erc721Symbol string     ERC721 contract symbol
       --erc721BaseURI           ERC721 base URI
+      --genericHandler          deploy generic handler
       --fee string              fee to be taken when making a deposit (in ETH, decimas are allowed) (default "0")
   -h, --help                    help for deploy
       --relayerThreshold uint   number of votes required for a proposal to pass (default 1)
@@ -855,7 +884,7 @@ Flags:
       --amount string       amount to deposit
       --bridge string       address of bridge contract
       --decimals uint       ERC20 token decimals
-      --destId string       destination chain ID
+      --domainId string     destination domain ID
   -h, --help                help for deposit
       --recipient string    address of recipient
       --resourceId string   resource ID for transfer
@@ -874,6 +903,31 @@ Flags:
       --dstAddress string     Where tokens should be minted. Defaults to TX sender
       --erc20Address string   ERC20 contract address
   -h, --help                  help for mint
+```
+
+### Centrifuge
+Centrifuge-related instructions.
+
+#### deploy
+
+This command can be used to deploy Centrifuge asset store contract that represents bridged Centrifuge assets.
+
+```bash
+Usage:
+   evm-cli centrifuge deploy [flags]
+```
+
+#### getHash
+Checks _assetsStored map on Centrifuge asset store contract to find if asset hash exists.
+
+```bash
+Usage:
+   evm-cli centrifuge getHash [flags]
+
+Flags:
+      --address string   Centrifuge asset store contract address
+      --hash string      A hash to lookup
+  -h, --help             help for getHash
 ```
 
 # ChainSafe Security Policy

@@ -76,7 +76,22 @@ func DeployErc721Handler(c ClientDeployer, txFabric TxFabric, gasPriceClient Gas
 	return address, nil
 }
 
+func DeployGenericHandler(c ClientDeployer, txFabric TxFabric, gasPriceClient GasPricer, bridgeAddress common.Address) (common.Address, error) {
+	log.Debug().Msgf("Deploying Generic Handler with params: %s", bridgeAddress.String())
+	parsed, err := abi.JSON(strings.NewReader(consts.GenericHandlerABI))
+	if err != nil {
+		return common.Address{}, err
+	}
+	address, err := deployContract(c, parsed, common.FromHex(consts.GenericHandlerBin), txFabric, gasPriceClient, bridgeAddress)
+	if err != nil {
+		return common.Address{}, err
+	}
+	return address, nil
+}
+
 func deployContract(client ClientDeployer, abi abi.ABI, bytecode []byte, txFabric TxFabric, gasPriceClient GasPricer, params ...interface{}) (common.Address, error) {
+	defer client.UnlockNonce()
+
 	client.LockNonce()
 	n, err := client.UnsafeNonce()
 	if err != nil {
@@ -110,7 +125,6 @@ func deployContract(client ClientDeployer, abi abi.ABI, bytecode []byte, txFabri
 	if err != nil {
 		return common.Address{}, err
 	}
-	client.UnlockNonce()
 	// checks bytecode at address
 	// nil is latest block
 	if code, err := client.CodeAt(context.Background(), address, nil); err != nil {

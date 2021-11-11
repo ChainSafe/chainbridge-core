@@ -1,4 +1,4 @@
-package config
+package chain
 
 import (
 	"testing"

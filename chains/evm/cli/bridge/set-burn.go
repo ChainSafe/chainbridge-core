@@ -40,15 +40,15 @@ var setBurnCmd = &cobra.Command{
 	},
 }
 
-func BindSetBurnCmdFlags() {
-	setBurnCmd.Flags().StringVar(&Handler, "handler", "", "ERC20 handler contract address")
-	setBurnCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	setBurnCmd.Flags().StringVar(&TokenContract, "tokenContract", "", "token contract to be registered")
-	flags.MarkFlagsAsRequired(setBurnCmd, "handler", "bridge", "tokenContract")
+func BindSetBurnCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Handler, "handler", "", "ERC20 handler contract address")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	cmd.Flags().StringVar(&TokenContract, "tokenContract", "", "token contract to be registered")
+	flags.MarkFlagsAsRequired(cmd, "handler", "bridge", "tokenContract")
 }
 
 func init() {
-	BindSetBurnCmdFlags()
+	BindSetBurnCmdFlags(setBurnCmd)
 }
 func ValidateSetBurnFlags(cmd *cobra.Command, args []string) error {
 

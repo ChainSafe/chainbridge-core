@@ -1,4 +1,4 @@
-package config
+package chain
 
 import (
 	"math/big"
@@ -17,7 +17,6 @@ type RawSharedSubstrateConfig struct {
 }
 
 func (c *RawSharedSubstrateConfig) ParseConfig() *SharedSubstrateConfig {
-
 	c.GeneralChainConfig.ParseConfig()
 
 	config := &SharedSubstrateConfig{
