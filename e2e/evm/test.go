@@ -98,6 +98,10 @@ func (s *IntegrationTestSuite) TearDownSuite() {}
 func (s *IntegrationTestSuite) SetupTest()     {}
 func (s *IntegrationTestSuite) TearDownTest()  {}
 
+func (s *IntegrationTestSuite) TestErc721Deposit() {
+	
+}
+
 func (s *IntegrationTestSuite) TestErc20Deposit() {
 	dstAddr := keystore.TestKeyRing.EthereumKeys[keystore.BobKey].CommonAddress()
 	senderBalBefore, err := calls.GetERC20Balance(s.client, s.erc20ContractAddr, EveKp.CommonAddress())
