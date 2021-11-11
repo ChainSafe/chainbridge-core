@@ -31,4 +31,4 @@ jobs:
         continue-on-error: true
       - run: |
           docker ps -a
-          docker logs relayer
+          docker logs relayer1
