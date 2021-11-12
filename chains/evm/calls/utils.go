@@ -12,8 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
 )
 
@@ -54,6 +54,13 @@ type ClientDispatcher interface {
 type SimulateCallerClient interface {
 	ContractCallerClient
 	TransactionByHash(ctx context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error)
+}
+
+func GetSolidityFunctionSig(in []byte) [4]byte {
+	var res [4]byte
+	hash := crypto.Keccak256Hash(in)
+	copy(res[:], hash[:])
+	return res
 }
 
 func SliceTo32Bytes(in []byte) [32]byte {
@@ -104,7 +111,6 @@ func UserAmountToWei(amount string, decimal *big.Int) (*big.Int, error) {
 
 func Transact(client ClientDispatcher, txFabric TxFabric, gasPriceClient GasPricer, to *common.Address, data []byte, gasLimit uint64, value *big.Int) (common.Hash, error) {
 	defer client.UnlockNonce()
-
 	client.LockNonce()
 	n, err := client.UnsafeNonce()
 	if err != nil {
@@ -132,14 +138,6 @@ func Transact(client ClientDispatcher, txFabric TxFabric, gasPriceClient GasPric
 		return common.Hash{}, err
 	}
 	return tx.Hash(), nil
-}
-
-func ConstructErc20DepositData(destRecipient []byte, amount *big.Int) []byte {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(amount, 32)...)
-	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(destRecipient))), 32)...)
-	data = append(data, destRecipient...)
-	return data
 }
 
 // Simulate function gets transaction info by hash and then executes a message call transaction, which is directly executed in the VM
