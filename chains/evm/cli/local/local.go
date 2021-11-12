@@ -6,7 +6,6 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 )
 
@@ -19,54 +18,45 @@ var LocalSetupCmd = &cobra.Command{
 
 // configuration
 var (
-	localEndpoint1 = "http://localhost:8545"
-	localEndpoint2 = "http://localhost:8546"
-	localDomainId1 = 0
-	localDomainId2 = 1
-	fabric1        = evmtransaction.NewTransaction
-	fabric2        = evmtransaction.NewTransaction
+	ethEndpoint1 = "http://localhost:8545"
+	ethEndpoint2 = "http://localhost:8547"
+	fabric1      = evmtransaction.NewTransaction
+	fabric2      = evmtransaction.NewTransaction
 )
 
 func localSetup(cmd *cobra.Command, args []string) error {
 	// init client1
-	ethClient, err := evmclient.NewEVMClientFromParams(localEndpoint1, AliceKp.PrivateKey())
+	ethClient, err := evmclient.NewEVMClientFromParams(ethEndpoint1, EveKp.PrivateKey())
 	if err != nil {
 		return err
 	}
 
 	// init client2
-	ethClient2, err := evmclient.NewEVMClientFromParams(localEndpoint2, AliceKp.PrivateKey())
+	ethClient2, err := evmclient.NewEVMClientFromParams(ethEndpoint2, EveKp.PrivateKey())
 	if err != nil {
 		return err
 	}
 
 	// chain 1
 	// domainsId: 0
-	bridgeAddr, erc20Addr, erc20HandlerAddr, err := PrepareLocalEnv(ethClient, fabric1, uint8(localDomainId1), big.NewInt(1), AliceKp.CommonAddress(), big.NewInt(0))
+	config, err := PrepareLocalEVME2EEnv(ethClient, fabric1, 1, big.NewInt(1), EveKp.CommonAddress())
 	if err != nil {
 		return err
 	}
 
 	// chain 2
 	// domainId: 1
-	bridgeAddr2, erc20Addr2, erc20HandlerAddr2, err := PrepareLocalEnv(ethClient2, fabric2, uint8(localDomainId2), big.NewInt(1), AliceKp.CommonAddress(), big.NewInt(0))
+	config2, err := PrepareLocalEVME2EEnv(ethClient2, fabric2, 2, big.NewInt(1), EveKp.CommonAddress())
 	if err != nil {
 		return err
 	}
 
-	prettyPrint(
-		bridgeAddr,
-		bridgeAddr2,
-		erc20Addr,
-		erc20Addr2,
-		erc20HandlerAddr,
-		erc20HandlerAddr2,
-	)
+	prettyPrint(config, config2)
 
 	return nil
 }
 
-func prettyPrint(params ...common.Address) {
+func prettyPrint(config, config2 EVME2EConfig) {
 	fmt.Printf(`
 ===============================================
 🎉🎉🎉 ChainBridge Successfully Deployed 🎉🎉🎉
@@ -75,18 +65,29 @@ func prettyPrint(params ...common.Address) {
 Bridge: %s
 ERC20: %s
 ERC20 Handler: %s
+Generic Handler: %s
+Asset Store: %s
 
 - Chain 2 -
 Bridge: %s
 ERC20: %s
 ERC20 Handler: %s
+Generic Handler: %s
+Asset Store: %s
 
 ===============================================
-`, params[0],
-		params[1],
-		params[2],
-		params[3],
-		params[4],
-		params[5],
+`,
+		// config
+		config.BridgeAddr,
+		config.Erc20Addr,
+		config.Erc20HandlerAddr,
+		config.GenericHandlerAddr,
+		config.AssetStoreAddr,
+		// config2
+		config2.BridgeAddr,
+		config2.Erc20Addr,
+		config2.Erc20HandlerAddr,
+		config2.GenericHandlerAddr,
+		config2.AssetStoreAddr,
 	)
 }

@@ -67,13 +67,13 @@ func PrepareLocalEVME2EEnv(
 	log.Debug().Msgf("All deployments and preparations are done")
 
 	return EVME2EConfig{
-		bridgeAddr: bridgeAddr,
+		BridgeAddr: bridgeAddr,
 
-		erc20Addr:        erc20Addr,
-		erc20HandlerAddr: erc20HandlerAddr,
+		Erc20Addr:        erc20Addr,
+		Erc20HandlerAddr: erc20HandlerAddr,
 
-		genericHandlerAddr: genericHandlerAddr,
-		assetStoreAddr:     assetStoreAddr,
+		GenericHandlerAddr: genericHandlerAddr,
+		AssetStoreAddr:     assetStoreAddr,
 	}, nil
 }
 
