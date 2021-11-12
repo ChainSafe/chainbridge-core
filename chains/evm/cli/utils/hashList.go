@@ -25,12 +25,12 @@ var hashListCmd = &cobra.Command{
 	},
 }
 
-func BindHashListCmdFlags() {
-	hashListCmd.Flags().StringVar(&BlockNumber, "blockNumber", "", "block number")
+func BindHashListCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&BlockNumber, "blockNumber", "", "block number")
 }
 
 func init() {
-	BindHashListCmdFlags()
+	BindHashListCmdFlags(hashListCmd)
 }
 
 func HashListCmd(cmd *cobra.Command, args []string) error {

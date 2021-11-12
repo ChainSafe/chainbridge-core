@@ -37,14 +37,14 @@ var balanceCmd = &cobra.Command{
 	},
 }
 
-func BindBalanceCmdFlags() {
-	balanceCmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
-	balanceCmd.Flags().StringVar(&AccountAddress, "accountAddress", "", "address to receive balance of")
-	flags.MarkFlagsAsRequired(balanceCmd, "erc20Address", "accountAddress")
+func BindBalanceCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
+	cmd.Flags().StringVar(&AccountAddress, "accountAddress", "", "address to receive balance of")
+	flags.MarkFlagsAsRequired(cmd, "erc20Address", "accountAddress")
 }
 
 func init() {
-	BindBalanceCmdFlags()
+	BindBalanceCmdFlags(balanceCmd)
 }
 
 var accountAddr common.Address
