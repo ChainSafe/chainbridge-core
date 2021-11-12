@@ -1,7 +1,6 @@
 package erc20
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 
@@ -97,20 +96,11 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasP
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
 	data := calls.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
-
-	input, err := calls.PrepareErc20DepositInput(uint8(DomainID), resourceIdBytesArr, data)
+	input, err := calls.PrepareDepositInput(uint8(DomainID), resourceIdBytesArr, data)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit input error: %v", err))
 		return err
 	}
-
-	blockNum, err := ethClient.BlockNumber(context.Background())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("block fetch error: %v", err))
-		return err
-	}
-
-	log.Debug().Msgf("blockNum: %v", blockNum)
 
 	// destinationId
 	txHash, err := calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddr, input, gasLimit, big.NewInt(0))
@@ -119,8 +109,6 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasP
 		return err
 	}
 
-	log.Debug().Msgf("erc20 deposit hash: %s", txHash.Hex())
-
-	log.Info().Msgf("%s tokens were transferred to %s from %s", Amount, recipientAddress.Hex(), senderKeyPair.CommonAddress().String())
+	log.Info().Msgf("%s tokens were transferred to %s from %s with hash %s", Amount, recipientAddress.Hex(), senderKeyPair.CommonAddress().String(), txHash.Hex())
 	return nil
 }

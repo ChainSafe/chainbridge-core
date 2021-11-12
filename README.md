@@ -332,6 +332,7 @@ Usage:
 Flags:
       --bridge string       bridge contract address
       --deposit string      deposit function signature (default "0x00000000")
+      --depositerOffset int   depositer address position offset in the metadata, in bytes
       --execute string      execute proposal function signature (default "0x00000000")
       --handler string      handler contract address
       --hash                treat signature inputs as function prototype strings, hash and take the first 4 bytes
@@ -388,6 +389,7 @@ Flags:
       --erc20Name string        ERC20 contract name
       --erc20Symbol string      ERC20 contract symbol
       --erc721                  deploy ERC721
+      --genericHandler          deploy generic handler
       --fee string              fee to be taken when making a deposit (in ETH, decimas are allowed) (default "0")
   -h, --help                    help for deploy
       --relayerThreshold uint   number of votes required for a proposal to pass (default 1)
@@ -559,6 +561,32 @@ Flags:
       --txHash string        transaction hash
 ```
 
+### Centrifuge
+Centrifuge-related instructions.
+
+#### deploy
+
+This command can be used to deploy Centrifuge asset store contract that represents bridged Centrifuge assets.
+
+```bash
+Usage:
+   evm-cli centrifuge deploy
+```
+
+#### getHash
+Checks _assetsStored map on Centrifuge asset store contract to find if asset hash exists.
+
+```bash
+Usage:
+   evm-cli centrifuge getHash [flags]
+
+Flags:
+      --address string   Centrifuge asset store contract address
+      --hash string      A hash to lookup
+  -h, --help             help for getHash
+```
+
+
 ## Celo-CLI
 Though Celo is an EVM-compatible chain, it deviates in its implementation of the original Ethereum specifications, and therefore is deserving of its own separate module.
 
@@ -685,6 +713,7 @@ Flags:
       --erc20Name string        ERC20 contract name
       --erc20Symbol string      ERC20 contract symbol
       --erc721                  deploy ERC721
+      --genericHandler          deploy generic handler
       --fee string              fee to be taken when making a deposit (in ETH, decimas are allowed) (default "0")
   -h, --help                    help for deploy
       --relayerThreshold uint   number of votes required for a proposal to pass (default 1)
@@ -795,6 +824,31 @@ Flags:
       --dstAddress string     Where tokens should be minted. Defaults to TX sender
       --erc20Address string   ERC20 contract address
   -h, --help                  help for mint
+```
+
+### Centrifuge
+Centrifuge-related instructions.
+
+#### deploy
+
+This command can be used to deploy Centrifuge asset store contract that represents bridged Centrifuge assets.
+
+```bash
+Usage:
+   evm-cli centrifuge deploy
+```
+
+#### getHash
+Checks _assetsStored map on Centrifuge asset store contract to find if asset hash exists.
+
+```bash
+Usage:
+   evm-cli centrifuge getHash [flags]
+
+Flags:
+      --address string   Centrifuge asset store contract address
+      --hash string      A hash to lookup
+  -h, --help             help for getHash
 ```
 
 # ChainSafe Security Policy

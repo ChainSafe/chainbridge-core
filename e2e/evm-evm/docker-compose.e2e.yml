@@ -36,12 +36,42 @@ services:
       - MINE=true
     entrypoint: "/root/entrypoint.sh"
 
-  relayer:
+  relayer1:
+    container_name: relayer1
     build:
       context: ../../.
       dockerfile: Dockerfile
-    container_name: "relayer"
     command: run --config /cfg --testkey alice --fresh
+    depends_on:
+      - evm1-1
+      - evm2-1
+    networks:
+      - evm1
+      - evm2
+    volumes:
+      - ./example/cfg:/cfg
+
+  relayer2:
+    container_name: relayer2
+    build:
+      context: ../../.
+      dockerfile: Dockerfile
+    command: run --config /cfg --testkey bob --fresh
+    depends_on:
+      - evm1-1
+      - evm2-1
+    networks:
+      - evm1
+      - evm2
+    volumes:
+      - ./example/cfg:/cfg
+
+  relayer3:
+    container_name: relayer3
+    build:
+      context: ../../.
+      dockerfile: Dockerfile
+    command: run --config /cfg --testkey charlie --fresh
     depends_on:
       - evm1-1
       - evm2-1
