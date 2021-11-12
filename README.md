@@ -570,7 +570,7 @@ This command can be used to deploy Centrifuge asset store contract that represen
 
 ```bash
 Usage:
-   evm-cli centrifuge deploy [flags]
+   evm-cli centrifuge deploy
 ```
 
 #### getHash
@@ -835,7 +835,7 @@ This command can be used to deploy Centrifuge asset store contract that represen
 
 ```bash
 Usage:
-   evm-cli centrifuge deploy [flags]
+   evm-cli centrifuge deploy
 ```
 
 #### getHash
