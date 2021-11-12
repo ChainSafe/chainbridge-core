@@ -76,7 +76,7 @@ func (w *SubstrateWriter) VoteProposal(m *relayer.Message) error {
 			}
 			return nil
 		} else {
-			log.Info().Str("reason", reason).Uint64("nonce", uint64(prop.DepositNonce)).Uint8("source", uint8(prop.SourceId)).Str("resource", types.HexEncodeToString(prop.ResourceId[:])).Msg("Ignoring proposal")
+			log.Info().Str("reason", reason).Uint64("nonce", uint64(prop.DepositNonce)).Uint8("source", uint8(prop.SourceId)).Str("resource", substrateTypes.HexEncodeToString(prop.ResourceId[:])).Msg("Ignoring proposal")
 			return nil
 		}
 	}
@@ -84,7 +84,7 @@ func (w *SubstrateWriter) VoteProposal(m *relayer.Message) error {
 }
 
 func (w *SubstrateWriter) proposalValid(prop *SubstrateProposal) (bool, string, error) {
-	srcId, err := types.EncodeToBytes(prop.SourceId)
+	srcId, err := substrateTypes.EncodeToBytes(prop.SourceId)
 	if err != nil {
 		return false, "", err
 	}
@@ -133,15 +133,15 @@ func (w *SubstrateWriter) createProposal(sourceChain uint8, depositNonce uint64,
 	//	call.Args = append(call.Args, eRID...)
 	//}
 	return &SubstrateProposal{
-		DepositNonce: types.U64(depositNonce),
+		DepositNonce: substrateTypes.U64(depositNonce),
 		Call:         call,
-		SourceId:     types.U8(sourceChain),
-		ResourceId:   types.NewBytes32(resourceId),
+		SourceId:     substrateTypes.U8(sourceChain),
+		ResourceId:   substrateTypes.NewBytes32(resourceId),
 		Method:       method,
 	}, nil
 }
 
-func containsVote(votes []types.AccountID, voter types.AccountID) bool {
+func containsVote(votes []substrateTypes.AccountID, voter substrateTypes.AccountID) bool {
 	for _, v := range votes {
 		if bytes.Equal(v[:], voter[:]) {
 			return true
