@@ -8,15 +8,15 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/types"
 
-	internalTypes "github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 type EventHandlers map[common.Address]EventHandlerFunc
-type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID internalTypes.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error)
+type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error)
 
 type ETHEventHandler struct {
 	bridgeAddress common.Address
@@ -31,7 +31,7 @@ func NewETHEventHandler(address common.Address, client ChainClient) *ETHEventHan
 	}
 }
 
-func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint64, resourceID internalTypes.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error) {
+func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error) {
 	handlerAddr, err := e.matchResourceIDToHandlerAddress(resourceID)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint6
 }
 
 // matchResourceIDToHandlerAddress is a private method that matches a previously registered resource ID to its corresponding handler address
-func (e *ETHEventHandler) matchResourceIDToHandlerAddress(resourceID internalTypes.ResourceID) (common.Address, error) {
+func (e *ETHEventHandler) matchResourceIDToHandlerAddress(resourceID types.ResourceID) (common.Address, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return common.Address{}, err
@@ -87,7 +87,7 @@ func (e *ETHEventHandler) RegisterEventHandler(handlerAddress string, handler Ev
 
 // Erc20EventHandler converts data pulled from event logs into message
 // handlerResponse can be an empty slice
-func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID internalTypes.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error) {
+func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error) {
 	if len(calldata) < 84 {
 		err := errors.New("invalid calldata length: less than 84 bytes")
 		return nil, err
@@ -119,7 +119,7 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID internal
 }
 
 // GenericEventHandler extracts metadata of generic deposit event log into message
-func GenericEventHandler(sourceID, destId uint8, nonce uint64, resourceID internalTypes.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error) {
+func GenericEventHandler(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error) {
 	if len(calldata) < 32 {
 		err := errors.New("invalid calldata length: less than 32 bytes")
 		return nil, err

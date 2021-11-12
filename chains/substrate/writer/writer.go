@@ -7,8 +7,8 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/substrate"
 	"github.com/ChainSafe/chainbridge-core/relayer"
-	internalTypes "github.com/ChainSafe/chainbridge-core/types"
-	"github.com/centrifuge/go-substrate-rpc-client/types"
+	"github.com/ChainSafe/chainbridge-core/types"
+	substrateTypes "github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/rs/zerolog/log"
 )
 
@@ -21,9 +21,9 @@ var AcknowledgeProposal = BridgePalletName + ".acknowledge_proposal"
 
 type Voter interface {
 	SubmitTx(method string, args ...interface{}) error
-	GetVoterAccountID() types.AccountID
-	GetMetadata() (meta types.Metadata)
-	ResolveResourceId(resourceId internalTypes.ResourceID) (string, error)
+	GetVoterAccountID() substrateTypes.AccountID
+	GetMetadata() (meta substrateTypes.Metadata)
+	ResolveResourceId(resourceId types.ResourceID) (string, error)
 	// TODO: Vote state should be higher abstraction
 	GetProposalStatus(sourceID, proposalBytes []byte) (bool, *substrate.VoteState, error)
 }
@@ -110,13 +110,13 @@ func (w *SubstrateWriter) proposalValid(prop *SubstrateProposal) (bool, string, 
 	}
 }
 
-func (w *SubstrateWriter) createProposal(sourceChain uint8, depositNonce uint64, resourceId internalTypes.ResourceID, args ...interface{}) (*SubstrateProposal, error) {
+func (w *SubstrateWriter) createProposal(sourceChain uint8, depositNonce uint64, resourceId types.ResourceID, args ...interface{}) (*SubstrateProposal, error) {
 	meta := w.client.GetMetadata()
 	method, err := w.client.ResolveResourceId(resourceId)
 	if err != nil {
 		return nil, err
 	}
-	call, err := types.NewCall(
+	call, err := substrateTypes.NewCall(
 		&meta,
 		method,
 		args...,
