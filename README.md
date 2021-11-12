@@ -897,7 +897,7 @@ This section allows developers with a way to quickly and with minimal effort sta
 
 ### `local`
 
-Locally deploy bridge and ERC20 handler contracts with preconfigured accounts and ERC20 handler
+Locally deploy bridge and ERC20 handler contracts with preconfigured accounts and ERC20 handler.
 
 ```bash
 Usage:
