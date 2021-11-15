@@ -27,8 +27,9 @@ install-subkey:
 	cargo install --force --git https://github.com/paritytech/substrate subkey
 
 genmocks:
-	mockgen -source=./chains/evm/evmgaspricer/gas-pricer.go -destination=./chains/evm/evmgaspricer/mock/gas-pricer.go
+	mockgen -source=chains/evm/evmgaspricer/gas-pricer.go -destination=chains/evm/evmgaspricer/mock/gas-pricer.go
 	mockgen -source=chains/evm/calls/utils.go -destination=chains/evm/calls/mock/utils.go
+	mockgen -destination=chains/evm/voter/mock/voter.go github.com/ChainSafe/chainbridge-core/chains/evm/voter ChainClient,MessageHandler
 
 e2e-test:
 	./scripts/int_tests.sh
