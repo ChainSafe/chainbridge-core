@@ -162,7 +162,6 @@ func (c *EVMClient) WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error
 	for retry > 0 {
 		receipt, err := c.Client.TransactionReceipt(context.Background(), h)
 		if err != nil {
-			log.Error().Err(err).Msgf("error getting tx receipt %s", h.String())
 			retry--
 			time.Sleep(5 * time.Second)
 			continue
