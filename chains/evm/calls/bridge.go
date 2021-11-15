@@ -282,32 +282,25 @@ func GetThreshold(evmCaller ContractCallerClient, bridgeAddress *common.Address)
 func ProposalStatus(evmCaller ContractCallerClient, p *proposal.Proposal) (relayer.ProposalStatus, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
-		return relayer.ProposalStatusInactive, err
+		return relayer.ProposalStatus{}, err
 	}
 	input, err := a.Pack("getProposal", p.Source, p.DepositNonce, SliceTo32Bytes(p.Data))
 	if err != nil {
-		return relayer.ProposalStatusInactive, err
+		return relayer.ProposalStatus{}, err
 	}
 
 	msg := ethereum.CallMsg{From: common.Address{}, To: &p.BridgeAddress, Data: input}
 	out, err := evmCaller.CallContract(context.TODO(), ToCallArg(msg), nil)
 	if err != nil {
-		return relayer.ProposalStatusInactive, err
-	}
-
-	type bridgeProposal struct {
-		Status        uint8
-		YesVotes      *big.Int
-		YesVotesTotal uint8
-		ProposedBlock *big.Int
+		return relayer.ProposalStatus{}, err
 	}
 	res, err := a.Unpack("getProposal", out)
 	if err != nil {
-		return relayer.ProposalStatusInactive, err
+		return relayer.ProposalStatus{}, err
 	}
 
-	out0 := *abi.ConvertType(res[0], new(bridgeProposal)).(*bridgeProposal)
-	return relayer.ProposalStatus(out0.Status), nil
+	ps := *abi.ConvertType(res[0], new(relayer.ProposalStatus)).(*relayer.ProposalStatus)
+	return ps, nil
 }
 
 func idAndNonce(srcId uint8, nonce uint64) *big.Int {
