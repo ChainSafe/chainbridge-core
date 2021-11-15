@@ -22,13 +22,14 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const (
+	maxShouldVoteChecks   = 40
+	shouldVoteCheckPeriod = 15
+)
+
 type ChainClient interface {
-	LatestBlock() (*big.Int, error)
 	RelayerAddress() common.Address
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
-	PendingCallContract(ctx context.Context, callArgs map[string]interface{}) ([]byte, error)
-	PendingTransactionCount(ctx context.Context) (uint, error)
-	ChainID(ctx context.Context) (*big.Int, error)
 	SubscribePendingTransactions(ctx context.Context, ch chan<- common.Hash) (*rpc.ClientSubscription, error)
 	TransactionByHash(ctx context.Context, hash common.Hash) (tx *ethereumTypes.Transaction, isPending bool, err error)
 	calls.ClientDispatcher
@@ -43,7 +44,7 @@ type EVMVoter struct {
 	client               ChainClient
 	fabric               calls.TxFabric
 	gasPriceClient       calls.GasPricer
-	pendingProposalVotes map[uint64]uint8
+	pendingProposalVotes map[common.Hash]uint8
 }
 
 func NewVoter(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasPriceClient calls.GasPricer) *EVMVoter {
@@ -52,7 +53,7 @@ func NewVoter(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasP
 		client:               client,
 		fabric:               fabric,
 		gasPriceClient:       gasPriceClient,
-		pendingProposalVotes: make(map[uint64]uint8),
+		pendingProposalVotes: make(map[common.Hash]uint8),
 	}
 
 	ch := make(chan common.Hash)
@@ -77,7 +78,7 @@ func (v *EVMVoter) VoteProposal(m *relayer.Message) error {
 	}
 
 	shouldVoteChn := make(chan bool)
-	go v.shouldVoteForProposal(shouldVoteChn, prop, time.Sleep)
+	go v.shouldVoteForProposal(shouldVoteChn, prop, time.Sleep, 0)
 
 	shouldVote := <-shouldVoteChn
 	if !shouldVote {
@@ -94,11 +95,13 @@ func (v *EVMVoter) VoteProposal(m *relayer.Message) error {
 	return nil
 }
 
-func (v *EVMVoter) shouldVoteForProposal(shouldVote chan bool, prop *proposal.Proposal, sleep func(d time.Duration)) {
-	sleep(time.Duration(rand.Intn(20)) * time.Millisecond * 500)
+func (v *EVMVoter) shouldVoteForProposal(shouldVote chan bool, prop *proposal.Proposal, sleep func(d time.Duration), tries int) {
+	sleep(time.Duration(rand.Intn(shouldVoteCheckPeriod)) * time.Second)
+	propID := prop.GetID()
 
-	defer delete(v.pendingProposalVotes, prop.DepositNonce)
+	defer delete(v.pendingProposalVotes, propID)
 	ps, err := calls.ProposalStatus(v.client, prop)
+
 	if err != nil {
 		log.Error().Err(err)
 		shouldVote <- false
@@ -117,8 +120,11 @@ func (v *EVMVoter) shouldVoteForProposal(shouldVote chan bool, prop *proposal.Pr
 		return
 	}
 
-	if ps.YesVotesTotal+v.pendingProposalVotes[prop.DepositNonce] >= threshold {
-		shouldVote <- false
+	if ps.YesVotesTotal+v.pendingProposalVotes[propID] >= threshold && tries < maxShouldVoteChecks {
+		// Wait until proposal status is finalized to prevent missing votes
+		// in case of dropped txs
+		tries++
+		v.shouldVoteForProposal(shouldVote, prop, sleep, tries)
 		return
 	}
 
@@ -151,8 +157,25 @@ func (v *EVMVoter) trackProposalPendingVotes(ch chan common.Hash) {
 		}
 
 		if m.Name == "voteProposal" {
+			source := data[0].(uint8)
 			depositNonce := data[1].(uint64)
-			v.pendingProposalVotes[depositNonce]++
+			prop := proposal.Proposal{
+				Source:       source,
+				DepositNonce: depositNonce,
+			}
+
+			go v.increaseProposalVoteCount(msg, prop.GetID())
 		}
 	}
+}
+
+func (v *EVMVoter) increaseProposalVoteCount(hash common.Hash, propID common.Hash) {
+	v.pendingProposalVotes[propID]++
+
+	_, err := v.client.WaitAndReturnTxReceipt(hash)
+	if err != nil {
+		log.Error().Err(err)
+	}
+
+	v.pendingProposalVotes[propID]--
 }

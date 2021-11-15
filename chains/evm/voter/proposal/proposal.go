@@ -31,3 +31,8 @@ type Proposal struct {
 func (p *Proposal) GetDataHash() common.Hash {
 	return crypto.Keccak256Hash(append(p.HandlerAddress.Bytes(), p.Data...))
 }
+
+// GetID construct proposal unique identifier
+func (p *Proposal) GetID() common.Hash {
+	return crypto.Keccak256Hash(append([]byte{p.Source}, byte(p.DepositNonce)))
+}
