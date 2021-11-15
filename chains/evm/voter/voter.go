@@ -67,6 +67,8 @@ func NewVoter(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasP
 	return voter
 }
 
+// VoteProposal checks if relayer already voted and is threshold
+// satisfied and casts a vote if it isn't
 func (v *EVMVoter) VoteProposal(m *relayer.Message) error {
 	prop, err := v.mh.HandleMessage(m)
 	if err != nil {
@@ -86,7 +88,7 @@ func (v *EVMVoter) VoteProposal(m *relayer.Message) error {
 
 	shouldVote := <-shouldVoteChn
 	if !shouldVote {
-		log.Debug().Msgf("Proposal %+v already has enough votes", prop)
+		log.Debug().Msgf("Proposal %+v already satisfies threshold", prop)
 		return nil
 	}
 
