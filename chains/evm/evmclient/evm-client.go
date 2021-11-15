@@ -23,16 +23,18 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/ethclient/gethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/rs/zerolog/log"
 )
 
 type EVMClient struct {
 	*ethclient.Client
-	rpClient  *rpc.Client
-	config    *EVMConfig
-	nonce     *big.Int
-	nonceLock sync.Mutex
+	gethClient *gethclient.Client
+	rpClient   *rpc.Client
+	config     *EVMConfig
+	nonce      *big.Int
+	nonceLock  sync.Mutex
 }
 
 // DepositLogs struct holds event data with all necessary parameters and a handler response
@@ -74,10 +76,15 @@ func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey) (*EVMClien
 	kp := secp256k1.NewKeypair(*privateKey)
 	c := &EVMClient{}
 	c.Client = ethclient.NewClient(rpcClient)
+	c.gethClient = gethclient.New(rpcClient)
 	c.rpClient = rpcClient
 	c.config = &EVMConfig{}
 	c.config.kp = kp
 	return c, nil
+}
+
+func (c *EVMClient) SubscribePendingTransactions(ctx context.Context, ch chan<- common.Hash) (*rpc.ClientSubscription, error) {
+	return c.gethClient.SubscribePendingTransactions(ctx, ch)
 }
 
 func (c *EVMClient) Configurate(path string, name string) error {
@@ -106,6 +113,7 @@ func (c *EVMClient) Configurate(path string, name string) error {
 	}
 	c.Client = ethclient.NewClient(rpcClient)
 	c.rpClient = rpcClient
+	c.gethClient = gethclient.New(rpcClient)
 
 	if generalConfig.LatestBlock {
 		curr, err := c.LatestBlock()

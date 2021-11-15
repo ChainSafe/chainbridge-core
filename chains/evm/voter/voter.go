@@ -7,11 +7,18 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"math/rand"
+	"strings"
+	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	ethereumTypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/rs/zerolog/log"
 )
 
@@ -19,7 +26,11 @@ type ChainClient interface {
 	LatestBlock() (*big.Int, error)
 	RelayerAddress() common.Address
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
+	PendingCallContract(ctx context.Context, callArgs map[string]interface{}) ([]byte, error)
+	PendingTransactionCount(ctx context.Context) (uint, error)
 	ChainID(ctx context.Context) (*big.Int, error)
+	SubscribePendingTransactions(ctx context.Context, ch chan<- common.Hash) (*rpc.ClientSubscription, error)
+	TransactionByHash(ctx context.Context, hash common.Hash) (tx *ethereumTypes.Transaction, isPending bool, err error)
 	calls.ClientDispatcher
 }
 
@@ -28,19 +39,27 @@ type MessageHandler interface {
 }
 
 type EVMVoter struct {
-	mh             MessageHandler
-	client         ChainClient
-	fabric         calls.TxFabric
-	gasPriceClient calls.GasPricer
+	mh                   MessageHandler
+	client               ChainClient
+	fabric               calls.TxFabric
+	gasPriceClient       calls.GasPricer
+	pendingProposalVotes map[uint64]uint8
 }
 
 func NewVoter(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasPriceClient calls.GasPricer) *EVMVoter {
-	return &EVMVoter{
-		mh:             mh,
-		client:         client,
-		fabric:         fabric,
-		gasPriceClient: gasPriceClient,
+	voter := &EVMVoter{
+		mh:                   mh,
+		client:               client,
+		fabric:               fabric,
+		gasPriceClient:       gasPriceClient,
+		pendingProposalVotes: make(map[uint64]uint8),
 	}
+
+	ch := make(chan common.Hash)
+	go voter.trackProposalPendingVotes(ch)
+	client.SubscribePendingTransactions(context.TODO(), ch)
+
+	return voter
 }
 
 func (v *EVMVoter) VoteProposal(m *relayer.Message) error {
@@ -48,22 +67,92 @@ func (v *EVMVoter) VoteProposal(m *relayer.Message) error {
 	if err != nil {
 		return err
 	}
-	ps, err := calls.ProposalStatus(v.client, prop)
-	if err != nil {
-		return fmt.Errorf("error getting proposal: %+v status %w", prop, err)
-	}
+
 	votedByTheRelayer, err := calls.IsProposalVotedBy(v.client, v.client.RelayerAddress(), prop)
 	if err != nil {
 		return err
 	}
-	// if this relayer had not voted for proposal and proposal is in Active or Inactive status
-	// we need to vote for it
-	if !votedByTheRelayer && (ps == relayer.ProposalStatusActive || ps == relayer.ProposalStatusInactive) {
-		hash, err := calls.VoteProposal(v.client, v.fabric, v.gasPriceClient, prop)
-		log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
+	if votedByTheRelayer {
+		return nil
+	}
+
+	shouldVoteChn := make(chan bool)
+	go v.shouldVoteForProposal(shouldVoteChn, prop, time.Sleep)
+
+	shouldVote := <-shouldVoteChn
+	if !shouldVote {
+		log.Debug().Msgf("Proposal %+v already has enough votes", prop)
+		return nil
+	}
+
+	hash, err := calls.VoteProposal(v.client, v.fabric, v.gasPriceClient, prop)
+	if err != nil {
+		return fmt.Errorf("voting failed. Err: %w", err)
+	}
+
+	log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
+	return nil
+}
+
+func (v *EVMVoter) shouldVoteForProposal(shouldVote chan bool, prop *proposal.Proposal, sleep func(d time.Duration)) {
+	sleep(time.Duration(rand.Intn(20)) * time.Millisecond * 500)
+
+	defer delete(v.pendingProposalVotes, prop.DepositNonce)
+	ps, err := calls.ProposalStatus(v.client, prop)
+	if err != nil {
+		log.Error().Err(err)
+		shouldVote <- false
+		return
+	}
+
+	if ps.Status == relayer.ProposalStatusExecuted || ps.Status == relayer.ProposalStatusCanceled {
+		shouldVote <- false
+		return
+	}
+
+	threshold, err := calls.GetThreshold(v.client, &prop.BridgeAddress)
+	if err != nil {
+		log.Error().Err(err)
+		shouldVote <- false
+		return
+	}
+
+	if ps.YesVotesTotal+v.pendingProposalVotes[prop.DepositNonce] >= threshold {
+		shouldVote <- false
+		return
+	}
+
+	shouldVote <- true
+}
+
+func (v *EVMVoter) trackProposalPendingVotes(ch chan common.Hash) {
+	for msg := range ch {
+		txData, _, err := v.client.TransactionByHash(context.TODO(), msg)
 		if err != nil {
-			return fmt.Errorf("voting failed. Err: %w", err)
+			log.Error().Err(err)
+			continue
+		}
+
+		a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+		if err != nil {
+			log.Error().Err(err)
+			continue
+		}
+
+		m, err := a.MethodById(txData.Data()[:4])
+		if err != nil {
+			continue
+		}
+
+		data, err := m.Inputs.UnpackValues(txData.Data()[4:])
+		if err != nil {
+			log.Error().Err(err)
+			continue
+		}
+
+		if m.Name == "voteProposal" {
+			depositNonce := data[1].(uint64)
+			v.pendingProposalVotes[depositNonce]++
 		}
 	}
-	return nil
 }
