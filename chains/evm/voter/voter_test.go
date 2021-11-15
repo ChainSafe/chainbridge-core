@@ -42,7 +42,7 @@ func (s *VoterTestSuite) SetupTest() {
 	s.mockMessageHandler = mock_voter.NewMockMessageHandler(gomockController)
 	s.mockClient = mock_voter.NewMockChainClient(gomockController)
 	s.mockClient.EXPECT().SubscribePendingTransactions(gomock.Any(), gomock.Any())
-	s.voter = voter.NewVoter(
+	s.voter, _ = voter.NewVoter(
 		s.mockMessageHandler,
 		s.mockClient,
 		evmtransaction.NewTransaction,

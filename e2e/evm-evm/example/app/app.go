@@ -48,8 +48,11 @@ func Run() error {
 	mh := voter.NewEVMMessageHandler(evm1Client, common.HexToAddress(evm1Cfg.SharedEVMConfig.Bridge))
 	mh.RegisterMessageHandler(common.HexToAddress(evm1Cfg.SharedEVMConfig.Erc20Handler), voter.ERC20MessageHandler)
 	mh.RegisterMessageHandler(common.HexToAddress(evm1Cfg.SharedEVMConfig.GenericHandler), voter.GenericMessageHandler)
-	evmeVoter := voter.NewVoter(mh, evm1Client, evmtransaction.NewTransaction, evmgaspricer.NewLondonGasPriceClient(evm1Client, nil))
 
+	evmeVoter, err := voter.NewVoter(mh, evm1Client, evmtransaction.NewTransaction, evmgaspricer.NewLondonGasPriceClient(evm1Client, nil))
+	if err != nil {
+		panic(err)
+	}
 	evm1Chain := evm.NewEVMChain(evm1Listener, evmeVoter, db, *evm1Cfg.SharedEVMConfig.GeneralChainConfig.Id, &evm1Cfg.SharedEVMConfig)
 
 	////EVM2 setup
@@ -69,8 +72,11 @@ func Run() error {
 	mhEVM := voter.NewEVMMessageHandler(evm2Client, common.HexToAddress(evm2Config.SharedEVMConfig.Bridge))
 	mhEVM.RegisterMessageHandler(common.HexToAddress(evm2Config.SharedEVMConfig.Erc20Handler), voter.ERC20MessageHandler)
 	mhEVM.RegisterMessageHandler(common.HexToAddress(evm2Config.SharedEVMConfig.GenericHandler), voter.GenericMessageHandler)
-	evm2Voter := voter.NewVoter(mhEVM, evm2Client, evmtransaction.NewTransaction, evmgaspricer.NewLondonGasPriceClient(evm2Client, nil))
 
+	evm2Voter, err := voter.NewVoter(mhEVM, evm2Client, evmtransaction.NewTransaction, evmgaspricer.NewLondonGasPriceClient(evm2Client, nil))
+	if err != nil {
+		panic(err)
+	}
 	evm2Chain := evm.NewEVMChain(evm2Listener, evm2Voter, db, *evm2Config.SharedEVMConfig.GeneralChainConfig.Id, &evm2Config.SharedEVMConfig)
 
 	r := relayer.NewRelayer(relayerConfig.RelayerConfig{PrometheusEndpoint: "/metrics", PrometheusPort: 2112}, []relayer.RelayedChain{evm2Chain, evm1Chain})

@@ -51,7 +51,7 @@ type EVMVoter struct {
 	pendingProposalVotes map[common.Hash]uint8
 }
 
-func NewVoter(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasPriceClient calls.GasPricer) *EVMVoter {
+func NewVoter(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasPriceClient calls.GasPricer) (*EVMVoter, error) {
 	voter := &EVMVoter{
 		mh:                   mh,
 		client:               client,
@@ -61,10 +61,13 @@ func NewVoter(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasP
 	}
 
 	ch := make(chan common.Hash)
-	go voter.trackProposalPendingVotes(ch)
-	client.SubscribePendingTransactions(context.TODO(), ch)
+	_, err := client.SubscribePendingTransactions(context.TODO(), ch)
+	if err != nil {
+		return nil, err
+	}
 
-	return voter
+	go voter.trackProposalPendingVotes(ch)
+	return voter, nil
 }
 
 // VoteProposal checks if relayer already voted and is threshold
