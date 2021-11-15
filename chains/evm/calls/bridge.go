@@ -284,7 +284,7 @@ func ProposalStatus(evmCaller ContractCallerClient, p *proposal.Proposal) (relay
 	if err != nil {
 		return relayer.ProposalStatus{}, err
 	}
-	input, err := a.Pack("getProposal", p.Source, p.DepositNonce, SliceTo32Bytes(p.Data))
+	input, err := a.Pack("getProposal", p.Source, p.DepositNonce, p.GetDataHash())
 	if err != nil {
 		return relayer.ProposalStatus{}, err
 	}

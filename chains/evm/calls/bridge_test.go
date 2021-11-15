@@ -65,14 +65,14 @@ func (s *ProposalStatusTestSuite) TestProposalStatusFailedUnpack() {
 }
 
 func (s *ProposalStatusTestSuite) TestProposalStatusSuccessfulCall() {
-	proposalStatus, _ := hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
+	proposalStatus, _ := hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000001c0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000001f")
 	s.mockContractCaller.EXPECT().CallContract(gomock.Any(), gomock.Any(), nil).Return(proposalStatus, nil)
 
 	status, err := calls.ProposalStatus(s.mockContractCaller, &proposal.Proposal{})
 
 	s.Nil(err)
-	s.Equal(int64(0), status.ProposedBlock.Int64())
-	s.Equal(int64(0), status.YesVotes.Int64())
+	s.Equal(status.YesVotesTotal, uint8(3))
+	s.Equal(status.Status, relayer.ProposalStatusExecuted)
 }
 
 func TestPrepareWithdrawInput(t *testing.T) {
