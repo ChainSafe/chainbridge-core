@@ -27,6 +27,10 @@ const (
 	shouldVoteCheckPeriod = 15
 )
 
+var (
+	Sleep = time.Sleep
+)
+
 type ChainClient interface {
 	RelayerAddress() common.Address
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
@@ -78,7 +82,7 @@ func (v *EVMVoter) VoteProposal(m *relayer.Message) error {
 	}
 
 	shouldVoteChn := make(chan bool)
-	go v.shouldVoteForProposal(shouldVoteChn, prop, time.Sleep, 0)
+	go v.shouldVoteForProposal(shouldVoteChn, prop, 0)
 
 	shouldVote := <-shouldVoteChn
 	if !shouldVote {
@@ -95,13 +99,13 @@ func (v *EVMVoter) VoteProposal(m *relayer.Message) error {
 	return nil
 }
 
-func (v *EVMVoter) shouldVoteForProposal(shouldVote chan bool, prop *proposal.Proposal, sleep func(d time.Duration), tries int) {
-	sleep(time.Duration(rand.Intn(shouldVoteCheckPeriod)) * time.Second)
+func (v *EVMVoter) shouldVoteForProposal(shouldVote chan bool, prop *proposal.Proposal, tries int) {
 	propID := prop.GetID()
-
 	defer delete(v.pendingProposalVotes, propID)
-	ps, err := calls.ProposalStatus(v.client, prop)
 
+	Sleep(time.Duration(rand.Intn(shouldVoteCheckPeriod)) * time.Second)
+
+	ps, err := calls.ProposalStatus(v.client, prop)
 	if err != nil {
 		log.Error().Err(err)
 		shouldVote <- false
@@ -124,7 +128,7 @@ func (v *EVMVoter) shouldVoteForProposal(shouldVote chan bool, prop *proposal.Pr
 		// Wait until proposal status is finalized to prevent missing votes
 		// in case of dropped txs
 		tries++
-		v.shouldVoteForProposal(shouldVote, prop, sleep, tries)
+		v.shouldVoteForProposal(shouldVote, prop, tries)
 		return
 	}
 
