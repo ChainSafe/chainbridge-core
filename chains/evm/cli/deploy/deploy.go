@@ -44,6 +44,7 @@ var (
 	// Flags for all EVM Deploy CLI commands
 	Bridge           bool
 	Erc20Handler     bool
+	GenericHandler   bool
 	Erc20            bool
 	Erc721           bool
 	DeployAll        bool
@@ -59,8 +60,8 @@ var (
 func BindDeployEVMFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&Bridge, "bridge", false, "deploy bridge")
 	cmd.Flags().BoolVar(&Erc20Handler, "erc20Handler", false, "deploy ERC20 handler")
+	cmd.Flags().BoolVar(&GenericHandler, "genericHandler", false, "deploy generic handler")
 	//deployCmd.Flags().Bool("erc721Handler", false, "deploy ERC721 handler")
-	//deployCmd.Flags().Bool("genericHandler", false, "deploy generic handler")
 	cmd.Flags().BoolVar(&Erc20, "erc20", false, "deploy ERC20")
 	cmd.Flags().BoolVar(&Erc721, "erc721", false, "deploy ERC721")
 	cmd.Flags().BoolVar(&DeployAll, "all", false, "deploy all")
@@ -76,6 +77,7 @@ func BindDeployEVMFlags(cmd *cobra.Command) {
 func init() {
 	BindDeployEVMFlags(DeployEVM)
 }
+
 func ValidateDeployFlags(cmd *cobra.Command, args []string) error {
 	deployments = make([]string, 0)
 	if DeployAll {
@@ -92,15 +94,24 @@ func ValidateDeployFlags(cmd *cobra.Command, args []string) error {
 			}
 			deployments = append(deployments, "erc20Handler")
 		}
+		if GenericHandler {
+			if !Bridge {
+				flags.MarkFlagsAsRequired(cmd, "bridgeAddress")
+			}
+
+			deployments = append(deployments, "genericHandler")
+		}
 		if Erc20 {
 			flags.MarkFlagsAsRequired(cmd, "erc20Symbol", "erc20Name")
 			deployments = append(deployments, "erc20")
 		}
 	}
+
 	if len(deployments) == 0 {
 		log.Error().Err(ErrNoDeploymentFlagsProvided)
 		return ErrNoDeploymentFlagsProvided
 	}
+
 	return nil
 }
 
@@ -133,8 +144,10 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPr
 	if err != nil {
 		return err
 	}
+
 	log.Debug().Msgf("url: %s gas limit: %v gas price: %v", url, gasLimit, gasPrice)
 	log.Debug().Msgf("SENDER Private key 0x%s", hex.EncodeToString(crypto.FromECDSA(senderKeyPair.PrivateKey())))
+
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("ethereum client error: %v", err)).Msg("error initializing new EVM client")
@@ -165,6 +178,20 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPr
 				return err
 			}
 			deployedContracts["erc20Handler"] = erc20HandlerAddr.String()
+		case "genericHandler":
+			log.Debug().Msgf("deploying generic handler..")
+			emptyAddr := common.Address{}
+			if bridgeAddr == emptyAddr {
+				log.Error().Err(errors.New("bridge flag or bridgeAddress param should be set for contracts deployments"))
+				return err
+			}
+
+			genericHandlerAddr, err := calls.DeployGenericHandler(ethClient, txFabric, gasPricer, bridgeAddr)
+			if err != nil {
+				log.Error().Err(fmt.Errorf("Generic handler deploy failed: %w", err))
+				return err
+			}
+			deployedContracts["genericHandler"] = genericHandlerAddr.String()
 		case "erc20":
 			log.Debug().Msgf("deploying ERC20..")
 			erc20Addr, err := calls.DeployErc20(ethClient, txFabric, gasPricer, Erc20Name, Erc20Symbol)
@@ -175,6 +202,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPr
 			deployedContracts["erc20Token"] = erc20Addr.String()
 		}
 	}
-	fmt.Printf("%+v", deployedContracts)
+
+	log.Info().Msgf("%+v", deployedContracts)
 	return nil
 }
