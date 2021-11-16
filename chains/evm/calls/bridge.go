@@ -138,7 +138,7 @@ func ConstructErc20DepositData(destRecipient []byte, amount *big.Int) []byte {
 
 func ConstructErc721DepositData(tokenId *big.Int, destRecipient []byte) []byte {
 	var data []byte
-	data = append(data, math.PaddedBigBytes(tokenId, 32)...)                               // Resource Id + Token Id
+	data = append(data, math.PaddedBigBytes(tokenId, 32)...)                               // Token Id
 	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(destRecipient))), 32)...) // Length of recipient
 	data = append(data, destRecipient...)                                                  // Recipient
 	return data

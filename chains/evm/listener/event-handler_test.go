@@ -90,6 +90,57 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleEventIncorrectDataLen() {
 	s.EqualError(err, errIncorrectDataLen.Error())
 }
 
+type Erc721HandlerTestSuite struct {
+	suite.Suite
+}
+
+func TestRunErc721HandlerTestSuite(t *testing.T) {
+	suite.Run(t, new(Erc721HandlerTestSuite))
+}
+
+func (s *Erc721HandlerTestSuite) SetupSuite()    {}
+func (s *Erc721HandlerTestSuite) TearDownSuite() {}
+func (s *Erc721HandlerTestSuite) SetupTest()     {}
+func (s *Erc721HandlerTestSuite) TearDownTest()  {}
+
+func (s *Erc721HandlerTestSuite) TestErc721EventHandler() {
+	// 0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b
+	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}
+
+	calldata := calls.ConstructErc721DepositData(big.NewInt(2), recipientByteSlice)
+	depositLog := &evmclient.DepositLogs{
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		Data:                calldata,
+		HandlerResponse:     []byte{},
+	}
+
+	sourceID := uint8(1)
+	tokenId := calldata[:32]
+	recipientAddressParsed := calldata[64:]
+
+	expected := &relayer.Message{
+		Source:       sourceID,
+		Destination:  depositLog.DestinationDomainID,
+		DepositNonce: depositLog.DepositNonce,
+		ResourceId:   depositLog.ResourceID,
+		Type:         relayer.NonFungibleTransfer,
+		Payload: []interface{}{
+			tokenId,
+			recipientAddressParsed,
+			[]byte{},
+		},
+	}
+
+	message, err := listener.Erc721EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
+	s.Nil(err)
+	s.NotNil(message)
+	s.Equal(message, expected)
+
+}
+
 type GenericHandlerTestSuite struct {
 	suite.Suite
 }

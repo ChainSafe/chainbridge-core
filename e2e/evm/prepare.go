@@ -93,7 +93,7 @@ func PrepareErc721EVME2EEnv(ethClient E2EClient, fabric calls.TxFabric, bridgeAd
 
 	gasLimit := uint64(2000000)
 	// Registering resource
-	resourceID := calls.SliceTo32Bytes(append(common.LeftPadBytes(erc721Addr.Bytes(), 31), 0))
+	resourceID := calls.SliceTo32Bytes(append(common.LeftPadBytes(erc721Addr.Bytes(), 31), uint8(2)))
 	registerResourceInput, err := calls.PrepareAdminSetResourceInput(erc721HandlerAddr, resourceID, erc721Addr)
 	if err != nil {
 		return common.Address{}, common.Address{}, err
@@ -103,10 +103,22 @@ func PrepareErc721EVME2EEnv(ethClient E2EClient, fabric calls.TxFabric, bridgeAd
 		return common.Address{}, common.Address{}, err
 	}
 
-	// calls.ERC721Mint(ethClient, fabric, staticGasPricer, gasLimit)
+	// Adding minter
+	_, err = calls.ERC721AddMinter(ethClient, fabric, staticGasPricer, gasLimit, erc721Addr, erc721HandlerAddr)
+	if err != nil {
+		return common.Address{}, common.Address{}, err
+	}
 
-	return common.Address{}, common.Address{}, nil
+	setBurnInput, err := calls.PrepareSetBurnableInput(erc721HandlerAddr, erc721Addr)
+	if err != nil {
+		return common.Address{}, common.Address{}, err
+	}
+	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &bridgeAddr, setBurnInput, gasLimit, big.NewInt(0))
+	if err != nil {
+		return common.Address{}, common.Address{}, err
+	}
 
+	return erc721Addr, erc721HandlerAddr, nil
 }
 
 func PrepareErc20EVME2EEnv(ethClient E2EClient, fabric calls.TxFabric, bridgeAddr, mintTo common.Address) (common.Address, common.Address, error) {
