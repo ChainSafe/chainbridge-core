@@ -141,7 +141,7 @@ func ConstructErc721DepositData(destRecipient []byte, tokenId *big.Int, metadata
 	data = append(data, math.PaddedBigBytes(tokenId, 32)...)                               // Token Id
 	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(destRecipient))), 32)...) // Length of recipient
 	data = append(data, destRecipient...)                                                  // Recipient
-	data = append(data, metadata...)
+	data = append(data, metadata...)                                                       // Metadata
 	return data
 }
 
