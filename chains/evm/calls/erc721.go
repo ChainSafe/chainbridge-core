@@ -88,6 +88,9 @@ func ERC721Owner(client ContractCallerDispatcherClient, tokenId *big.Int, erc721
 	}
 
 	res, err := UnpackErc721Result("ownerOf", out)
+	if err != nil {
+		return nil, err
+	}
 
 	ownerAddr := abi.ConvertType(res[0], new(common.Address)).(*common.Address)
 
