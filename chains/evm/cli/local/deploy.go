@@ -1,4 +1,7 @@
-package evm
+// Copyright 2021 ChainSafe Systems
+// SPDX-License-Identifier: LGPL-3.0-only
+
+package local
 
 import (
 	"fmt"
@@ -26,11 +29,11 @@ var (
 )
 
 type EVME2EConfig struct {
-	bridgeAddr         common.Address
-	erc20Addr          common.Address
-	erc20HandlerAddr   common.Address
-	assetStoreAddr     common.Address
-	genericHandlerAddr common.Address
+	BridgeAddr         common.Address
+	Erc20Addr          common.Address
+	Erc20HandlerAddr   common.Address
+	AssetStoreAddr     common.Address
+	GenericHandlerAddr common.Address
 }
 
 type E2EClient interface {
@@ -39,7 +42,7 @@ type E2EClient interface {
 	calls.ClientDeployer
 }
 
-func PrepareEVME2EEnv(
+func PrepareLocalEVME2EEnv(
 	ethClient E2EClient,
 	fabric calls.TxFabric,
 	domainID uint8,
@@ -64,13 +67,13 @@ func PrepareEVME2EEnv(
 	log.Debug().Msgf("All deployments and preparations are done")
 
 	return EVME2EConfig{
-		bridgeAddr: bridgeAddr,
+		BridgeAddr: bridgeAddr,
 
-		erc20Addr:        erc20Addr,
-		erc20HandlerAddr: erc20HandlerAddr,
+		Erc20Addr:        erc20Addr,
+		Erc20HandlerAddr: erc20HandlerAddr,
 
-		genericHandlerAddr: genericHandlerAddr,
-		assetStoreAddr:     assetStoreAddr,
+		GenericHandlerAddr: genericHandlerAddr,
+		AssetStoreAddr:     assetStoreAddr,
 	}, nil
 }
 
