@@ -109,38 +109,41 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 	s.NotEmpty(s.erc721HandlerAddr)
 	gasLimit := uint64(2000000)
 	tokenId := big.NewInt(1)
+	metadata := "metadata.url"
 
 	dstAddr := keystore.TestKeyRing.EthereumKeys[keystore.BobKey].CommonAddress()
 
-	// Mint token
-	_, err := calls.ERC721Mint(s.client, s.fabric1, s.gasPricer, gasLimit, tokenId, "test.url", s.erc721ContractAddr, s.adminKey.CommonAddress())
+	// Mint token and give approval
+	// This is done here so token only exists on evm1
+	_, err := calls.ERC721Mint(s.client, s.fabric1, s.gasPricer, gasLimit, tokenId, metadata, s.erc721ContractAddr, s.adminKey.CommonAddress())
 	s.Nil(err, "Mint failed")
-
-	// Give erc721handler approval for tokens
 	_, err = calls.ERC721Approve(s.client, s.fabric1, s.gasPricer, gasLimit, tokenId, s.erc721ContractAddr, s.erc721HandlerAddr)
 	s.Nil(err, "Approve failed")
 
+	// Check on evm1 if initial owner is admin
 	initialOwner, err := calls.ERC721Owner(s.client, tokenId, s.erc721ContractAddr)
 	s.Nil(err)
 	s.Equal(initialOwner.String(), s.adminKey.CommonAddress().String())
 
+	// Check on evm2 token doesn't exist
 	_, err = calls.ERC721Owner(s.client2, tokenId, s.erc721ContractAddr)
 	s.Error(err)
 
-	data := calls.ConstructErc721DepositData(tokenId, dstAddr.Bytes())
+	data := calls.ConstructErc721DepositData(dstAddr.Bytes(), tokenId, []byte(metadata))
 	_, err = calls.Deposit(s.client, s.fabric1, s.gasPricer, s.bridgeAddr, s.erc721RID, 2, data)
 	s.Nil(err)
 
 	//Wait 120 seconds for relayer vote
 	time.Sleep(120 * time.Second)
 
+	// Check on evm1 that token is burned
 	_, err = calls.ERC721Owner(s.client, tokenId, s.erc721ContractAddr)
 	s.Error(err)
 
+	// Ch
 	owner, err := calls.ERC721Owner(s.client2, tokenId, s.erc721ContractAddr)
 	s.Nil(err)
 	s.Equal(dstAddr.String(), owner.String())
-
 }
 
 func (s *IntegrationTestSuite) TestErc20Deposit() {
