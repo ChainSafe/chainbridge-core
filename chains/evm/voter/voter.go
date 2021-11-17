@@ -55,7 +55,7 @@ type EVMVoter struct {
 // that listens to pending voteProposal transactions and avoids wasting gas
 // on sending votes for transactions that will fail.
 // Currently, officialy supported only by Geth nodes.
-func NewVoterWithSubscription(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasPriceClient calls.GasPricer, subscribeToPendingTxs bool) (*EVMVoter, error) {
+func NewVoterWithSubscription(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasPriceClient calls.GasPricer) (*EVMVoter, error) {
 	voter := &EVMVoter{
 		mh:                   mh,
 		client:               client,
@@ -69,7 +69,6 @@ func NewVoterWithSubscription(mh MessageHandler, client ChainClient, fabric call
 	if err != nil {
 		return nil, err
 	}
-
 	go voter.trackProposalPendingVotes(ch)
 
 	return voter, nil

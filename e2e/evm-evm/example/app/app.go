@@ -49,7 +49,7 @@ func Run() error {
 	mh.RegisterMessageHandler(common.HexToAddress(evm1Cfg.SharedEVMConfig.Erc20Handler), voter.ERC20MessageHandler)
 	mh.RegisterMessageHandler(common.HexToAddress(evm1Cfg.SharedEVMConfig.GenericHandler), voter.GenericMessageHandler)
 
-	evmeVoter, err := voter.NewVoter(mh, evm1Client, evmtransaction.NewTransaction, evmgaspricer.NewLondonGasPriceClient(evm1Client, nil))
+	evmeVoter, err := voter.NewVoterWithSubscription(mh, evm1Client, evmtransaction.NewTransaction, evmgaspricer.NewLondonGasPriceClient(evm1Client, nil))
 	if err != nil {
 		panic(err)
 	}
@@ -73,7 +73,7 @@ func Run() error {
 	mhEVM.RegisterMessageHandler(common.HexToAddress(evm2Config.SharedEVMConfig.Erc20Handler), voter.ERC20MessageHandler)
 	mhEVM.RegisterMessageHandler(common.HexToAddress(evm2Config.SharedEVMConfig.GenericHandler), voter.GenericMessageHandler)
 
-	evm2Voter, err := voter.NewVoter(mhEVM, evm2Client, evmtransaction.NewTransaction, evmgaspricer.NewLondonGasPriceClient(evm2Client, nil))
+	evm2Voter, err := voter.NewVoterWithSubscription(mhEVM, evm2Client, evmtransaction.NewTransaction, evmgaspricer.NewLondonGasPriceClient(evm2Client, nil))
 	if err != nil {
 		panic(err)
 	}
