@@ -205,8 +205,7 @@ func (s *ListenerTestSuite) TestErc721HandleEvent_WithoutMetadata_Sucess() {
 }
 
 func (s *ListenerTestSuite) TestErc721HandleEvent_IncorrectCalldataLen_Failure() {
-	// 0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b
-	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}
+	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194}
 
 	var calldata []byte
 	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(2), 32)...)
