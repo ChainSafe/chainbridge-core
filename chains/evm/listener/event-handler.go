@@ -142,7 +142,7 @@ func GenericEventHandler(sourceID, destId uint8, nonce uint64, resourceID types.
 }
 
 func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error) {
-	if len(calldata) < 84 {
+	if len(calldata) < 64 {
 		err := errors.New("invalid calldata length: less than 84 bytes")
 		return nil, err
 	}
