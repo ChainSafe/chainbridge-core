@@ -17,10 +17,7 @@ require (
 	go.opentelemetry.io/otel v1.1.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric v0.24.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v0.24.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.1.0
-	go.opentelemetry.io/otel/exporters/prometheus v0.24.0
 	go.opentelemetry.io/otel/metric v0.24.0
-	go.opentelemetry.io/otel/sdk v1.1.0
 	go.opentelemetry.io/otel/sdk/export/metric v0.24.0
 	go.opentelemetry.io/otel/sdk/metric v0.24.0
 	go.opentelemetry.io/otel/trace v1.1.0
@@ -30,10 +27,7 @@ require (
 
 require (
 	github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6 // indirect
-	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/btcsuite/btcd v0.20.1-beta // indirect
-	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
-	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deckarep/golang-set v0.0.0-20180603214616-504e848d77ea // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
@@ -47,15 +41,10 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.4.2 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/pierrec/xxHash v0.1.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.11.0 // indirect
-	github.com/prometheus/client_model v0.2.0 // indirect
-	github.com/prometheus/common v0.26.0 // indirect
-	github.com/prometheus/procfs v0.6.0 // indirect
 	github.com/rjeczalik/notify v0.9.1 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
 	github.com/spf13/afero v1.6.0 // indirect
@@ -64,8 +53,8 @@ require (
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.5 // indirect
 	github.com/tklauser/numcpus v0.2.2 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.1.0 // indirect
 	go.opentelemetry.io/otel/internal/metric v0.24.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.1.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.9.0 // indirect
 	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
 	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf // indirect
