@@ -8,7 +8,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
-	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/stretchr/testify/suite"
@@ -47,12 +47,12 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleEvent() {
 	amountParsed := calldata[:32]
 	recipientAddressParsed := calldata[64:]
 
-	expected := &relayer.Message{
+	expected := &message.Message{
 		Source:       sourceID,
 		Destination:  depositLog.DestinationDomainID,
 		DepositNonce: depositLog.DepositNonce,
 		ResourceId:   depositLog.ResourceID,
-		Type:         relayer.FungibleTransfer,
+		Type:         message.FungibleTransfer,
 		Payload: []interface{}{
 			amountParsed,
 			recipientAddressParsed,
@@ -147,12 +147,12 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEventEmptyMetadata() {
 	}
 
 	sourceID := uint8(1)
-	expected := &relayer.Message{
+	expected := &message.Message{
 		Source:       sourceID,
 		Destination:  depositLog.DestinationDomainID,
 		DepositNonce: depositLog.DepositNonce,
 		ResourceId:   depositLog.ResourceID,
-		Type:         relayer.GenericTransfer,
+		Type:         message.GenericTransfer,
 		Payload: []interface{}{
 			metadata,
 		},
@@ -186,12 +186,12 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEvent() {
 	}
 
 	sourceID := uint8(1)
-	expected := &relayer.Message{
+	expected := &message.Message{
 		Source:       sourceID,
 		Destination:  depositLog.DestinationDomainID,
 		DepositNonce: depositLog.DepositNonce,
 		ResourceId:   depositLog.ResourceID,
-		Type:         relayer.GenericTransfer,
+		Type:         message.GenericTransfer,
 		Payload: []interface{}{
 			metadata,
 		},

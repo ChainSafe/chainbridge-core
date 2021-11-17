@@ -15,8 +15,8 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 	"github.com/ChainSafe/chainbridge-core/config"
-	relayerConfig "github.com/ChainSafe/chainbridge-core/config/relayer"
 	"github.com/ChainSafe/chainbridge-core/lvldb"
+	"github.com/ChainSafe/chainbridge-core/opentelemetry"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -73,7 +73,7 @@ func Run() error {
 
 	evm2Chain := evm.NewEVMChain(evm2Listener, evm2Voter, db, *evm2Config.SharedEVMConfig.GeneralChainConfig.Id, &evm2Config.SharedEVMConfig)
 
-	r := relayer.NewRelayer(relayerConfig.RelayerConfig{PrometheusEndpoint: "/metrics", PrometheusPort: 2112}, []relayer.RelayedChain{evm2Chain, evm1Chain})
+	r := relayer.NewRelayer([]relayer.RelayedChain{evm2Chain, evm1Chain}, &opentelemetry.ConsoleTelemetry{})
 
 	go r.Start(stopChn, errChn)
 
