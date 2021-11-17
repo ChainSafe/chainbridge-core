@@ -140,7 +140,7 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 	_, err = calls.ERC721Owner(s.client, tokenId, s.erc721ContractAddr)
 	s.Error(err)
 
-	// Ch
+	// Check on evm2 that token is minted to destination address
 	owner, err := calls.ERC721Owner(s.client2, tokenId, s.erc721ContractAddr)
 	s.Nil(err)
 	s.Equal(dstAddr.String(), owner.String())
