@@ -1,6 +1,7 @@
 package calls
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"math/big"
@@ -338,15 +339,28 @@ func IsProposalVotedBy(evmCaller ContractCallerClient, by common.Address, p *pro
 	return out0, nil
 }
 
-// Public function to generate bytedata for adminWithdraw contract method
+// private function to generate bytedata for adminWithdraw contract method
 // Used to manually withdraw funds from ERC safes
-// @dev data is ABI-encoded withdrawal parameters specific to the handler
-// https://github.com/ChainSafe/chainbridge-solidity/blob/anderson/add-erc1155-support/contracts/Bridge.sol#L304-L315
-func PrepareWithdrawInput(handlerAddress common.Address, data []byte) ([]byte, error) {
+func prepareWithdrawInput(
+	handlerAddress,
+	tokenAddress,
+	recipientAddress common.Address,
+	realAmount *big.Int,
+) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
 	}
+
+	// @dev withdrawal data should include:
+	// tokenAddress
+	// recipientAddress
+	// amountOrTokenID
+	data := bytes.Buffer{}
+	data.Write(common.LeftPadBytes(tokenAddress.Bytes(), 32))
+	data.Write(common.LeftPadBytes(recipientAddress.Bytes(), 32))
+	data.Write(common.LeftPadBytes(realAmount.Bytes(), 32))
+
 	input, err := a.Pack(
 		"adminWithdraw",
 		handlerAddress,
@@ -356,4 +370,31 @@ func PrepareWithdrawInput(handlerAddress common.Address, data []byte) ([]byte, e
 		return []byte{}, err
 	}
 	return input, nil
+}
+
+func Withdraw(client ClientDispatcher, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, bridgeAddress, handlerAddress, tokenAddress, recipientAddress common.Address, amountOrTokenId *big.Int) (*common.Hash, error) {
+	withdrawInput, err := prepareWithdrawInput(
+		handlerAddress,
+		tokenAddress,
+		recipientAddress,
+		amountOrTokenId,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("withdrawal input error: %v", err)
+	}
+	h, err := Transact(
+		client,
+		txFabric,
+		gasPricer,
+		&bridgeAddress,
+		withdrawInput,
+		gasLimit,
+		big.NewInt(0),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("withdrawal failed %w", err)
+	}
+	log.Debug().Str("hash", h.String()).Msgf("Withdrawal sent")
+
+	return &h, nil
 }

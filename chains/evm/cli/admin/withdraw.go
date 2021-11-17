@@ -1,8 +1,6 @@
 package admin
 
 import (
-	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"math/big"
@@ -43,19 +41,19 @@ var withdrawCmd = &cobra.Command{
 	},
 }
 
-func BindWithdrawCmdFlags() {
-	withdrawCmd.Flags().StringVar(&Amount, "amount", "", "token amount to withdraw. Should be set or ID or amount if both set error will occur")
-	withdrawCmd.Flags().StringVar(&TokenID, "tokenId", "", "token ID to withdraw. Should be set or ID or amount if both set error will occur")
-	withdrawCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	withdrawCmd.Flags().StringVar(&Handler, "handler", "", "handler contract address")
-	withdrawCmd.Flags().StringVar(&Token, "token", "", "ERC20 or ERC721 token contract address")
-	withdrawCmd.Flags().StringVar(&Recipient, "recipient", "", "address to withdraw to")
-	withdrawCmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
+func BindWithdrawCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Amount, "amount", "", "token amount to withdraw. Should be set or ID or amount if both set error will occur")
+	cmd.Flags().StringVar(&TokenID, "tokenId", "", "token ID to withdraw. Should be set or ID or amount if both set error will occur")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	cmd.Flags().StringVar(&Handler, "handler", "", "handler contract address")
+	cmd.Flags().StringVar(&Token, "token", "", "ERC20 or ERC721 token contract address")
+	cmd.Flags().StringVar(&Recipient, "recipient", "", "address to withdraw to")
+	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
 	flags.MarkFlagsAsRequired(withdrawCmd, "amount", "tokenId", "bridge", "handler", "token", "recipient", "decimals")
 }
 
 func init() {
-	BindWithdrawCmdFlags()
+	BindWithdrawCmdFlags(withdrawCmd)
 }
 
 func ValidateWithdrawCmdFlags(cmd *cobra.Command, args []string) error {
@@ -112,36 +110,22 @@ func WithdrawCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gas
 	gasPricer.SetClient(ethClient)
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
-	// @dev withdrawal data should include:
-	// tokenAddr => common.Address
-	// recipientAddr => common.Address
-	// amountOrTokenID => uint256 (*big.Int)
-	withdrawalData := bytes.Buffer{}
-	withdrawalData.Write(common.LeftPadBytes(tokenAddr.Bytes(), 32))
-	withdrawalData.Write(common.LeftPadBytes(recipientAddr.Bytes(), 32))
-	withdrawalData.Write(common.LeftPadBytes(realAmount.Bytes(), 32))
-
-	input, err := calls.PrepareWithdrawInput(handlerAddr, withdrawalData.Bytes())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("admin withdrawal input error: %v", err))
-		return err
-	}
-	blockNum, err := ethClient.BlockNumber(context.Background())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("block fetch error: %v", err))
-		return err
-	}
-
-	log.Debug().Msgf("blockNum: %v", blockNum)
-
-	txHash, err := calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddr, input, gasLimit, big.NewInt(0))
+	txHash, err := calls.Withdraw(
+		ethClient,
+		txFabric,
+		gasPricer,
+		gasLimit,
+		bridgeAddr,
+		handlerAddr,
+		tokenAddr,
+		recipientAddr,
+		big.NewInt(0),
+	)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("admin withdrawal error: %v", err))
 	}
 
-	log.Debug().Msgf("admin withdrawal hash: %s", txHash.Hex())
-
-	log.Info().Msgf("%s tokens were withdrawn from handler contract %s into recipient %s", Amount, Handler, Recipient)
+	log.Info().Msgf("%s tokens were withdrawn from handler contract %s into recipient %s; tx hash: %s", Amount, Handler, Recipient, txHash.Hex())
 
 	return nil
 }
