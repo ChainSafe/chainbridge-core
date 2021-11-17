@@ -45,6 +45,7 @@ func BindDepositCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&DestionationID, "destId", "", "destination domain ID")
 	cmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID for transfer")
 	cmd.Flags().StringVar(&TokenId, "tokenId", "", "ERC721 token ID")
+	cmd.Flags().StringVar(&Metadata, "metadata", "", "ERC721 metadata")
 	flags.MarkFlagsAsRequired(cmd, "recipient", "bridge", "destId", "resourceId", "tokenId")
 }
 
@@ -93,7 +94,7 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasP
 	}
 
 	txHash, err := calls.ERC721Deposit(
-		ethClient, txFabric, gasPricer.(calls.GasPricer), gasLimit, tokenId, destinationID, resourceId, bridgeAddr, recipientAddr,
+		ethClient, txFabric, gasPricer.(calls.GasPricer), gasLimit, tokenId, Metadata, destinationID, resourceId, bridgeAddr, recipientAddr,
 	)
 	if err != nil {
 		return err

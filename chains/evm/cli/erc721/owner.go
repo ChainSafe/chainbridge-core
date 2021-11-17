@@ -77,11 +77,11 @@ func OwnerCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPri
 	gasPricer.SetClient(ethClient)
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
-	_, err = calls.ERC721Owner(ethClient, txFabric, gasPricer.(calls.GasPricer), gasLimit, tokenId, erc721Addr)
+	owner, err := calls.ERC721Owner(ethClient, tokenId, erc721Addr)
 	if err != nil {
 		return err
 	}
 
-	log.Info().Msgf("%v token owner", tokenId)
+	log.Info().Msgf("%v token owner: %v", tokenId, owner)
 	return err
 }

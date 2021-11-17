@@ -1,7 +1,6 @@
 package erc721
 
 import (
-	"encoding/hex"
 	"fmt"
 	"math/big"
 
@@ -76,10 +75,6 @@ func ProcessMintFlags(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid token id value")
 	}
 
-	if Metadata[0:2] == "0x" {
-		Metadata = Metadata[2:]
-	}
-	metadata, err = hex.DecodeString(Metadata)
 	return err
 }
 
@@ -94,7 +89,7 @@ func MintCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPric
 	gasPricer.SetClient(ethClient)
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
-	_, err = calls.ERC721Mint(ethClient, txFabric, gasPricer.(calls.GasPricer), gasLimit, tokenId, metadata, erc721Addr, dstAddress)
+	_, err = calls.ERC721Mint(ethClient, txFabric, gasPricer.(calls.GasPricer), gasLimit, tokenId, Metadata, erc721Addr, dstAddress)
 	if err != nil {
 		return err
 	}

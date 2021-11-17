@@ -26,7 +26,6 @@ var (
 	erc721Addr    common.Address
 	dstAddress    common.Address
 	tokenId       *big.Int
-	metadata      []byte
 	recipientAddr common.Address
 	bridgeAddr    common.Address
 	destinationID int
