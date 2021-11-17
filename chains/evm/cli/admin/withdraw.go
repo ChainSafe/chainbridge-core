@@ -123,6 +123,7 @@ func WithdrawCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gas
 	)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("admin withdrawal error: %v", err))
+		return err
 	}
 
 	log.Info().Msgf("%s tokens were withdrawn from handler contract %s into recipient %s; tx hash: %s", Amount, Handler, Recipient, txHash.Hex())
