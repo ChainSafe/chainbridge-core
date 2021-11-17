@@ -5,48 +5,45 @@
 package mock_relayer
 
 import (
-	context "context"
 	reflect "reflect"
 
 	message "github.com/ChainSafe/chainbridge-core/relayer/message"
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockTracer is a mock of Tracer interface.
-type MockTracer struct {
+// MockMetrics is a mock of Metrics interface.
+type MockMetrics struct {
 	ctrl     *gomock.Controller
-	recorder *MockTracerMockRecorder
+	recorder *MockMetricsMockRecorder
 }
 
-// MockTracerMockRecorder is the mock recorder for MockTracer.
-type MockTracerMockRecorder struct {
-	mock *MockTracer
+// MockMetricsMockRecorder is the mock recorder for MockMetrics.
+type MockMetricsMockRecorder struct {
+	mock *MockMetrics
 }
 
-// NewMockTracer creates a new mock instance.
-func NewMockTracer(ctrl *gomock.Controller) *MockTracer {
-	mock := &MockTracer{ctrl: ctrl}
-	mock.recorder = &MockTracerMockRecorder{mock}
+// NewMockMetrics creates a new mock instance.
+func NewMockMetrics(ctrl *gomock.Controller) *MockMetrics {
+	mock := &MockMetrics{ctrl: ctrl}
+	mock.recorder = &MockMetricsMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockTracer) EXPECT() *MockTracerMockRecorder {
+func (m *MockMetrics) EXPECT() *MockMetricsMockRecorder {
 	return m.recorder
 }
 
-// TraceDepositEvent mocks base method.
-func (m_2 *MockTracer) TraceDepositEvent(ctx context.Context, m *message.Message) context.Context {
+// TrackDepositMessage mocks base method.
+func (m_2 *MockMetrics) TrackDepositMessage(m *message.Message) {
 	m_2.ctrl.T.Helper()
-	ret := m_2.ctrl.Call(m_2, "TraceDepositEvent", ctx, m)
-	ret0, _ := ret[0].(context.Context)
-	return ret0
+	m_2.ctrl.Call(m_2, "TrackDepositMessage", m)
 }
 
-// TraceDepositEvent indicates an expected call of TraceDepositEvent.
-func (mr *MockTracerMockRecorder) TraceDepositEvent(ctx, m interface{}) *gomock.Call {
+// TrackDepositMessage indicates an expected call of TrackDepositMessage.
+func (mr *MockMetricsMockRecorder) TrackDepositMessage(m interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TraceDepositEvent", reflect.TypeOf((*MockTracer)(nil).TraceDepositEvent), ctx, m)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrackDepositMessage", reflect.TypeOf((*MockMetrics)(nil).TrackDepositMessage), m)
 }
 
 // MockRelayedChain is a mock of RelayedChain interface.

@@ -1,7 +1,6 @@
 package relayer
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -13,8 +12,8 @@ import (
 
 type RouteTestSuite struct {
 	suite.Suite
-	mockTracer       *mock_relayer.MockTracer
 	mockRelayedChain *mock_relayer.MockRelayedChain
+	mockMetrics      *mock_relayer.MockMetrics
 }
 
 func TestRunRouteTestSuite(t *testing.T) {
@@ -25,61 +24,60 @@ func (s *RouteTestSuite) SetupSuite()    {}
 func (s *RouteTestSuite) TearDownSuite() {}
 func (s *RouteTestSuite) SetupTest() {
 	gomockController := gomock.NewController(s.T())
-	s.mockTracer = mock_relayer.NewMockTracer(gomockController)
 	s.mockRelayedChain = mock_relayer.NewMockRelayedChain(gomockController)
+	s.mockMetrics = mock_relayer.NewMockMetrics(gomockController)
+	s.mockMetrics.EXPECT().TrackDepositMessage(gomock.Any())
 }
 func (s *RouteTestSuite) TearDownTest() {}
 
 func (s *RouteTestSuite) TestLogsErrorIfDestinationDoesNotExist() {
-	s.mockTracer.EXPECT().TraceDepositEvent(gomock.Any(), gomock.Any()).Return(context.Background())
-	relayer := Relayer{}
+	relayer := Relayer{
+		metrics: s.mockMetrics,
+	}
 
-	relayer.route(&message.Message{}, s.mockTracer)
+	relayer.route(&message.Message{})
 }
 
 func (s *RouteTestSuite) TestLogsErrorIfMessageProcessorReturnsError() {
-	s.mockTracer.EXPECT().TraceDepositEvent(gomock.Any(), gomock.Any()).Return(context.Background())
 	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1))
-	relayer := Relayer{
-		messageProcessors: []message.MessageProcessor{
-			func(m *message.Message) error { return fmt.Errorf("error") },
-		},
-	}
+	relayer := NewRelayer(
+		[]RelayedChain{},
+		s.mockMetrics,
+		func(m *message.Message) error { return fmt.Errorf("error") },
+	)
 	relayer.addRelayedChain(s.mockRelayedChain)
 
 	relayer.route(&message.Message{
 		Destination: 1,
-	}, s.mockTracer)
+	})
 }
 
 func (s *RouteTestSuite) TestLogsErrorIfWriteReturnsError() {
-	s.mockTracer.EXPECT().TraceDepositEvent(gomock.Any(), gomock.Any()).Return(context.Background())
 	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1))
 	s.mockRelayedChain.EXPECT().Write(gomock.Any()).Return(fmt.Errorf("Error"))
-	relayer := Relayer{
-		messageProcessors: []message.MessageProcessor{
-			func(m *message.Message) error { return nil },
-		},
-	}
+	relayer := NewRelayer(
+		[]RelayedChain{},
+		s.mockMetrics,
+		func(m *message.Message) error { return nil },
+	)
 	relayer.addRelayedChain(s.mockRelayedChain)
 
 	relayer.route(&message.Message{
 		Destination: 1,
-	}, s.mockTracer)
+	})
 }
 
 func (s *RouteTestSuite) TestWritesToDestChainIfMessageValid() {
-	s.mockTracer.EXPECT().TraceDepositEvent(gomock.Any(), gomock.Any()).Return(context.Background())
 	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1))
 	s.mockRelayedChain.EXPECT().Write(gomock.Any()).Return(nil)
-	relayer := Relayer{
-		messageProcessors: []message.MessageProcessor{
-			func(m *message.Message) error { return nil },
-		},
-	}
+	relayer := NewRelayer(
+		[]RelayedChain{},
+		s.mockMetrics,
+		func(m *message.Message) error { return nil },
+	)
 	relayer.addRelayedChain(s.mockRelayedChain)
 
 	relayer.route(&message.Message{
 		Destination: 1,
-	}, s.mockTracer)
+	})
 }

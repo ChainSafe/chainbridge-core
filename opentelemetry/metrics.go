@@ -17,7 +17,9 @@ type ChainbridgeMetrics struct {
 	DepositEventCount metric.Int64Counter
 }
 
-func newChainbridgeMetrics(meter metric.Meter) *ChainbridgeMetrics {
+// NewChainbridgeMetrics creates an instance of ChainbridgeMetrics
+// with provided OpenTelemetry meter
+func NewChainbridgeMetrics(meter metric.Meter) *ChainbridgeMetrics {
 	return &ChainbridgeMetrics{
 		DepositEventCount: metric.Must(meter).NewInt64Counter(
 			"chainbridge.DepositEventCount",
@@ -46,7 +48,7 @@ func initOpenTelemetryMetrics(opts ...otlpmetrichttp.Option) (*ChainbridgeMetric
 	}
 
 	meter := cont.Meter("chainbridge")
-	metrics := newChainbridgeMetrics(meter)
+	metrics := NewChainbridgeMetrics(meter)
 
 	return metrics, nil
 }
