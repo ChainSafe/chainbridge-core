@@ -41,7 +41,6 @@ func (s *VoterTestSuite) SetupTest() {
 	gomockController := gomock.NewController(s.T())
 	s.mockMessageHandler = mock_voter.NewMockMessageHandler(gomockController)
 	s.mockClient = mock_voter.NewMockChainClient(gomockController)
-	s.mockClient.EXPECT().SubscribePendingTransactions(gomock.Any(), gomock.Any())
 	s.voter = voter.NewVoter(
 		s.mockMessageHandler,
 		s.mockClient,
@@ -97,7 +96,7 @@ func (s *VoterTestSuite) TestVoteProposal_ProposalStatusFail() {
 
 	err := s.voter.VoteProposal(&relayer.Message{})
 
-	s.Nil(err)
+	s.NotNil(err)
 }
 
 func (s *VoterTestSuite) TestVoteProposal_ExecutedProposal() {
@@ -114,7 +113,7 @@ func (s *VoterTestSuite) TestVoteProposal_ExecutedProposal() {
 	s.Nil(err)
 }
 
-func (s *VoterTestSuite) TestVoteProposal_InactiveProposal() {
+func (s *VoterTestSuite) TestVoteProposal_GetThresholdFail() {
 	s.mockMessageHandler.EXPECT().HandleMessage(gomock.Any()).Return(&proposal.Proposal{
 		Source:       0,
 		DepositNonce: 0,
@@ -122,9 +121,9 @@ func (s *VoterTestSuite) TestVoteProposal_InactiveProposal() {
 	s.mockClient.EXPECT().RelayerAddress().Return(common.Address{})
 	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(proposalNotVotedResponse, nil)
 	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(inactiveProposalStatus, nil)
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return([]byte{5}, nil)
+	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return([]byte{}, errors.New("error"))
 
 	err := s.voter.VoteProposal(&relayer.Message{})
 
-	s.Nil(err)
+	s.NotNil(err)
 }
