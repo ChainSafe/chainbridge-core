@@ -4,17 +4,14 @@
 package relayer
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/ChainSafe/chainbridge-core/config/relayer"
-	"github.com/ChainSafe/chainbridge-core/opentelemetry"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/rs/zerolog/log"
 )
 
-type Tracer interface {
-	TraceDepositEvent(ctx context.Context, m *message.Message) context.Context
+type Metrics interface {
+	TrackDepositMessage(m *message.Message)
 }
 
 type RelayedChain interface {
@@ -23,12 +20,12 @@ type RelayedChain interface {
 	DomainID() uint8
 }
 
-func NewRelayer(config relayer.RelayerConfig, chains []RelayedChain, messageProcessors ...message.MessageProcessor) *Relayer {
-	return &Relayer{relayedChains: chains, messageProcessors: messageProcessors, config: config}
+func NewRelayer(chains []RelayedChain, metrics Metrics, messageProcessors ...message.MessageProcessor) *Relayer {
+	return &Relayer{relayedChains: chains, messageProcessors: messageProcessors, metrics: metrics}
 }
 
 type Relayer struct {
-	config            relayer.RelayerConfig
+	metrics           Metrics
 	relayedChains     []RelayedChain
 	registry          map[uint8]RelayedChain
 	messageProcessors []message.MessageProcessor
@@ -38,22 +35,18 @@ type Relayer struct {
 // and passing them with a channel that accepts unified cross chain message format
 func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 	log.Debug().Msgf("Starting relayer")
+
 	messagesChannel := make(chan *message.Message)
-
-	telemetry, err := opentelemetry.NewOpenTelemetry(r.config)
-	if err != nil {
-		panic(err)
-	}
-
 	for _, c := range r.relayedChains {
 		log.Debug().Msgf("Starting chain %v", c.DomainID())
 		r.addRelayedChain(c)
 		go c.PollEvents(stop, sysErr, messagesChannel)
 	}
+
 	for {
 		select {
 		case m := <-messagesChannel:
-			go r.route(m, telemetry)
+			go r.route(m)
 			continue
 		case <-stop:
 			return
@@ -62,8 +55,8 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 }
 
 // Route function winds destination writer by mapping DestinationID from message to registered writer.
-func (r *Relayer) route(m *message.Message, t Tracer) {
-	_ = t.TraceDepositEvent(context.Background(), m)
+func (r *Relayer) route(m *message.Message) {
+	r.metrics.TrackDepositMessage(m)
 
 	destChain, ok := r.registry[m.Destination]
 	if !ok {
