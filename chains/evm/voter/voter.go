@@ -51,7 +51,11 @@ type EVMVoter struct {
 	pendingProposalVotes map[common.Hash]uint8
 }
 
-func NewVoter(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasPriceClient calls.GasPricer) (*EVMVoter, error) {
+// NewVoterWithSubscription creates EVMVoter with pending proposal subscription
+// that listens to pending voteProposal transactions and avoids wasting gas
+// on sending votes for transactions that will fail.
+// Currently, officialy supported only by Geth nodes.
+func NewVoterWithSubscription(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasPriceClient calls.GasPricer, subscribeToPendingTxs bool) (*EVMVoter, error) {
 	voter := &EVMVoter{
 		mh:                   mh,
 		client:               client,
@@ -67,11 +71,25 @@ func NewVoter(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasP
 	}
 
 	go voter.trackProposalPendingVotes(ch)
+
 	return voter, nil
 }
 
+// NewVoter creates EVMVoter without pending proposal subscription.
+// It is a fallback for nodes that don't support pending transaction subscription
+// and will vote on proposals that already satisfy threshold thus wasting gas.
+func NewVoter(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasPriceClient calls.GasPricer) *EVMVoter {
+	return &EVMVoter{
+		mh:                   mh,
+		client:               client,
+		fabric:               fabric,
+		gasPriceClient:       gasPriceClient,
+		pendingProposalVotes: make(map[common.Hash]uint8),
+	}
+}
+
 // VoteProposal checks if relayer already voted and is threshold
-// satisfied and casts a vote if it isn't
+// satisfied and casts a vote if it isn't.
 func (v *EVMVoter) VoteProposal(m *relayer.Message) error {
 	prop, err := v.mh.HandleMessage(m)
 	if err != nil {
@@ -86,10 +104,12 @@ func (v *EVMVoter) VoteProposal(m *relayer.Message) error {
 		return nil
 	}
 
-	shouldVoteChn := make(chan bool)
-	go v.shouldVoteForProposal(shouldVoteChn, prop, 0)
+	shouldVote, err := v.shouldVoteForProposal(prop, 0)
+	if err != nil {
+		log.Error().Err(err)
+		return err
+	}
 
-	shouldVote := <-shouldVoteChn
 	if !shouldVote {
 		log.Debug().Msgf("Proposal %+v already satisfies threshold", prop)
 		return nil
@@ -104,7 +124,10 @@ func (v *EVMVoter) VoteProposal(m *relayer.Message) error {
 	return nil
 }
 
-func (v *EVMVoter) shouldVoteForProposal(shouldVote chan bool, prop *proposal.Proposal, tries int) {
+// shouldVoteForProposal checks if proposal already has threshold with pending
+// proposal votes from other relayers.
+// Only works in conjuction with NewVoterWithSubscription.
+func (v *EVMVoter) shouldVoteForProposal(prop *proposal.Proposal, tries int) (bool, error) {
 	propID := prop.GetID()
 	defer delete(v.pendingProposalVotes, propID)
 
@@ -112,34 +135,30 @@ func (v *EVMVoter) shouldVoteForProposal(shouldVote chan bool, prop *proposal.Pr
 
 	ps, err := calls.ProposalStatus(v.client, prop)
 	if err != nil {
-		log.Error().Err(err)
-		shouldVote <- false
-		return
+		return false, err
 	}
 
 	if ps.Status == relayer.ProposalStatusExecuted || ps.Status == relayer.ProposalStatusCanceled {
-		shouldVote <- false
-		return
+		return false, nil
 	}
 
 	threshold, err := calls.GetThreshold(v.client, &prop.BridgeAddress)
 	if err != nil {
-		log.Error().Err(err)
-		shouldVote <- false
-		return
+		return false, err
 	}
 
 	if ps.YesVotesTotal+v.pendingProposalVotes[propID] >= threshold && tries < maxShouldVoteChecks {
 		// Wait until proposal status is finalized to prevent missing votes
 		// in case of dropped txs
 		tries++
-		v.shouldVoteForProposal(shouldVote, prop, tries)
-		return
+		return v.shouldVoteForProposal(prop, tries)
 	}
 
-	shouldVote <- true
+	return true, nil
 }
 
+// trackProposalPendingVotes tracks pending voteProposal txs from
+// other relayers.
 func (v *EVMVoter) trackProposalPendingVotes(ch chan common.Hash) {
 	for msg := range ch {
 		txData, _, err := v.client.TransactionByHash(context.TODO(), msg)
@@ -178,6 +197,8 @@ func (v *EVMVoter) trackProposalPendingVotes(ch chan common.Hash) {
 	}
 }
 
+// increaseProposalVoteCount increases pending proposal vote for target proposal
+// and decreases it when transaction is mined.
 func (v *EVMVoter) increaseProposalVoteCount(hash common.Hash, propID common.Hash) {
 	v.pendingProposalVotes[propID]++
 
