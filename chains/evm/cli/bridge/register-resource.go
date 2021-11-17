@@ -39,16 +39,16 @@ var registerResourceCmd = &cobra.Command{
 	},
 }
 
-func BindRegisterResourceCmdFlags() {
-	registerResourceCmd.Flags().StringVar(&Handler, "handler", "", "handler contract address")
-	registerResourceCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	registerResourceCmd.Flags().StringVar(&Target, "target", "", "contract address to be registered")
-	registerResourceCmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID to be registered")
-	flags.MarkFlagsAsRequired(registerResourceCmd, "handler", "bridge", "target", "resourceId")
+func BindRegisterResourceCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Handler, "handler", "", "handler contract address")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	cmd.Flags().StringVar(&Target, "target", "", "contract address to be registered")
+	cmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID to be registered")
+	flags.MarkFlagsAsRequired(cmd, "handler", "bridge", "target", "resourceId")
 }
 
 func init() {
-	BindRegisterResourceCmdFlags()
+	BindRegisterResourceCmdFlags(registerResourceCmd)
 }
 
 func ValidateRegisterResourceFlags(cmd *cobra.Command, args []string) error {

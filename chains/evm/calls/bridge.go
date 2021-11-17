@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/rs/zerolog/log"
 )
 
@@ -41,40 +42,48 @@ func PrepareAdminSetResourceInput(handler common.Address, resourceID types.Resou
 	return input, nil
 }
 
-func PrepareErc20DepositInput(destDomainID uint8, resourceID types.ResourceID, data []byte) ([]byte, error) {
+func PrepareAdminSetGenericResourceInput(
+	handler common.Address,
+	rId types.ResourceID,
+	addr common.Address,
+	depositFunctionSig [4]byte,
+	depositerOffset *big.Int,
+	executeFunctionSig [4]byte,
+) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
 	}
-	input, err := a.Pack("deposit", destDomainID, resourceID, data)
+	input, err := a.Pack("adminSetGenericResource", handler, rId, addr, depositFunctionSig, depositerOffset, executeFunctionSig)
 	if err != nil {
 		return []byte{}, err
 	}
 	return input, nil
 }
 
-func PrepareExecuteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID types.ResourceID, calldata []byte, revertOnFail bool) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+func AdminSetGenericResource(
+	client ClientDispatcher,
+	fabric TxFabric,
+	gasPriceClient GasPricer,
+	handler common.Address,
+	rID types.ResourceID,
+	addr common.Address,
+	depositFunctionSig [4]byte,
+	depositerOffset *big.Int,
+	executeFunctionSig [4]byte,
+) (common.Hash, error) {
+	input, err := PrepareAdminSetGenericResourceInput(handler, rID, addr, depositFunctionSig, depositerOffset, executeFunctionSig)
 	if err != nil {
-		return []byte{}, err
+		return common.Hash{}, err
 	}
-	input, err := a.Pack("executeProposal", sourceDomainID, depositNonce, calldata, resourceID, revertOnFail)
-	if err != nil {
-		return []byte{}, err
-	}
-	return input, nil
-}
 
-func PrepareVoteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID types.ResourceID, calldata []byte) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	gasLimit := uint64(2000000)
+	h, err := Transact(client, fabric, gasPriceClient, &handler, input, gasLimit, big.NewInt(0))
 	if err != nil {
-		return []byte{}, err
+		return common.Hash{}, fmt.Errorf("setting generic resource failed %w", err)
 	}
-	input, err := a.Pack("voteProposal", sourceDomainID, depositNonce, resourceID, calldata)
-	if err != nil {
-		return []byte{}, err
-	}
-	return input, nil
+
+	return h, nil
 }
 
 func PrepareAddRelayerInput(relayer common.Address) ([]byte, error) {
@@ -119,12 +128,47 @@ func ParseIsRelayerOutput(output []byte) (bool, error) {
 	return *b, nil
 }
 
-func Deposit(client ClientDispatcher, fabric TxFabric, gasPriceClient GasPricer, bridgeAddress, recipient common.Address, amount *big.Int, resourceID types.ResourceID, destDomainID uint8) error {
-	data := ConstructErc20DepositData(recipient.Bytes(), amount)
-	input, err := PrepareErc20DepositInput(destDomainID, resourceID, data)
+func ConstructErc20DepositData(destRecipient []byte, amount *big.Int) []byte {
+	var data []byte
+	data = append(data, math.PaddedBigBytes(amount, 32)...)
+	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(destRecipient))), 32)...)
+	data = append(data, destRecipient...)
+	return data
+}
+
+func ConstructGenericDepositData(metadata []byte) []byte {
+	var data []byte
+	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(metadata))), 32)...)
+	data = append(data, metadata...)
+	return data
+}
+
+func PrepareDepositInput(destDomainID uint8, resourceID types.ResourceID, data []byte) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("deposit", destDomainID, resourceID, data)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
+}
+
+func Deposit(
+	client ClientDispatcher,
+	fabric TxFabric,
+	gasPriceClient GasPricer,
+	bridgeAddress common.Address,
+	resourceID types.ResourceID,
+	destDomainID uint8,
+	data []byte,
+) error {
+	input, err := PrepareDepositInput(destDomainID, resourceID, data)
 	if err != nil {
 		return err
 	}
+
 	gasLimit := uint64(2000000)
 	h, err := Transact(client, fabric, gasPriceClient, &bridgeAddress, input, gasLimit, big.NewInt(0))
 	if err != nil {
@@ -132,6 +176,18 @@ func Deposit(client ClientDispatcher, fabric TxFabric, gasPriceClient GasPricer,
 	}
 	log.Debug().Str("hash", h.String()).Msgf("Deposit sent")
 	return nil
+}
+
+func PrepareExecuteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID types.ResourceID, calldata []byte, revertOnFail bool) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("executeProposal", sourceDomainID, depositNonce, calldata, resourceID, revertOnFail)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
 }
 
 func ExecuteProposal(client ClientDispatcher, fabric TxFabric, gasPriceClient GasPricer, proposal *proposal.Proposal) (common.Hash, error) {
@@ -146,6 +202,18 @@ func ExecuteProposal(client ClientDispatcher, fabric TxFabric, gasPriceClient Ga
 		return common.Hash{}, fmt.Errorf("execute proposal failed %w", err)
 	}
 	return h, nil
+}
+
+func PrepareVoteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID types.ResourceID, calldata []byte) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("voteProposal", sourceDomainID, depositNonce, resourceID, calldata)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
 }
 
 func VoteProposal(client ClientDispatcher, fabric TxFabric, gasPriceClient GasPricer, proposal *proposal.Proposal) (common.Hash, error) {
@@ -172,6 +240,42 @@ func PrepareSetDepositNonceInput(domainID uint8, depositNonce uint64) ([]byte, e
 		return []byte{}, err
 	}
 	return input, nil
+}
+
+func PrepareSetThresholdInput(threshold *big.Int) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+	input, err := a.Pack("adminChangeRelayerThreshold", threshold)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
+}
+
+func GetThreshold(evmCaller ContractCallerClient, bridgeAddress *common.Address) (uint8, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return 0, err
+	}
+	input, err := a.Pack("_relayerThreshold")
+	if err != nil {
+		return 0, err
+	}
+	msg := ethereum.CallMsg{From: common.Address{}, To: bridgeAddress, Data: input}
+	out, err := evmCaller.CallContract(context.TODO(), ToCallArg(msg), nil)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := a.Unpack("_relayerThreshold", out)
+	if err != nil {
+		return 0, err
+	}
+
+	out0 := *abi.ConvertType(res[0], new(uint8)).(*uint8)
+	return out0, nil
 }
 
 func ProposalStatus(evmCaller ContractCallerClient, p *proposal.Proposal) (message.ProposalStatus, error) {

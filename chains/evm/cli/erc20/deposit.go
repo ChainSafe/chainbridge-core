@@ -1,7 +1,6 @@
 package erc20
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 
@@ -42,17 +41,17 @@ var depositCmd = &cobra.Command{
 }
 
 func init() {
-	BindDepositCmdFlags()
+	BindDepositCmdFlags(depositCmd)
 }
 
-func BindDepositCmdFlags() {
-	depositCmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
-	depositCmd.Flags().StringVar(&Bridge, "bridge", "", "address of bridge contract")
-	depositCmd.Flags().StringVar(&Amount, "amount", "", "amount to deposit")
-	depositCmd.Flags().Uint64Var(&DomainID, "domainId", 0, "destination domain ID")
-	depositCmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID for transfer")
-	depositCmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
-	flags.MarkFlagsAsRequired(depositCmd, "recipient", "bridge", "amount", "domainId", "resourceId", "decimals")
+func BindDepositCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "address of bridge contract")
+	cmd.Flags().StringVar(&Amount, "amount", "", "amount to deposit")
+	cmd.Flags().Uint64Var(&DomainID, "domainId", 0, "destination domain ID")
+	cmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID for transfer")
+	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
+	flags.MarkFlagsAsRequired(cmd, "recipient", "bridge", "amount", "domainId", "resourceId", "decimals")
 }
 
 func ValidateDepositFlags(cmd *cobra.Command, args []string) error {
@@ -97,20 +96,11 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasP
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
 	data := calls.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
-
-	input, err := calls.PrepareErc20DepositInput(uint8(DomainID), resourceIdBytesArr, data)
+	input, err := calls.PrepareDepositInput(uint8(DomainID), resourceIdBytesArr, data)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit input error: %v", err))
 		return err
 	}
-
-	blockNum, err := ethClient.BlockNumber(context.Background())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("block fetch error: %v", err))
-		return err
-	}
-
-	log.Debug().Msgf("blockNum: %v", blockNum)
 
 	// destinationId
 	txHash, err := calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddr, input, gasLimit, big.NewInt(0))
@@ -119,8 +109,6 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasP
 		return err
 	}
 
-	log.Debug().Msgf("erc20 deposit hash: %s", txHash.Hex())
-
-	log.Info().Msgf("%s tokens were transferred to %s from %s", Amount, recipientAddress.Hex(), senderKeyPair.CommonAddress().String())
+	log.Info().Msgf("%s tokens were transferred to %s from %s with hash %s", Amount, recipientAddress.Hex(), senderKeyPair.CommonAddress().String(), txHash.Hex())
 	return nil
 }

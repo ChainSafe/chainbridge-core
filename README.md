@@ -1,4 +1,4 @@
-# Chainbridge core
+# Chainbridge Core
 <a href="https://discord.gg/ykXsJKfhgq">
   <img alt="discord" src="https://img.shields.io/discord/593655374469660673?label=Discord&logo=discord&style=flat" />
 </a>
@@ -15,6 +15,8 @@ Chainbridge-core is the project that was born from the existing version of [Chai
 3. [Usage](#usage)
 4. [EVM-CLI](#evm-cli)
 5. [Celo-CLI](#celo-cli)
+6. [Substrate](#substrate)
+7. [Local Setup](#local-setup)
 
 ## Installation
 Refer to [installation](https://github.com/ChainSafe/chainbridge-docs/blob/develop/docs/installation.md) guide for assistance in installing.
@@ -24,13 +26,16 @@ Refer to [installation](https://github.com/ChainSafe/chainbridge-docs/blob/devel
 The chainbridge-core-example currently supports two modules:
 1. [EVM-CLI](#evm-cli)
 2. [Celo-CLI](#celo-cli)
+3. [Substrate](#substrate)
 
 ## Usage
 Since chainbridge-core is the modular framework it will require writing some code to get it running. Here you can find some examples
+
 [Example](https://github.com/ChainSafe/chainbridge-core-example)
 
+&nbsp; 
 
-## EVM-CLI
+## `EVM-CLI`
 This module provides instruction for communicating with EVM-compatible chains.
 
 ```bash
@@ -50,7 +55,9 @@ Flags:
   -h, --help   help for evm-cli
 ```
 
-### Accounts
+&nbsp; 
+
+### `Accounts`
 Account instructions, allowing us to generate keypairs or import existing keypairs for use.
 
 ```bash
@@ -66,7 +73,7 @@ Flags:
   -h, --help   help for accounts
 ```
 
-#### generate
+#### `generate`
 The generate subcommand is used to generate the bridge keystore. If no options are specified, a Secp256k1 key will be made.
 
 ```bash
@@ -77,7 +84,7 @@ Flags:
   -h, --help   help for generate
 ```
 
-#### import
+#### `import`
 The import subcommand is used to import a keystore for the bridge.
 
 ```bash
@@ -89,7 +96,7 @@ Flags:
       --password string   password to encrypt with
 ```
 
-#### transfer
+#### `transfer`
 The generate subcommand is used to transfer the base currency.
 
 ```bash
@@ -103,7 +110,9 @@ Flags:
       --recipient string   recipient address
 ```
 
-### Admin
+&nbsp; 
+
+### `Admin`
 Admin-related instructions.
 
 ```bash
@@ -126,7 +135,7 @@ Flags:
   -h, --help   help for admin
 ```
 
-#### add-admin
+#### `add-admin`
 Add a new admin.
 
 ```bash
@@ -139,7 +148,7 @@ Flags:
   -h, --help            help for add-admin
 ```
 
-#### add-relayer
+#### `add-relayer`
 Add a new relayer.
 
 ```bash
@@ -152,7 +161,7 @@ Flags:
       --relayer string   address to add
 ```
 
-#### is-relayer
+#### `is-relayer`
 Check if an address is registered as a relayer.
 
 ```bash
@@ -165,7 +174,7 @@ Flags:
       --relayer string   address to check
 ```
 
-#### pause
+#### `pause`
 Pause deposits and proposals,
 
 ```bash
@@ -178,7 +187,7 @@ Flags:
 
 ```
 
-#### remove-admin
+#### `remove-admin`
 Remove an existing admin.
 
 ```bash
@@ -191,7 +200,7 @@ Flags:
   -h, --help            help for remove-admin
 ```
 
-#### remove-relayer
+#### `remove-relayer`
 Remove a relayer.
 
 ```bash
@@ -204,7 +213,7 @@ Flags:
       --relayer string   address to remove
 ```
 
-#### set-fee
+#### `set-fee`
 Set a new fee for deposits.
 
 ```bash
@@ -217,7 +226,7 @@ Flags:
   -h, --help            help for set-fee
 ```
 
-#### set-threshold
+#### `set-threshold`
 Set a new relayer vote threshold.
 
 ```bash
@@ -230,7 +239,7 @@ Flags:
       --threshold uint   new relayer threshold
 ```
 
-#### unpause
+#### `unpause`
 Unpause deposits and proposals.
 
 ```bash
@@ -242,7 +251,7 @@ Flags:
   -h, --help            help for unpause
 ```
 
-#### withdraw
+#### `withdraw`
 Withdraw tokens from the handler contract.
 
 ```bash
@@ -260,7 +269,9 @@ Flags:
       --token string       ERC20 or ERC721 token contract address
 ```
 
-### Bridge
+&nbsp; 
+
+### `Bridge`
 Bridge-related instructions.
 
 ```bash
@@ -279,7 +290,7 @@ Flags:
   -h, --help   help for bridge
 ```
 
-#### cancel-proposal
+#### `cancel-proposal`
 Cancel an expired proposal.
 
 ```bash
@@ -294,7 +305,7 @@ Flags:
   -h, --help                help for cancel-proposal
 ```
 
-#### query-proposal
+#### `query-proposal`
 Query an inbound proposal.
 
 ```bash
@@ -309,7 +320,7 @@ Flags:
   -h, --help                help for query-proposal
 ```
 
-#### query-resource
+#### `query-resource`
 Query the contract address with the provided resource ID for a specific handler contract.
 
 ```bash
@@ -322,7 +333,7 @@ Flags:
       --resourceId string   resource ID to query
 ```
 
-#### register-generic-resource
+#### `register-generic-resource`
 Register a resource ID with a contract address for a generic handler.
 
 ```bash
@@ -332,6 +343,7 @@ Usage:
 Flags:
       --bridge string       bridge contract address
       --deposit string      deposit function signature (default "0x00000000")
+      --depositerOffset int   depositer address position offset in the metadata, in bytes
       --execute string      execute proposal function signature (default "0x00000000")
       --handler string      handler contract address
       --hash                treat signature inputs as function prototype strings, hash and take the first 4 bytes
@@ -340,7 +352,7 @@ Flags:
       --target string       contract address to be registered
 ```
 
-#### register-resource
+#### `register-resource`
 Register a resource ID
 
 ```bash
@@ -355,7 +367,7 @@ Flags:
       --target string       contract address to be registered
 ```
 
-#### set-burn
+#### `set-burn`
 Set a token contract as mintable/burnable
 
 ```bash
@@ -369,7 +381,9 @@ Flags:
       --tokenContract string   token contract to be registered
 ```
 
-### Deploy
+&nbsp; 
+
+### `Deploy`
 Deploy smart contracts.
 
 Used to deploy all or some of the contracts required for bridging. Selection of contracts can be made by either specifying --all or a subset of flags
@@ -388,13 +402,16 @@ Flags:
       --erc20Name string        ERC20 contract name
       --erc20Symbol string      ERC20 contract symbol
       --erc721                  deploy ERC721
+      --genericHandler          deploy generic handler
       --fee string              fee to be taken when making a deposit (in ETH, decimas are allowed) (default "0")
   -h, --help                    help for deploy
       --relayerThreshold uint   number of votes required for a proposal to pass (default 1)
       --relayers strings        list of initial relayers
 ```
 
-### ERC20
+&nbsp; 
+
+### `ERC20`
 ERC20-related instructions.
 
 ```bash
@@ -413,7 +430,7 @@ Flags:
   -h, --help   help for erc20
 ```
 
-#### add-minter
+#### `add-minter`
 Add a minter to an Erc20 mintable contract.
 
 ```bash
@@ -427,7 +444,7 @@ Flags:
 
 ```
 
-#### allowance
+#### `allowance`
 Get the allowance of a spender for an address.
 
 ```bash
@@ -441,7 +458,7 @@ Flags:
       --spender string        address of spender
 ```
 
-#### approve
+#### `approve`
 Approve tokens in an ERC20 contract for transfer.
 
 ```bash
@@ -456,7 +473,7 @@ Flags:
       --recipient string      address of recipient
 ```
 
-#### balance
+#### `balance`
 Query balance of an account in an ERC20 contract.
 
 ```bash
@@ -469,7 +486,7 @@ Flags:
   -h, --help                    help for balance
 ```
 
-#### deposit
+#### `deposit`
 Initiate a transfer of ERC20 tokens.
 
 ```bash
@@ -486,7 +503,7 @@ Flags:
       --resourceId string   resource ID for transfer
 ```
 
-#### mint
+#### `mint`
 Mint tokens on an ERC20 mintable contract.
 
 ```bash
@@ -501,10 +518,13 @@ Flags:
   -h, --help                  help for mint
 ```
 
-### ERC721
+&nbsp; 
+
+### `ERC721`
 ERC721-related instructions.
 
-#### add-minter
+
+#### `add-minter`
 Add a minter to an ERC721 mintable contract.
 
 ```bash
@@ -517,7 +537,7 @@ Flags:
       --minter string          address of minter
 ```
 
-### Utils
+### `Utils`
 Utils-related instructions.
 *Useful for debugging*
 
@@ -533,7 +553,7 @@ Flags:
   -h, --help   help for utils
 ```
 
-#### hashlist
+#### `hashlist`
 List tx hashes.
 
 ```bash
@@ -545,7 +565,7 @@ Flags:
   -h, --help                 help for hashList
 ```
 
-#### simulate
+#### `simulate`
 Replay a failed transaction by simulating invocation; not state-altering
 
 ```bash
@@ -559,7 +579,34 @@ Flags:
       --txHash string        transaction hash
 ```
 
-## Celo-CLI
+### `Centrifuge`
+Centrifuge-related instructions.
+
+#### `deploy`
+
+This command can be used to deploy Centrifuge asset store contract that represents bridged Centrifuge assets.
+
+```bash
+Usage:
+   evm-cli centrifuge deploy
+```
+
+#### `getHash`
+Checks _assetsStored map on Centrifuge asset store contract to find if asset hash exists.
+
+```bash
+Usage:
+   evm-cli centrifuge getHash [flags]
+
+Flags:
+      --address string   Centrifuge asset store contract address
+      --hash string      A hash to lookup
+  -h, --help             help for getHash
+```
+
+&nbsp; 
+
+## `Celo-CLI`
 Though Celo is an EVM-compatible chain, it deviates in its implementation of the original Ethereum specifications, and therefore is deserving of its own separate module.
 
 See: [differences between EVM and Celo](#differences-between-evm-and-celo).
@@ -576,6 +623,8 @@ Available Commands:
 Flags:
   -h, --help   help for celo-cli
 ```
+
+&nbsp; 
 
 ### Differences Between EVM and Celo
 
@@ -622,7 +671,9 @@ Message {
 }
 ```
 
-### Bridge
+&nbsp; 
+
+### `Bridge`
 Bridge-related instructions.
 
 ```bash
@@ -637,7 +688,7 @@ Flags:
   -h, --help   help for bridge
 ```
 
-#### register-resource
+#### `register-resource`
 Register a resource ID with a contract address for a handler
 
 ```bash
@@ -652,7 +703,7 @@ Flags:
       --target string       contract address to be registered
 ```
 
-#### set-burn
+#### `set-burn`
 Set a token contract as mintable/burnable in a handler
 
 ```bash
@@ -666,7 +717,9 @@ Flags:
       --tokenContract string   token contract to be registered
 ```
 
-### Deploy
+&nbsp; 
+
+### `Deploy`
 Deploy smart contracts.
 
 This command can be used to deploy all or some of the contracts required for bridging. Selection of contracts can be made by either specifying --all or a subset of flags.
@@ -685,14 +738,17 @@ Flags:
       --erc20Name string        ERC20 contract name
       --erc20Symbol string      ERC20 contract symbol
       --erc721                  deploy ERC721
+      --genericHandler          deploy generic handler
       --fee string              fee to be taken when making a deposit (in ETH, decimas are allowed) (default "0")
   -h, --help                    help for deploy
       --relayerThreshold uint   number of votes required for a proposal to pass (default 1)
       --relayers strings        list of initial relayers
 ```
 
-### ERC20
-erc20-related instructions
+&nbsp; 
+
+### `ERC20`
+erc20-related instructions.
 
 ```bash
 Usage:
@@ -710,7 +766,7 @@ Flags:
   -h, --help   help for erc20
 ```
 
-#### add-minter
+#### `add-minter`
 Add a minter to an Erc20 mintable contract.
 
 ```bash
@@ -723,7 +779,7 @@ Flags:
       --minter string         address of minter
 ```
 
-#### allowance
+#### `allowance`
 Set a token contract as mintable/burnable in a handler.
 
 ```bash
@@ -737,7 +793,7 @@ Flags:
       --spender string        address of spender
 ```
 
-#### approve
+#### `approve`
 Approve tokens in an ERC20 contract for transfer.
 
 ```bash
@@ -752,7 +808,7 @@ Flags:
       --recipient string      address of recipient
 ```
 
-#### balance
+#### `balance`
 Query balance of an account in an ERC20 contract.
 
 ```bash
@@ -765,7 +821,7 @@ Flags:
   -h, --help                    help for balance
 ```
 
-#### deposit
+#### `deposit`
 Initiate a transfer of ERC20 tokens.
 
 ```bash
@@ -782,7 +838,7 @@ Flags:
       --resourceId string   resource ID for transfer
 ```
 
-#### mint
+#### `mint`
 Mint tokens on an ERC20 mintable contract.
 
 ```bash
@@ -796,6 +852,71 @@ Flags:
       --erc20Address string   ERC20 contract address
   -h, --help                  help for mint
 ```
+
+&nbsp; 
+
+### Centrifuge
+Centrifuge-related instructions.
+
+#### `deploy`
+
+This command can be used to deploy Centrifuge asset store contract that represents bridged Centrifuge assets.
+
+```bash
+Usage:
+   evm-cli centrifuge deploy
+```
+
+#### `getHash`
+Checks _assetsStored map on Centrifuge asset store contract to find if asset hash exists.
+
+```bash
+Usage:
+   evm-cli centrifuge getHash [flags]
+
+Flags:
+      --address string   Centrifuge asset store contract address
+      --hash string      A hash to lookup
+  -h, --help             help for getHash
+```
+
+&nbsp; 
+
+## Substrate
+This module provides instruction for communicating with Substrate-compatible chains. 
+
+Currently there is no CLI for this, though more information can be found about this module within its repository, listed below.
+
+[Substrate Module Repository](https://github.com/ChainSafe/chainbridge-substrate-module)
+
+&nbsp; 
+
+## Local Setup
+
+This section allows developers with a way to quickly and with minimal effort stand-up a local development environment in order to fully test out functionality of the chainbridge.
+
+### `local`
+
+Locally deploy bridge and ERC20 handler contracts with preconfigured accounts and ERC20 handler.
+
+```bash
+Usage:
+   local-setup [flags]
+
+Flags:
+  -h, --help   help for local-setup
+```
+
+This can be easily run by building the [chainbridge-core-example](https://github.com/ChainSafe/chainbridge-core-example) app, or by issuing a `Makefile` instruction directly from the root of the [chainbridge-core](https://github.com/ChainSafe/chainbridge-core) itself.
+```bash
+make local-setup
+```
+##### ^ this command will run a shell script that contains instructions for running two EVM chains via [Docker](https://www.docker.com/) (`docker-compose`). Note: this will likely take a few minutes to run.
+&nbsp; 
+
+You can also review our [Local Setup Guide](https://github.com/ChainSafe/chainbridge-docs/blob/develop/docs/guides/local-setup-guide.md) for a more detailed example of setting up a local development environment manually.
+
+&nbsp; 
 
 # ChainSafe Security Policy
 

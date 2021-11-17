@@ -1,0 +1,86 @@
+# Copyright 2020 ChainSafe Systems
+# SPDX-License-Identifier: LGPL-3.0-only
+version: '3'
+
+services:
+  evm1-1:
+    build:
+      context: ../geth-build
+      dockerfile: Dockerfile
+    container_name: evm1-1
+    networks:
+      - evm1
+    ports:
+      - "8545:8545"
+      - "8546:8546"
+    environment:
+      - NODEKEY=98ab333347a12cef869f92b3de44085f9e44891e513bcf1d76a99eecbcdd5e17
+      - NETWORKID=421
+      - MINE=true
+    entrypoint: "/root/entrypoint.sh"
+
+  # SECOND CHAIN
+  evm2-1:
+    build:
+      context: ../geth-build
+      dockerfile: Dockerfile
+    container_name: evm2-1
+    networks:
+      - evm2
+    ports:
+      - "8547:8545"
+      - "8548:8546"
+    environment:
+      - NODEKEY=98ab333347a12cef869f92b3de44085f9e44891e513bcf1d76a99eecbcdd5e17
+      - NETWORKID=420
+      - MINE=true
+    entrypoint: "/root/entrypoint.sh"
+
+  relayer1:
+    container_name: relayer1
+    build:
+      context: ../../.
+      dockerfile: Dockerfile
+    command: run --config /cfg --testkey alice --fresh
+    depends_on:
+      - evm1-1
+      - evm2-1
+    networks:
+      - evm1
+      - evm2
+    volumes:
+      - ./example/cfg:/cfg
+
+  relayer2:
+    container_name: relayer2
+    build:
+      context: ../../.
+      dockerfile: Dockerfile
+    command: run --config /cfg --testkey bob --fresh
+    depends_on:
+      - evm1-1
+      - evm2-1
+    networks:
+      - evm1
+      - evm2
+    volumes:
+      - ./example/cfg:/cfg
+
+  relayer3:
+    container_name: relayer3
+    build:
+      context: ../../.
+      dockerfile: Dockerfile
+    command: run --config /cfg --testkey charlie --fresh
+    depends_on:
+      - evm1-1
+      - evm2-1
+    networks:
+      - evm1
+      - evm2
+    volumes:
+      - ./example/cfg:/cfg
+
+networks:
+  evm2:
+  evm1:

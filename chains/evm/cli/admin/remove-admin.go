@@ -17,10 +17,14 @@ var removeAdminCmd = &cobra.Command{
 	Run: removeAdmin,
 }
 
+func BindRemoveAdminFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Admin, "admin", "", "address to remove")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	flags.MarkFlagsAsRequired(cmd, "admin", "bridge")
+}
+
 func init() {
-	removeAdminCmd.Flags().StringVar(&Admin, "admin", "", "address to remove")
-	removeAdminCmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	flags.MarkFlagsAsRequired(removeAdminCmd, "admin", "bridge")
+	BindRemoveAdminFlags(removeAdminCmd)
 }
 
 func removeAdmin(cmd *cobra.Command, args []string) {
