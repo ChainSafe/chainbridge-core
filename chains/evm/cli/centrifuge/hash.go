@@ -78,6 +78,7 @@ func GetHashCmd(cmd *cobra.Command, args []string) error {
 	isAssetStored, err := calls.IsCentrifugeAssetStored(ethClient, storeAddr, byteHash)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("Checking if asset stored failed: %w", err))
+		return err
 	}
 
 	log.Info().Msgf("The hash '%s' exists: %t", Hash, isAssetStored)

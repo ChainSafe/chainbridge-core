@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/local"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
@@ -19,7 +20,7 @@ import (
 )
 
 type TestClient interface {
-	E2EClient
+	local.E2EClient
 	LatestBlock() (*big.Int, error)
 	FetchEventLogs(ctx context.Context, contractAddress common.Address, event string, startBlock *big.Int, endBlock *big.Int) ([]types.Log, error)
 }
@@ -76,29 +77,24 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	log.Debug().Msgf("Latest block %s", b.String())
 
-	config, err := PrepareEVME2EEnv(ethClient, s.fabric1, 1, big.NewInt(1), s.adminKey.CommonAddress())
+	config, err := local.PrepareLocalEVME2EEnv(ethClient, s.fabric1, 1, big.NewInt(1), s.adminKey.CommonAddress())
 	if err != nil {
 		panic(err)
 	}
 
-	s.bridgeAddr = config.bridgeAddr
-	s.erc20ContractAddr = config.erc20Addr
-	s.erc20HandlerAddr = config.erc20HandlerAddr
-	s.erc721ContractAddr = config.erc721Addr
-	s.erc721HandlerAddr = config.erc721HandlerAddr
-	s.genericHandlerAddr = config.genericHandlerAddr
-	s.assetStoreAddr = config.assetStoreAddr
-
-	_, err = PrepareEVME2EEnv(ethClient2, s.fabric2, 2, big.NewInt(1), s.adminKey.CommonAddress())
-	if err != nil {
-		panic(err)
-	}
+	s.bridgeAddr = config.BridgeAddr
+	s.erc20ContractAddr = config.Erc20Addr
+	s.erc20HandlerAddr = config.Erc20HandlerAddr
+	s.erc721ContractAddr = config.Erc721Addr
+	s.erc721HandlerAddr = config.Erc721HandlerAddr
+	s.genericHandlerAddr = config.GenericHandlerAddr
+	s.assetStoreAddr = config.AssetStoreAddr
 
 	s.gasPricer = evmgaspricer.NewStaticGasPriceDeterminant(s.client, nil)
 
-	s.erc20RID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.erc20Addr.Bytes(), 31), uint8(0)))
-	s.genericRID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.genericHandlerAddr.Bytes(), 31), uint8(1)))
-	s.erc721RID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.erc721Addr.Bytes(), 31), uint8(2)))
+	s.erc20RID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.Erc20Addr.Bytes(), 31), uint8(0)))
+	s.genericRID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.GenericHandlerAddr.Bytes(), 31), uint8(1)))
+	s.erc721RID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.Erc721Addr.Bytes(), 31), uint8(2)))
 }
 func (s *IntegrationTestSuite) TearDownSuite() {}
 func (s *IntegrationTestSuite) SetupTest()     {}
@@ -148,7 +144,7 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 
 func (s *IntegrationTestSuite) TestErc20Deposit() {
 	dstAddr := keystore.TestKeyRing.EthereumKeys[keystore.BobKey].CommonAddress()
-	senderBalBefore, err := calls.GetERC20Balance(s.client, s.erc20ContractAddr, EveKp.CommonAddress())
+	senderBalBefore, err := calls.GetERC20Balance(s.client, s.erc20ContractAddr, local.EveKp.CommonAddress())
 	s.Nil(err)
 	destBalanceBefore, err := calls.GetERC20Balance(s.client2, s.erc20ContractAddr, dstAddr)
 	s.Nil(err)

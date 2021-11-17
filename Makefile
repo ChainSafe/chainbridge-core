@@ -35,3 +35,6 @@ e2e-setup:
 
 e2e-test:
 	./scripts/int_tests.sh
+
+local-setup:
+	./scripts/local_setup.sh

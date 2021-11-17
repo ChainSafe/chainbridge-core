@@ -44,7 +44,7 @@ func PrepareAdminSetResourceInput(handler common.Address, resourceID types.Resou
 
 func PrepareAdminSetGenericResourceInput(
 	handler common.Address,
-	rId [32]byte,
+	rId types.ResourceID,
 	addr common.Address,
 	depositFunctionSig [4]byte,
 	depositerOffset *big.Int,
@@ -66,7 +66,7 @@ func AdminSetGenericResource(
 	fabric TxFabric,
 	gasPriceClient GasPricer,
 	handler common.Address,
-	rID [32]byte,
+	rID types.ResourceID,
 	addr common.Address,
 	depositFunctionSig [4]byte,
 	depositerOffset *big.Int,
@@ -80,7 +80,7 @@ func AdminSetGenericResource(
 	gasLimit := uint64(2000000)
 	h, err := Transact(client, fabric, gasPriceClient, &handler, input, gasLimit, big.NewInt(0))
 	if err != nil {
-		return common.Hash{}, fmt.Errorf("settings generic resource failed %w", err)
+		return common.Hash{}, fmt.Errorf("setting generic resource failed %w", err)
 	}
 
 	return h, nil
@@ -152,7 +152,7 @@ func ConstructGenericDepositData(metadata []byte) []byte {
 	return data
 }
 
-func PrepareDepositInput(destDomainID uint8, resourceID [32]byte, data []byte) ([]byte, error) {
+func PrepareDepositInput(destDomainID uint8, resourceID types.ResourceID, data []byte) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return []byte{}, err
@@ -164,7 +164,15 @@ func PrepareDepositInput(destDomainID uint8, resourceID [32]byte, data []byte) (
 	return input, nil
 }
 
-func Deposit(client ClientDispatcher, fabric TxFabric, gasPriceClient GasPricer, bridgeAddress common.Address, resourceID [32]byte, destDomainID uint8, data []byte) (*common.Hash, error) {
+func Deposit(
+	client ClientDispatcher,
+	fabric TxFabric,
+	gasPriceClient GasPricer,
+	bridgeAddress common.Address,
+	resourceID types.ResourceID,
+	destDomainID uint8,
+	data []byte,
+) (*common.Hash, error) {
 	input, err := PrepareDepositInput(destDomainID, resourceID, data)
 	if err != nil {
 		return nil, err

@@ -121,6 +121,7 @@ func ValidateDeployFlags(cmd *cobra.Command, args []string) error {
 			deployments = append(deployments, "erc721")
 		}
 	}
+
 	if len(deployments) == 0 {
 		log.Error().Err(ErrNoDeploymentFlagsProvided)
 		return ErrNoDeploymentFlagsProvided
