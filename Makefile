@@ -30,6 +30,8 @@ genmocks:
 	mockgen -source=./chains/evm/evmgaspricer/gas-pricer.go -destination=./chains/evm/evmgaspricer/mock/gas-pricer.go
 	mockgen -source=chains/evm/calls/utils.go -destination=chains/evm/calls/mock/utils.go
 
-
 e2e-test:
 	./scripts/int_tests.sh
+
+local-setup:
+	./scripts/local_setup.sh
