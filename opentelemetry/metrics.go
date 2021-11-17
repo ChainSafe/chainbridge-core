@@ -2,20 +2,15 @@ package opentelemetry
 
 import (
 	"context"
-	"net/http"
-	"strconv"
 
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
-	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
 	export "go.opentelemetry.io/otel/sdk/export/metric"
-	"go.opentelemetry.io/otel/sdk/metric/aggregator/histogram"
 	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
 	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
 	"go.opentelemetry.io/otel/sdk/metric/selector/simple"
-	selector "go.opentelemetry.io/otel/sdk/metric/selector/simple"
 )
 
 type ChainbridgeMetrics struct {
@@ -29,32 +24,6 @@ func newChainbridgeMetrics(meter metric.Meter) *ChainbridgeMetrics {
 			metric.WithDescription("Number of deposit events across all chains"),
 		),
 	}
-}
-
-func initPrometheusMetrics(port uint64, path string) (*ChainbridgeMetrics, error) {
-	config := prometheus.Config{}
-	c := controller.New(
-		processor.NewFactory(
-			selector.NewWithHistogramDistribution(
-				histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries),
-			),
-			export.CumulativeExportKindSelector(),
-			processor.WithMemory(true),
-		),
-	)
-	exp, err := prometheus.New(config, c)
-	if err != nil {
-		return nil, err
-	}
-
-	global.SetMeterProvider(exp.MeterProvider())
-	go func() {
-		http.HandleFunc(path, exp.ServeHTTP)
-		_ = http.ListenAndServe(":"+strconv.Itoa(int(port)), nil)
-	}()
-
-	meter := c.Meter("chainbridge")
-	return newChainbridgeMetrics(meter), nil
 }
 
 func initOpenTelemetryMetrics(opts ...otlpmetrichttp.Option) (*ChainbridgeMetrics, error) {
