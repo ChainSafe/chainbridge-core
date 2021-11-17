@@ -119,7 +119,7 @@ func WithdrawCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gas
 		handlerAddr,
 		tokenAddr,
 		recipientAddr,
-		big.NewInt(0),
+		realAmount,
 	)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("admin withdrawal error: %v", err))

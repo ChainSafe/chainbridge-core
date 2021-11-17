@@ -355,7 +355,7 @@ func prepareWithdrawInput(
 	// @dev withdrawal data should include:
 	// tokenAddress
 	// recipientAddress
-	// amountOrTokenID
+	// realAmount
 	data := bytes.Buffer{}
 	data.Write(common.LeftPadBytes(tokenAddress.Bytes(), 32))
 	data.Write(common.LeftPadBytes(recipientAddress.Bytes(), 32))
