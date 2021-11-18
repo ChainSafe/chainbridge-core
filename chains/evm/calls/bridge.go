@@ -339,9 +339,9 @@ func IsProposalVotedBy(evmCaller ContractCallerClient, by common.Address, p *pro
 	return out0, nil
 }
 
-// private function to generate bytedata for adminWithdraw contract method
+// public function to generate bytedata for adminWithdraw contract method
 // Used to manually withdraw funds from ERC safes
-func prepareWithdrawInput(
+func PrepareWithdrawInput(
 	handlerAddress,
 	tokenAddress,
 	recipientAddress common.Address,
@@ -364,7 +364,7 @@ func prepareWithdrawInput(
 	input, err := a.Pack(
 		"adminWithdraw",
 		handlerAddress,
-		data,
+		data.Bytes(),
 	)
 	if err != nil {
 		return []byte{}, err
@@ -372,8 +372,9 @@ func prepareWithdrawInput(
 	return input, nil
 }
 
+// public function to Withdraw funds from ERC safes
 func Withdraw(client ClientDispatcher, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, bridgeAddress, handlerAddress, tokenAddress, recipientAddress common.Address, amountOrTokenId *big.Int) (*common.Hash, error) {
-	withdrawInput, err := prepareWithdrawInput(
+	withdrawInput, err := PrepareWithdrawInput(
 		handlerAddress,
 		tokenAddress,
 		recipientAddress,
