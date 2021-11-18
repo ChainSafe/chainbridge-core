@@ -1,6 +1,8 @@
 package admin
 
 import (
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -23,6 +25,10 @@ var (
 
 //processed flag vars
 var (
-	bridgeAddr  common.Address
-	relayerAddr common.Address
+	bridgeAddr    common.Address
+	handlerAddr   common.Address
+	relayerAddr   common.Address
+	recipientAddr common.Address
+	tokenAddr     common.Address
+	realAmount    *big.Int
 )
