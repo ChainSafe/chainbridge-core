@@ -19,8 +19,8 @@ import (
 
 var withdrawCmd = &cobra.Command{
 	Use:   "withdraw",
-	Short: "Withdraw tokens from the handler contract",
-	Long:  "Withdraw tokens from the handler contract",
+	Short: "Withdraw tokens from a handler contract",
+	Long:  "Withdraw tokens from a handler contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
