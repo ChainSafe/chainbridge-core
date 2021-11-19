@@ -27,8 +27,11 @@ func (s *LoggerTestSuite) TearDownSuite() {}
 
 func (s *LoggerTestSuite) TearDownTest() {}
 
+var timestamp = time.Now()
+var Now = func() time.Time { return timestamp }
+
 func (s *LoggerTestSuite) TestWriteCliDataToFile() {
-	expectedLog := time.Now().Format("02-01|15:00:00.000 ") +
+	expectedLog := timestamp.Format("02-01|15:00:00.000 ") +
 		"Called evm-cli with args: --gasLimit=\"7000000\" --gasPrice=\"25000000000\" --help=\"false\" --jsonWallet=\"test-wallet\" --jsonWalletPassword=\"test-wallet-password\" --networkid=\"0\" --url=\"test-url\" =>\n"
 
 	rootCmdArgs := []string{
