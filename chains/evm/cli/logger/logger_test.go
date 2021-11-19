@@ -2,8 +2,9 @@ package logger_test
 
 import (
 	"os"
+	"regexp"
+	"strings"
 	"testing"
-	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
@@ -28,8 +29,7 @@ func (s *LoggerTestSuite) TearDownSuite() {}
 func (s *LoggerTestSuite) TearDownTest() {}
 
 func (s *LoggerTestSuite) TestWriteCliDataToFile() {
-	expectedLog := time.Now().Format("02-01|15:00:00.000 ") +
-		"Called evm-cli with args: --gasLimit=\"7000000\" --gasPrice=\"25000000000\" --help=\"false\" --jsonWallet=\"test-wallet\" --jsonWalletPassword=\"test-wallet-password\" --networkid=\"0\" --url=\"test-url\" =>\n"
+	expectedLog := "Called evm-cli with args: --gasLimit=\"7000000\" --gasPrice=\"25000000000\" --help=\"false\" --jsonWallet=\"test-wallet\" --jsonWalletPassword=\"test-wallet-password\" --networkid=\"0\" --url=\"test-url\" =>\n"
 
 	rootCmdArgs := []string{
 		"--url", "test-url",
@@ -45,7 +45,9 @@ func (s *LoggerTestSuite) TestWriteCliDataToFile() {
 	_ = cli.EvmRootCLI.Execute()
 
 	data, _ := os.ReadFile(logger.CliLogsFilename)
-	s.Equal(expectedLog, string(data))
+	logParts := strings.SplitN(string(data), " ", 2)
+	s.Equal(expectedLog, logParts[1])
+	s.True(regexp.Match("[0-9]{2}-[0-9]{2}|[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{3}", []byte(logParts[0])))
 
 	err := os.Remove(logger.CliLogsFilename)
 	if err != nil {
