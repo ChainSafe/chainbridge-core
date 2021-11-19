@@ -1,6 +1,7 @@
 package calls
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"math/big"
@@ -345,4 +346,65 @@ func IsProposalVotedBy(evmCaller ContractCallerClient, by common.Address, p *pro
 	}
 	out0 := *abi.ConvertType(res[0], new(bool)).(*bool)
 	return out0, nil
+}
+
+// public function to generate bytedata for adminWithdraw contract method
+// Used to manually withdraw funds from ERC safes
+func PrepareWithdrawInput(
+	handlerAddress,
+	tokenAddress,
+	recipientAddress common.Address,
+	realAmount *big.Int,
+) ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+
+	// @dev withdrawal data should include:
+	// tokenAddress
+	// recipientAddress
+	// realAmount
+	data := bytes.Buffer{}
+	data.Write(common.LeftPadBytes(tokenAddress.Bytes(), 32))
+	data.Write(common.LeftPadBytes(recipientAddress.Bytes(), 32))
+	data.Write(common.LeftPadBytes(realAmount.Bytes(), 32))
+
+	input, err := a.Pack(
+		"adminWithdraw",
+		handlerAddress,
+		data.Bytes(),
+	)
+	if err != nil {
+		return []byte{}, err
+	}
+	return input, nil
+}
+
+// public function to Withdraw funds from ERC safes
+func Withdraw(client ClientDispatcher, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, bridgeAddress, handlerAddress, tokenAddress, recipientAddress common.Address, amountOrTokenId *big.Int) (*common.Hash, error) {
+	withdrawInput, err := PrepareWithdrawInput(
+		handlerAddress,
+		tokenAddress,
+		recipientAddress,
+		amountOrTokenId,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("withdrawal input error: %v", err)
+	}
+	h, err := Transact(
+		client,
+		txFabric,
+		gasPricer,
+		&bridgeAddress,
+		withdrawInput,
+		gasLimit,
+		big.NewInt(0),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("withdrawal failed %w", err)
+	}
+	log.Debug().Str("hash", h.String()).Msgf("Withdrawal sent")
+
+	return &h, nil
 }

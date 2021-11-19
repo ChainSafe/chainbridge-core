@@ -129,7 +129,7 @@ Available Commands:
   set-fee        Set a new fee for deposits
   set-threshold  Set a new relayer vote threshold
   unpause        Unpause deposits and proposals
-  withdraw       Withdraw tokens from the handler contract
+  withdraw       Withdraw tokens from a handler contract
 
 Flags:
   -h, --help   help for admin
@@ -252,7 +252,7 @@ Flags:
 ```
 
 #### `withdraw`
-Withdraw tokens from the handler contract.
+Withdraw tokens from a handler contract.
 
 ```bash
 Usage:
