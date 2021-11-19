@@ -125,11 +125,14 @@ func (v *EVMVoter) VoteProposal(m *relayer.Message) error {
 
 // shouldVoteForProposal checks if proposal already has threshold with pending
 // proposal votes from other relayers.
-// Only works in conjuction with NewVoterWithSubscription.
+// Only works properly in conjuction with NewVoterWithSubscription as without a subscription
+// no pending txs would be received and pending vote count would be 0.
 func (v *EVMVoter) shouldVoteForProposal(prop *proposal.Proposal, tries int) (bool, error) {
 	propID := prop.GetID()
 	defer delete(v.pendingProposalVotes, propID)
 
+	// random delay to prevent all relayers checking for pending votes
+	// at the same time and all of them sending another tx
 	Sleep(time.Duration(rand.Intn(shouldVoteCheckPeriod)) * time.Second)
 
 	ps, err := calls.ProposalStatus(v.client, prop)
@@ -157,7 +160,8 @@ func (v *EVMVoter) shouldVoteForProposal(prop *proposal.Proposal, tries int) (bo
 }
 
 // trackProposalPendingVotes tracks pending voteProposal txs from
-// other relayers.
+// other relayers and increases count of pending votes in pendingProposalVotes map
+// by proposal unique id.
 func (v *EVMVoter) trackProposalPendingVotes(ch chan common.Hash) {
 	for msg := range ch {
 		txData, _, err := v.client.TransactionByHash(context.TODO(), msg)
