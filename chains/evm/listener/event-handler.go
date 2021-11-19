@@ -141,7 +141,7 @@ func GenericEventHandler(sourceID, destId uint8, nonce uint64, resourceID types.
 	}, nil
 }
 
-func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error) {
+func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
 	if len(calldata) < 64 {
 		err := errors.New("invalid calldata length: less than 84 bytes")
 		return nil, err
@@ -164,12 +164,12 @@ func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.R
 	}
 	// rest of bytes is metada
 
-	return &relayer.Message{
+	return &message.Message{
 		Source:       sourceID,
 		Destination:  destId,
 		DepositNonce: nonce,
 		ResourceId:   resourceID,
-		Type:         relayer.NonFungibleTransfer,
+		Type:         message.NonFungibleTransfer,
 		Payload: []interface{}{
 			tokenId,
 			recipientAddress,
