@@ -3,12 +3,14 @@ package calls_test
 import (
 	"encoding/hex"
 	"errors"
+	"math/big"
 	"testing"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	mock_listener "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
 )
@@ -70,4 +72,25 @@ func (s *ProposalStatusTestSuite) TestProposalStatusSuccessfulCall() {
 
 	s.Equal(message.ProposalStatusInactive, status)
 	s.Nil(err)
+}
+
+func TestPrepareWithdrawInput(t *testing.T) {
+	handlerAddress := common.HexToAddress("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF")
+	tokenAddress := common.HexToAddress("0x3f709398808af36ADBA86ACC617FeB7F5B7B193E")
+	recipientAddress := common.HexToAddress("0x8e5F72B158BEDf0ab50EDa78c70dFC118158C272")
+	amountOrTokenId := big.NewInt(1)
+
+	inputBytes, err := calls.PrepareWithdrawInput(
+		handlerAddress,
+		tokenAddress,
+		recipientAddress,
+		amountOrTokenId,
+	)
+	if err != nil {
+		t.Fatalf("could not prepare withdraw input: %v", err)
+	}
+
+	if len(inputBytes) == 0 {
+		t.Fatal("prepared input byte slice empty")
+	}
 }
