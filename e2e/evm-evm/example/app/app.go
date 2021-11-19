@@ -42,11 +42,13 @@ func Run() error {
 
 	eventHandler := listener.NewETHEventHandler(common.HexToAddress(evm1Cfg.SharedEVMConfig.Bridge), evm1Client)
 	eventHandler.RegisterEventHandler(evm1Cfg.SharedEVMConfig.Erc20Handler, listener.Erc20EventHandler)
+	eventHandler.RegisterEventHandler(evm1Cfg.SharedEVMConfig.Erc721Handler, listener.Erc721EventHandler)
 	eventHandler.RegisterEventHandler(evm1Cfg.SharedEVMConfig.GenericHandler, listener.GenericEventHandler)
 	evm1Listener := listener.NewEVMListener(evm1Client, eventHandler, common.HexToAddress(evm1Cfg.SharedEVMConfig.Bridge))
 
 	mh := voter.NewEVMMessageHandler(evm1Client, common.HexToAddress(evm1Cfg.SharedEVMConfig.Bridge))
 	mh.RegisterMessageHandler(common.HexToAddress(evm1Cfg.SharedEVMConfig.Erc20Handler), voter.ERC20MessageHandler)
+	mh.RegisterMessageHandler(common.HexToAddress(evm1Cfg.SharedEVMConfig.Erc721Handler), voter.ERC721MessageHandler)
 	mh.RegisterMessageHandler(common.HexToAddress(evm1Cfg.SharedEVMConfig.GenericHandler), voter.GenericMessageHandler)
 	evmeVoter := voter.NewVoter(mh, evm1Client, evmtransaction.NewTransaction, evmgaspricer.NewLondonGasPriceClient(evm1Client, nil))
 
@@ -63,11 +65,13 @@ func Run() error {
 
 	eventHandlerEVM := listener.NewETHEventHandler(common.HexToAddress(evm2Config.SharedEVMConfig.Bridge), evm2Client)
 	eventHandlerEVM.RegisterEventHandler(evm2Config.SharedEVMConfig.Erc20Handler, listener.Erc20EventHandler)
+	eventHandlerEVM.RegisterEventHandler(evm2Config.SharedEVMConfig.Erc721Handler, listener.Erc721EventHandler)
 	eventHandlerEVM.RegisterEventHandler(evm2Config.SharedEVMConfig.GenericHandler, listener.GenericEventHandler)
 	evm2Listener := listener.NewEVMListener(evm2Client, eventHandlerEVM, common.HexToAddress(evm2Config.SharedEVMConfig.Bridge))
 
 	mhEVM := voter.NewEVMMessageHandler(evm2Client, common.HexToAddress(evm2Config.SharedEVMConfig.Bridge))
 	mhEVM.RegisterMessageHandler(common.HexToAddress(evm2Config.SharedEVMConfig.Erc20Handler), voter.ERC20MessageHandler)
+	mhEVM.RegisterMessageHandler(common.HexToAddress(evm2Config.SharedEVMConfig.Erc721Handler), voter.ERC721MessageHandler)
 	mhEVM.RegisterMessageHandler(common.HexToAddress(evm2Config.SharedEVMConfig.GenericHandler), voter.GenericMessageHandler)
 	evm2Voter := voter.NewVoter(mhEVM, evm2Client, evmtransaction.NewTransaction, evmgaspricer.NewLondonGasPriceClient(evm2Client, nil))
 

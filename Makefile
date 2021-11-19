@@ -31,6 +31,9 @@ genmocks:
 	mockgen -destination=./relayer/mock/relayer.go -source=./relayer/relayer.go
 	mockgen -source=chains/evm/calls/utils.go -destination=chains/evm/calls/mock/utils.go
 
+e2e-setup:
+	docker-compose --file=./e2e/evm-evm/docker-compose.e2e.yml up
+
 e2e-test:
 	./scripts/int_tests.sh
 

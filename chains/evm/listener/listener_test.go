@@ -110,3 +110,122 @@ func (s *ListenerTestSuite) TestErc20HandleEventIncorrectCalldataLen() {
 
 	s.EqualError(err, errIncorrectCalldataLen.Error())
 }
+
+func (s *ListenerTestSuite) TestErc721HandleEvent_WithMetadata_Sucess() {
+	// 0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b
+	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}
+
+	metadataByteSlice := []byte{132, 121, 165, 51, 119, 4, 194, 218, 249, 250, 250, 212, 173, 9, 147, 218, 249, 250, 250, 4, 194, 218, 132, 121}
+
+	var calldata []byte
+	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(2), 32)...)
+	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(recipientByteSlice))), 32)...)
+	calldata = append(calldata, recipientByteSlice...)
+	calldata = append(calldata, metadataByteSlice...)
+
+	depositLog := &evmclient.DepositLogs{
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		Data:                calldata,
+		HandlerResponse:     []byte{},
+	}
+
+	sourceID := uint8(1)
+	tokenIdParsed := calldata[:32]
+	recipientAddressParsed := calldata[64:84]
+	metadataParsed := calldata[84:]
+
+	expected := &relayer.Message{
+		Source:       sourceID,
+		Destination:  depositLog.DestinationDomainID,
+		DepositNonce: depositLog.DepositNonce,
+		ResourceId:   depositLog.ResourceID,
+		Type:         relayer.NonFungibleTransfer,
+		Payload: []interface{}{
+			tokenIdParsed,
+			recipientAddressParsed,
+			metadataParsed,
+		},
+	}
+
+	message, err := listener.Erc721EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
+
+	s.Nil(err)
+
+	s.NotNil(message)
+
+	s.Equal(message, expected)
+}
+
+func (s *ListenerTestSuite) TestErc721HandleEvent_WithoutMetadata_Sucess() {
+	// 0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b
+	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}
+
+	var calldata []byte
+	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(2), 32)...)
+	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(recipientByteSlice))), 32)...)
+	calldata = append(calldata, recipientByteSlice...)
+
+	depositLog := &evmclient.DepositLogs{
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		Data:                calldata,
+		HandlerResponse:     []byte{},
+	}
+
+	sourceID := uint8(1)
+	tokenIdParsed := calldata[:32]
+	recipientAddressParsed := calldata[64:84]
+	metadataParsed := []byte{}
+
+	expected := &relayer.Message{
+		Source:       sourceID,
+		Destination:  depositLog.DestinationDomainID,
+		DepositNonce: depositLog.DepositNonce,
+		ResourceId:   depositLog.ResourceID,
+		Type:         relayer.NonFungibleTransfer,
+		Payload: []interface{}{
+			tokenIdParsed,
+			recipientAddressParsed,
+			metadataParsed,
+		},
+	}
+
+	message, err := listener.Erc721EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
+
+	s.Nil(err)
+
+	s.NotNil(message)
+
+	s.Equal(message, expected)
+}
+
+func (s *ListenerTestSuite) TestErc721HandleEvent_IncorrectCalldataLen_Failure() {
+	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194}
+
+	var calldata []byte
+	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(2), 32)...)
+	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(recipientByteSlice))), 16)...)
+	calldata = append(calldata, recipientByteSlice...)
+
+	depositLog := &evmclient.DepositLogs{
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		Data:                calldata,
+		HandlerResponse:     []byte{},
+	}
+
+	sourceID := uint8(1)
+
+	message, err := listener.Erc721EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
+
+	s.Nil(message)
+
+	s.EqualError(err, errIncorrectCalldataLen.Error())
+}

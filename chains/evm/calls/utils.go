@@ -37,6 +37,11 @@ type ClientDeployer interface {
 	ClientContractChecker
 }
 
+type ContractCallerDispatcherClient interface {
+	ContractCallerClient
+	ClientDispatcher
+}
+
 type GasPricer interface {
 	GasPrice() ([]*big.Int, error)
 }
