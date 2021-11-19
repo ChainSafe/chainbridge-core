@@ -43,7 +43,7 @@ which is called inside relayer router when a `Deposit` event appears and should 
 
 ### OpenTelementry
 
-`chainbridge-core` provides already implemented metrics provider via [OpenTelemetry](https://opentelemetry.io/) that is vendor-agnostic. It uses a separate [collector](https://opentelemetry.io/docs/collector/) that then sends metrics via configured [exporters](https://opentelemetry.io/docs/collector/configuration/#exporters) to one or many metrics back-ends.
+`chainbridge-core` provides already implemented metrics [provider](./opentelemetry/opentelemetry.go) via [OpenTelemetry](https://opentelemetry.io/) that is vendor-agnostic. It sends metrics to a separate [collector](https://opentelemetry.io/docs/collector/) that then sends metrics via configured [exporters](https://opentelemetry.io/docs/collector/configuration/#exporters) to one or many metrics back-ends.
 
 
 ## `EVM-CLI`
