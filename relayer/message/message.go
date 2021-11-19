@@ -18,10 +18,15 @@ const (
 	GenericTransfer     TransferType = "GenericTransfer"
 )
 
-type ProposalStatus uint8
+type ProposalStatus struct {
+	Status        uint8
+	YesVotes      *big.Int
+	YesVotesTotal uint8
+	ProposedBlock *big.Int
+}
 
 const (
-	ProposalStatusInactive ProposalStatus = iota
+	ProposalStatusInactive uint8 = iota
 	ProposalStatusActive
 	ProposalStatusPassed // Ready to be executed
 	ProposalStatusExecuted
@@ -29,7 +34,7 @@ const (
 )
 
 var (
-	StatusMap = map[ProposalStatus]string{ProposalStatusInactive: "inactive", ProposalStatusActive: "active", ProposalStatusPassed: "passed", ProposalStatusExecuted: "executed", ProposalStatusCanceled: "canceled"}
+	StatusMap = map[uint8]string{ProposalStatusInactive: "inactive", ProposalStatusActive: "active", ProposalStatusPassed: "passed", ProposalStatusExecuted: "executed", ProposalStatusCanceled: "canceled"}
 )
 
 type Message struct {

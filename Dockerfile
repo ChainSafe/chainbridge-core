@@ -8,10 +8,8 @@ RUN cd /src && echo $(ls -1 /src)
 RUN go mod download
 RUN go build -o /bridge ./e2e/evm-evm/example/.
 
-# # final stage
+# final stage
 FROM debian:stretch-slim
-RUN apt-get -y update && apt-get -y upgrade && apt-get install ca-certificates wget -y
-
 COPY --from=builder /bridge ./
 RUN chmod +x ./bridge
 

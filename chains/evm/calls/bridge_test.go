@@ -51,7 +51,7 @@ func (s *ProposalStatusTestSuite) TestProposalStatusFailedContractCall() {
 
 	status, err := calls.ProposalStatus(s.mockContractCaller, &proposal.Proposal{})
 
-	s.Equal(message.ProposalStatusInactive, status)
+	s.Equal(message.ProposalStatus{}, status)
 	s.NotNil(err)
 }
 
@@ -60,18 +60,19 @@ func (s *ProposalStatusTestSuite) TestProposalStatusFailedUnpack() {
 
 	status, err := calls.ProposalStatus(s.mockContractCaller, &proposal.Proposal{})
 
-	s.Equal(message.ProposalStatusInactive, status)
+	s.Equal(message.ProposalStatus{}, status)
 	s.NotNil(err)
 }
 
 func (s *ProposalStatusTestSuite) TestProposalStatusSuccessfulCall() {
-	proposalStatus, _ := hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
+	proposalStatus, _ := hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000001c0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000001f")
 	s.mockContractCaller.EXPECT().CallContract(gomock.Any(), gomock.Any(), nil).Return(proposalStatus, nil)
 
 	status, err := calls.ProposalStatus(s.mockContractCaller, &proposal.Proposal{})
 
-	s.Equal(message.ProposalStatusInactive, status)
 	s.Nil(err)
+	s.Equal(status.YesVotesTotal, uint8(3))
+	s.Equal(status.Status, message.ProposalStatusExecuted)
 }
 
 func TestPrepareWithdrawInput(t *testing.T) {

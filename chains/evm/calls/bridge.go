@@ -291,32 +291,25 @@ func GetThreshold(evmCaller ContractCallerClient, bridgeAddress *common.Address)
 func ProposalStatus(evmCaller ContractCallerClient, p *proposal.Proposal) (message.ProposalStatus, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
-		return message.ProposalStatusInactive, err
+		return message.ProposalStatus{}, err
 	}
-	input, err := a.Pack("getProposal", p.Source, p.DepositNonce, SliceTo32Bytes(p.Data))
+	input, err := a.Pack("getProposal", p.Source, p.DepositNonce, p.GetDataHash())
 	if err != nil {
-		return message.ProposalStatusInactive, err
+		return message.ProposalStatus{}, err
 	}
 
 	msg := ethereum.CallMsg{From: common.Address{}, To: &p.BridgeAddress, Data: input}
 	out, err := evmCaller.CallContract(context.TODO(), ToCallArg(msg), nil)
 	if err != nil {
-		return message.ProposalStatusInactive, err
-	}
-
-	type bridgeProposal struct {
-		Status        uint8
-		YesVotes      *big.Int
-		YesVotesTotal uint8
-		ProposedBlock *big.Int
+		return message.ProposalStatus{}, err
 	}
 	res, err := a.Unpack("getProposal", out)
 	if err != nil {
-		return message.ProposalStatusInactive, err
+		return message.ProposalStatus{}, err
 	}
 
-	out0 := *abi.ConvertType(res[0], new(bridgeProposal)).(*bridgeProposal)
-	return message.ProposalStatus(out0.Status), nil
+	ps := *abi.ConvertType(res[0], new(message.ProposalStatus)).(*message.ProposalStatus)
+	return ps, nil
 }
 
 func idAndNonce(srcId uint8, nonce uint64) *big.Int {
