@@ -13,11 +13,16 @@ Chainbridge-core is the project that was born from the existing version of [Chai
 1. [Installation](#installation)
 2. [Modules](#modules)
 3. [Usage](#usage)
+<<<<<<< HEAD
 4. [Metrics](#metrics)
 4. [EVM-CLI](#evm-cli)
 5. [Celo-CLI](#celo-cli)
 6. [Substrate](#substrate)
 7. [Local Setup](#local-setup)
+=======
+4. [EVM-CLI](#evm-cli)
+5. [Celo-CLI](#celo-cli)
+>>>>>>> main
 
 ## Installation
 Refer to [installation](https://github.com/ChainSafe/chainbridge-docs/blob/develop/docs/installation.md) guide for assistance in installing.
@@ -27,13 +32,17 @@ Refer to [installation](https://github.com/ChainSafe/chainbridge-docs/blob/devel
 The chainbridge-core-example currently supports two modules:
 1. [EVM-CLI](#evm-cli)
 2. [Celo-CLI](#celo-cli)
+<<<<<<< HEAD
 3. [Substrate](#substrate)
+=======
+>>>>>>> main
 
 ## Usage
 Since chainbridge-core is the modular framework it will require writing some code to get it running. Here you can find some examples
 
 [Example](https://github.com/ChainSafe/chainbridge-core-example)
 
+<<<<<<< HEAD
 &nbsp;
 
 ## Metrics
@@ -47,6 +56,10 @@ which is called inside relayer router when a `Deposit` event appears and should 
 
 
 ## `EVM-CLI`
+=======
+
+## EVM-CLI
+>>>>>>> main
 This module provides instruction for communicating with EVM-compatible chains.
 
 ```bash
@@ -66,9 +79,13 @@ Flags:
   -h, --help   help for evm-cli
 ```
 
+<<<<<<< HEAD
 &nbsp;
 
 ### `Accounts`
+=======
+### Accounts
+>>>>>>> main
 Account instructions, allowing us to generate keypairs or import existing keypairs for use.
 
 ```bash
@@ -78,13 +95,20 @@ Usage:
 Available Commands:
   generate    Generate bridge keystore (Secp256k1)
   import      Import bridge keystore
+<<<<<<< HEAD
   transfer    Transfer base currency
+=======
+>>>>>>> main
 
 Flags:
   -h, --help   help for accounts
 ```
 
+<<<<<<< HEAD
 #### `generate`
+=======
+#### generate
+>>>>>>> main
 The generate subcommand is used to generate the bridge keystore. If no options are specified, a Secp256k1 key will be made.
 
 ```bash
@@ -95,7 +119,11 @@ Flags:
   -h, --help   help for generate
 ```
 
+<<<<<<< HEAD
 #### `import`
+=======
+#### import
+>>>>>>> main
 The import subcommand is used to import a keystore for the bridge.
 
 ```bash
@@ -107,6 +135,7 @@ Flags:
       --password string   password to encrypt with
 ```
 
+<<<<<<< HEAD
 #### `transfer`
 The generate subcommand is used to transfer the base currency.
 
@@ -124,6 +153,9 @@ Flags:
 &nbsp;
 
 ### `Admin`
+=======
+### Admin
+>>>>>>> main
 Admin-related instructions.
 
 ```bash
@@ -140,13 +172,21 @@ Available Commands:
   set-fee        Set a new fee for deposits
   set-threshold  Set a new relayer vote threshold
   unpause        Unpause deposits and proposals
+<<<<<<< HEAD
   withdraw       Withdraw tokens from a handler contract
+=======
+  withdraw       Withdraw tokens from the handler contract
+>>>>>>> main
 
 Flags:
   -h, --help   help for admin
 ```
 
+<<<<<<< HEAD
 #### `add-admin`
+=======
+#### add-admin
+>>>>>>> main
 Add a new admin.
 
 ```bash
@@ -159,7 +199,11 @@ Flags:
   -h, --help            help for add-admin
 ```
 
+<<<<<<< HEAD
 #### `add-relayer`
+=======
+#### add-relayer
+>>>>>>> main
 Add a new relayer.
 
 ```bash
@@ -172,7 +216,11 @@ Flags:
       --relayer string   address to add
 ```
 
+<<<<<<< HEAD
 #### `is-relayer`
+=======
+#### is-relayer
+>>>>>>> main
 Check if an address is registered as a relayer.
 
 ```bash
@@ -185,7 +233,11 @@ Flags:
       --relayer string   address to check
 ```
 
+<<<<<<< HEAD
 #### `pause`
+=======
+#### pause
+>>>>>>> main
 Pause deposits and proposals,
 
 ```bash
@@ -198,7 +250,11 @@ Flags:
 
 ```
 
+<<<<<<< HEAD
 #### `remove-admin`
+=======
+#### remove-admin
+>>>>>>> main
 Remove an existing admin.
 
 ```bash
@@ -211,7 +267,11 @@ Flags:
   -h, --help            help for remove-admin
 ```
 
+<<<<<<< HEAD
 #### `remove-relayer`
+=======
+#### remove-relayer
+>>>>>>> main
 Remove a relayer.
 
 ```bash
@@ -224,7 +284,11 @@ Flags:
       --relayer string   address to remove
 ```
 
+<<<<<<< HEAD
 #### `set-fee`
+=======
+#### set-fee
+>>>>>>> main
 Set a new fee for deposits.
 
 ```bash
@@ -237,7 +301,11 @@ Flags:
   -h, --help            help for set-fee
 ```
 
+<<<<<<< HEAD
 #### `set-threshold`
+=======
+#### set-threshold
+>>>>>>> main
 Set a new relayer vote threshold.
 
 ```bash
@@ -250,7 +318,11 @@ Flags:
       --threshold uint   new relayer threshold
 ```
 
+<<<<<<< HEAD
 #### `unpause`
+=======
+#### unpause
+>>>>>>> main
 Unpause deposits and proposals.
 
 ```bash
@@ -262,8 +334,13 @@ Flags:
   -h, --help            help for unpause
 ```
 
+<<<<<<< HEAD
 #### `withdraw`
 Withdraw tokens from a handler contract.
+=======
+#### withdraw
+Withdraw tokens from the handler contract.
+>>>>>>> main
 
 ```bash
 Usage:
@@ -280,9 +357,13 @@ Flags:
       --token string       ERC20 or ERC721 token contract address
 ```
 
+<<<<<<< HEAD
 &nbsp;
 
 ### `Bridge`
+=======
+### Bridge
+>>>>>>> main
 Bridge-related instructions.
 
 ```bash
@@ -301,7 +382,11 @@ Flags:
   -h, --help   help for bridge
 ```
 
+<<<<<<< HEAD
 #### `cancel-proposal`
+=======
+#### cancel-proposal
+>>>>>>> main
 Cancel an expired proposal.
 
 ```bash
@@ -310,13 +395,21 @@ Usage:
 
 Flags:
       --bridge string       bridge contract address
+<<<<<<< HEAD
       --domainId uint       domain ID of proposal to cancel
+=======
+      --chainId uint        chain ID of proposal to cancel
+>>>>>>> main
       --dataHash string     hash of proposal metadata
       --depositNonce uint   deposit nonce of proposal to cancel
   -h, --help                help for cancel-proposal
 ```
 
+<<<<<<< HEAD
 #### `query-proposal`
+=======
+#### query-proposal
+>>>>>>> main
 Query an inbound proposal.
 
 ```bash
@@ -325,13 +418,21 @@ Usage:
 
 Flags:
       --bridge string       bridge contract address
+<<<<<<< HEAD
       --domainId uint       source domain ID of proposal
+=======
+      --chainId uint        source chain ID of proposal
+>>>>>>> main
       --dataHash string     hash of proposal metadata
       --depositNonce uint   deposit nonce of proposal
   -h, --help                help for query-proposal
 ```
 
+<<<<<<< HEAD
 #### `query-resource`
+=======
+#### query-resource
+>>>>>>> main
 Query the contract address with the provided resource ID for a specific handler contract.
 
 ```bash
@@ -344,7 +445,11 @@ Flags:
       --resourceId string   resource ID to query
 ```
 
+<<<<<<< HEAD
 #### `register-generic-resource`
+=======
+#### register-generic-resource
+>>>>>>> main
 Register a resource ID with a contract address for a generic handler.
 
 ```bash
@@ -354,7 +459,10 @@ Usage:
 Flags:
       --bridge string       bridge contract address
       --deposit string      deposit function signature (default "0x00000000")
+<<<<<<< HEAD
       --depositerOffset int   depositer address position offset in the metadata, in bytes
+=======
+>>>>>>> main
       --execute string      execute proposal function signature (default "0x00000000")
       --handler string      handler contract address
       --hash                treat signature inputs as function prototype strings, hash and take the first 4 bytes
@@ -363,7 +471,11 @@ Flags:
       --target string       contract address to be registered
 ```
 
+<<<<<<< HEAD
 #### `register-resource`
+=======
+#### register-resource
+>>>>>>> main
 Register a resource ID
 
 ```bash
@@ -378,7 +490,11 @@ Flags:
       --target string       contract address to be registered
 ```
 
+<<<<<<< HEAD
 #### `set-burn`
+=======
+#### set-burn
+>>>>>>> main
 Set a token contract as mintable/burnable
 
 ```bash
@@ -392,9 +508,13 @@ Flags:
       --tokenContract string   token contract to be registered
 ```
 
+<<<<<<< HEAD
 &nbsp;
 
 ### `Deploy`
+=======
+### Deploy
+>>>>>>> main
 Deploy smart contracts.
 
 Used to deploy all or some of the contracts required for bridging. Selection of contracts can be made by either specifying --all or a subset of flags
@@ -407,26 +527,37 @@ Flags:
       --all                     deploy all
       --bridge                  deploy bridge
       --bridgeAddress string    bridge contract address. Should be provided if handlers are deployed separately
+<<<<<<< HEAD
       --domainId string          domain ID for the instance (default "1")
+=======
+      --chainId string          chain ID for the instance (default "1")
+>>>>>>> main
       --erc20                   deploy ERC20
       --erc20Handler            deploy ERC20 handler
       --erc20Name string        ERC20 contract name
       --erc20Symbol string      ERC20 contract symbol
       --erc721                  deploy ERC721
+<<<<<<< HEAD
       --erc721Handler           deploy ERC721 handler
       --erc721Name string       ERC721 contract name
       --erc721Symbol string     ERC721 contract symbol
       --erc721BaseURI           ERC721 base URI
       --genericHandler          deploy generic handler
+=======
+>>>>>>> main
       --fee string              fee to be taken when making a deposit (in ETH, decimas are allowed) (default "0")
   -h, --help                    help for deploy
       --relayerThreshold uint   number of votes required for a proposal to pass (default 1)
       --relayers strings        list of initial relayers
 ```
 
+<<<<<<< HEAD
 &nbsp;
 
 ### `ERC20`
+=======
+### ERC20
+>>>>>>> main
 ERC20-related instructions.
 
 ```bash
@@ -445,7 +576,11 @@ Flags:
   -h, --help   help for erc20
 ```
 
+<<<<<<< HEAD
 #### `add-minter`
+=======
+#### add-minter
+>>>>>>> main
 Add a minter to an Erc20 mintable contract.
 
 ```bash
@@ -455,11 +590,19 @@ Usage:
 Flags:
       --erc20Address string   ERC20 contract address
   -h, --help                  help for add-minter
+<<<<<<< HEAD
       --minter string         handler contract address
 
 ```
 
 #### `allowance`
+=======
+      --minter string         address of minter
+
+```
+
+#### allowance
+>>>>>>> main
 Get the allowance of a spender for an address.
 
 ```bash
@@ -473,7 +616,11 @@ Flags:
       --spender string        address of spender
 ```
 
+<<<<<<< HEAD
 #### `approve`
+=======
+#### approve
+>>>>>>> main
 Approve tokens in an ERC20 contract for transfer.
 
 ```bash
@@ -488,7 +635,11 @@ Flags:
       --recipient string      address of recipient
 ```
 
+<<<<<<< HEAD
 #### `balance`
+=======
+#### balance
+>>>>>>> main
 Query balance of an account in an ERC20 contract.
 
 ```bash
@@ -501,7 +652,11 @@ Flags:
   -h, --help                    help for balance
 ```
 
+<<<<<<< HEAD
 #### `deposit`
+=======
+#### deposit
+>>>>>>> main
 Initiate a transfer of ERC20 tokens.
 
 ```bash
@@ -512,13 +667,21 @@ Flags:
       --amount string       amount to deposit
       --bridge string       address of bridge contract
       --decimals uint       ERC20 token decimals
+<<<<<<< HEAD
       --domainId string     destination domain ID
+=======
+      --destId string       destination chain ID
+>>>>>>> main
   -h, --help                help for deposit
       --recipient string    address of recipient
       --resourceId string   resource ID for transfer
 ```
 
+<<<<<<< HEAD
 #### `mint`
+=======
+#### mint
+>>>>>>> main
 Mint tokens on an ERC20 mintable contract.
 
 ```bash
@@ -533,6 +696,7 @@ Flags:
   -h, --help                  help for mint
 ```
 
+<<<<<<< HEAD
 &nbsp;
 
 ### `ERC721`
@@ -551,6 +715,12 @@ Available Commands:
 ```
 
 #### `add-minter`
+=======
+### ERC721
+ERC721-related instructions.
+
+#### add-minter
+>>>>>>> main
 Add a minter to an ERC721 mintable contract.
 
 ```bash
@@ -563,6 +733,7 @@ Flags:
       --minter string          address of minter
 ```
 
+<<<<<<< HEAD
 #### `approve`
 Approve token in an ERC721 contract for transfer.
 
@@ -622,6 +793,8 @@ Flags:
   -h, --help                         help for add-minter
 ```
 
+=======
+>>>>>>> main
 ### Utils
 Utils-related instructions.
 *Useful for debugging*
@@ -638,7 +811,11 @@ Flags:
   -h, --help   help for utils
 ```
 
+<<<<<<< HEAD
 #### `hashlist`
+=======
+#### hashlist
+>>>>>>> main
 List tx hashes.
 
 ```bash
@@ -650,7 +827,11 @@ Flags:
   -h, --help                 help for hashList
 ```
 
+<<<<<<< HEAD
 #### `simulate`
+=======
+#### simulate
+>>>>>>> main
 Replay a failed transaction by simulating invocation; not state-altering
 
 ```bash
@@ -664,6 +845,7 @@ Flags:
       --txHash string        transaction hash
 ```
 
+<<<<<<< HEAD
 ### `Centrifuge`
 Centrifuge-related instructions.
 
@@ -692,6 +874,9 @@ Flags:
 &nbsp;
 
 ## `Celo-CLI`
+=======
+## Celo-CLI
+>>>>>>> main
 Though Celo is an EVM-compatible chain, it deviates in its implementation of the original Ethereum specifications, and therefore is deserving of its own separate module.
 
 See: [differences between EVM and Celo](#differences-between-evm-and-celo).
@@ -709,8 +894,11 @@ Flags:
   -h, --help   help for celo-cli
 ```
 
+<<<<<<< HEAD
 &nbsp;
 
+=======
+>>>>>>> main
 ### Differences Between EVM and Celo
 
 The differences alluded to above in how Celo constructs transactions versus those found within Ethereum can be viewed below by taking a look at the Message structs in both implementations.
@@ -756,9 +944,13 @@ Message {
 }
 ```
 
+<<<<<<< HEAD
 &nbsp;
 
 ### `Bridge`
+=======
+### Bridge
+>>>>>>> main
 Bridge-related instructions.
 
 ```bash
@@ -773,7 +965,11 @@ Flags:
   -h, --help   help for bridge
 ```
 
+<<<<<<< HEAD
 #### `register-resource`
+=======
+#### register-resource
+>>>>>>> main
 Register a resource ID with a contract address for a handler
 
 ```bash
@@ -788,7 +984,11 @@ Flags:
       --target string       contract address to be registered
 ```
 
+<<<<<<< HEAD
 #### `set-burn`
+=======
+#### set-burn
+>>>>>>> main
 Set a token contract as mintable/burnable in a handler
 
 ```bash
@@ -802,9 +1002,13 @@ Flags:
       --tokenContract string   token contract to be registered
 ```
 
+<<<<<<< HEAD
 &nbsp;
 
 ### `Deploy`
+=======
+### Deploy
+>>>>>>> main
 Deploy smart contracts.
 
 This command can be used to deploy all or some of the contracts required for bridging. Selection of contracts can be made by either specifying --all or a subset of flags.
@@ -817,27 +1021,39 @@ Flags:
       --all                     deploy all
       --bridge                  deploy bridge
       --bridgeAddress string    bridge contract address. Should be provided if handlers are deployed separately
+<<<<<<< HEAD
       --domainId string         domain ID for the instance (default "1")
+=======
+      --chainId string          chain ID for the instance (default "1")
+>>>>>>> main
       --erc20                   deploy ERC20
       --erc20Handler            deploy ERC20 handler
       --erc20Name string        ERC20 contract name
       --erc20Symbol string      ERC20 contract symbol
       --erc721                  deploy ERC721
+<<<<<<< HEAD
       --erc721Handler           deploy ERC721 handler
       --erc721Name string       ERC721 contract name
       --erc721Symbol string     ERC721 contract symbol
       --erc721BaseURI           ERC721 base URI
       --genericHandler          deploy generic handler
+=======
+>>>>>>> main
       --fee string              fee to be taken when making a deposit (in ETH, decimas are allowed) (default "0")
   -h, --help                    help for deploy
       --relayerThreshold uint   number of votes required for a proposal to pass (default 1)
       --relayers strings        list of initial relayers
 ```
 
+<<<<<<< HEAD
 &nbsp;
 
 ### `ERC20`
 erc20-related instructions.
+=======
+### ERC20
+erc20-related instructions
+>>>>>>> main
 
 ```bash
 Usage:
@@ -855,7 +1071,11 @@ Flags:
   -h, --help   help for erc20
 ```
 
+<<<<<<< HEAD
 #### `add-minter`
+=======
+#### add-minter
+>>>>>>> main
 Add a minter to an Erc20 mintable contract.
 
 ```bash
@@ -868,7 +1088,11 @@ Flags:
       --minter string         address of minter
 ```
 
+<<<<<<< HEAD
 #### `allowance`
+=======
+#### allowance
+>>>>>>> main
 Set a token contract as mintable/burnable in a handler.
 
 ```bash
@@ -882,7 +1106,11 @@ Flags:
       --spender string        address of spender
 ```
 
+<<<<<<< HEAD
 #### `approve`
+=======
+#### approve
+>>>>>>> main
 Approve tokens in an ERC20 contract for transfer.
 
 ```bash
@@ -897,7 +1125,11 @@ Flags:
       --recipient string      address of recipient
 ```
 
+<<<<<<< HEAD
 #### `balance`
+=======
+#### balance
+>>>>>>> main
 Query balance of an account in an ERC20 contract.
 
 ```bash
@@ -910,7 +1142,11 @@ Flags:
   -h, --help                    help for balance
 ```
 
+<<<<<<< HEAD
 #### `deposit`
+=======
+#### deposit
+>>>>>>> main
 Initiate a transfer of ERC20 tokens.
 
 ```bash
@@ -921,13 +1157,21 @@ Flags:
       --amount string       amount to deposit
       --bridge string       address of bridge contract
       --decimals uint       ERC20 token decimals
+<<<<<<< HEAD
       --domainId string     destination domain ID
+=======
+      --destId string       destination chain ID
+>>>>>>> main
   -h, --help                help for deposit
       --recipient string    address of recipient
       --resourceId string   resource ID for transfer
 ```
 
+<<<<<<< HEAD
 #### `mint`
+=======
+#### mint
+>>>>>>> main
 Mint tokens on an ERC20 mintable contract.
 
 ```bash
@@ -942,6 +1186,7 @@ Flags:
   -h, --help                  help for mint
 ```
 
+<<<<<<< HEAD
 &nbsp;
 
 ### Centrifuge
@@ -1007,6 +1252,8 @@ You can also review our [Local Setup Guide](https://github.com/ChainSafe/chainbr
 
 &nbsp;
 
+=======
+>>>>>>> main
 # ChainSafe Security Policy
 
 ## Reporting a Security Bug

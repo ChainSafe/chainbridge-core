@@ -23,7 +23,7 @@ type ProposalVoter interface {
 
 // EVMChain is struct that aggregates all data required for
 type EVMChain struct {
-	listener EventListener // Rename
+	listener EventListener
 	writer   ProposalVoter
 	domainID uint8
 	kvdb     blockstore.KeyValueReaderWriter

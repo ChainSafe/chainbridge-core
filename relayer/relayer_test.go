@@ -2,6 +2,7 @@ package relayer
 
 import (
 	"fmt"
+	"math/big"
 	"testing"
 
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
@@ -36,6 +37,25 @@ func (s *RouteTestSuite) TestLogsErrorIfDestinationDoesNotExist() {
 	}
 
 	relayer.route(&message.Message{})
+}
+
+// TestRouter tests relayers router
+func (s *RouteTestSuite) TestAdjustDecimalsForERC20AmountMessageProcessor() {
+	a, _ := big.NewInt(0).SetString("145556700000000000000", 10) // 145.5567 tokens
+	msg := &message.Message{
+		Destination: 2,
+		Source:      1,
+		Payload: []interface{}{
+			a.Bytes(), // 145.5567 tokens
+		},
+	}
+	err := message.AdjustDecimalsForERC20AmountMessageProcessor(map[uint8]uint64{1: 18, 2: 2})(msg)
+	s.Nil(err)
+	amount := new(big.Int).SetBytes(msg.Payload[0].([]byte))
+	if amount.Cmp(big.NewInt(14555)) != 0 {
+		s.Fail("wrong amount")
+	}
+
 }
 
 func (s *RouteTestSuite) TestLogsErrorIfMessageProcessorReturnsError() {
