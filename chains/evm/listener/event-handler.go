@@ -6,15 +6,18 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
+	"github.com/ChainSafe/chainbridge-core/types"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 type EventHandlers map[common.Address]EventHandlerFunc
-type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, caller ChainClient) (*relayer.Message, error)
+type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error)
 
 type ETHEventHandler struct {
 	bridgeAddress common.Address
@@ -29,32 +32,32 @@ func NewETHEventHandler(address common.Address, client ChainClient) *ETHEventHan
 	}
 }
 
-func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint64, rID [32]byte) (*relayer.Message, error) {
-	addr, err := e.matchResourceIDToHandlerAddress(rID)
+func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
+	handlerAddr, err := e.matchResourceIDToHandlerAddress(resourceID)
 	if err != nil {
 		return nil, err
 	}
 
-	eventHandler, err := e.matchAddressWithHandlerFunc(addr)
+	eventHandler, err := e.matchAddressWithHandlerFunc(handlerAddr)
 	if err != nil {
 		return nil, err
 	}
 
-	return eventHandler(sourceID, destID, depositNonce, addr, e.client)
+	return eventHandler(sourceID, destID, depositNonce, resourceID, calldata, handlerResponse)
 }
 
-func (e *ETHEventHandler) matchResourceIDToHandlerAddress(rID [32]byte) (common.Address, error) {
-	definition := "[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"_resourceIDToHandlerAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
-	a, err := abi.JSON(strings.NewReader(definition))
+// matchResourceIDToHandlerAddress is a private method that matches a previously registered resource ID to its corresponding handler address
+func (e *ETHEventHandler) matchResourceIDToHandlerAddress(resourceID types.ResourceID) (common.Address, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return common.Address{}, err
 	}
-	input, err := a.Pack("_resourceIDToHandlerAddress", rID)
+	input, err := a.Pack("_resourceIDToHandlerAddress", resourceID)
 	if err != nil {
 		return common.Address{}, err
 	}
 	msg := ethereum.CallMsg{From: common.Address{}, To: &e.bridgeAddress, Data: input}
-	out, err := e.client.CallContract(context.TODO(), toCallArg(msg), nil)
+	out, err := e.client.CallContract(context.TODO(), calls.ToCallArg(msg), nil)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -66,86 +69,111 @@ func (e *ETHEventHandler) matchResourceIDToHandlerAddress(rID [32]byte) (common.
 	return out0, nil
 }
 
-func (e *ETHEventHandler) matchAddressWithHandlerFunc(addr common.Address) (EventHandlerFunc, error) {
-	hf, ok := e.eventHandlers[addr]
+// matchAddressWithHandlerFunc is a private method that matches a handler address with an associated handler function
+func (e *ETHEventHandler) matchAddressWithHandlerFunc(handlerAddress common.Address) (EventHandlerFunc, error) {
+	hf, ok := e.eventHandlers[handlerAddress]
 	if !ok {
 		return nil, errors.New("no corresponding event handler for this address exists")
 	}
 	return hf, nil
 }
 
-func (e *ETHEventHandler) RegisterEventHandler(address string, handler EventHandlerFunc) {
+// RegisterEventHandler is a public method that registers an event handler by associating a handler function to a specific address
+func (e *ETHEventHandler) RegisterEventHandler(handlerAddress string, handler EventHandlerFunc) {
 	if e.eventHandlers == nil {
 		e.eventHandlers = make(map[common.Address]EventHandlerFunc)
 	}
-	e.eventHandlers[common.HexToAddress(address)] = handler
+	e.eventHandlers[common.HexToAddress(handlerAddress)] = handler
 }
 
-func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
-	arg := map[string]interface{}{
-		"from": msg.From,
-		"to":   msg.To,
-	}
-	if len(msg.Data) > 0 {
-		arg["data"] = hexutil.Bytes(msg.Data)
-	}
-	if msg.Value != nil {
-		arg["value"] = (*hexutil.Big)(msg.Value)
-	}
-	if msg.Gas != 0 {
-		arg["gas"] = hexutil.Uint64(msg.Gas)
-	}
-	if msg.GasPrice != nil {
-		arg["gasPrice"] = (*hexutil.Big)(msg.GasPrice)
-	}
-	return arg
-}
-
-func Erc20EventHandler(sourceID, destId uint8, nonce uint64, handlerContractAddress common.Address, client ChainClient) (*relayer.Message, error) {
-	definition := "[{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"internalType\":\"uint8\",\"name\":\"destId\",\"type\":\"uint8\"}],\"name\":\"getDepositRecord\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"internalType\":\"uint8\",\"name\":\"_lenDestinationRecipientAddress\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"_destinationChainID\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"_resourceID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"_destinationRecipientAddress\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"_depositer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"internalType\":\"structERC20Handler.DepositRecord\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
-	type ERC20HandlerDepositRecord struct {
-		TokenAddress                   common.Address
-		LenDestinationRecipientAddress uint8
-		DestinationChainID             uint8
-		ResourceID                     [32]byte
-		DestinationRecipientAddress    []byte
-		Depositer                      common.Address
-		Amount                         *big.Int
-	}
-	a, err := abi.JSON(strings.NewReader(definition))
-	if err != nil {
+// Erc20EventHandler converts data pulled from event logs into message
+// handlerResponse can be an empty slice
+func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
+	if len(calldata) < 84 {
+		err := errors.New("invalid calldata length: less than 84 bytes")
 		return nil, err
 	}
 
-	input, err := a.Pack("getDepositRecord", nonce, destId)
-	if err != nil {
-		return nil, err
-	}
+	// @dev
+	// amount: first 32 bytes of calldata
+	amount := calldata[:32]
 
-	msg := ethereum.CallMsg{From: common.Address{}, To: &handlerContractAddress, Data: input}
-	out, err := client.CallContract(context.TODO(), toCallArg(msg), nil)
-	if err != nil {
-		return nil, err
-	}
-	res, err := a.Unpack("getDepositRecord", out)
-	if err != nil {
-		return nil, err
-	}
+	// lenRecipientAddress: second 32 bytes of calldata [32:64]
+	// does not need to be derived because it is being calculated
+	// within ERC20MessageHandler
+	// https://github.com/ChainSafe/chainbridge-core/blob/main/chains/evm/voter/message-handler.go#L108
 
-	if len(res) == 0 {
-		return nil, errors.New("no handler associated with such resourceID")
-	}
+	// recipientAddress: last 20 bytes of calldata
+	recipientAddress := calldata[64:]
 
-	out0 := *abi.ConvertType(res[0], new(ERC20HandlerDepositRecord)).(*ERC20HandlerDepositRecord)
-	return &relayer.Message{
+	return &message.Message{
 		Source:       sourceID,
 		Destination:  destId,
 		DepositNonce: nonce,
-		ResourceId:   out0.ResourceID,
-		Type:         relayer.FungibleTransfer,
+		ResourceId:   resourceID,
+		Type:         message.FungibleTransfer,
 		Payload: []interface{}{
-			out0.Amount.Bytes(),
-			out0.DestinationRecipientAddress,
+			amount,
+			recipientAddress,
+		},
+	}, nil
+}
+
+// GenericEventHandler extracts metadata of generic deposit event log into message
+func GenericEventHandler(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
+	if len(calldata) < 32 {
+		err := errors.New("invalid calldata length: less than 32 bytes")
+		return nil, err
+	}
+
+	// first 32 bytes are metadata length
+	metadata := calldata[32:]
+
+	return &message.Message{
+		Source:       sourceID,
+		Destination:  destId,
+		DepositNonce: nonce,
+		ResourceId:   resourceID,
+		Type:         message.GenericTransfer,
+		Payload: []interface{}{
+			metadata,
+		},
+	}, nil
+}
+
+func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
+	if len(calldata) < 64 {
+		err := errors.New("invalid calldata length: less than 84 bytes")
+		return nil, err
+	}
+
+	// first 32 bytes are tokenId
+	tokenId := calldata[:32]
+
+	// 32 - 64 is recipient address length
+	recipientAddressLength := big.NewInt(0).SetBytes(calldata[32:64])
+
+	// 64 - (64 + recipient address length) is recipient address
+	recipientAddress := calldata[64:(64 + recipientAddressLength.Int64())]
+
+	// if metadata present
+	metadata := []byte{}
+	metadataStart := big.NewInt(0).Add(big.NewInt(64), recipientAddressLength).Int64()
+	if metadataStart <= int64(len(calldata)) {
+		metadata = calldata[metadataStart:]
+	}
+	// rest of bytes is metada
+
+	return &message.Message{
+		Source:       sourceID,
+		Destination:  destId,
+		DepositNonce: nonce,
+		ResourceId:   resourceID,
+		Type:         message.NonFungibleTransfer,
+		Payload: []interface{}{
+			tokenId,
+			recipientAddress,
+			metadata,
 		},
 	}, nil
 }

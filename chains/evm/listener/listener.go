@@ -9,28 +9,24 @@ import (
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/blockstore"
-	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
+	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/rs/zerolog/log"
 )
 
 var BlockRetryInterval = time.Second * 5
 var BlockDelay = big.NewInt(10) //TODO: move to config
 
-type DepositLogs struct {
-	DestinationID uint8
-	ResourceID    [32]byte
-	DepositNonce  uint64
+type EventHandler interface {
+	HandleEvent(sourceID, destID uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error)
 }
-
 type ChainClient interface {
 	LatestBlock() (*big.Int, error)
-	FetchDepositLogs(ctx context.Context, address common.Address, startBlock *big.Int, endBlock *big.Int) ([]*DepositLogs, error)
+	FetchDepositLogs(ctx context.Context, address common.Address, startBlock *big.Int, endBlock *big.Int) ([]*evmclient.DepositLogs, error)
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
-}
-
-type EventHandler interface {
-	HandleEvent(sourceID, destID uint8, nonce uint64, rID [32]byte) (*relayer.Message, error)
 }
 
 type EVMListener struct {
@@ -43,9 +39,9 @@ func NewEVMListener(chainReader ChainClient, handler EventHandler, bridgeAddress
 	return &EVMListener{chainReader: chainReader, eventHandler: handler, bridgeAddress: bridgeAddress}
 }
 
-func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message {
+func (l *EVMListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *message.Message {
 	// TODO: This channel should be closed somewhere!
-	ch := make(chan *relayer.Message)
+	ch := make(chan *message.Message)
 	go func() {
 		for {
 			select {
@@ -63,15 +59,16 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw bl
 					time.Sleep(BlockRetryInterval)
 					continue
 				}
+
 				logs, err := l.chainReader.FetchDepositLogs(context.Background(), l.bridgeAddress, startBlock, startBlock)
 				if err != nil {
 					// Filtering logs error really can appear only on wrong configuration or temporary network problem
 					// so i do no see any reason to break execution
-					log.Error().Err(err).Str("ChainID", string(chainID)).Msgf("Unable to filter logs")
+					log.Error().Err(err).Str("DomainID", string(domainID)).Msgf("Unable to filter logs")
 					continue
 				}
 				for _, eventLog := range logs {
-					m, err := l.eventHandler.HandleEvent(chainID, eventLog.DestinationID, eventLog.DepositNonce, eventLog.ResourceID)
+					m, err := l.eventHandler.HandleEvent(domainID, eventLog.DestinationDomainID, eventLog.DepositNonce, eventLog.ResourceID, eventLog.Data, eventLog.HandlerResponse)
 					if err != nil {
 						errChn <- err
 						log.Error().Err(err)
@@ -82,11 +79,11 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, chainID uint8, kvrw bl
 				}
 				if startBlock.Int64()%20 == 0 {
 					// Logging process every 20 bocks to exclude spam
-					log.Debug().Str("block", startBlock.String()).Uint8("chainID", chainID).Msg("Queried block for deposit events")
+					log.Debug().Str("block", startBlock.String()).Uint8("domainID", domainID).Msg("Queried block for deposit events")
 				}
 				// TODO: We can store blocks to DB inside listener or make listener send something to channel each block to save it.
 				//Write to block store. Not a critical operation, no need to retry
-				err = blockstore.StoreBlock(kvrw, startBlock, chainID)
+				err = blockstore.StoreBlock(kvrw, startBlock, domainID)
 				if err != nil {
 					log.Error().Str("block", startBlock.String()).Err(err).Msg("Failed to write latest block to blockstore")
 				}

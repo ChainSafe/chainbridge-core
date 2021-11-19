@@ -7,15 +7,12 @@ import (
 	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-
+	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
-
-// @dev
-// inputs here and in bridge.go could get consolidated into something similar to txFabric in deploy.go
 
 func PrepareMintTokensInput(destAddr common.Address, amount *big.Int) ([]byte, error) {
 	log.Debug().Msgf("Minting tokens %s %s", destAddr.String(), amount.String())
@@ -42,7 +39,7 @@ func PrepareErc20ApproveInput(target common.Address, amount *big.Int) ([]byte, e
 	return input, nil
 }
 
-func PrepareErc20AddMinterInput(client ChainClient, erc20Contract, handler common.Address) ([]byte, error) {
+func PrepareErc20AddMinterInput(client ContractCallerClient, erc20Contract, handler common.Address) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
 	if err != nil {
 		return []byte{}, err
@@ -58,12 +55,12 @@ func PrepareErc20AddMinterInput(client ChainClient, erc20Contract, handler commo
 	return input, nil
 }
 
-func PrepareRegisterGenericResourceInput(handler common.Address, rId [32]byte, addr common.Address, depositSig, executeSig [4]byte) ([]byte, error) {
+func PrepareRegisterGenericResourceInput(handler common.Address, resourceID types.ResourceID, addr common.Address, depositSig, executeSig [4]byte) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
 	if err != nil {
 		return []byte{}, err // Not sure what status to use here
 	}
-	input, err := a.Pack("adminSetGenericResource", handler, rId, addr, depositSig, executeSig)
+	input, err := a.Pack("adminSetGenericResource", handler, resourceID, addr, depositSig, executeSig)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -99,7 +96,7 @@ func ParseERC20BalanceOutput(output []byte) (*big.Int, error) {
 	return balance, nil
 }
 
-func MinterRole(chainClient ChainClient, erc20Contract common.Address) ([32]byte, error) {
+func MinterRole(chainClient ContractCallerClient, erc20Contract common.Address) ([32]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
 	if err != nil {
 		return [32]byte{}, err
@@ -121,7 +118,7 @@ func MinterRole(chainClient ChainClient, erc20Contract common.Address) ([32]byte
 	return out0, nil
 }
 
-func GetERC20Balance(ethClient ChainClient, erc20Addr, address common.Address) (*big.Int, error) {
+func GetERC20Balance(ethClient ContractCheckerCallerClient, erc20Addr, address common.Address) (*big.Int, error) {
 	input, err := PrepareERC20BalanceInput(address)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("prepare input error: %v", err))

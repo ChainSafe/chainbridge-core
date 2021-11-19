@@ -1,6 +1,8 @@
 package bridge
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -9,27 +11,30 @@ var queryProposalCmd = &cobra.Command{
 	Use:   "query-proposal",
 	Short: "Query an inbound proposal",
 	Long:  "Query an inbound proposal",
-	Run:   queryProposal,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	Run: queryProposal,
 }
 
+func BindQueryProposalFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	cmd.Flags().StringVar(&DataHash, "dataHash", "", "hash of proposal metadata")
+	cmd.Flags().Uint64Var(&DomainID, "domainId", 0, "source domain ID of proposal")
+	cmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "	deposit nonce of proposal")
+	flags.MarkFlagsAsRequired(cmd, "bridge", "dataHash", "domainId", "depositNonce")
+}
 func init() {
-	queryProposalCmd.Flags().String("bridge", "", "bridge contract address")
-	queryProposalCmd.Flags().String("dataHash", "", "hash of proposal metadata")
-	queryProposalCmd.Flags().Uint64("chainId", 0, "source chain ID of proposal")
-	queryProposalCmd.Flags().Uint64("depositNonce", 0, "deposit nonce of proposal")
+	BindQueryProposalFlags(queryProposalCmd)
 }
 
 func queryProposal(cmd *cobra.Command, args []string) {
-	bridgeAddress := cmd.Flag("bridge").Value
-	chainId := cmd.Flag("chainId").Value
-	depositNonce := cmd.Flag("depositNonce").Value
-	dataHash := cmd.Flag("dataHash").Value
 	log.Debug().Msgf(`
 Querying proposal
 Chain ID: %d
 Deposit nonce: %d
 Data hash: %s
-Bridge address: %s`, chainId, depositNonce, dataHash, bridgeAddress)
+Bridge address: %s`, DomainID, DepositNonce, DataHash, Bridge)
 }
 
 /*
@@ -46,7 +51,7 @@ func queryProposal(cctx *cli.Context) error {
 		return err
 	}
 
-	chainID := cctx.Uint64("chainId")
+	domainID := cctx.Uint64("domainId")
 	depositNonce := cctx.Uint64("depositNonce")
 	dataHash := cctx.String("dataHash")
 	dataHashBytes := utils.SliceTo32Bytes(common.Hex2Bytes(dataHash))
@@ -56,11 +61,11 @@ func queryProposal(cctx *cli.Context) error {
 		return err
 	}
 
-	prop, err := utils.QueryProposal(ethClient, bridgeAddress, uint8(chainID), depositNonce, dataHashBytes)
+	prop, err := utils.QueryProposal(ethClient, bridgeAddress, uint8(domainID), depositNonce, dataHashBytes)
 	if err != nil {
 		return err
 	}
-	log.Info().Msgf("proposal with chainID %v and depositNonce %v queried. %+v", chainID, depositNonce, prop)
+	log.Info().Msgf("proposal with domainID %v and depositNonce %v queried. %+v", domainID, depositNonce, prop)
 	return nil
 }
 */

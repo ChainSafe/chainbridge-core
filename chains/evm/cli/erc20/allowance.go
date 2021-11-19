@@ -2,6 +2,8 @@ package erc20
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -11,16 +13,20 @@ var allowanceCmd = &cobra.Command{
 	Use:   "allowance",
 	Short: "Get the allowance of a spender for an address",
 	Long:  "Get the allowance of a spender for an address",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		txFabric := evmtransaction.NewTransaction
 		return AllowanceCmd(cmd, args, txFabric)
 	},
 }
 
-func BindAllowanceCmdFlags(cli *cobra.Command) {
-	cli.Flags().String("erc20Address", "", "ERC20 contract address")
-	cli.Flags().String("owner", "", "address of token owner")
-	cli.Flags().String("spender", "", "address of spender")
+func BindAllowanceCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
+	cmd.Flags().StringVar(&OwnerAddress, "owner", "", "address of token owner")
+	cmd.Flags().StringVar(&SpenderAddress, "spender", "", "address of spender")
+	flags.MarkFlagsAsRequired(cmd, "erc20Address", "owner", "spender")
 }
 
 func init() {
@@ -28,15 +34,12 @@ func init() {
 }
 
 func AllowanceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	erc20Address := cmd.Flag("erc20Address").Value.String()
-	ownerAddress := cmd.Flag("owner").Value.String()
-	spenderAddress := cmd.Flag("spender").Value.String()
 	log.Debug().Msgf(`
 Determing allowance
 ERC20 address: %s
 Owner address: %s
 Spender address: %s`,
-		erc20Address, ownerAddress, spenderAddress)
+		Erc20Address, OwnerAddress, SpenderAddress)
 	return nil
 
 	/*

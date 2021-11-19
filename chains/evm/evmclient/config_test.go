@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ChainSafe/chainbridge-core/config"
+	"github.com/ChainSafe/chainbridge-core/config/chain"
 )
 
 func TestLoadJSONConfig(t *testing.T) {
@@ -30,7 +30,7 @@ func TestParseChainConfig(t *testing.T) {
 	generalConfig := createGeneralConfig()
 
 	input := RawEVMConfig{
-		RawSharedEVMConfig: config.RawSharedEVMConfig{
+		RawSharedEVMConfig: chain.RawSharedEVMConfig{
 			GeneralChainConfig: generalConfig,
 			Bridge:             "0x1234",
 			Erc20Handler:       "0x1234",
@@ -50,7 +50,7 @@ func TestParseChainConfig(t *testing.T) {
 	}
 
 	expected := EVMConfig{
-		SharedEVMConfig: config.SharedEVMConfig{
+		SharedEVMConfig: chain.SharedEVMConfig{
 			GeneralChainConfig: generalConfig,
 			Bridge:             "0x1234",
 			Erc20Handler:       "0x1234",
@@ -74,7 +74,7 @@ func TestParseChainConfigWithNoBlockConfirmations(t *testing.T) {
 	generalConfig := createGeneralConfig()
 
 	input := RawEVMConfig{
-		RawSharedEVMConfig: config.RawSharedEVMConfig{
+		RawSharedEVMConfig: chain.RawSharedEVMConfig{
 			GeneralChainConfig: generalConfig,
 			Bridge:             "0x1234",
 			Erc20Handler:       "0x1234",
@@ -94,7 +94,7 @@ func TestParseChainConfigWithNoBlockConfirmations(t *testing.T) {
 	}
 
 	expected := EVMConfig{
-		SharedEVMConfig: config.SharedEVMConfig{
+		SharedEVMConfig: chain.SharedEVMConfig{
 			GeneralChainConfig: generalConfig,
 			Bridge:             "0x1234",
 			Erc20Handler:       "0x1234",
@@ -119,7 +119,7 @@ func TestChainConfigOneContract(t *testing.T) {
 	generalConfig := createGeneralConfig()
 
 	input := RawEVMConfig{
-		RawSharedEVMConfig: config.RawSharedEVMConfig{
+		RawSharedEVMConfig: chain.RawSharedEVMConfig{
 			GeneralChainConfig: generalConfig,
 			Bridge:             "0x1234",
 			Erc20Handler:       "0x1234",
@@ -136,7 +136,7 @@ func TestChainConfigOneContract(t *testing.T) {
 	}
 
 	expected := EVMConfig{
-		SharedEVMConfig: config.SharedEVMConfig{
+		SharedEVMConfig: chain.SharedEVMConfig{
 			GeneralChainConfig: generalConfig,
 			Bridge:             "0x1234",
 			Erc20Handler:       "0x1234",
@@ -160,11 +160,11 @@ func TestRequiredOpts(t *testing.T) {
 	_, err := ParseConfig(&input)
 
 	if err == nil {
-		t.Error("config missing chainId field but no error reported")
+		t.Error("config missing domainId field but no error reported")
 	}
 
 	// Empty bridgeContract provided
-	input = RawEVMConfig{RawSharedEVMConfig: config.RawSharedEVMConfig{Bridge: ""}}
+	input = RawEVMConfig{RawSharedEVMConfig: chain.RawSharedEVMConfig{Bridge: ""}}
 
 	_, err = ParseConfig(&input)
 
@@ -174,9 +174,9 @@ func TestRequiredOpts(t *testing.T) {
 
 }
 
-func createGeneralConfig() config.GeneralChainConfig {
+func createGeneralConfig() chain.GeneralChainConfig {
 	var id uint8 = 1
-	return config.GeneralChainConfig{
+	return chain.GeneralChainConfig{
 		Name:     "chain",
 		Id:       &id,
 		Endpoint: "endpoint",
@@ -187,7 +187,7 @@ func createGeneralConfig() config.GeneralChainConfig {
 func createTempConfigFile() (*os.File, *RawEVMConfig) {
 	generalCfg := createGeneralConfig()
 	ethCfg := RawEVMConfig{
-		RawSharedEVMConfig: config.RawSharedEVMConfig{
+		RawSharedEVMConfig: chain.RawSharedEVMConfig{
 			GeneralChainConfig: generalCfg,
 			Bridge:             "0x1234"},
 	}

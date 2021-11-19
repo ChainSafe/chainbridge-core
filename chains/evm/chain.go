@@ -8,35 +8,34 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/blockstore"
-	"github.com/ChainSafe/chainbridge-core/config"
-	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/config/chain"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/rs/zerolog/log"
 )
 
 type EventListener interface {
-	ListenToEvents(startBlock *big.Int, chainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message
+	ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *message.Message
 }
 
 type ProposalVoter interface {
-	VoteProposal(message *relayer.Message) error
+	VoteProposal(message *message.Message) error
 }
 
 // EVMChain is struct that aggregates all data required for
 type EVMChain struct {
-	listener              EventListener // Rename
-	writer                ProposalVoter
-	chainID               uint8
-	kvdb                  blockstore.KeyValueReaderWriter
-	bridgeContractAddress string //nolint
-	config                *config.SharedEVMConfig
+	listener EventListener
+	writer   ProposalVoter
+	domainID uint8
+	kvdb     blockstore.KeyValueReaderWriter
+	config   *chain.SharedEVMConfig
 }
 
-func NewEVMChain(dr EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, chainID uint8, config *config.SharedEVMConfig) *EVMChain {
-	return &EVMChain{listener: dr, writer: writer, kvdb: kvdb, chainID: chainID, config: config}
+func NewEVMChain(dr EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, domainID uint8, config *chain.SharedEVMConfig) *EVMChain {
+	return &EVMChain{listener: dr, writer: writer, kvdb: kvdb, domainID: domainID, config: config}
 }
 
 // PollEvents is the goroutine that polling blocks and searching Deposit Events in them. Event then sent to eventsChan
-func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *relayer.Message) {
+func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *message.Message) {
 	log.Info().Msg("Polling Blocks...")
 	// Handler chain specific configs and flags
 	block, err := blockstore.SetupBlockstore(&c.config.GeneralChainConfig, c.kvdb, c.config.StartBlock)
@@ -44,7 +43,7 @@ func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsC
 		sysErr <- fmt.Errorf("error %w on getting last stored block", err)
 		return
 	}
-	ech := c.listener.ListenToEvents(block, c.chainID, c.kvdb, stop, sysErr)
+	ech := c.listener.ListenToEvents(block, c.domainID, c.kvdb, stop, sysErr)
 	for {
 		select {
 		case <-stop:
@@ -57,10 +56,10 @@ func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsC
 	}
 }
 
-func (c *EVMChain) Write(msg *relayer.Message) error {
+func (c *EVMChain) Write(msg *message.Message) error {
 	return c.writer.VoteProposal(msg)
 }
 
-func (c *EVMChain) ChainID() uint8 {
-	return c.chainID
+func (c *EVMChain) DomainID() uint8 {
+	return c.domainID
 }

@@ -1,6 +1,8 @@
 package admin
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -9,18 +11,25 @@ var unpauseCmd = &cobra.Command{
 	Use:   "unpause",
 	Short: "Unpause deposits and proposals",
 	Long:  "Unpause deposits and proposals",
-	Run:   unpause,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	Run: unpause,
+}
+
+func BindUnpauseFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	flags.MarkFlagsAsRequired(cmd, "bridge")
 }
 
 func init() {
-	unpauseCmd.Flags().String("bridge", "", "bridge contract address")
+	BindUnpauseFlags(unpauseCmd)
 }
 
 func unpause(cmd *cobra.Command, args []string) {
-	bridgeAddress := cmd.Flag("bridge").Value
 	log.Debug().Msgf(`
 Unpausing
-Bridge address: %s`, bridgeAddress)
+Bridge address: %s`, Bridge)
 }
 
 /*
