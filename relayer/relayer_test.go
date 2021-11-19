@@ -27,11 +27,11 @@ func (s *RouteTestSuite) SetupTest() {
 	gomockController := gomock.NewController(s.T())
 	s.mockRelayedChain = mock_relayer.NewMockRelayedChain(gomockController)
 	s.mockMetrics = mock_relayer.NewMockMetrics(gomockController)
-	s.mockMetrics.EXPECT().TrackDepositMessage(gomock.Any())
 }
 func (s *RouteTestSuite) TearDownTest() {}
 
 func (s *RouteTestSuite) TestLogsErrorIfDestinationDoesNotExist() {
+	s.mockMetrics.EXPECT().TrackDepositMessage(gomock.Any())
 	relayer := Relayer{
 		metrics: s.mockMetrics,
 	}
@@ -59,6 +59,7 @@ func (s *RouteTestSuite) TestAdjustDecimalsForERC20AmountMessageProcessor() {
 }
 
 func (s *RouteTestSuite) TestLogsErrorIfMessageProcessorReturnsError() {
+	s.mockMetrics.EXPECT().TrackDepositMessage(gomock.Any())
 	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1))
 	relayer := NewRelayer(
 		[]RelayedChain{},
@@ -73,6 +74,7 @@ func (s *RouteTestSuite) TestLogsErrorIfMessageProcessorReturnsError() {
 }
 
 func (s *RouteTestSuite) TestLogsErrorIfWriteReturnsError() {
+	s.mockMetrics.EXPECT().TrackDepositMessage(gomock.Any())
 	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1))
 	s.mockRelayedChain.EXPECT().Write(gomock.Any()).Return(fmt.Errorf("Error"))
 	relayer := NewRelayer(
@@ -88,6 +90,7 @@ func (s *RouteTestSuite) TestLogsErrorIfWriteReturnsError() {
 }
 
 func (s *RouteTestSuite) TestWritesToDestChainIfMessageValid() {
+	s.mockMetrics.EXPECT().TrackDepositMessage(gomock.Any())
 	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1))
 	s.mockRelayedChain.EXPECT().Write(gomock.Any()).Return(nil)
 	relayer := NewRelayer(
