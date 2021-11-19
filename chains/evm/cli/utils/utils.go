@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -70,23 +69,6 @@ func WeiAmountToUser(amount *big.Int, decimals *big.Int) (*big.Float, error) {
 		return nil, errors.New("wrong amount format")
 	}
 	return new(big.Float).Quo(amountFloat, big.NewFloat(gomath.Pow10(int(decimals.Int64())))), nil
-}
-
-// constructErc20Data constructs the data field to be passed into an erc721 deposit call
-func ConstructErc721DepositData(tokenId *big.Int, destRecipient []byte) []byte {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(tokenId, 32)...)                               // Resource Id + Token Id
-	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(destRecipient))), 32)...) // Length of recipient
-	data = append(data, destRecipient...)                                                  // Recipient
-
-	return data
-}
-
-func ConstructGenericDepositData(metadata []byte) []byte {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(metadata))), 32)...)
-	data = append(data, metadata...)
-	return data
 }
 
 type GasPricerWithPostConfig interface {

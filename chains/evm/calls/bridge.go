@@ -137,6 +137,15 @@ func ConstructErc20DepositData(destRecipient []byte, amount *big.Int) []byte {
 	return data
 }
 
+func ConstructErc721DepositData(destRecipient []byte, tokenId *big.Int, metadata []byte) []byte {
+	var data []byte
+	data = append(data, math.PaddedBigBytes(tokenId, 32)...)                               // Token Id
+	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(destRecipient))), 32)...) // Length of recipient
+	data = append(data, destRecipient...)                                                  // Recipient
+	data = append(data, metadata...)                                                       // Metadata
+	return data
+}
+
 func ConstructGenericDepositData(metadata []byte) []byte {
 	var data []byte
 	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(metadata))), 32)...)
@@ -164,19 +173,19 @@ func Deposit(
 	resourceID types.ResourceID,
 	destDomainID uint8,
 	data []byte,
-) error {
+) (*common.Hash, error) {
 	input, err := PrepareDepositInput(destDomainID, resourceID, data)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	gasLimit := uint64(2000000)
 	h, err := Transact(client, fabric, gasPriceClient, &bridgeAddress, input, gasLimit, big.NewInt(0))
 	if err != nil {
-		return fmt.Errorf("deposit failed %w", err)
+		return nil, fmt.Errorf("deposit failed %w", err)
 	}
 	log.Debug().Str("hash", h.String()).Msgf("Deposit sent")
-	return nil
+	return &h, nil
 }
 
 func PrepareExecuteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID types.ResourceID, calldata []byte, revertOnFail bool) ([]byte, error) {

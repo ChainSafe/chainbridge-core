@@ -31,6 +31,9 @@ genmocks:
 	mockgen -source=chains/evm/calls/utils.go -destination=chains/evm/calls/mock/utils.go
 	mockgen -destination=chains/evm/voter/mock/voter.go github.com/ChainSafe/chainbridge-core/chains/evm/voter ChainClient,MessageHandler
 
+e2e-setup:
+	docker-compose --file=./e2e/evm-evm/docker-compose.e2e.yml up
+
 e2e-test:
 	./scripts/int_tests.sh
 

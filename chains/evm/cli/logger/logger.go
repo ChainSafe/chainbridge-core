@@ -13,11 +13,12 @@ import (
 
 var (
 	CliLogsFilename = "cli_output_data.log"
+	Now             = time.Now
 )
 
 func LoggerMetadata(cmdName string, flagSet *pflag.FlagSet) {
 
-	currentTimestamp := time.Now().Format("02-01|15:00:00.000 ")
+	currentTimestamp := Now().Format("02-01|15:00:00.000 ")
 
 	file, err := os.OpenFile(CliLogsFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
