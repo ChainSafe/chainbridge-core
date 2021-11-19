@@ -9,7 +9,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
-	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -288,27 +288,27 @@ func GetThreshold(evmCaller ContractCallerClient, bridgeAddress *common.Address)
 	return out0, nil
 }
 
-func ProposalStatus(evmCaller ContractCallerClient, p *proposal.Proposal) (relayer.ProposalStatus, error) {
+func ProposalStatus(evmCaller ContractCallerClient, p *proposal.Proposal) (message.ProposalStatus, error) {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
-		return relayer.ProposalStatus{}, err
+		return message.ProposalStatus{}, err
 	}
 	input, err := a.Pack("getProposal", p.Source, p.DepositNonce, p.GetDataHash())
 	if err != nil {
-		return relayer.ProposalStatus{}, err
+		return message.ProposalStatus{}, err
 	}
 
 	msg := ethereum.CallMsg{From: common.Address{}, To: &p.BridgeAddress, Data: input}
 	out, err := evmCaller.CallContract(context.TODO(), ToCallArg(msg), nil)
 	if err != nil {
-		return relayer.ProposalStatus{}, err
+		return message.ProposalStatus{}, err
 	}
 	res, err := a.Unpack("getProposal", out)
 	if err != nil {
-		return relayer.ProposalStatus{}, err
+		return message.ProposalStatus{}, err
 	}
 
-	ps := *abi.ConvertType(res[0], new(relayer.ProposalStatus)).(*relayer.ProposalStatus)
+	ps := *abi.ConvertType(res[0], new(message.ProposalStatus)).(*message.ProposalStatus)
 	return ps, nil
 }
 

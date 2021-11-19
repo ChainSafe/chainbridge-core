@@ -14,7 +14,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
-	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	ethereumTypes "github.com/ethereum/go-ethereum/core/types"
@@ -40,7 +40,7 @@ type ChainClient interface {
 }
 
 type MessageHandler interface {
-	HandleMessage(m *relayer.Message) (*proposal.Proposal, error)
+	HandleMessage(m *message.Message) (*proposal.Proposal, error)
 }
 
 type EVMVoter struct {
@@ -89,7 +89,7 @@ func NewVoter(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasP
 
 // VoteProposal checks if relayer already voted and is threshold
 // satisfied and casts a vote if it isn't.
-func (v *EVMVoter) VoteProposal(m *relayer.Message) error {
+func (v *EVMVoter) VoteProposal(m *message.Message) error {
 	prop, err := v.mh.HandleMessage(m)
 	if err != nil {
 		return err
@@ -140,7 +140,7 @@ func (v *EVMVoter) shouldVoteForProposal(prop *proposal.Proposal, tries int) (bo
 		return false, err
 	}
 
-	if ps.Status == relayer.ProposalStatusExecuted || ps.Status == relayer.ProposalStatusCanceled {
+	if ps.Status == message.ProposalStatusExecuted || ps.Status == message.ProposalStatusCanceled {
 		return false, nil
 	}
 

@@ -279,6 +279,141 @@ func (mr *MockClientDeployerMockRecorder) WaitAndReturnTxReceipt(h interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitAndReturnTxReceipt", reflect.TypeOf((*MockClientDeployer)(nil).WaitAndReturnTxReceipt), h)
 }
 
+// MockContractCallerDispatcherClient is a mock of ContractCallerDispatcherClient interface.
+type MockContractCallerDispatcherClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockContractCallerDispatcherClientMockRecorder
+}
+
+// MockContractCallerDispatcherClientMockRecorder is the mock recorder for MockContractCallerDispatcherClient.
+type MockContractCallerDispatcherClientMockRecorder struct {
+	mock *MockContractCallerDispatcherClient
+}
+
+// NewMockContractCallerDispatcherClient creates a new mock instance.
+func NewMockContractCallerDispatcherClient(ctrl *gomock.Controller) *MockContractCallerDispatcherClient {
+	mock := &MockContractCallerDispatcherClient{ctrl: ctrl}
+	mock.recorder = &MockContractCallerDispatcherClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockContractCallerDispatcherClient) EXPECT() *MockContractCallerDispatcherClientMockRecorder {
+	return m.recorder
+}
+
+// CallContract mocks base method.
+func (m *MockContractCallerDispatcherClient) CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CallContract", ctx, callArgs, blockNumber)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CallContract indicates an expected call of CallContract.
+func (mr *MockContractCallerDispatcherClientMockRecorder) CallContract(ctx, callArgs, blockNumber interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CallContract", reflect.TypeOf((*MockContractCallerDispatcherClient)(nil).CallContract), ctx, callArgs, blockNumber)
+}
+
+// From mocks base method.
+func (m *MockContractCallerDispatcherClient) From() common.Address {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "From")
+	ret0, _ := ret[0].(common.Address)
+	return ret0
+}
+
+// From indicates an expected call of From.
+func (mr *MockContractCallerDispatcherClientMockRecorder) From() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "From", reflect.TypeOf((*MockContractCallerDispatcherClient)(nil).From))
+}
+
+// LockNonce mocks base method.
+func (m *MockContractCallerDispatcherClient) LockNonce() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "LockNonce")
+}
+
+// LockNonce indicates an expected call of LockNonce.
+func (mr *MockContractCallerDispatcherClientMockRecorder) LockNonce() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LockNonce", reflect.TypeOf((*MockContractCallerDispatcherClient)(nil).LockNonce))
+}
+
+// SignAndSendTransaction mocks base method.
+func (m *MockContractCallerDispatcherClient) SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SignAndSendTransaction", ctx, tx)
+	ret0, _ := ret[0].(common.Hash)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SignAndSendTransaction indicates an expected call of SignAndSendTransaction.
+func (mr *MockContractCallerDispatcherClientMockRecorder) SignAndSendTransaction(ctx, tx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignAndSendTransaction", reflect.TypeOf((*MockContractCallerDispatcherClient)(nil).SignAndSendTransaction), ctx, tx)
+}
+
+// UnlockNonce mocks base method.
+func (m *MockContractCallerDispatcherClient) UnlockNonce() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "UnlockNonce")
+}
+
+// UnlockNonce indicates an expected call of UnlockNonce.
+func (mr *MockContractCallerDispatcherClientMockRecorder) UnlockNonce() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnlockNonce", reflect.TypeOf((*MockContractCallerDispatcherClient)(nil).UnlockNonce))
+}
+
+// UnsafeIncreaseNonce mocks base method.
+func (m *MockContractCallerDispatcherClient) UnsafeIncreaseNonce() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UnsafeIncreaseNonce")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UnsafeIncreaseNonce indicates an expected call of UnsafeIncreaseNonce.
+func (mr *MockContractCallerDispatcherClientMockRecorder) UnsafeIncreaseNonce() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnsafeIncreaseNonce", reflect.TypeOf((*MockContractCallerDispatcherClient)(nil).UnsafeIncreaseNonce))
+}
+
+// UnsafeNonce mocks base method.
+func (m *MockContractCallerDispatcherClient) UnsafeNonce() (*big.Int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UnsafeNonce")
+	ret0, _ := ret[0].(*big.Int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UnsafeNonce indicates an expected call of UnsafeNonce.
+func (mr *MockContractCallerDispatcherClientMockRecorder) UnsafeNonce() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnsafeNonce", reflect.TypeOf((*MockContractCallerDispatcherClient)(nil).UnsafeNonce))
+}
+
+// WaitAndReturnTxReceipt mocks base method.
+func (m *MockContractCallerDispatcherClient) WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitAndReturnTxReceipt", h)
+	ret0, _ := ret[0].(*types.Receipt)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WaitAndReturnTxReceipt indicates an expected call of WaitAndReturnTxReceipt.
+func (mr *MockContractCallerDispatcherClientMockRecorder) WaitAndReturnTxReceipt(h interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitAndReturnTxReceipt", reflect.TypeOf((*MockContractCallerDispatcherClient)(nil).WaitAndReturnTxReceipt), h)
+}
+
 // MockGasPricer is a mock of GasPricer interface.
 type MockGasPricer struct {
 	ctrl     *gomock.Controller

@@ -11,7 +11,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 	mock_voter "github.com/ChainSafe/chainbridge-core/chains/evm/voter/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
-	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
@@ -54,7 +54,7 @@ func (s *VoterTestSuite) TearDownTest() {}
 func (s *VoterTestSuite) TestVoteProposal_HandleMessageError() {
 	s.mockMessageHandler.EXPECT().HandleMessage(gomock.Any()).Return(nil, errors.New("error"))
 
-	err := s.voter.VoteProposal(&relayer.Message{})
+	err := s.voter.VoteProposal(&message.Message{})
 
 	s.NotNil(err)
 }
@@ -67,7 +67,7 @@ func (s *VoterTestSuite) TestVoteProposal_IsProposalVotedByError() {
 	s.mockClient.EXPECT().RelayerAddress().Return(common.Address{})
 	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return([]byte{}, errors.New("error"))
 
-	err := s.voter.VoteProposal(&relayer.Message{})
+	err := s.voter.VoteProposal(&message.Message{})
 
 	s.NotNil(err)
 }
@@ -80,7 +80,7 @@ func (s *VoterTestSuite) TestVoteProposal_ProposalAlreadyVoted() {
 	s.mockClient.EXPECT().RelayerAddress().Return(common.Address{})
 	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(proposalVotedResponse, nil)
 
-	err := s.voter.VoteProposal(&relayer.Message{})
+	err := s.voter.VoteProposal(&message.Message{})
 
 	s.Nil(err)
 }
@@ -94,7 +94,7 @@ func (s *VoterTestSuite) TestVoteProposal_ProposalStatusFail() {
 	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(proposalNotVotedResponse, nil)
 	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return([]byte{}, errors.New("error"))
 
-	err := s.voter.VoteProposal(&relayer.Message{})
+	err := s.voter.VoteProposal(&message.Message{})
 
 	s.NotNil(err)
 }
@@ -108,7 +108,7 @@ func (s *VoterTestSuite) TestVoteProposal_ExecutedProposal() {
 	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(proposalNotVotedResponse, nil)
 	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(executedProposalStatus, nil)
 
-	err := s.voter.VoteProposal(&relayer.Message{})
+	err := s.voter.VoteProposal(&message.Message{})
 
 	s.Nil(err)
 }
@@ -123,7 +123,7 @@ func (s *VoterTestSuite) TestVoteProposal_GetThresholdFail() {
 	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(inactiveProposalStatus, nil)
 	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return([]byte{}, errors.New("error"))
 
-	err := s.voter.VoteProposal(&relayer.Message{})
+	err := s.voter.VoteProposal(&message.Message{})
 
 	s.NotNil(err)
 }

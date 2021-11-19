@@ -13,6 +13,7 @@ Chainbridge-core is the project that was born from the existing version of [Chai
 1. [Installation](#installation)
 2. [Modules](#modules)
 3. [Usage](#usage)
+4. [Metrics](#metrics)
 4. [EVM-CLI](#evm-cli)
 5. [Celo-CLI](#celo-cli)
 6. [Substrate](#substrate)
@@ -33,7 +34,17 @@ Since chainbridge-core is the modular framework it will require writing some cod
 
 [Example](https://github.com/ChainSafe/chainbridge-core-example)
 
-&nbsp; 
+&nbsp;
+
+## Metrics
+
+Metrics, in `chainbridge-core` are handled via injecting metrics provider compatible with [Metrics](./relayer/relayer.go) interface into `Relayer` instance. It currently needs only one method, `TrackDepositMessage(m *message.Message)`
+which is called inside relayer router when a `Deposit` event appears and should contain all necessary metrics data for extraction in custom implementations.
+
+### OpenTelementry
+
+`chainbridge-core` provides already implemented metrics [provider](./opentelemetry/opentelemetry.go) via [OpenTelemetry](https://opentelemetry.io/) that is vendor-agnostic. It sends metrics to a separate [collector](https://opentelemetry.io/docs/collector/) that then sends metrics via configured [exporters](https://opentelemetry.io/docs/collector/configuration/#exporters) to one or many metrics back-ends.
+
 
 ## `EVM-CLI`
 This module provides instruction for communicating with EVM-compatible chains.
@@ -55,7 +66,7 @@ Flags:
   -h, --help   help for evm-cli
 ```
 
-&nbsp; 
+&nbsp;
 
 ### `Accounts`
 Account instructions, allowing us to generate keypairs or import existing keypairs for use.
@@ -110,7 +121,7 @@ Flags:
       --recipient string   recipient address
 ```
 
-&nbsp; 
+&nbsp;
 
 ### `Admin`
 Admin-related instructions.
@@ -269,7 +280,7 @@ Flags:
       --token string       ERC20 or ERC721 token contract address
 ```
 
-&nbsp; 
+&nbsp;
 
 ### `Bridge`
 Bridge-related instructions.
@@ -381,7 +392,7 @@ Flags:
       --tokenContract string   token contract to be registered
 ```
 
-&nbsp; 
+&nbsp;
 
 ### `Deploy`
 Deploy smart contracts.
@@ -413,7 +424,7 @@ Flags:
       --relayers strings        list of initial relayers
 ```
 
-&nbsp; 
+&nbsp;
 
 ### `ERC20`
 ERC20-related instructions.
@@ -522,7 +533,7 @@ Flags:
   -h, --help                  help for mint
 ```
 
-&nbsp; 
+&nbsp;
 
 ### `ERC721`
 ERC721-related instructions.
@@ -678,7 +689,7 @@ Flags:
   -h, --help             help for getHash
 ```
 
-&nbsp; 
+&nbsp;
 
 ## `Celo-CLI`
 Though Celo is an EVM-compatible chain, it deviates in its implementation of the original Ethereum specifications, and therefore is deserving of its own separate module.
@@ -698,7 +709,7 @@ Flags:
   -h, --help   help for celo-cli
 ```
 
-&nbsp; 
+&nbsp;
 
 ### Differences Between EVM and Celo
 
@@ -745,7 +756,7 @@ Message {
 }
 ```
 
-&nbsp; 
+&nbsp;
 
 ### `Bridge`
 Bridge-related instructions.
@@ -791,7 +802,7 @@ Flags:
       --tokenContract string   token contract to be registered
 ```
 
-&nbsp; 
+&nbsp;
 
 ### `Deploy`
 Deploy smart contracts.
@@ -823,7 +834,7 @@ Flags:
       --relayers strings        list of initial relayers
 ```
 
-&nbsp; 
+&nbsp;
 
 ### `ERC20`
 erc20-related instructions.
@@ -931,7 +942,7 @@ Flags:
   -h, --help                  help for mint
 ```
 
-&nbsp; 
+&nbsp;
 
 ### Centrifuge
 Centrifuge-related instructions.
@@ -958,16 +969,16 @@ Flags:
   -h, --help             help for getHash
 ```
 
-&nbsp; 
+&nbsp;
 
 ## Substrate
-This module provides instruction for communicating with Substrate-compatible chains. 
+This module provides instruction for communicating with Substrate-compatible chains.
 
 Currently there is no CLI for this, though more information can be found about this module within its repository, listed below.
 
 [Substrate Module Repository](https://github.com/ChainSafe/chainbridge-substrate-module)
 
-&nbsp; 
+&nbsp;
 
 ## Local Setup
 
@@ -990,11 +1001,11 @@ This can be easily run by building the [chainbridge-core-example](https://github
 make local-setup
 ```
 ##### ^ this command will run a shell script that contains instructions for running two EVM chains via [Docker](https://www.docker.com/) (`docker-compose`). Note: this will likely take a few minutes to run.
-&nbsp; 
+&nbsp;
 
 You can also review our [Local Setup Guide](https://github.com/ChainSafe/chainbridge-docs/blob/develop/docs/guides/local-setup-guide.md) for a more detailed example of setting up a local development environment manually.
 
-&nbsp; 
+&nbsp;
 
 # ChainSafe Security Policy
 

@@ -11,7 +11,7 @@ import (
 
 	evmclient "github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	proposal "github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
-	relayer "github.com/ChainSafe/chainbridge-core/relayer"
+	message "github.com/ChainSafe/chainbridge-core/relayer/message"
 	common "github.com/ethereum/go-ethereum/common"
 	types "github.com/ethereum/go-ethereum/core/types"
 	rpc "github.com/ethereum/go-ethereum/rpc"
@@ -222,7 +222,7 @@ func (m *MockMessageHandler) EXPECT() *MockMessageHandlerMockRecorder {
 }
 
 // HandleMessage mocks base method.
-func (m *MockMessageHandler) HandleMessage(arg0 *relayer.Message) (*proposal.Proposal, error) {
+func (m *MockMessageHandler) HandleMessage(arg0 *message.Message) (*proposal.Proposal, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HandleMessage", arg0)
 	ret0, _ := ret[0].(*proposal.Proposal)

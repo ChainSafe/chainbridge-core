@@ -7,9 +7,9 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 
 	mock_listener "github.com/ChainSafe/chainbridge-core/chains/evm/listener/mock"
-	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/golang/mock/gomock"
@@ -60,12 +60,12 @@ func (s *ListenerTestSuite) TestErc20HandleEvent() {
 	amountParsed := calldata[:32]
 	recipientAddressParsed := calldata[64:]
 
-	expected := &relayer.Message{
+	expected := &message.Message{
 		Source:       sourceID,
 		Destination:  depositLog.DestinationDomainID,
 		DepositNonce: depositLog.DepositNonce,
 		ResourceId:   depositLog.ResourceID,
-		Type:         relayer.FungibleTransfer,
+		Type:         message.FungibleTransfer,
 		Payload: []interface{}{
 			amountParsed,
 			recipientAddressParsed,
@@ -137,12 +137,12 @@ func (s *ListenerTestSuite) TestErc721HandleEvent_WithMetadata_Sucess() {
 	recipientAddressParsed := calldata[64:84]
 	metadataParsed := calldata[84:]
 
-	expected := &relayer.Message{
+	expected := &message.Message{
 		Source:       sourceID,
 		Destination:  depositLog.DestinationDomainID,
 		DepositNonce: depositLog.DepositNonce,
 		ResourceId:   depositLog.ResourceID,
-		Type:         relayer.NonFungibleTransfer,
+		Type:         message.NonFungibleTransfer,
 		Payload: []interface{}{
 			tokenIdParsed,
 			recipientAddressParsed,
@@ -182,12 +182,12 @@ func (s *ListenerTestSuite) TestErc721HandleEvent_WithoutMetadata_Sucess() {
 	recipientAddressParsed := calldata[64:84]
 	metadataParsed := []byte{}
 
-	expected := &relayer.Message{
+	expected := &message.Message{
 		Source:       sourceID,
 		Destination:  depositLog.DestinationDomainID,
 		DepositNonce: depositLog.DepositNonce,
 		ResourceId:   depositLog.ResourceID,
-		Type:         relayer.NonFungibleTransfer,
+		Type:         message.NonFungibleTransfer,
 		Payload: []interface{}{
 			tokenIdParsed,
 			recipientAddressParsed,

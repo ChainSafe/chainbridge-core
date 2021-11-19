@@ -9,7 +9,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	mock_listener "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
-	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
@@ -51,7 +51,7 @@ func (s *ProposalStatusTestSuite) TestProposalStatusFailedContractCall() {
 
 	status, err := calls.ProposalStatus(s.mockContractCaller, &proposal.Proposal{})
 
-	s.Equal(relayer.ProposalStatus{}, status)
+	s.Equal(message.ProposalStatus{}, status)
 	s.NotNil(err)
 }
 
@@ -60,7 +60,7 @@ func (s *ProposalStatusTestSuite) TestProposalStatusFailedUnpack() {
 
 	status, err := calls.ProposalStatus(s.mockContractCaller, &proposal.Proposal{})
 
-	s.Equal(relayer.ProposalStatus{}, status)
+	s.Equal(message.ProposalStatus{}, status)
 	s.NotNil(err)
 }
 
@@ -72,7 +72,7 @@ func (s *ProposalStatusTestSuite) TestProposalStatusSuccessfulCall() {
 
 	s.Nil(err)
 	s.Equal(status.YesVotesTotal, uint8(3))
-	s.Equal(status.Status, relayer.ProposalStatusExecuted)
+	s.Equal(status.Status, message.ProposalStatusExecuted)
 }
 
 func TestPrepareWithdrawInput(t *testing.T) {
