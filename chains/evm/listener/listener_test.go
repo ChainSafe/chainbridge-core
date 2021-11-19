@@ -137,12 +137,12 @@ func (s *ListenerTestSuite) TestErc721HandleEvent_WithMetadata_Sucess() {
 	recipientAddressParsed := calldata[64:84]
 	metadataParsed := calldata[84:]
 
-	expected := &relayer.Message{
+	expected := &message.Message{
 		Source:       sourceID,
 		Destination:  depositLog.DestinationDomainID,
 		DepositNonce: depositLog.DepositNonce,
 		ResourceId:   depositLog.ResourceID,
-		Type:         relayer.NonFungibleTransfer,
+		Type:         message.NonFungibleTransfer,
 		Payload: []interface{}{
 			tokenIdParsed,
 			recipientAddressParsed,
@@ -182,12 +182,12 @@ func (s *ListenerTestSuite) TestErc721HandleEvent_WithoutMetadata_Sucess() {
 	recipientAddressParsed := calldata[64:84]
 	metadataParsed := []byte{}
 
-	expected := &relayer.Message{
+	expected := &message.Message{
 		Source:       sourceID,
 		Destination:  depositLog.DestinationDomainID,
 		DepositNonce: depositLog.DepositNonce,
 		ResourceId:   depositLog.ResourceID,
-		Type:         relayer.NonFungibleTransfer,
+		Type:         message.NonFungibleTransfer,
 		Payload: []interface{}{
 			tokenIdParsed,
 			recipientAddressParsed,
