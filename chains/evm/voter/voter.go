@@ -10,7 +10,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
-	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
@@ -24,7 +24,7 @@ type ChainClient interface {
 }
 
 type MessageHandler interface {
-	HandleMessage(m *relayer.Message) (*proposal.Proposal, error)
+	HandleMessage(m *message.Message) (*proposal.Proposal, error)
 }
 
 type EVMVoter struct {
@@ -43,7 +43,7 @@ func NewVoter(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasP
 	}
 }
 
-func (v *EVMVoter) VoteProposal(m *relayer.Message) error {
+func (v *EVMVoter) VoteProposal(m *message.Message) error {
 	prop, err := v.mh.HandleMessage(m)
 	if err != nil {
 		return err
@@ -58,7 +58,7 @@ func (v *EVMVoter) VoteProposal(m *relayer.Message) error {
 	}
 	// if this relayer had not voted for proposal and proposal is in Active or Inactive status
 	// we need to vote for it
-	if !votedByTheRelayer && (ps == relayer.ProposalStatusActive || ps == relayer.ProposalStatusInactive) {
+	if !votedByTheRelayer && (ps == message.ProposalStatusActive || ps == message.ProposalStatusInactive) {
 		hash, err := calls.VoteProposal(v.client, v.fabric, v.gasPriceClient, prop)
 		log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
 		if err != nil {

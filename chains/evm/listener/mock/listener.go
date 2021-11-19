@@ -10,7 +10,7 @@ import (
 	reflect "reflect"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	relayer "github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	types "github.com/ChainSafe/chainbridge-core/types"
 	common "github.com/ethereum/go-ethereum/common"
 	gomock "github.com/golang/mock/gomock"
@@ -108,10 +108,10 @@ func (m *MockEventHandler) EXPECT() *MockEventHandlerMockRecorder {
 }
 
 // HandleEvent mocks base method.
-func (m *MockEventHandler) HandleEvent(sourceID, destID uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error) {
+func (m *MockEventHandler) HandleEvent(sourceID, destID uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HandleEvent", sourceID, destID, nonce, resourceID, calldata, handlerResponse)
-	ret0, _ := ret[0].(*relayer.Message)
+	ret0, _ := ret[0].(*message.Message)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

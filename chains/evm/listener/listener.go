@@ -10,7 +10,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/blockstore"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"
 
@@ -21,7 +21,7 @@ var BlockRetryInterval = time.Second * 5
 var BlockDelay = big.NewInt(10) //TODO: move to config
 
 type EventHandler interface {
-	HandleEvent(sourceID, destID uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*relayer.Message, error)
+	HandleEvent(sourceID, destID uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error)
 }
 type ChainClient interface {
 	LatestBlock() (*big.Int, error)
@@ -39,9 +39,9 @@ func NewEVMListener(chainReader ChainClient, handler EventHandler, bridgeAddress
 	return &EVMListener{chainReader: chainReader, eventHandler: handler, bridgeAddress: bridgeAddress}
 }
 
-func (l *EVMListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *relayer.Message {
+func (l *EVMListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *message.Message {
 	// TODO: This channel should be closed somewhere!
-	ch := make(chan *relayer.Message)
+	ch := make(chan *message.Message)
 	go func() {
 		for {
 			select {

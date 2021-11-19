@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/substrate"
-	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/types"
 	substrateTypes "github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/rs/zerolog/log"
@@ -28,8 +28,8 @@ type Voter interface {
 	GetProposalStatus(sourceID, proposalBytes []byte) (bool, *substrate.VoteState, error)
 }
 
-type ProposalHandler func(msg *relayer.Message) []interface{}
-type ProposalHandlers map[relayer.TransferType]ProposalHandler
+type ProposalHandler func(msg *message.Message) []interface{}
+type ProposalHandlers map[message.TransferType]ProposalHandler
 
 type SubstrateWriter struct {
 	client   Voter
@@ -41,14 +41,14 @@ func NewSubstrateWriter(domainID uint8, client Voter) *SubstrateWriter {
 	return &SubstrateWriter{domainID: domainID, client: client}
 }
 
-func (w *SubstrateWriter) RegisterHandler(t relayer.TransferType, handler ProposalHandler) {
+func (w *SubstrateWriter) RegisterHandler(t message.TransferType, handler ProposalHandler) {
 	if w.handlers == nil {
-		w.handlers = make(map[relayer.TransferType]ProposalHandler)
+		w.handlers = make(map[message.TransferType]ProposalHandler)
 	}
 	w.handlers[t] = handler
 }
 
-func (w *SubstrateWriter) VoteProposal(m *relayer.Message) error {
+func (w *SubstrateWriter) VoteProposal(m *message.Message) error {
 	handler, ok := w.handlers[m.Type]
 	if !ok {
 		return fmt.Errorf("no corresponding substrate handler found for message type %s", m.Type)

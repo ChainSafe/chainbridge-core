@@ -9,7 +9,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	mock_listener "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
-	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
@@ -51,7 +51,7 @@ func (s *ProposalStatusTestSuite) TestProposalStatusFailedContractCall() {
 
 	status, err := calls.ProposalStatus(s.mockContractCaller, &proposal.Proposal{})
 
-	s.Equal(relayer.ProposalStatusInactive, status)
+	s.Equal(message.ProposalStatusInactive, status)
 	s.NotNil(err)
 }
 
@@ -60,7 +60,7 @@ func (s *ProposalStatusTestSuite) TestProposalStatusFailedUnpack() {
 
 	status, err := calls.ProposalStatus(s.mockContractCaller, &proposal.Proposal{})
 
-	s.Equal(relayer.ProposalStatusInactive, status)
+	s.Equal(message.ProposalStatusInactive, status)
 	s.NotNil(err)
 }
 
@@ -70,7 +70,7 @@ func (s *ProposalStatusTestSuite) TestProposalStatusSuccessfulCall() {
 
 	status, err := calls.ProposalStatus(s.mockContractCaller, &proposal.Proposal{})
 
-	s.Equal(relayer.ProposalStatusInactive, status)
+	s.Equal(message.ProposalStatusInactive, status)
 	s.Nil(err)
 }
 
