@@ -55,9 +55,9 @@ func SetupDefaultEVMChain(rawConfig map[string]interface{}, db blockstore.KeyVal
 	evmListener := listener.NewEVMListener(client, eventHandler, common.HexToAddress(config.Bridge))
 
 	mh := voter.NewEVMMessageHandler(client, common.HexToAddress(config.Bridge))
-	mh.RegisterMessageHandler(common.HexToAddress(config.Erc20Handler), voter.ERC20MessageHandler)
-	mh.RegisterMessageHandler(common.HexToAddress(config.Erc721Handler), voter.ERC721MessageHandler)
-	mh.RegisterMessageHandler(common.HexToAddress(config.GenericHandler), voter.GenericMessageHandler)
+	mh.RegisterMessageHandler(config.Erc20Handler, voter.ERC20MessageHandler)
+	mh.RegisterMessageHandler(config.Erc721Handler, voter.ERC721MessageHandler)
+	mh.RegisterMessageHandler(config.GenericHandler, voter.GenericMessageHandler)
 	evmVoter := voter.NewVoter(mh, client, evmtransaction.NewTransaction, evmgaspricer.NewLondonGasPriceClient(client, nil))
 
 	return NewEVMChain(evmListener, evmVoter, db, config), nil

@@ -41,8 +41,6 @@ func NewEVMListener(chainReader ChainClient, handler EventHandler, bridgeAddress
 
 func (l *EVMListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *message.Message {
 	ch := make(chan *message.Message)
-	defer close(ch)
-
 	go func() {
 		for {
 			select {
