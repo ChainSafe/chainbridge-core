@@ -43,7 +43,7 @@ func BindPauseCmdFlags(cmd *cobra.Command) {
 }
 
 func init() {
-	BindPauseCmdFlags(unpauseCmd)
+	BindPauseCmdFlags(pauseCmd)
 }
 
 func ValidatePauseCmdFlags(cmd *cobra.Command, args []string) error {
