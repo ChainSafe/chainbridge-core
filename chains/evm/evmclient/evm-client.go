@@ -74,12 +74,11 @@ func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey) (*EVMClien
 	if err != nil {
 		return nil, err
 	}
-	kp := secp256k1.NewKeypair(*privateKey)
 	c := &EVMClient{}
 	c.Client = ethclient.NewClient(rpcClient)
 	c.gethClient = gethclient.New(rpcClient)
 	c.rpClient = rpcClient
-	c.kp = kp
+	c.kp = secp256k1.NewKeypair(*privateKey)
 	return c, nil
 }
 
