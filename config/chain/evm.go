@@ -62,17 +62,12 @@ func NewEVMConfig(chainConfig map[string]interface{}) (*EVMConfig, error) {
 		Erc20Handler:       c.Erc20Handler,
 		Erc721Handler:      c.Erc721Handler,
 		GenericHandler:     c.GenericHandler,
+		Bridge:             c.Bridge,
 		GasLimit:           big.NewInt(consts.DefaultGasLimit),
 		MaxGasPrice:        big.NewInt(consts.DefaultGasPrice),
 		GasMultiplier:      big.NewFloat(consts.DefaultGasMultiplier),
 		StartBlock:         big.NewInt(c.StartBlock),
 		BlockConfirmations: consts.DefaultBlockConfirmations,
-	}
-
-	if c.Bridge != "" {
-		config.Bridge = c.Bridge
-	} else {
-		return nil, fmt.Errorf("must provide opts.bridge field for ethereum config")
 	}
 
 	if c.GasLimit != 0 {

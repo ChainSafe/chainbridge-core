@@ -63,10 +63,6 @@ func GetStartBlock(kvdb KeyValueReaderWriter, domainID uint8, startBlock *big.In
 	}
 
 	if fresh {
-		if startBlock == nil {
-			startBlock = big.NewInt(0)
-		}
-
 		return startBlock, nil
 	}
 
