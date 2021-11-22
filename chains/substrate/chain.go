@@ -24,10 +24,10 @@ type SubstrateChain struct {
 	listener EventListener
 	writer   ProposalVoter
 	kvdb     blockstore.KeyValueReaderWriter
-	config   *chain.SharedSubstrateConfig
+	config   *chain.SubstrateConfig
 }
 
-func NewSubstrateChain(listener EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, domainID uint8, config *chain.SharedSubstrateConfig) *SubstrateChain {
+func NewSubstrateChain(listener EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, domainID uint8, config *chain.SubstrateConfig) *SubstrateChain {
 	return &SubstrateChain{
 		listener: listener,
 		writer:   writer,
@@ -39,14 +39,19 @@ func NewSubstrateChain(listener EventListener, writer ProposalVoter, kvdb blocks
 
 func (c *SubstrateChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *message.Message) {
 	log.Info().Msg("Polling Blocks...")
-	// Handler chain specific configs and flags
-	//b, err := blockstore.GetLastStoredBlock(c.kvdb, c.domainID)
-	block, err := blockstore.SetupBlockstore(&c.config.GeneralChainConfig, c.kvdb, c.config.StartBlock)
+
+	startingBlock, err := blockstore.GetStartingBlock(
+		c.kvdb,
+		*c.config.GeneralChainConfig.Id,
+		c.config.StartBlock,
+		c.config.GeneralChainConfig.FreshStart,
+	)
 	if err != nil {
 		sysErr <- fmt.Errorf("error %w on getting last stored block", err)
 		return
 	}
-	ech := c.listener.ListenToEvents(block, c.domainID, c.kvdb, stop, sysErr)
+
+	ech := c.listener.ListenToEvents(startingBlock, c.domainID, c.kvdb, stop, sysErr)
 	for {
 		select {
 		case <-stop:
