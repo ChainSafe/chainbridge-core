@@ -40,10 +40,11 @@ func NewSubstrateChain(listener EventListener, writer ProposalVoter, kvdb blocks
 func (c *SubstrateChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *message.Message) {
 	log.Info().Msg("Polling Blocks...")
 
-	startingBlock, err := blockstore.GetStartingBlock(
+	startingBlock, err := blockstore.GetStartBlock(
 		c.kvdb,
 		*c.config.GeneralChainConfig.Id,
 		c.config.StartBlock,
+		c.config.GeneralChainConfig.LatestBlock,
 		c.config.GeneralChainConfig.FreshStart,
 	)
 	if err != nil {
