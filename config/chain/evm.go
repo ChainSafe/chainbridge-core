@@ -5,9 +5,10 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+	"github.com/mitchellh/mapstructure"
 )
 
-type SharedEVMConfig struct {
+type EVMConfig struct {
 	GeneralChainConfig GeneralChainConfig
 	Bridge             string
 	Erc20Handler       string
@@ -17,10 +18,10 @@ type SharedEVMConfig struct {
 	GasMultiplier      *big.Float
 	GasLimit           *big.Int
 	StartBlock         *big.Int
-	BlockConfirmations *big.Int
+	BlockConfirmations uint8
 }
 
-type RawSharedEVMConfig struct {
+type RawEVMConfig struct {
 	GeneralChainConfig `mapstructure:",squash"`
 	Bridge             string  `mapstructure:"bridge"`
 	Erc20Handler       string  `mapstructure:"erc20Handler"`
@@ -30,10 +31,10 @@ type RawSharedEVMConfig struct {
 	GasMultiplier      float64 `mapstructure:"gasMultiplier"`
 	GasLimit           int64   `mapstructure:"gasLimit"`
 	StartBlock         int64   `mapstructure:"startBlock"`
-	BlockConfirmations int64   `mapstructure:"blockConfirmations"`
+	BlockConfirmations uint8   `mapstructure:"blockConfirmations"`
 }
 
-func (c *RawSharedEVMConfig) Validate() error {
+func (c *RawEVMConfig) Validate() error {
 	if err := c.GeneralChainConfig.Validate(); err != nil {
 		return err
 	}
@@ -43,10 +44,20 @@ func (c *RawSharedEVMConfig) Validate() error {
 	return nil
 }
 
-func (c *RawSharedEVMConfig) ParseConfig() (*SharedEVMConfig, error) {
-	c.GeneralChainConfig.ParseConfig()
+func NewEVMConfig(chainConfig map[string]interface{}) (*EVMConfig, error) {
+	var c RawEVMConfig
+	err := mapstructure.Decode(chainConfig, &c)
+	if err != nil {
+		return nil, err
+	}
 
-	config := &SharedEVMConfig{
+	err = c.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	c.GeneralChainConfig.ParseFlags()
+	config := &EVMConfig{
 		GeneralChainConfig: c.GeneralChainConfig,
 		Erc20Handler:       c.Erc20Handler,
 		Erc721Handler:      c.Erc721Handler,
@@ -55,7 +66,7 @@ func (c *RawSharedEVMConfig) ParseConfig() (*SharedEVMConfig, error) {
 		MaxGasPrice:        big.NewInt(consts.DefaultGasPrice),
 		GasMultiplier:      big.NewFloat(consts.DefaultGasMultiplier),
 		StartBlock:         big.NewInt(c.StartBlock),
-		BlockConfirmations: big.NewInt(consts.DefaultBlockConfirmations),
+		BlockConfirmations: consts.DefaultBlockConfirmations,
 	}
 
 	if c.Bridge != "" {
@@ -77,7 +88,7 @@ func (c *RawSharedEVMConfig) ParseConfig() (*SharedEVMConfig, error) {
 	}
 
 	if c.BlockConfirmations != 0 {
-		config.BlockConfirmations = big.NewInt(c.BlockConfirmations)
+		config.BlockConfirmations = c.BlockConfirmations
 	}
 
 	return config, nil
