@@ -8,8 +8,14 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/blockstore"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 	"github.com/ChainSafe/chainbridge-core/config/chain"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
 
@@ -25,25 +31,65 @@ type ProposalVoter interface {
 type EVMChain struct {
 	listener EventListener
 	writer   ProposalVoter
-	domainID uint8
 	kvdb     blockstore.KeyValueReaderWriter
-	config   *chain.SharedEVMConfig
+	config   *chain.EVMConfig
 }
 
-func NewEVMChain(dr EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, domainID uint8, config *chain.SharedEVMConfig) *EVMChain {
-	return &EVMChain{listener: dr, writer: writer, kvdb: kvdb, domainID: domainID, config: config}
+// SetupDefaultEVMChain sets up an EVMChain with all supported handlers configured
+func SetupDefaultEVMChain(rawConfig map[string]interface{}, db blockstore.KeyValueReaderWriter) (*EVMChain, error) {
+	config, err := chain.NewEVMConfig(rawConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	client := evmclient.NewEVMClient()
+	err = client.Configurate(config)
+	if err != nil {
+		return nil, err
+	}
+
+	eventHandler := listener.NewETHEventHandler(common.HexToAddress(config.Bridge), client)
+	eventHandler.RegisterEventHandler(config.Erc20Handler, listener.Erc20EventHandler)
+	eventHandler.RegisterEventHandler(config.Erc721Handler, listener.Erc721EventHandler)
+	eventHandler.RegisterEventHandler(config.GenericHandler, listener.GenericEventHandler)
+	evmListener := listener.NewEVMListener(client, eventHandler, common.HexToAddress(config.Bridge))
+
+	mh := voter.NewEVMMessageHandler(client, common.HexToAddress(config.Bridge))
+	mh.RegisterMessageHandler(common.HexToAddress(config.Erc20Handler), voter.ERC20MessageHandler)
+	mh.RegisterMessageHandler(common.HexToAddress(config.Erc721Handler), voter.ERC721MessageHandler)
+	mh.RegisterMessageHandler(common.HexToAddress(config.GenericHandler), voter.GenericMessageHandler)
+	evmVoter := voter.NewVoter(mh, client, evmtransaction.NewTransaction, evmgaspricer.NewLondonGasPriceClient(client, nil))
+
+	return NewEVMChain(evmListener, evmVoter, db, config), nil
 }
 
-// PollEvents is the goroutine that polling blocks and searching Deposit Events in them. Event then sent to eventsChan
+func NewEVMChain(listener EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, config *chain.EVMConfig) *EVMChain {
+	return &EVMChain{listener: listener, writer: writer, kvdb: kvdb, config: config}
+}
+
+// PollEvents is the goroutine that polls blocks and searches Deposit events in them.
+// Events are then sent to eventsChan.
 func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *message.Message) {
 	log.Info().Msg("Polling Blocks...")
-	// Handler chain specific configs and flags
-	block, err := blockstore.SetupBlockstore(&c.config.GeneralChainConfig, c.kvdb, c.config.StartBlock)
-	if err != nil {
-		sysErr <- fmt.Errorf("error %w on getting last stored block", err)
-		return
+
+	var startingBlock *big.Int
+	var err error
+	if c.config.GeneralChainConfig.LatestBlock {
+		startingBlock = nil
+	} else {
+		startingBlock, err = blockstore.GetStartingBlock(
+			c.kvdb,
+			*c.config.GeneralChainConfig.Id,
+			c.config.StartBlock,
+			c.config.GeneralChainConfig.FreshStart,
+		)
+		if err != nil {
+			sysErr <- fmt.Errorf("error %w on getting last stored block", err)
+			return
+		}
 	}
-	ech := c.listener.ListenToEvents(block, c.domainID, c.kvdb, stop, sysErr)
+
+	ech := c.listener.ListenToEvents(startingBlock, *c.config.GeneralChainConfig.Id, c.kvdb, stop, sysErr)
 	for {
 		select {
 		case <-stop:
@@ -61,5 +107,5 @@ func (c *EVMChain) Write(msg *message.Message) error {
 }
 
 func (c *EVMChain) DomainID() uint8 {
-	return c.domainID
+	return *c.config.GeneralChainConfig.Id
 }
