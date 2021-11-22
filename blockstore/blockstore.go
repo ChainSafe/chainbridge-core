@@ -55,10 +55,18 @@ func GetLastStoredBlock(db KeyValueReader, domainID uint8) (*big.Int, error) {
 	return block, nil
 }
 
-// GetStartingBlock queries the blockstore for the latest known block. If the latest block is
+// GetStartBlock queries the blockstore for the latest known block. If the latest block is
 // greater than configured startBlock, then startBlock is replaced with the latest known block.
-func GetStartingBlock(kvdb KeyValueReaderWriter, domainID uint8, startBlock *big.Int, freshStart bool) (*big.Int, error) {
-	if freshStart {
+func GetStartBlock(kvdb KeyValueReaderWriter, domainID uint8, startBlock *big.Int, latest bool, fresh bool) (*big.Int, error) {
+	if latest {
+		return nil, nil
+	}
+
+	if fresh {
+		if startBlock == nil {
+			startBlock = big.NewInt(0)
+		}
+
 		return startBlock, nil
 	}
 

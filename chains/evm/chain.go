@@ -72,24 +72,19 @@ func NewEVMChain(listener EventListener, writer ProposalVoter, kvdb blockstore.K
 func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *message.Message) {
 	log.Info().Msg("Polling Blocks...")
 
-	var startingBlock *big.Int
-	var err error
-	if c.config.GeneralChainConfig.LatestBlock {
-		startingBlock = nil
-	} else {
-		startingBlock, err = blockstore.GetStartingBlock(
-			c.kvdb,
-			*c.config.GeneralChainConfig.Id,
-			c.config.StartBlock,
-			c.config.GeneralChainConfig.FreshStart,
-		)
-		if err != nil {
-			sysErr <- fmt.Errorf("error %w on getting last stored block", err)
-			return
-		}
+	startBlock, err := blockstore.GetStartBlock(
+		c.kvdb,
+		*c.config.GeneralChainConfig.Id,
+		c.config.StartBlock,
+		c.config.GeneralChainConfig.LatestBlock,
+		c.config.GeneralChainConfig.FreshStart,
+	)
+	if err != nil {
+		sysErr <- fmt.Errorf("error %w on getting last stored block", err)
+		return
 	}
 
-	ech := c.listener.ListenToEvents(startingBlock, *c.config.GeneralChainConfig.Id, c.kvdb, stop, sysErr)
+	ech := c.listener.ListenToEvents(startBlock, *c.config.GeneralChainConfig.Id, c.kvdb, stop, sysErr)
 	for {
 		select {
 		case <-stop:
