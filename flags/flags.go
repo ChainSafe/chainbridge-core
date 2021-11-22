@@ -7,21 +7,17 @@ import (
 
 var (
 	// Flags for running the Chainbridge app
-	ChainConfigFlagName   = "config"
-	RelayerConfigFlagName = "relayer-config"
-	KeystoreFlagName      = "keystore"
-	BlockstoreFlagName    = "blockstore"
-	FreshStartFlagName    = "fresh"
-	LatestBlockFlagName   = "latest"
-	TestKeyFlagName       = "testkey"
+	ConfigFlagName      = "config"
+	KeystoreFlagName    = "keystore"
+	BlockstoreFlagName  = "blockstore"
+	FreshStartFlagName  = "fresh"
+	LatestBlockFlagName = "latest"
+	TestKeyFlagName     = "testkey"
 )
 
 func BindFlags(rootCMD *cobra.Command) {
-	rootCMD.PersistentFlags().String(ChainConfigFlagName, ".", "Path to JSON configuration files directory")
-	_ = viper.BindPFlag(ChainConfigFlagName, rootCMD.PersistentFlags().Lookup(ChainConfigFlagName))
-
-	rootCMD.PersistentFlags().String(RelayerConfigFlagName, "", "Path to relayer JSON file configuration")
-	_ = viper.BindPFlag(RelayerConfigFlagName, rootCMD.PersistentFlags().Lookup(RelayerConfigFlagName))
+	rootCMD.PersistentFlags().String(ConfigFlagName, ".", "Path to JSON configuration file")
+	_ = viper.BindPFlag(ConfigFlagName, rootCMD.PersistentFlags().Lookup(ConfigFlagName))
 
 	rootCMD.PersistentFlags().String(BlockstoreFlagName, "./lvldbdata", "Specify path for blockstore")
 	_ = viper.BindPFlag(BlockstoreFlagName, rootCMD.PersistentFlags().Lookup(BlockstoreFlagName))

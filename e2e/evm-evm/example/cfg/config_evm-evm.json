@@ -1,0 +1,31 @@
+{
+  "relayer": {},
+  "chains": [
+    {
+      "id": 1,
+      "name": "evm1",
+      "type": "evm",
+      "endpoint": "ws://evm1-1:8546",
+      "from": "0xff93B45308FD417dF303D6515aB04D9e89a750Ca",
+      "bridge": "0xd606A00c1A39dA53EA7Bb3Ab570BBE40b156EB66",
+      "erc20Handler": "0x05C5AFACf64A6082D4933752FfB447AED63581b1",
+      "genericHandler": "0x08CFcF164dc2C4AB1E0966F236E87F913DE77b69",
+      "gasLimit": 9000000,
+      "maxGasPrice": 20000000000,
+      "blockConfirmations": 10
+    },
+    {
+      "id": 2,
+      "name": "evm2",
+      "type": "evm",
+      "endpoint": "ws://evm2-1:8546",
+      "from": "0xff93B45308FD417dF303D6515aB04D9e89a750Ca",
+      "bridge": "0xd606A00c1A39dA53EA7Bb3Ab570BBE40b156EB66",
+      "erc20Handler": "0x05C5AFACf64A6082D4933752FfB447AED63581b1",
+      "genericHandler": "0x08CFcF164dc2C4AB1E0966F236E87F913DE77b69",
+      "gasLimit": 9000000,
+      "maxGasPrice": 20000000000,
+      "blockConfirmations": 10
+    }
+  ]
+}
