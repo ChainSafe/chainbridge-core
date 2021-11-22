@@ -40,8 +40,9 @@ func NewEVMListener(chainReader ChainClient, handler EventHandler, bridgeAddress
 }
 
 func (l *EVMListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *message.Message {
-	// TODO: This channel should be closed somewhere!
 	ch := make(chan *message.Message)
+	defer close(ch)
+
 	go func() {
 		for {
 			select {
@@ -54,6 +55,11 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw b
 					time.Sleep(BlockRetryInterval)
 					continue
 				}
+
+				if startBlock == nil {
+					startBlock = head
+				}
+
 				// Sleep if the difference is less than BlockDelay; (latest - current) < BlockDelay
 				if big.NewInt(0).Sub(head, startBlock).Cmp(BlockDelay) == -1 {
 					time.Sleep(BlockRetryInterval)
