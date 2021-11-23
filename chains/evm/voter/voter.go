@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	maxSimulateVoteChecks, maxShouldVoteChecks     = 40, 40
+	maxSimulateVoteChecks, maxShouldVoteChecks     = 5, 40
 	simulateVoteCheckPeriod, shouldVoteCheckPeriod = 15, 15
 )
 
@@ -113,8 +113,7 @@ func (v *EVMVoter) VoteProposal(m *message.Message) error {
 		log.Debug().Msgf("Proposal %+v already satisfies threshold", prop)
 		return nil
 	}
-
-	err = calls.SimulateVoteProposal(v.client, prop, 0, maxSimulateVoteChecks, simulateVoteCheckPeriod)
+	err = v.simulateVoteProposal(prop, 0)
 	if err != nil {
 		log.Error().Err(err)
 		return err
@@ -163,6 +162,20 @@ func (v *EVMVoter) shouldVoteForProposal(prop *proposal.Proposal, tries int) (bo
 	}
 
 	return true, nil
+}
+
+func (v *EVMVoter) simulateVoteProposal(prop *proposal.Proposal, tries int) error {
+	err := calls.SimulateVoteProposal(v.client, prop)
+	if err != nil {
+		if tries < maxSimulateVoteChecks {
+			tries++
+			Sleep(time.Duration(rand.Intn(shouldVoteCheckPeriod)) * time.Second)
+			v.simulateVoteProposal(prop, tries)
+		}
+		return err
+	} else {
+		return nil
+	}
 }
 
 // trackProposalPendingVotes tracks pending voteProposal txs from
