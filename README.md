@@ -701,6 +701,7 @@ Usage:
    celo-cli [command]
 
 Available Commands:
+  admin       Admin-related instructions
   bridge      Bridge-related instructions
   deploy      Deploy smart contracts
   erc20       erc20-related instructions
@@ -754,6 +755,48 @@ Message {
    ethCompatible:       ethCompatible,       // Bool to check presence of: feeCurrency, gatewayFeeRecipient, gatewayFee
    checkNonce:          checkNonce,
 }
+```
+
+&nbsp;
+
+### `Admin`
+Admin-related instructions.
+
+```bash
+Usage:
+   celo-cli admin [command]
+
+Available Commands:
+  pause          Pause deposits and proposals
+  unpause        Unpause deposits and proposals
+
+Flags:
+  -h, --help   help for admin
+```
+
+#### `pause`
+Pause deposits and proposals,
+
+```bash
+Usage:
+   celo-cli admin pause [flags]
+
+Flags:
+      --bridge string   bridge contract address
+  -h, --help            help for pause
+
+```
+
+#### `unpause`
+Unpause deposits and proposals.
+
+```bash
+Usage:
+   celo-cli admin unpause [flags]
+
+Flags:
+      --bridge string   bridge contract address
+  -h, --help            help for unpause
 ```
 
 &nbsp;
