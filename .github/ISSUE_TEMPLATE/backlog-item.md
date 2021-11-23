@@ -1,5 +1,5 @@
 ---
-name: Template For Internal Use
+name: Backlog item
 about: Speccing out the details of development for specific features/epics
 title: ''
 labels: ''

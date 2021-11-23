@@ -1,6 +1,6 @@
 ---
-name: Feature request or epic
-about: Suggest an idea for this project
+name: User story
+about: Piece of system functionality, understood by the Customer / Product Owner, representing an increment of business value, to be implemented by the team.
 title: ''
 labels: ''
 assignees: ''
