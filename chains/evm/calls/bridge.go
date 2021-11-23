@@ -5,7 +5,9 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
@@ -224,6 +226,26 @@ func PrepareVoteProposalInput(sourceDomainID uint8, depositNonce uint64, resourc
 		return []byte{}, err
 	}
 	return input, nil
+}
+
+func SimulateVoteProposal(evmCaller ContractCallerClient, prop *proposal.Proposal, tries int, maxTries int, shouldVoteCheckPeriod int) error {
+	input, err := PrepareVoteProposalInput(prop.Source, prop.DepositNonce, prop.ResourceId, prop.Data)
+	if err != nil {
+		return err
+	}
+	msg := ethereum.CallMsg{From: common.Address{}, To: &prop.BridgeAddress, Data: input}
+
+	_, err = evmCaller.CallContract(context.TODO(), ToCallArg(msg), nil)
+	if err != nil {
+		if tries < maxTries {
+			tries++
+			time.Sleep(time.Duration(rand.Intn(shouldVoteCheckPeriod)) * time.Second)
+			return SimulateVoteProposal(evmCaller, prop, tries, maxTries, shouldVoteCheckPeriod)
+		}
+		return err
+	} else {
+		return nil
+	}
 }
 
 func VoteProposal(client ClientDispatcher, fabric TxFabric, gasPriceClient GasPricer, proposal *proposal.Proposal) (common.Hash, error) {

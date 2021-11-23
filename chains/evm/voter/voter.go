@@ -15,7 +15,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	ethereumTypes "github.com/ethereum/go-ethereum/core/types"
@@ -24,8 +23,8 @@ import (
 )
 
 const (
-	maxShouldVoteChecks   = 40
-	shouldVoteCheckPeriod = 15
+	maxSimulateVoteChecks, maxShouldVoteChecks     = 40, 40
+	simulateVoteCheckPeriod, shouldVoteCheckPeriod = 15, 15
 )
 
 var (
@@ -115,6 +114,12 @@ func (v *EVMVoter) VoteProposal(m *message.Message) error {
 		return nil
 	}
 
+	err = calls.SimulateVoteProposal(v.client, prop, 0, maxSimulateVoteChecks, simulateVoteCheckPeriod)
+	if err != nil {
+		log.Error().Err(err)
+		return err
+	}
+
 	hash, err := calls.VoteProposal(v.client, v.fabric, v.gasPriceClient, prop)
 	if err != nil {
 		return fmt.Errorf("voting failed. Err: %w", err)
@@ -157,27 +162,7 @@ func (v *EVMVoter) shouldVoteForProposal(prop *proposal.Proposal, tries int) (bo
 		return v.shouldVoteForProposal(prop, tries)
 	}
 
-	return v.simulateCall(prop, 0)
-}
-
-func (v *EVMVoter) simulateCall(prop *proposal.Proposal, tries int) (bool, error) {
-	Sleep(time.Duration(rand.Intn(shouldVoteCheckPeriod)) * time.Second)
-	input, err := calls.PrepareVoteProposalInput(prop.Source, prop.DepositNonce, prop.ResourceId, prop.Data)
-	if err != nil {
-		return false, err
-	}
-	msg := ethereum.CallMsg{From: common.Address{}, To: &prop.BridgeAddress, Data: input}
-
-	_, err = v.client.CallContract(context.TODO(), calls.ToCallArg(msg), nil)
-	if err != nil {
-		if tries < maxShouldVoteChecks {
-			tries++
-			return v.simulateCall(prop, tries)
-		}
-		return false, err
-	} else {
-		return true, nil
-	}
+	return true, nil
 }
 
 // trackProposalPendingVotes tracks pending voteProposal txs from
