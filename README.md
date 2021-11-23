@@ -434,12 +434,12 @@ Usage:
    evm-cli erc20 [command]
 
 Available Commands:
-  add-minter  Add a minter to an Erc20 mintable contract
-  allowance   Get the allowance of a spender for an address
-  approve     Approve tokens in an ERC20 contract for transfer
-  balance     Query balance of an account in an ERC20 contract
-  deposit     Initiate a transfer of ERC20 tokens
-  mint        Mint tokens on an ERC20 mintable contract
+  add-minter     Add a minter to an Erc20 mintable contract
+  get-allowance  Get the allowance of a spender for an address
+  approve        Approve tokens in an ERC20 contract for transfer
+  balance        Query balance of an account in an ERC20 contract
+  deposit        Initiate a transfer of ERC20 tokens
+  mint           Mint tokens on an ERC20 mintable contract
 
 Flags:
   -h, --help   help for erc20
@@ -676,17 +676,17 @@ Usage:
    evm-cli centrifuge deploy
 ```
 
-#### `getHash`
+#### `get-hash`
 Checks _assetsStored map on Centrifuge asset store contract to find if asset hash exists.
 
 ```bash
 Usage:
-   evm-cli centrifuge getHash [flags]
+   evm-cli centrifuge get-hash [flags]
 
 Flags:
       --address string   Centrifuge asset store contract address
       --hash string      A hash to lookup
-  -h, --help             help for getHash
+  -h, --help             help for get-hash
 ```
 
 &nbsp;
@@ -935,7 +935,7 @@ Usage:
    celo-cli erc20 mint [flags]
 
 Flags:
-      --amount string         amount to mint fee (in ETH)
+      --amount string         Amount to mint fee (in ETH)
       --decimal uint          ERC20 token decimals (default 18)
       --dstAddress string     Where tokens should be minted. Defaults to TX sender
       --erc20Address string   ERC20 contract address
@@ -949,24 +949,24 @@ Centrifuge-related instructions.
 
 #### `deploy`
 
-This command can be used to deploy Centrifuge asset store contract that represents bridged Centrifuge assets.
+The deploy subcommand deploys a Centrifuge asset store contract that represents bridged Centrifuge assets.
 
 ```bash
 Usage:
-   evm-cli centrifuge deploy
+   celo-cli centrifuge deploy
 ```
 
-#### `getHash`
-Checks _assetsStored map on Centrifuge asset store contract to find if asset hash exists.
+#### `get-hash`
+The get-hash subcommand checks _assetsStored map on a Centrifuge asset store contract to find if asset hash exists.
 
 ```bash
 Usage:
-   evm-cli centrifuge getHash [flags]
+   celo-cli centrifuge get-hash [flags]
 
 Flags:
       --address string   Centrifuge asset store contract address
       --hash string      A hash to lookup
-  -h, --help             help for getHash
+  -h, --help             help for get-hash
 ```
 
 &nbsp;

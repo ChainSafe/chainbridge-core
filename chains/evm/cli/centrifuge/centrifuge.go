@@ -6,8 +6,8 @@ import (
 
 var CentrifugeCmd = &cobra.Command{
 	Use:   "centrifuge",
-	Short: "Centrifuge related instructions",
-	Long:  "Centrifuge related instructions",
+	Short: "Centrifuge-related instructions",
+	Long:  "Centrifuge-related instructions",
 }
 
 func init() {

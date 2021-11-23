@@ -24,7 +24,7 @@ var ErrNoDeploymentFlagsProvided = errors.New("provide at least one deployment f
 var DeployEVM = &cobra.Command{
 	Use:   "deploy",
 	Short: "Deploy smart contracts",
-	Long:  "This command can be used to deploy all or some of the contracts required for bridging. Selection of contracts can be made by either specifying --all or a subset of flags",
+	Long:  "The deploy subcommand deploys all or some of the contracts required for bridging. Selection of contracts can be made by either specifying --all or a subset of flags",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -61,23 +61,23 @@ var (
 )
 
 func BindDeployEVMFlags(cmd *cobra.Command) {
-	cmd.Flags().BoolVar(&Bridge, "bridge", false, "deploy bridge")
-	cmd.Flags().StringVar(&BridgeAddress, "bridgeAddress", "", "bridge contract address. Should be provided if handlers are deployed separately")
-	cmd.Flags().BoolVar(&DeployAll, "all", false, "deploy all")
-	cmd.Flags().Uint8Var(&DomainId, "domainId", 1, "domain ID for the instance")
-	cmd.Flags().BoolVar(&Erc20, "erc20", false, "deploy ERC20")
-	cmd.Flags().BoolVar(&Erc20Handler, "erc20Handler", false, "deploy ERC20 handler")
+	cmd.Flags().BoolVar(&Bridge, "bridge", false, "Deploy bridge")
+	cmd.Flags().StringVar(&BridgeAddress, "bridgeAddress", "", "Bridge contract address. Should be provided if handlers are deployed separately")
+	cmd.Flags().BoolVar(&DeployAll, "all", false, "Deploy all")
+	cmd.Flags().Uint8Var(&DomainId, "domainId", 1, "Domain ID for the instance")
+	cmd.Flags().BoolVar(&Erc20, "erc20", false, "Deploy ERC20")
+	cmd.Flags().BoolVar(&Erc20Handler, "erc20Handler", false, "Deploy ERC20 handler")
 	cmd.Flags().StringVar(&Erc20Name, "erc20Name", "", "ERC20 contract name")
 	cmd.Flags().StringVar(&Erc20Symbol, "erc20Symbol", "", "ERC20 contract symbol")
-	cmd.Flags().BoolVar(&Erc721, "erc721", false, "deploy ERC721")
-	cmd.Flags().BoolVar(&Erc721Handler, "erc721Handler", false, "deploy ERC721 handler")
+	cmd.Flags().BoolVar(&Erc721, "erc721", false, "Deploy ERC721")
+	cmd.Flags().BoolVar(&Erc721Handler, "erc721Handler", false, "Deploy ERC721 handler")
 	cmd.Flags().StringVar(&Erc721Name, "erc721Name", "", "ERC721 contract name")
 	cmd.Flags().StringVar(&Erc721Symbol, "erc721Symbol", "", "ERC721 contract symbol")
 	cmd.Flags().StringVar(&Erc721BaseURI, "erc721BaseURI", "", "ERC721 base URI")
-	cmd.Flags().BoolVar(&GenericHandler, "genericHandler", false, "deploy generic handler")
-	cmd.Flags().Uint64Var(&Fee, "fee", 0, "fee to be taken when making a deposit (in ETH, decimas are allowed)")
-	cmd.Flags().StringSliceVar(&Relayers, "relayers", []string{}, "list of initial relayers")
-	cmd.Flags().Uint64Var(&RelayerThreshold, "relayerTreshold", 1, "number of votes required for a proposal to pass")
+	cmd.Flags().BoolVar(&GenericHandler, "genericHandler", false, "Deploy generic handler")
+	cmd.Flags().Uint64Var(&Fee, "fee", 0, "Fee to be taken when making a deposit (in ETH, decimals are allowed)")
+	cmd.Flags().StringSliceVar(&Relayers, "relayers", []string{}, "List of initial relayers")
+	cmd.Flags().Uint64Var(&RelayerThreshold, "relayerTreshold", 1, "Number of votes required for a proposal to pass")
 }
 
 func init() {
@@ -202,7 +202,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPr
 
 			genericHandlerAddr, err := calls.DeployGenericHandler(ethClient, txFabric, gasPricer, bridgeAddr)
 			if err != nil {
-				log.Error().Err(fmt.Errorf("Generic handler deploy failed: %w", err))
+				log.Error().Err(fmt.Errorf("generic handler deploy failed: %w", err))
 				return err
 			}
 			deployedContracts["genericHandler"] = genericHandlerAddr.String()

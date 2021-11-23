@@ -14,9 +14,9 @@ import (
 )
 
 var getHashCmd = &cobra.Command{
-	Use:   "getHash",
+	Use:   "get-hash",
 	Short: "Returns if a given hash exists in asset store",
-	Long:  "Checks _assetsStored map on Centrifuge asset store contract to find if asset hash exists.",
+	Long:  "The get-hash subcommand checks _assetsStored map on a Centrifuge asset store contract to find if asset hash exists",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -77,7 +77,7 @@ func GetHashCmd(cmd *cobra.Command, args []string) error {
 
 	isAssetStored, err := calls.IsCentrifugeAssetStored(ethClient, storeAddr, byteHash)
 	if err != nil {
-		log.Error().Err(fmt.Errorf("Checking if asset stored failed: %w", err))
+		log.Error().Err(fmt.Errorf("checking if asset stored failed: %w", err))
 		return err
 	}
 

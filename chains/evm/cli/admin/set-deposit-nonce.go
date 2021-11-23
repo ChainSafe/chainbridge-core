@@ -19,9 +19,7 @@ import (
 var setDepositNonceCmd = &cobra.Command{
 	Use:   "set-deposit-nonce",
 	Short: "Set the deposit nonce",
-	Long: `Set the deposit nonce
-
-This nonce cannot be less than what is currently stored in the contract`,
+	Long:  `The set-deposit-nonce subcommand sets the deposit nonce. This nonce cannot be less than what is currently stored in the contract`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -41,9 +39,9 @@ This nonce cannot be less than what is currently stored in the contract`,
 }
 
 func BindSetDepositNonceFlags(cmd *cobra.Command) {
-	cmd.Flags().Uint8Var(&DomainID, "domainId", 0, "domain ID of chain")
-	cmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "deposit nonce to set (does not decrement)")
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	cmd.Flags().Uint8Var(&DomainID, "domainId", 0, "Domain ID of chain")
+	cmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "Deposit nonce to set (does not decrement)")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	flags.MarkFlagsAsRequired(cmd, "domainId", "depositNonce", "bridge")
 }
 

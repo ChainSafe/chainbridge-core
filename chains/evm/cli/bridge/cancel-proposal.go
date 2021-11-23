@@ -10,7 +10,7 @@ import (
 var cancelProposalCmd = &cobra.Command{
 	Use:   "cancel-proposal",
 	Short: "Cancel an expired proposal",
-	Long:  "Cancel an expired proposal",
+	Long:  "The cancel-proposal subcommand cancels an expired proposal",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -18,10 +18,10 @@ var cancelProposalCmd = &cobra.Command{
 }
 
 func BindCancelProposalFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	cmd.Flags().StringVar(&DataHash, "dataHash", "", "hash of proposal metadata")
-	cmd.Flags().Uint64Var(&DomainID, "domainId", 0, "domain ID of proposal to cancel")
-	cmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "deposit nonce of proposal to cancel")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
+	cmd.Flags().StringVar(&DataHash, "dataHash", "", "Hash of proposal metadata")
+	cmd.Flags().Uint64Var(&DomainID, "domainId", 0, "Domain ID of proposal to cancel")
+	cmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "Deposit nonce of proposal to cancel")
 	flags.MarkFlagsAsRequired(cmd, "bridge", "dataHash", "domainId", "depositNonce")
 }
 

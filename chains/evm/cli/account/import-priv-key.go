@@ -12,13 +12,13 @@ import (
 var importPrivKeyCmd = &cobra.Command{
 	Use:   "import",
 	Short: "Import bridge keystore",
-	Long:  "The import subcommand is used to import a keystore for the bridge.",
+	Long:  "The import subcommand is used to import a keystore for the bridge",
 	RunE:  importPrivKey,
 }
 
 func BindImportPrivKeyFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&PrivateKey, "privateKey", "", "Private key to encrypt")
-	cmd.Flags().StringVar(&Pass, "password", "", "password to encrypt with")
+	cmd.Flags().StringVar(&Pass, "password", "", "Password to encrypt with")
 	flags.MarkFlagsAsRequired(cmd, "privateKey", "password")
 }
 

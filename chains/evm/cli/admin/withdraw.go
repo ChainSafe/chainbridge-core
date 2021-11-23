@@ -20,7 +20,7 @@ import (
 var withdrawCmd = &cobra.Command{
 	Use:   "withdraw",
 	Short: "Withdraw tokens from a handler contract",
-	Long:  "Withdraw tokens from a handler contract",
+	Long:  "The withdraw subcommand withdrawals tokens from a handler contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -42,12 +42,12 @@ var withdrawCmd = &cobra.Command{
 }
 
 func BindWithdrawCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Amount, "amount", "", "token amount to withdraw. Should be set or ID or amount if both set error will occur")
-	cmd.Flags().StringVar(&TokenID, "tokenId", "", "token ID to withdraw. Should be set or ID or amount if both set error will occur")
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	cmd.Flags().StringVar(&Handler, "handler", "", "handler contract address")
+	cmd.Flags().StringVar(&Amount, "amount", "", "Token amount to withdraw. Should be set or ID or amount if both set error will occur")
+	cmd.Flags().StringVar(&TokenID, "tokenId", "", "Token ID to withdraw. Should be set or ID or amount if both set error will occur")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
+	cmd.Flags().StringVar(&Handler, "handler", "", "Handler contract address")
 	cmd.Flags().StringVar(&Token, "token", "", "ERC20 or ERC721 token contract address")
-	cmd.Flags().StringVar(&Recipient, "recipient", "", "address to withdraw to")
+	cmd.Flags().StringVar(&Recipient, "recipient", "", "Address to withdrawal to")
 	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
 	flags.MarkFlagsAsRequired(withdrawCmd, "amount", "tokenId", "bridge", "handler", "token", "recipient", "decimals")
 }
