@@ -59,10 +59,20 @@ func (v *EVMVoter) VoteProposal(m *relayer.Message) error {
 	// if this relayer had not voted for proposal and proposal is in Active or Inactive status
 	// we need to vote for it
 	if !votedByTheRelayer && (ps == relayer.ProposalStatusActive || ps == relayer.ProposalStatusInactive) {
-		hash, err := calls.VoteProposal(v.client, v.fabric, v.gasPriceClient, prop)
-		log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
-		if err != nil {
+		results := make(chan *proposal.Proposal)
+		errors := make(chan error)
+		go calls.SimulateVoteProposal(v.client, prop, results, errors, 5)
+
+		select {
+		case err := <-errors:
 			return fmt.Errorf("voting failed. Err: %w", err)
+		case res := <-results:
+			hash, err := calls.VoteProposal(v.client, v.fabric, v.gasPriceClient, res)
+			if err != nil {
+				return fmt.Errorf("voting failed. Err: %w", err)
+			}
+			log.Debug().Str("hash", hash.String()).Uint64("nonce", res.DepositNonce).Msgf("Voted")
+			return nil
 		}
 	}
 	return nil

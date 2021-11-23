@@ -7,8 +7,10 @@ import (
 	gomath "math"
 	"math/big"
 	"strings"
+	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -171,4 +173,27 @@ func Simulate(c SimulateCallerClient, block *big.Int, txHash common.Hash, from c
 	}
 	log.Debug().Msg(string(bs))
 	return bs, nil
+}
+
+func SimulateVoteProposal(evmCaller ContractCallerClient, proposal *proposal.Proposal, ch chan<- *proposal.Proposal, errors chan error, retry int) error {
+	input, err := PrepareVoteProposalInput(proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data)
+	if err != nil {
+		return err
+	}
+	msg := ethereum.CallMsg{From: common.Address{}, To: &proposal.BridgeAddress, Data: input}
+
+	_, err = evmCaller.CallContract(context.TODO(), ToCallArg(msg), nil)
+	if err != nil {
+		if retry > 0 {
+			log.Error().Err(err).Msgf("error while voting", err)
+			retry--
+			time.Sleep(5 * time.Second)
+			SimulateVoteProposal(evmCaller, proposal, ch, errors, retry)
+		} else {
+			errors <- err
+		}
+	} else {
+		ch <- proposal
+	}
+	return nil
 }
