@@ -64,7 +64,7 @@ func PauseCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPri
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	fmt.Printf("Pausing bridge: %s\n", Bridge)
+	log.Info().Msgf("Pausing bridge: %s\n", Bridge)
 
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
