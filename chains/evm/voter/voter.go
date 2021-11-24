@@ -169,7 +169,7 @@ func (v *EVMVoter) simulateVoteProposal(prop *proposal.Proposal, tries int) erro
 	if err != nil {
 		if tries < maxSimulateVoteChecks {
 			tries++
-			Sleep(time.Duration(rand.Intn(shouldVoteCheckPeriod)) * time.Second)
+			Sleep(time.Duration(rand.Intn(simulateVoteCheckPeriod)) * time.Second)
 			v.simulateVoteProposal(prop, tries)
 		}
 		return err
