@@ -688,6 +688,14 @@ Flags:
       --hash string      A hash to lookup
   -h, --help             help for getHash
 ```
+&nbsp;
+
+## `Celo-CLI`
+This module provides instruction for communicating with Celo-compatible chains.
+
+More information can be found about this module within its repository, listed below.
+
+[Celo Module Repository](https://github.com/ChainSafe/chainbridge-celo-module)
 
 &nbsp;
 
