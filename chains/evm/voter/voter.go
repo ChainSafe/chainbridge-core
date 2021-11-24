@@ -23,8 +23,9 @@ import (
 )
 
 const (
-	maxSimulateVoteChecks, maxShouldVoteChecks     = 5, 40
-	simulateVoteCheckPeriod, shouldVoteCheckPeriod = 15, 15
+	maxSimulateVoteChecks = 5
+	maxShouldVoteChecks   = 40
+	shouldVoteCheckPeriod = 15
 )
 
 var (
@@ -169,7 +170,6 @@ func (v *EVMVoter) simulateVoteProposal(prop *proposal.Proposal, tries int) erro
 	if err != nil {
 		if tries < maxSimulateVoteChecks {
 			tries++
-			Sleep(time.Duration(rand.Intn(simulateVoteCheckPeriod)) * time.Second)
 			return v.simulateVoteProposal(prop, tries)
 		}
 		return err
