@@ -9,6 +9,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -46,7 +47,8 @@ func init() {
 }
 
 func ValidateSimulateFlags(cmd *cobra.Command, args []string) error {
-	if !common.IsHexAddress(TxHash) {
+	_, err := hexutil.Decode(TxHash)
+	if err != nil {
 		return fmt.Errorf("invalid tx hash %s", TxHash)
 	}
 	if !common.IsHexAddress(FromAddress) {
