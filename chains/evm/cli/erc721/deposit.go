@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc721"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ethereum/go-ethereum/common"
@@ -86,18 +85,19 @@ func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 }
 
 func DepositCmd(cmd *cobra.Command, args []string, erc721Contract *erc721.ERC721Contract) error {
-	txHash, err := erc721Contract.Deposit(tokenId, Metadata, destinationID, resourceId, bridgeAddr, recipientAddr, transactor.NewDefaultTransactOptions())
-	if err != nil {
-		return err
-	}
+	// txHash, err := erc721Contract.Deposit(tokenId, Metadata, destinationID, resourceId, bridgeAddr, recipientAddr, transactor.NewDefaultTransactOptions())
+	// if err != nil {
+	// 	return err
+	// }
 
-	log.Info().Msgf(
-		`erc721 deposit hash: %s
-		%s token were transferred to %s from %s`,
-		txHash.Hex(),
-		tokenId.String(),
-		recipientAddr.Hex(),
-		senderKeyPair.CommonAddress().String(),
-	)
-	return err
+	// log.Info().Msgf(
+	// 	`erc721 deposit hash: %s
+	// 	%s token were transferred to %s from %s`,
+	// 	txHash.Hex(),
+	// 	tokenId.String(),
+	// 	recipientAddr.Hex(),
+	// 	senderKeyPair.CommonAddress().String(),
+	// )
+	// return err
+	return nil
 }

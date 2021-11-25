@@ -135,7 +135,7 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 	_, err = erc721Contract2.Owner(tokenId)
 	s.Error(err)
 
-	_, err = erc721Contract1.Deposit(tokenId, metadata, 2, s.erc721RID, s.bridgeAddr, dstAddr, txOptions)
+	_, err = erc721Contract1.Deposit(s.fabric1, s.gasPricer, tokenId, metadata, 2, s.erc721RID, s.bridgeAddr, dstAddr, txOptions)
 	s.Nil(err)
 
 	//Wait 120 seconds for relayer vote

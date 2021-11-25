@@ -72,10 +72,10 @@ func (c *ERC721Contract) Approve(tokenId *big.Int, recipient common.Address, opt
 	return txHash, err
 }
 
-func (c *ERC721Contract) Deposit(tokenId *big.Int, metadata string, destinationId int, resourceId types.ResourceID, bridgeContract, recipient common.Address, opts transactor.TransactOptions) (*common.Hash, error) {
+// TODO - move to bridge - needs bridge to be refactored
+func (c *ERC721Contract) Deposit(txFabric calls.TxFabric, gasPricer calls.GasPricer, tokenId *big.Int, metadata string, destinationId int, resourceId types.ResourceID, bridgeContract, recipient common.Address, opts transactor.TransactOptions) (*common.Hash, error) {
 	data := calls.ConstructErc721DepositData(recipient.Bytes(), tokenId, []byte(metadata))
-	// TODO - needs bridge to be refactored
-	txHash, err := calls.Deposit(c.client, nil, nil, bridgeContract, resourceId, uint8(destinationId), data)
+	txHash, err := calls.Deposit(c.client, txFabric, gasPricer, bridgeContract, resourceId, uint8(destinationId), data)
 	if err != nil {
 		log.Error().Err(err)
 		return nil, err
