@@ -95,3 +95,25 @@ func TestPrepareWithdrawInput(t *testing.T) {
 		t.Fatal("prepared input byte slice empty")
 	}
 }
+
+func TestPreparePauseInput(t *testing.T) {
+	inputBytes, err := calls.PreparePauseInput()
+	if err != nil {
+		t.Fatalf("could not prepare pause input: %v", err)
+	}
+
+	if len(inputBytes) == 0 {
+		t.Fatal("prepared input byte slice empty")
+	}
+}
+
+func TestPrepareUnpauseInput(t *testing.T) {
+	inputBytes, err := calls.PrepareUnpauseInput()
+	if err != nil {
+		t.Fatalf("could not prepare unpause input: %v", err)
+	}
+
+	if len(inputBytes) == 0 {
+		t.Fatal("prepared input byte slice empty")
+	}
+}

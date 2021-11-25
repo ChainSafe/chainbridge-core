@@ -19,10 +19,10 @@ Chainbridge-core is the project that was born from the existing version of [Chai
 6. [Substrate](#substrate)
 7. [Local Setup](#local-setup)
 
-## Installation
+## `Installation`
 Refer to [installation](https://github.com/ChainSafe/chainbridge-docs/blob/develop/docs/installation.md) guide for assistance in installing.
 
-## Modules
+## `Modules`
 
 The chainbridge-core-example currently supports two modules:
 1. [EVM-CLI](#evm-cli)
@@ -36,12 +36,12 @@ Since chainbridge-core is the modular framework it will require writing some cod
 
 &nbsp;
 
-## Metrics
+## `Metrics`
 
 Metrics, in `chainbridge-core` are handled via injecting metrics provider compatible with [Metrics](./relayer/relayer.go) interface into `Relayer` instance. It currently needs only one method, `TrackDepositMessage(m *message.Message)`
 which is called inside relayer router when a `Deposit` event appears and should contain all necessary metrics data for extraction in custom implementations.
 
-### OpenTelementry
+### `OpenTelementry`
 
 `chainbridge-core` provides already implemented metrics [provider](./opentelemetry/opentelemetry.go) via [OpenTelemetry](https://opentelemetry.io/) that is vendor-agnostic. It sends metrics to a separate [collector](https://opentelemetry.io/docs/collector/) that then sends metrics via configured [exporters](https://opentelemetry.io/docs/collector/configuration/#exporters) to one or many metrics back-ends.
 
@@ -688,333 +688,18 @@ Flags:
       --hash string      A hash to lookup
   -h, --help             help for getHash
 ```
-
 &nbsp;
 
 ## `Celo-CLI`
-Though Celo is an EVM-compatible chain, it deviates in its implementation of the original Ethereum specifications, and therefore is deserving of its own separate module.
+This module provides instruction for communicating with Celo-compatible chains.
 
-See: [differences between EVM and Celo](#differences-between-evm-and-celo).
+More information can be found about this module within its repository, listed below.
 
-```bash
-Usage:
-   celo-cli [command]
-
-Available Commands:
-  admin       Admin-related instructions
-  bridge      Bridge-related instructions
-  deploy      Deploy smart contracts
-  erc20       erc20-related instructions
-
-Flags:
-  -h, --help   help for celo-cli
-```
+[Celo Module Repository](https://github.com/ChainSafe/chainbridge-celo-module)
 
 &nbsp;
 
-### Differences Between EVM and Celo
-
-The differences alluded to above in how Celo constructs transactions versus those found within Ethereum can be viewed below by taking a look at the Message structs in both implementations.
-
-[Ethereum Message Struct](https://github.com/ethereum/go-ethereum/blob/ac7baeab57405c64592b1646a91e0a2bb33d8d6c/core/types/transaction.go#L586-L598)
-
-Here you will find fields relating to the most recent London hardfork (EIP-1559), most notably `gasFeeCap` and `gasTipCap`.
-
-```go
-Message {
-   from:       from,
-   to:         to,
-   nonce:      nonce,
-   amount:     amount,
-   gasLimit:   gasLimit,
-   gasPrice:   gasPrice,
-   gasFeeCap:  gasFeeCap,
-   gasTipCap:  gasTipCap,
-   data:       data,
-   accessList: accessList,
-   isFake:     isFake,
-}
-```
-
-[Celo Message Struct](https://github.com/ChainSafe/chainbridge-celo-module/blob/b6d7ad422a5356500d2d5cf0b98e00da86dbb42e/transaction/tx.go#L422-L435)
-
-In Celo's struct you will notice that there are additional fields added for `feeCurrency`, `gatewayFeeRecipient` and `gatewayFee`. You may also notice the `ethCompatible` field, a boolean value we added in order to quickly determine whether the message is Ethereum compatible or not, ie, that `feeCurrency`, `gatewayFeeRecipient` and `gatewayFee` are omitted.
-
-```go
-Message {
-   from:                from,
-   to:                  to,
-   nonce:               nonce,
-   amount:              amount,
-   gasLimit:            gasLimit,
-   gasPrice:            gasPrice,
-   feeCurrency:         feeCurrency,         // Celo-specific
-   gatewayFeeRecipient: gatewayFeeRecipient, // Celo-specific
-   gatewayFee:          gatewayFee,          // Celo-specific
-   data:                data,
-   ethCompatible:       ethCompatible,       // Bool to check presence of: feeCurrency, gatewayFeeRecipient, gatewayFee
-   checkNonce:          checkNonce,
-}
-```
-
-&nbsp;
-
-### `Admin`
-Admin-related instructions.
-
-```bash
-Usage:
-   celo-cli admin [command]
-
-Available Commands:
-  pause          Pause deposits and proposals
-  unpause        Unpause deposits and proposals
-
-Flags:
-  -h, --help   help for admin
-```
-
-#### `pause`
-Pause deposits and proposals,
-
-```bash
-Usage:
-   celo-cli admin pause [flags]
-
-Flags:
-      --bridge string   bridge contract address
-  -h, --help            help for pause
-
-```
-
-#### `unpause`
-Unpause deposits and proposals.
-
-```bash
-Usage:
-   celo-cli admin unpause [flags]
-
-Flags:
-      --bridge string   bridge contract address
-  -h, --help            help for unpause
-```
-
-&nbsp;
-
-### `Bridge`
-Bridge-related instructions.
-
-```bash
-Usage:
-   celo-cli bridge [command]
-
-Available Commands:
-  register-resource Register a resource ID
-  set-burn          Set a token contract as mintable/burnable
-
-Flags:
-  -h, --help   help for bridge
-```
-
-#### `register-resource`
-Register a resource ID with a contract address for a handler
-
-```bash
-Usage:
-   celo-cli bridge register-resource [flags]
-
-Flags:
-      --bridge string       bridge contract address
-      --handler string      handler contract address
-  -h, --help                help for register-resource
-      --resourceId string   resource ID to be registered
-      --target string       contract address to be registered
-```
-
-#### `set-burn`
-Set a token contract as mintable/burnable in a handler
-
-```bash
-Usage:
-   celo-cli bridge set-burn [flags]
-
-Flags:
-      --bridge string          bridge contract address
-      --handler string         ERC20 handler contract address
-  -h, --help                   help for set-burn
-      --tokenContract string   token contract to be registered
-```
-
-&nbsp;
-
-### `Deploy`
-Deploy smart contracts.
-
-This command can be used to deploy all or some of the contracts required for bridging. Selection of contracts can be made by either specifying --all or a subset of flags.
-
-```bash
-Usage:
-   celo-cli deploy [flags]
-
-Flags:
-      --all                     deploy all
-      --bridge                  deploy bridge
-      --bridgeAddress string    bridge contract address. Should be provided if handlers are deployed separately
-      --domainId string         domain ID for the instance (default "1")
-      --erc20                   deploy ERC20
-      --erc20Handler            deploy ERC20 handler
-      --erc20Name string        ERC20 contract name
-      --erc20Symbol string      ERC20 contract symbol
-      --erc721                  deploy ERC721
-      --erc721Handler           deploy ERC721 handler
-      --erc721Name string       ERC721 contract name
-      --erc721Symbol string     ERC721 contract symbol
-      --erc721BaseURI           ERC721 base URI
-      --genericHandler          deploy generic handler
-      --fee string              fee to be taken when making a deposit (in ETH, decimas are allowed) (default "0")
-  -h, --help                    help for deploy
-      --relayerThreshold uint   number of votes required for a proposal to pass (default 1)
-      --relayers strings        list of initial relayers
-```
-
-&nbsp;
-
-### `ERC20`
-erc20-related instructions.
-
-```bash
-Usage:
-   celo-cli erc20 [command]
-
-Available Commands:
-  add-minter  Add a minter to an Erc20 mintable contract
-  allowance   Set a token contract as mintable/burnable
-  approve     Approve tokens in an ERC20 contract for transfer
-  balance     Query balance of an account in an ERC20 contract
-  deposit     Initiate a transfer of ERC20 tokens
-  mint        Mint tokens on an ERC20 mintable contract
-
-Flags:
-  -h, --help   help for erc20
-```
-
-#### `add-minter`
-Add a minter to an Erc20 mintable contract.
-
-```bash
-Usage:
-   celo-cli erc20 add-minter [flags]
-
-Flags:
-      --erc20Address string   ERC20 contract address
-  -h, --help                  help for add-minter
-      --minter string         address of minter
-```
-
-#### `allowance`
-Set a token contract as mintable/burnable in a handler.
-
-```bash
-Usage:
-   celo-cli erc20 allowance [flags]
-
-Flags:
-      --erc20Address string   ERC20 contract address
-  -h, --help                  help for allowance
-      --owner string          address of token owner
-      --spender string        address of spender
-```
-
-#### `approve`
-Approve tokens in an ERC20 contract for transfer.
-
-```bash
-Usage:
-   celo-cli erc20 approve [flags]
-
-Flags:
-      --amount string         amount to grant allowance
-      --decimals uint         ERC20 token decimals (default 18)
-      --erc20address string   ERC20 contract address
-  -h, --help                  help for approve
-      --recipient string      address of recipient
-```
-
-#### `balance`
-Query balance of an account in an ERC20 contract.
-
-```bash
-Usage:
-   celo-cli erc20 balance [flags]
-
-Flags:
-      --accountAddress string   address to receive balance of
-      --erc20Address string     ERC20 contract address
-  -h, --help                    help for balance
-```
-
-#### `deposit`
-Initiate a transfer of ERC20 tokens.
-
-```bash
-Usage:
-   celo-cli erc20 deposit [flags]
-
-Flags:
-      --amount string       amount to deposit
-      --bridge string       address of bridge contract
-      --decimals uint       ERC20 token decimals
-      --domainId string     destination domain ID
-  -h, --help                help for deposit
-      --recipient string    address of recipient
-      --resourceId string   resource ID for transfer
-```
-
-#### `mint`
-Mint tokens on an ERC20 mintable contract.
-
-```bash
-Usage:
-   celo-cli erc20 mint [flags]
-
-Flags:
-      --amount string         amount to mint fee (in ETH)
-      --decimal uint          ERC20 token decimals (default 18)
-      --dstAddress string     Where tokens should be minted. Defaults to TX sender
-      --erc20Address string   ERC20 contract address
-  -h, --help                  help for mint
-```
-
-&nbsp;
-
-### Centrifuge
-Centrifuge-related instructions.
-
-#### `deploy`
-
-This command can be used to deploy Centrifuge asset store contract that represents bridged Centrifuge assets.
-
-```bash
-Usage:
-   evm-cli centrifuge deploy
-```
-
-#### `getHash`
-Checks _assetsStored map on Centrifuge asset store contract to find if asset hash exists.
-
-```bash
-Usage:
-   evm-cli centrifuge getHash [flags]
-
-Flags:
-      --address string   Centrifuge asset store contract address
-      --hash string      A hash to lookup
-  -h, --help             help for getHash
-```
-
-&nbsp;
-
-## Substrate
+## `Substrate`
 This module provides instruction for communicating with Substrate-compatible chains.
 
 Currently there is no CLI for this, though more information can be found about this module within its repository, listed below.
@@ -1023,7 +708,7 @@ Currently there is no CLI for this, though more information can be found about t
 
 &nbsp;
 
-## Local Setup
+## `Local Setup`
 
 This section allows developers with a way to quickly and with minimal effort stand-up a local development environment in order to fully test out functionality of the chainbridge.
 
