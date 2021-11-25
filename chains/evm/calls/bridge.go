@@ -402,16 +402,26 @@ func Withdraw(client ClientDispatcher, txFabric TxFabric, gasPricer GasPricer, g
 	return &h, nil
 }
 
+// PreparePauseInput generates bytedata for adminPauseTransfers contract method
+func PreparePauseInput() ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+
+	input, err := a.Pack("adminPauseTransfers")
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return input, nil
+}
+
 // Pause pauses: deposits, deposit executions, proposal creations,
 // and voting executions
 // https://github.com/ChainSafe/chainbridge-solidity/blob/master/contracts/Bridge.sol#L159-L165
 func Pause(client ClientDispatcher, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, bridgeAddress common.Address) (*common.Hash, error) {
-	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
-	if err != nil {
-		return nil, fmt.Errorf("could not parse bridge ABI: %w", err)
-	}
-
-	pauseInput, err := a.Pack("adminPauseTransfers")
+	pauseInput, err := PreparePauseInput()
 	if err != nil {
 		return nil, fmt.Errorf("could not prepare adminPauseTransfers input: %w", err)
 	}
@@ -433,16 +443,27 @@ func Pause(client ClientDispatcher, txFabric TxFabric, gasPricer GasPricer, gasL
 	return &h, nil
 }
 
+// PrepareUnpauseInput generates bytedata for adminUnpauseTransfers contract
+// method
+func PrepareUnpauseInput() ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+
+	input, err := a.Pack("adminUnpauseTransfers")
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return input, nil
+}
+
 // Unpause unpauses: deposits, deposit executions, proposal creations,
 // and voting executions
 // https://github.com/ChainSafe/chainbridge-solidity/blob/master/contracts/Bridge.sol#L167-L173
 func Unpause(client ClientDispatcher, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, bridgeAddress common.Address) (*common.Hash, error) {
-	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
-	if err != nil {
-		return nil, fmt.Errorf("could not parse bridge ABI: %w", err)
-	}
-
-	unpauseInput, err := a.Pack("adminUnpauseTransfers")
+	unpauseInput, err := PrepareUnpauseInput()
 	if err != nil {
 		return nil, fmt.Errorf("could not prepare adminUnpauseTransfers input: %w", err)
 	}
