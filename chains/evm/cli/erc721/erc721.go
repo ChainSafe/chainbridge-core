@@ -3,7 +3,13 @@ package erc721
 import (
 	"fmt"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc721"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -27,4 +33,25 @@ func init() {
 	ERC721Cmd.AddCommand(ownerCmd)
 	ERC721Cmd.AddCommand(depositCmd)
 	ERC721Cmd.AddCommand(addMinterCmd)
+}
+
+func initializeErc721Contract() (*erc721.ERC721Contract, error) {
+	txFabric := evmtransaction.NewTransaction
+
+	ethClient, err := evmclient.NewEVMClientFromParams(
+		url, senderKeyPair.PrivateKey())
+	if err != nil {
+		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
+		return nil, err
+	}
+
+	gasPricer := evmgaspricer.NewLondonGasPriceClient(
+		ethClient,
+		&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice},
+	)
+
+	transactor := transactor.NewSignAndSendTransactor(txFabric, gasPricer, ethClient)
+	erc721Contract := erc721.NewErc721Contract(ethClient, erc721Addr, transactor)
+
+	return erc721Contract, nil
 }

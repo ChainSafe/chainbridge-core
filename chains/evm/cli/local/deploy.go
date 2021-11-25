@@ -8,6 +8,8 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc721"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum/common"
@@ -197,7 +199,9 @@ func PrepareErc721EVME2EEnv(ethClient E2EClient, fabric calls.TxFabric, bridgeAd
 	}
 
 	// Adding minter
-	_, err = calls.ERC721AddMinter(ethClient, fabric, staticGasPricer, gasLimit, erc721Addr, erc721HandlerAddr)
+	t := transactor.NewSignAndSendTransactor(fabric, staticGasPricer, ethClient)
+	erc721Contract := erc721.NewErc721Contract(ethClient, erc721Addr, t)
+	_, err = erc721Contract.AddMinter(erc721HandlerAddr, transactor.NewDefaultTransactOptions())
 	if err != nil {
 		return common.Address{}, common.Address{}, err
 	}

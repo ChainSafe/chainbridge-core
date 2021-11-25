@@ -4,13 +4,10 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc721"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -24,8 +21,11 @@ var approveCmd = &cobra.Command{
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return ApproveCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+		erc721Contract, err := initializeErc721Contract()
+		if err != nil {
+			return err
+		}
+		return ApproveCmd(cmd, args, erc721Contract)
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateApproveFlags(cmd, args)
@@ -70,18 +70,8 @@ func ProcessApproveFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func ApproveCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
-	ethClient, err := evmclient.NewEVMClientFromParams(
-		url, senderKeyPair.PrivateKey())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
-		return err
-	}
-
-	gasPricer.SetClient(ethClient)
-	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-
-	_, err = calls.ERC721Approve(ethClient, txFabric, gasPricer.(calls.GasPricer), gasLimit, tokenId, erc721Addr, recipientAddr)
+func ApproveCmd(cmd *cobra.Command, args []string, erc721Contract *erc721.ERC721Contract) error {
+	_, err = erc721Contract.Approve(tokenId, recipientAddr, transactor.NewDefaultTransactOptions())
 	if err != nil {
 		return err
 	}
