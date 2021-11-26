@@ -65,10 +65,8 @@ type CommonTransaction interface {
 	RawWithSignature(key *ecdsa.PrivateKey, domainID *big.Int) ([]byte, error)
 }
 
-func NewEVMClient() *EVMClient {
-	return &EVMClient{}
-}
-
+// NewEVMClientFromParams creates a client for EVMChain with provided
+// private key.
 func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey) (*EVMClient, error) {
 	rpcClient, err := rpc.DialContext(context.TODO(), url)
 	if err != nil {
@@ -82,26 +80,27 @@ func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey) (*EVMClien
 	return c, nil
 }
 
-func (c *EVMClient) Configurate(cfg *chain.EVMConfig) error {
+// NewEVMClient creates a client for EVM chain configured with specified config.
+// Private key is chosen by 'from' param in chain config that matches filename inside keystore path.
+func NewEVMClient(cfg *chain.EVMConfig) (*EVMClient, error) {
+	c := &EVMClient{}
 	generalConfig := cfg.GeneralChainConfig
 
 	kp, err := keystore.KeypairFromAddress(generalConfig.From, keystore.EthChain, generalConfig.KeystorePath, generalConfig.Insecure)
 	if err != nil {
-		return err
+		return c, err
 	}
 	krp := kp.(*secp256k1.Keypair)
 	c.kp = krp
 
-	log.Info().Str("url", generalConfig.Endpoint).Msg("Connecting to evm chain...")
-
 	rpcClient, err := rpc.DialContext(context.TODO(), generalConfig.Endpoint)
 	if err != nil {
-		return err
+		return c, err
 	}
 	c.Client = ethclient.NewClient(rpcClient)
 	c.rpClient = rpcClient
 
-	return nil
+	return c, nil
 }
 
 func (c *EVMClient) SubscribePendingTransactions(ctx context.Context, ch chan<- common.Hash) (*rpc.ClientSubscription, error) {

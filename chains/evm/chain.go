@@ -42,8 +42,7 @@ func SetupDefaultEVMChain(rawConfig map[string]interface{}, txFabric calls.TxFab
 		return nil, err
 	}
 
-	client := evmclient.NewEVMClient()
-	err = client.Configurate(config)
+	client, err := evmclient.NewEVMClient(config)
 	if err != nil {
 		return nil, err
 	}
