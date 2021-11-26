@@ -10,6 +10,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/types"
+	"github.com/rs/zerolog/log"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -80,9 +81,16 @@ func (e *ETHEventHandler) matchAddressWithHandlerFunc(handlerAddress common.Addr
 
 // RegisterEventHandler is a public method that registers an event handler by associating a handler function to a specific address
 func (e *ETHEventHandler) RegisterEventHandler(handlerAddress string, handler EventHandlerFunc) {
+	if handlerAddress == "" {
+		return
+	}
+
 	if e.eventHandlers == nil {
 		e.eventHandlers = make(map[common.Address]EventHandlerFunc)
 	}
+
+	log.Info().Msgf("Registered event handler for address %s", handlerAddress)
+
 	e.eventHandlers[common.HexToAddress(handlerAddress)] = handler
 }
 
