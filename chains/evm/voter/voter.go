@@ -181,6 +181,10 @@ func (v *EVMVoter) trackProposalPendingVotes(ch chan common.Hash) {
 			continue
 		}
 
+		if len(txData.Data()) < 4 {
+			continue
+		}
+
 		m, err := a.MethodById(txData.Data()[:4])
 		if err != nil {
 			continue
