@@ -99,6 +99,7 @@ func NewEVMClient(cfg *chain.EVMConfig) (*EVMClient, error) {
 	}
 	c.Client = ethclient.NewClient(rpcClient)
 	c.rpClient = rpcClient
+	c.gethClient = gethclient.New(rpcClient)
 
 	return c, nil
 }
