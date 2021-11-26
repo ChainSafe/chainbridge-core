@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/config"
 	"github.com/ChainSafe/chainbridge-core/flags"
 	"github.com/ChainSafe/chainbridge-core/lvldb"
@@ -35,7 +36,7 @@ func Run() error {
 		switch chainConfig["type"] {
 		case "evm":
 			{
-				chain, err := evm.SetupDefaultEVMChain(chainConfig, db)
+				chain, err := evm.SetupDefaultEVMChain(chainConfig, evmtransaction.NewTransaction, db)
 				if err != nil {
 					panic(err)
 				}

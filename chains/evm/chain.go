@@ -8,9 +8,9 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/blockstore"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 	"github.com/ChainSafe/chainbridge-core/config/chain"
@@ -36,14 +36,13 @@ type EVMChain struct {
 }
 
 // SetupDefaultEVMChain sets up an EVMChain with all supported handlers configured
-func SetupDefaultEVMChain(rawConfig map[string]interface{}, db blockstore.KeyValueReaderWriter) (*EVMChain, error) {
+func SetupDefaultEVMChain(rawConfig map[string]interface{}, txFabric calls.TxFabric, db blockstore.KeyValueReaderWriter) (*EVMChain, error) {
 	config, err := chain.NewEVMConfig(rawConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	client := evmclient.NewEVMClient()
-	err = client.Configurate(config)
+	client, err := evmclient.NewEVMClient(config)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +57,10 @@ func SetupDefaultEVMChain(rawConfig map[string]interface{}, db blockstore.KeyVal
 	mh.RegisterMessageHandler(config.Erc20Handler, voter.ERC20MessageHandler)
 	mh.RegisterMessageHandler(config.Erc721Handler, voter.ERC721MessageHandler)
 	mh.RegisterMessageHandler(config.GenericHandler, voter.GenericMessageHandler)
-	evmVoter := voter.NewVoter(mh, client, evmtransaction.NewTransaction, evmgaspricer.NewLondonGasPriceClient(client, nil))
+	evmVoter, err := voter.NewVoterWithSubscription(mh, client, txFabric, evmgaspricer.NewLondonGasPriceClient(client, nil))
+	if err != nil {
+		return nil, err
+	}
 
 	return NewEVMChain(evmListener, evmVoter, db, config), nil
 }
