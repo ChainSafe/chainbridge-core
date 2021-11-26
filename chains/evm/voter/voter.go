@@ -51,7 +51,7 @@ type EVMVoter struct {
 	pendingProposalVotes map[common.Hash]uint8
 }
 
-// NewVoterWithSubscription creates EVMVoter that votes for
+// NewVoterWithSubscription creates an instance of EVMVoter that votes for
 // proposals on chain.
 //
 // It is created with a pending proposal subscription that listens to
@@ -77,7 +77,7 @@ func NewVoterWithSubscription(mh MessageHandler, client ChainClient, fabric call
 	return voter, nil
 }
 
-// NewVoter creates EVMVoter that votes for proposal on chain.
+// NewVoter creates an instance of EVMVoter that votes for proposal on chain.
 //
 // It is created without pending proposal subscription and is a fallback
 // for nodes that don't support pending transaction subscription and will vote
