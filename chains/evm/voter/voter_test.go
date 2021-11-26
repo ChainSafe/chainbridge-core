@@ -19,6 +19,7 @@ import (
 
 var (
 	proposalVotedResponse, _    = hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000001")
+	threshold, _                = hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000003")
 	proposalNotVotedResponse, _ = hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000000")
 	executedProposalStatus, _   = hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000001c0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000001f")
 	inactiveProposalStatus, _   = hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
@@ -59,6 +60,29 @@ func (s *VoterTestSuite) TestVoteProposal_HandleMessageError() {
 	s.NotNil(err)
 }
 
+func (s *VoterTestSuite) TestVoteProposal_SimulateVoteProposalError() {
+	s.mockMessageHandler.EXPECT().HandleMessage(gomock.Any()).Return(&proposal.Proposal{
+		Source:       0,
+		DepositNonce: 0,
+	}, nil)
+	s.mockClient.EXPECT().RelayerAddress().Return(common.Address{})
+	//calls.IsProposalVotedBy
+	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(proposalNotVotedResponse, nil)
+	//calls.ProposalStatus
+	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(inactiveProposalStatus, nil)
+	//calls.GetThreshold
+	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(threshold, nil)
+
+	//calls.SimulateVoteProposal called 6 times
+	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+	err := s.voter.VoteProposal(&message.Message{})
+
+	s.NotNil(err)
+}
 func (s *VoterTestSuite) TestVoteProposal_IsProposalVotedByError() {
 	s.mockMessageHandler.EXPECT().HandleMessage(gomock.Any()).Return(&proposal.Proposal{
 		Source:       0,
