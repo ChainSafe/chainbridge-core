@@ -51,10 +51,13 @@ type EVMVoter struct {
 	pendingProposalVotes map[common.Hash]uint8
 }
 
-// NewVoterWithSubscription creates EVMVoter with pending proposal subscription
-// that listens to pending voteProposal transactions and avoids wasting gas
-// on sending votes for transactions that will fail.
-// Currently, officialy supported only by Geth nodes.
+// NewVoterWithSubscription creates EVMVoter that votes for
+// proposals on chain.
+//
+// It is created with a pending proposal subscription that listens to
+// pending voteProposal transactions and avoids wasting gas on sending votes
+// for transactions that will fail.
+// Currently, officially supported only by Geth nodes.
 func NewVoterWithSubscription(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasPriceClient calls.GasPricer) (*EVMVoter, error) {
 	voter := &EVMVoter{
 		mh:                   mh,
@@ -74,9 +77,11 @@ func NewVoterWithSubscription(mh MessageHandler, client ChainClient, fabric call
 	return voter, nil
 }
 
-// NewVoter creates EVMVoter without pending proposal subscription.
-// It is a fallback for nodes that don't support pending transaction subscription
-// and will vote on proposals that already satisfy threshold thus wasting gas.
+// NewVoter creates EVMVoter that votes for proposal on chain.
+//
+// It is created without pending proposal subscription and is a fallback
+// for nodes that don't support pending transaction subscription and will vote
+// on proposals that already satisfy threshold.
 func NewVoter(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasPriceClient calls.GasPricer) *EVMVoter {
 	return &EVMVoter{
 		mh:                   mh,
