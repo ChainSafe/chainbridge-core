@@ -44,7 +44,8 @@ func (c *RawEVMConfig) Validate() error {
 	return nil
 }
 
-// NewEVMConfig creates and validates an instance of an EVMConfig
+// NewEVMConfig decodes and validates an instance of an EVMConfig from
+// raw chain config
 func NewEVMConfig(chainConfig map[string]interface{}) (*EVMConfig, error) {
 	var c RawEVMConfig
 	err := mapstructure.Decode(chainConfig, &c)
