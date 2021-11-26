@@ -6,8 +6,8 @@ package cmd
 import (
 	evmCLI "github.com/ChainSafe/chainbridge-core/chains/evm/cli"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/local"
-	"github.com/ChainSafe/chainbridge-core/config"
 	"github.com/ChainSafe/chainbridge-core/e2e/evm-evm/example/app"
+	"github.com/ChainSafe/chainbridge-core/flags"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -30,7 +30,7 @@ var (
 )
 
 func init() {
-	config.BindFlags(runCMD)
+	flags.BindFlags(runCMD)
 }
 
 func Execute() {

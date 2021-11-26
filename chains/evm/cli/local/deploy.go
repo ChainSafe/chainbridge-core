@@ -48,10 +48,10 @@ func PrepareLocalEVME2EEnv(
 	ethClient E2EClient,
 	fabric calls.TxFabric,
 	domainID uint8,
-	treshHold *big.Int,
+	threshold *big.Int,
 	mintTo common.Address,
 ) (EVME2EConfig, error) {
-	bridgeAddr, err := deployBridgeForTest(ethClient, fabric, domainID, treshHold)
+	bridgeAddr, err := deployBridgeForTest(ethClient, fabric, domainID, threshold)
 	if err != nil {
 		return EVME2EConfig{}, err
 	}
@@ -218,10 +218,10 @@ func deployBridgeForTest(
 	c E2EClient,
 	fabric calls.TxFabric,
 	domainID uint8,
-	treshHold *big.Int,
+	threshold *big.Int,
 ) (common.Address, error) {
 	staticGasPricer := evmgaspricer.NewStaticGasPriceDeterminant(c, nil)
-	bridgeAddr, err := calls.DeployBridge(c, fabric, staticGasPricer, domainID, DefaultRelayerAddresses, treshHold, big.NewInt(0))
+	bridgeAddr, err := calls.DeployBridge(c, fabric, staticGasPricer, domainID, DefaultRelayerAddresses, threshold, big.NewInt(0))
 	if err != nil {
 		return common.Address{}, fmt.Errorf("Bridge deploy failed: %w", err)
 	}

@@ -87,11 +87,17 @@ func (mh *EVMMessageHandler) MatchAddressWithHandlerFunc(addr common.Address) (M
 	return h, nil
 }
 
-func (mh *EVMMessageHandler) RegisterMessageHandler(address common.Address, handler MessageHandlerFunc) {
+func (mh *EVMMessageHandler) RegisterMessageHandler(address string, handler MessageHandlerFunc) {
+	if address == "" {
+		return
+	}
 	if mh.handlers == nil {
 		mh.handlers = make(map[common.Address]MessageHandlerFunc)
 	}
-	mh.handlers[address] = handler
+
+	log.Info().Msgf("Registered message handler for address %s", address)
+
+	mh.handlers[common.HexToAddress(address)] = handler
 }
 
 func ERC20MessageHandler(m *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
