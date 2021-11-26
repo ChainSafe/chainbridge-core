@@ -6,8 +6,8 @@ import (
 
 var BridgeCmd = &cobra.Command{
 	Use:   "bridge",
-	Short: "Bridge-related instructions",
-	Long:  "Bridge-related instructions",
+	Short: "Set of commands for operating with a bridge",
+	Long:  "Set of commands for operating with a bridge",
 }
 
 func init() {

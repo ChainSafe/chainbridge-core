@@ -14,9 +14,9 @@ import (
 )
 
 var hashListCmd = &cobra.Command{
-	Use:   "hashList",
+	Use:   "hash-list",
 	Short: "List tx hashes",
-	Long:  "List tx hashes",
+	Long:  "The hash-list subcommand ",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},

@@ -19,7 +19,7 @@ import (
 var setDepositNonceCmd = &cobra.Command{
 	Use:   "set-deposit-nonce",
 	Short: "Set the deposit nonce",
-	Long:  `The set-deposit-nonce subcommand sets the deposit nonce. This nonce cannot be less than what is currently stored in the contract`,
+	Long:  "The set-deposit-nonce subcommand sets the deposit nonce. This nonce cannot be less than what is currently stored in the contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},

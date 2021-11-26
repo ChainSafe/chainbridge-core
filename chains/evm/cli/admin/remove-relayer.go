@@ -9,8 +9,8 @@ import (
 
 var removeRelayerCmd = &cobra.Command{
 	Use:   "remove-relayer",
-	Short: "Remove a relayer",
-	Long:  "The remove-relayer subcommand removes a relayer",
+	Short: "Remove an existing relayer",
+	Long:  "The remove-relayer subcommand removes an existing relayer",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},

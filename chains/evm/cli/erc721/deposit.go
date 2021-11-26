@@ -20,7 +20,7 @@ import (
 var depositCmd = &cobra.Command{
 	Use:   "deposit",
 	Short: "Deposit ERC721 token",
-	Long:  "Deposit ERC721 token",
+	Long:  "The deposit command creates new ERC721 token deposit on bridge contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -40,13 +40,13 @@ var depositCmd = &cobra.Command{
 }
 
 func BindDepositCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "address of bridge contract")
-	cmd.Flags().StringVar(&DestionationID, "destId", "", "destination domain ID")
-	cmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID for transfer")
-	cmd.Flags().StringVar(&TokenId, "tokenId", "", "ERC721 token ID")
-	cmd.Flags().StringVar(&Metadata, "metadata", "", "ERC721 metadata")
-	flags.MarkFlagsAsRequired(cmd, "recipient", "bridge", "destId", "resourceId", "tokenId")
+	cmd.Flags().StringVar(&Recipient, "recipient", "", "Recipient address")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
+	cmd.Flags().StringVar(&DestionationID, "dest-id", "", "Destination domain ID")
+	cmd.Flags().StringVar(&ResourceID, "resource-id", "", "Resource ID for transfer")
+	cmd.Flags().StringVar(&TokenId, "token-id", "", "ERC721 token ID")
+	cmd.Flags().StringVar(&Metadata, "metadata", "", "ERC721 token metadata")
+	flags.MarkFlagsAsRequired(cmd, "recipient", "bridge", "dest-id", "resource-id", "token-id")
 }
 
 func init() {

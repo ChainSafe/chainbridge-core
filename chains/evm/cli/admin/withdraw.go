@@ -42,12 +42,12 @@ var withdrawCmd = &cobra.Command{
 }
 
 func BindWithdrawCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Amount, "amount", "", "Token amount to withdraw. Should be set or ID or amount if both set error will occur")
-	cmd.Flags().StringVar(&TokenID, "tokenId", "", "Token ID to withdraw. Should be set or ID or amount if both set error will occur")
+	cmd.Flags().StringVar(&Amount, "amount", "", "Token amount to withdraw, use only if ERC20 token is withdrawn. If both amount and token-id are set a error will occur")
+	cmd.Flags().StringVar(&TokenID, "token-id", "", "Token ID to withdraw, use only if ERC721 token is withdrawn. If both amount and token-id are set a error will occur")
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	cmd.Flags().StringVar(&Handler, "handler", "", "Handler contract address")
 	cmd.Flags().StringVar(&Token, "token", "", "ERC20 or ERC721 token contract address")
-	cmd.Flags().StringVar(&Recipient, "recipient", "", "Address to withdrawal to")
+	cmd.Flags().StringVar(&Recipient, "recipient", "", "Address to withdraw to")
 	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
 	flags.MarkFlagsAsRequired(withdrawCmd, "amount", "tokenId", "bridge", "handler", "token", "recipient", "decimals")
 }
@@ -70,10 +70,10 @@ func ValidateWithdrawCmdFlags(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid recipient address: %s", Recipient)
 	}
 	if TokenID != "" && Amount != "" {
-		return errors.New("only id or amount should be set")
+		return errors.New("only token-id or amount should be set")
 	}
 	if TokenID == "" && Amount == "" {
-		return errors.New("id or amount flag should be set")
+		return errors.New("token-id or amount flag should be set")
 	}
 	return nil
 }

@@ -23,10 +23,10 @@ var getAllowanceCmd = &cobra.Command{
 }
 
 func BindGetAllowanceCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
+	cmd.Flags().StringVar(&Erc20Address, "contract", "", "ERC20 contract address")
 	cmd.Flags().StringVar(&OwnerAddress, "owner", "", "Address of token owner")
 	cmd.Flags().StringVar(&SpenderAddress, "spender", "", "Address of spender")
-	flags.MarkFlagsAsRequired(cmd, "erc20Address", "owner", "spender")
+	flags.MarkFlagsAsRequired(cmd, "contract", "owner", "spender")
 }
 
 func init() {

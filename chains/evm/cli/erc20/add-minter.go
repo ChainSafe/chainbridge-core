@@ -1,7 +1,6 @@
 package erc20
 
 import (
-	"errors"
 	"fmt"
 	"math/big"
 
@@ -19,7 +18,7 @@ import (
 
 var addMinterCmd = &cobra.Command{
 	Use:   "add-minter",
-	Short: "Add a minter to an Erc20 mintable contract",
+	Short: "Add new ERC20 minter",
 	Long:  "The add-minter subcommand adds a minter to an ERC20 mintable contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
@@ -39,9 +38,9 @@ var addMinterCmd = &cobra.Command{
 }
 
 func BindAddMinterCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
-	cmd.Flags().StringVar(&Minter, "minter", "", "Handler contract address")
-	flags.MarkFlagsAsRequired(cmd, "erc20Address", "minter")
+	cmd.Flags().StringVar(&Erc20Address, "contract", "", "ERC20 contract address")
+	cmd.Flags().StringVar(&Minter, "minter", "", "Minter address")
+	flags.MarkFlagsAsRequired(cmd, "contract", "minter")
 }
 
 func init() {
@@ -50,10 +49,10 @@ func init() {
 
 func ValidateAddMinterFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Erc20Address) {
-		return errors.New("invalid erc20Address address")
+		return fmt.Errorf("invalid ERC20 contract address: %s", Erc20Address)
 	}
 	if !common.IsHexAddress(Minter) {
-		return errors.New("invalid minter address")
+		return fmt.Errorf("invalid minter address: %s", Minter)
 	}
 	return nil
 }
