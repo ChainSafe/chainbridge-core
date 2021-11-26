@@ -74,11 +74,8 @@ func (s *VoterTestSuite) TestVoteProposal_SimulateVoteProposalError() {
 	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(threshold, nil)
 
 	//calls.SimulateVoteProposal called 6 times
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Times(6).Return(nil, errors.New("error"))
+
 	err := s.voter.VoteProposal(&message.Message{})
 
 	s.NotNil(err)
