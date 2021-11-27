@@ -3,7 +3,7 @@ package chain
 import (
 	"fmt"
 
-	"github.com/ChainSafe/chainbridge-core/config"
+	"github.com/ChainSafe/chainbridge-core/flags"
 	"github.com/spf13/viper"
 )
 
@@ -12,6 +12,7 @@ type GeneralChainConfig struct {
 	Id             *uint8 `mapstructure:"id"`
 	Endpoint       string `mapstructure:"endpoint"`
 	From           string `mapstructure:"from"`
+	Type           string `mapstructure:"type"`
 	KeystorePath   string
 	Insecure       bool
 	BlockstorePath string
@@ -20,9 +21,7 @@ type GeneralChainConfig struct {
 }
 
 func (c *GeneralChainConfig) Validate() error {
-	// viper defaults to 0 for not specified ints, but we must have a valid domain id
-	// Previous method of checking used a string cast like below
-	//domainId := string(c.Id)
+	// viper defaults to 0 for not specified ints
 	if c.Id == nil {
 		return fmt.Errorf("required field domain.Id empty for chain %v", c.Id)
 	}
@@ -38,15 +37,14 @@ func (c *GeneralChainConfig) Validate() error {
 	return nil
 }
 
-func (c *GeneralChainConfig) ParseConfig() {
-	if path := viper.GetString(config.TestKeyFlagName); path != "" {
+func (c *GeneralChainConfig) ParseFlags() {
+	if path := viper.GetString(flags.TestKeyFlagName); path != "" {
 		c.KeystorePath = path
 		c.Insecure = true
 	} else {
-		c.KeystorePath = viper.GetString(config.KeystoreFlagName)
+		c.KeystorePath = viper.GetString(flags.KeystoreFlagName)
 	}
-	c.BlockstorePath = viper.GetString(config.BlockstoreFlagName)
-	c.FreshStart = viper.GetBool(config.FreshStartFlagName)
-	c.LatestBlock = viper.GetBool(config.LatestBlockFlagName)
-
+	c.BlockstorePath = viper.GetString(flags.BlockstoreFlagName)
+	c.FreshStart = viper.GetBool(flags.FreshStartFlagName)
+	c.LatestBlock = viper.GetBool(flags.LatestBlockFlagName)
 }

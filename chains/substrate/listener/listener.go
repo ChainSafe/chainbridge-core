@@ -60,6 +60,11 @@ func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, domainID uint8, 
 					time.Sleep(BlockRetryInterval)
 					continue
 				}
+
+				if startBlock == nil {
+					startBlock = big.NewInt(int64(finalizedHeader.Number))
+				}
+
 				if startBlock.Cmp(big.NewInt(0).SetUint64(uint64(finalizedHeader.Number))) == 1 {
 					time.Sleep(BlockRetryInterval)
 					continue

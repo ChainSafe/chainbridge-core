@@ -35,12 +35,13 @@ type EVMListener struct {
 	bridgeAddress common.Address
 }
 
+// NewEVMListener creates an EVMListener that listens to deposit events on chain
+// and calls event handler when one occurs
 func NewEVMListener(chainReader ChainClient, handler EventHandler, bridgeAddress common.Address) *EVMListener {
 	return &EVMListener{chainReader: chainReader, eventHandler: handler, bridgeAddress: bridgeAddress}
 }
 
 func (l *EVMListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *message.Message {
-	// TODO: This channel should be closed somewhere!
 	ch := make(chan *message.Message)
 	go func() {
 		for {
@@ -54,6 +55,11 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw b
 					time.Sleep(BlockRetryInterval)
 					continue
 				}
+
+				if startBlock == nil {
+					startBlock = head
+				}
+
 				// Sleep if the difference is less than BlockDelay; (latest - current) < BlockDelay
 				if big.NewInt(0).Sub(head, startBlock).Cmp(BlockDelay) == -1 {
 					time.Sleep(BlockRetryInterval)

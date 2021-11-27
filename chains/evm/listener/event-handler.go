@@ -10,6 +10,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/types"
+	"github.com/rs/zerolog/log"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -25,6 +26,8 @@ type ETHEventHandler struct {
 	client        ChainClient
 }
 
+// NewETHEventHandler creates an instance of ETHEventHandler that contains
+// handler functions for processing deposit events
 func NewETHEventHandler(address common.Address, client ChainClient) *ETHEventHandler {
 	return &ETHEventHandler{
 		bridgeAddress: address,
@@ -69,7 +72,7 @@ func (e *ETHEventHandler) matchResourceIDToHandlerAddress(resourceID types.Resou
 	return out0, nil
 }
 
-// matchAddressWithHandlerFunc is a private method that matches a handler address with an associated handler function
+// matchAddressWithHandlerFunc matches a handler address with an associated handler function
 func (e *ETHEventHandler) matchAddressWithHandlerFunc(handlerAddress common.Address) (EventHandlerFunc, error) {
 	hf, ok := e.eventHandlers[handlerAddress]
 	if !ok {
@@ -78,11 +81,18 @@ func (e *ETHEventHandler) matchAddressWithHandlerFunc(handlerAddress common.Addr
 	return hf, nil
 }
 
-// RegisterEventHandler is a public method that registers an event handler by associating a handler function to a specific address
+// RegisterEventHandler registers an event handler by associating a handler function to a specified address
 func (e *ETHEventHandler) RegisterEventHandler(handlerAddress string, handler EventHandlerFunc) {
+	if handlerAddress == "" {
+		return
+	}
+
 	if e.eventHandlers == nil {
 		e.eventHandlers = make(map[common.Address]EventHandlerFunc)
 	}
+
+	log.Info().Msgf("Registered event handler for address %s", handlerAddress)
+
 	e.eventHandlers[common.HexToAddress(handlerAddress)] = handler
 }
 
@@ -119,7 +129,7 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.Re
 	}, nil
 }
 
-// GenericEventHandler extracts metadata of generic deposit event log into message
+// GenericEventHandler converts data pulled from generic deposit event logs into message
 func GenericEventHandler(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
 	if len(calldata) < 32 {
 		err := errors.New("invalid calldata length: less than 32 bytes")
@@ -141,6 +151,7 @@ func GenericEventHandler(sourceID, destId uint8, nonce uint64, resourceID types.
 	}, nil
 }
 
+// Erc721EventHandler converts data pulled from ERC721 deposit event logs into message
 func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
 	if len(calldata) < 64 {
 		err := errors.New("invalid calldata length: less than 84 bytes")

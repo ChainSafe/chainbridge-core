@@ -22,6 +22,9 @@ import (
 
 type MessageHandlerFunc func(m *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error)
 
+// NewEVMMessageHandler creates an instance of EVMMessageHandler that contains
+// message handler functions for converting deposit message into a chain specific
+// proposal
 func NewEVMMessageHandler(client ChainClient, bridgeAddress common.Address) *EVMMessageHandler {
 	return &EVMMessageHandler{
 		bridgeAddress: bridgeAddress,
@@ -87,11 +90,18 @@ func (mh *EVMMessageHandler) MatchAddressWithHandlerFunc(addr common.Address) (M
 	return h, nil
 }
 
-func (mh *EVMMessageHandler) RegisterMessageHandler(address common.Address, handler MessageHandlerFunc) {
+// RegisterEventHandler registers an message handler by associating a handler function to a specified address
+func (mh *EVMMessageHandler) RegisterMessageHandler(address string, handler MessageHandlerFunc) {
+	if address == "" {
+		return
+	}
 	if mh.handlers == nil {
 		mh.handlers = make(map[common.Address]MessageHandlerFunc)
 	}
-	mh.handlers[address] = handler
+
+	log.Info().Msgf("Registered message handler for address %s", address)
+
+	mh.handlers[common.HexToAddress(address)] = handler
 }
 
 func ERC20MessageHandler(m *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {

@@ -77,7 +77,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	log.Debug().Msgf("Latest block %s", b.String())
 
-	config, err := local.PrepareLocalEVME2EEnv(ethClient, s.fabric1, 1, big.NewInt(1), s.adminKey.CommonAddress())
+	config, err := local.PrepareLocalEVME2EEnv(ethClient, s.fabric1, 1, big.NewInt(2), s.adminKey.CommonAddress())
 	if err != nil {
 		panic(err)
 	}
@@ -91,6 +91,11 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.assetStoreAddr = config.AssetStoreAddr
 
 	s.gasPricer = evmgaspricer.NewStaticGasPriceDeterminant(s.client, nil)
+
+	_, err = local.PrepareLocalEVME2EEnv(ethClient2, s.fabric2, 2, big.NewInt(2), s.adminKey.CommonAddress())
+	if err != nil {
+		panic(err)
+	}
 
 	s.erc20RID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.Erc20Addr.Bytes(), 31), uint8(0)))
 	s.genericRID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.GenericHandlerAddr.Bytes(), 31), uint8(1)))

@@ -39,7 +39,7 @@ func DeployBridge(c ClientDeployer, txFabric TxFabric, gasPriceClient GasPricer,
 }
 
 func DeployErc20Handler(c ClientDeployer, txFabric TxFabric, gasPriceClient GasPricer, bridgeAddress common.Address) (common.Address, error) {
-	log.Debug().Msgf("Deployng ERC20 Handler with params: %s", bridgeAddress.String())
+	log.Debug().Msgf("Deploying ERC20 Handler with params: %s", bridgeAddress.String())
 	parsed, err := abi.JSON(strings.NewReader(consts.ERC20HandlerABI))
 	if err != nil {
 		return common.Address{}, err
@@ -64,7 +64,7 @@ func DeployErc721(c ClientDeployer, txFabric TxFabric, gasPriceClient GasPricer,
 }
 
 func DeployErc721Handler(c ClientDeployer, txFabric TxFabric, gasPriceClient GasPricer, bridgeAddress common.Address) (common.Address, error) {
-	log.Debug().Msgf("Deployng ERC721 Handler with params: %s", bridgeAddress.String())
+	log.Debug().Msgf("Deploying ERC721 Handler with params: %s", bridgeAddress.String())
 	parsed, err := abi.JSON(strings.NewReader(consts.ERC721HandlerABI))
 	if err != nil {
 		return common.Address{}, err

@@ -341,8 +341,8 @@ func IsProposalVotedBy(evmCaller ContractCallerClient, by common.Address, p *pro
 	return out0, nil
 }
 
-// public function to generate bytedata for adminWithdraw contract method
-// Used to manually withdraw funds from ERC safes
+// PrepareWithdrawInput generates bytedata for adminWithdraw contract
+// method
 func PrepareWithdrawInput(
 	handlerAddress,
 	tokenAddress,
@@ -374,7 +374,7 @@ func PrepareWithdrawInput(
 	return input, nil
 }
 
-// public function to Withdraw funds from ERC safes
+// Withdraw withdraws funds from ERC safes
 func Withdraw(client ClientDispatcher, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, bridgeAddress, handlerAddress, tokenAddress, recipientAddress common.Address, amountOrTokenId *big.Int) (*common.Hash, error) {
 	withdrawInput, err := PrepareWithdrawInput(
 		handlerAddress,
@@ -397,7 +397,90 @@ func Withdraw(client ClientDispatcher, txFabric TxFabric, gasPricer GasPricer, g
 	if err != nil {
 		return nil, fmt.Errorf("withdrawal failed %w", err)
 	}
-	log.Debug().Str("hash", h.String()).Msgf("Withdrawal sent")
+	log.Debug().Msg("Withdrawal initiated")
+
+	return &h, nil
+}
+
+// PreparePauseInput generates bytedata for adminPauseTransfers contract method
+func PreparePauseInput() ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+
+	input, err := a.Pack("adminPauseTransfers")
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return input, nil
+}
+
+// Pause pauses: deposits, deposit executions, proposal creations,
+// and voting executions
+// https://github.com/ChainSafe/chainbridge-solidity/blob/master/contracts/Bridge.sol#L159-L165
+func Pause(client ClientDispatcher, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, bridgeAddress common.Address) (*common.Hash, error) {
+	pauseInput, err := PreparePauseInput()
+	if err != nil {
+		return nil, fmt.Errorf("could not prepare adminPauseTransfers input: %w", err)
+	}
+
+	h, err := Transact(
+		client,
+		txFabric,
+		gasPricer,
+		&bridgeAddress,
+		pauseInput,
+		gasLimit,
+		big.NewInt(0),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("pause failed %w", err)
+	}
+	log.Debug().Msg("Pause initiated")
+
+	return &h, nil
+}
+
+// PrepareUnpauseInput generates bytedata for adminUnpauseTransfers contract
+// method
+func PrepareUnpauseInput() ([]byte, error) {
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		return []byte{}, err
+	}
+
+	input, err := a.Pack("adminUnpauseTransfers")
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return input, nil
+}
+
+// Unpause unpauses: deposits, deposit executions, proposal creations,
+// and voting executions
+// https://github.com/ChainSafe/chainbridge-solidity/blob/master/contracts/Bridge.sol#L167-L173
+func Unpause(client ClientDispatcher, txFabric TxFabric, gasPricer GasPricer, gasLimit uint64, bridgeAddress common.Address) (*common.Hash, error) {
+	unpauseInput, err := PrepareUnpauseInput()
+	if err != nil {
+		return nil, fmt.Errorf("could not prepare adminUnpauseTransfers input: %w", err)
+	}
+
+	h, err := Transact(
+		client,
+		txFabric,
+		gasPricer,
+		&bridgeAddress,
+		unpauseInput,
+		gasLimit,
+		big.NewInt(0),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("unpause failed %w", err)
+	}
+	log.Debug().Msg("Unpause initiated")
 
 	return &h, nil
 }
