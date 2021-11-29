@@ -15,13 +15,10 @@ import (
 )
 
 type Forwarder interface {
-	LockNonce()
-	UnlockNonce()
-	GetUnsafeNonce() (*big.Int, error)
-	GetGasPrice() (*big.Int, error)
+	GetNonce(from common.Address) (*big.Int, error)
 	GetForwarderAddress() common.Address
 	GetChainId() uint8
-	PackAndSignForwarderArg(to *common.Address, data []byte, opts transactor.TransactOptions) ([]byte, error)
+	GetForwarderData(to common.Address, data []byte, kp *secp256k1.Keypair, opts transactor.TransactOptions) ([]byte, error)
 }
 
 type RelayTx struct {
@@ -55,11 +52,15 @@ func NewITXTransactor(url string, forwarder Forwarder, kp *secp256k1.Keypair) (*
 	}, nil
 }
 
-func (itx *ITXTransactor) Transact(to *common.Address, data []byte, opts transactor.TransactOptions) (common.Hash, error) {
-	itx.forwarder.LockNonce()
-	defer itx.forwarder.UnlockNonce()
+func (itx *ITXTransactor) Transact(to common.Address, data []byte, opts transactor.TransactOptions) (common.Hash, error) {
+	nonce, err := itx.forwarder.GetNonce(itx.kp.CommonAddress())
+	if err != nil {
+		return common.Hash{}, err
+	}
+	opts.Nonce = nonce
+	opts.ChainID = itx.forwarder.GetChainId()
 
-	forwarderData, err := itx.forwarder.PackAndSignForwarderArg(to, data, opts)
+	forwarderData, err := itx.forwarder.GetForwarderData(to, data, itx.kp, opts)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -69,6 +70,9 @@ func (itx *ITXTransactor) Transact(to *common.Address, data []byte, opts transac
 		data: forwarderData,
 		opts: opts,
 	})
+	if err != nil {
+		return common.Hash{}, err
+	}
 
 	return itx.sendTransaction(context.Background(), signedTx)
 }
@@ -78,7 +82,6 @@ func (itx *ITXTransactor) signRelayTx(tx *RelayTx) (*SignedRelayTx, error) {
 	addressType, _ := abi.NewType("address", "address", nil)
 	bytesType, _ := abi.NewType("bytes", "bytes", nil)
 	stringType, _ := abi.NewType("string", "string", nil)
-
 	arguments := abi.Arguments{
 		{Type: addressType},
 		{Type: bytesType},
@@ -87,21 +90,7 @@ func (itx *ITXTransactor) signRelayTx(tx *RelayTx) (*SignedRelayTx, error) {
 		{Type: stringType},
 	}
 
-	nonce, err := itx.forwarder.GetUnsafeNonce()
-	if err != nil {
-		return nil, err
-	}
-	tx.opts.Nonce = nonce
-
-	gasPrice, err := itx.forwarder.GetGasPrice()
-	if err != nil {
-		return nil, err
-	}
-
-	tx.opts.GasPrice = gasPrice
-	tx.opts.ChainID = itx.forwarder.GetChainId()
-
-	packed, err := arguments.Pack(tx.to, tx.data, tx.opts.GasPrice, tx.opts.ChainID, tx.opts.Priority)
+	packed, err := arguments.Pack(tx.to, tx.data, tx.opts.GasLimit, big.NewInt(int64(tx.opts.ChainID)), tx.opts.Priority)
 	if err != nil {
 		return nil, err
 	}
@@ -123,14 +112,14 @@ func (itx *ITXTransactor) signRelayTx(tx *RelayTx) (*SignedRelayTx, error) {
 
 func (itx *ITXTransactor) sendTransaction(ctx context.Context, signedTx *SignedRelayTx) (common.Hash, error) {
 	type txResponse struct {
-		relayTransactionHash hexutil.Bytes
+		RelayTransactionHash hexutil.Bytes
 	}
 
 	sig := "0x" + common.Bytes2Hex(signedTx.sig)
 	txArg := map[string]interface{}{
 		"to":       signedTx.to.String(),
 		"data":     "0x" + common.Bytes2Hex(signedTx.data),
-		"gas":      signedTx.opts.GasLimit,
+		"gas":      signedTx.opts.GasLimit.String(),
 		"schedule": signedTx.opts.Priority,
 	}
 
@@ -140,5 +129,5 @@ func (itx *ITXTransactor) sendTransaction(ctx context.Context, signedTx *SignedR
 		return common.Hash{}, err
 	}
 
-	return common.HexToHash(resp.relayTransactionHash.String()), nil
+	return common.HexToHash(resp.RelayTransactionHash.String()), nil
 }
