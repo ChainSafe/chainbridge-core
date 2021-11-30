@@ -58,51 +58,6 @@ func (c *BridgeContract) UnpackResult(method string, output []byte) ([]interface
 	return res, err
 }
 
-func (c *BridgeContract) PrepareSetBurnableInput(handler, tokenAddress common.Address) ([]byte, error) {
-	return c.PackMethod("adminSetBurnable", handler, tokenAddress)
-}
-
-func (c *BridgeContract) PrepareAdminSetResourceInput(handler common.Address, resourceID types.ResourceID, addr common.Address) ([]byte, error) {
-	log.Debug().Msgf("resourceID %x", resourceID)
-	return c.PackMethod("adminSetResource", handler, resourceID, addr)
-}
-
-func (c *BridgeContract) PrepareAddRelayerInput(relayer common.Address) ([]byte, error) {
-	return c.PackMethod("adminAddRelayer", relayer)
-}
-
-func (c *BridgeContract) PrepareDepositInput(destDomainID uint8, resourceID types.ResourceID, data []byte) ([]byte, error) {
-	return c.PackMethod("deposit", destDomainID, resourceID, data)
-}
-
-func (c *BridgeContract) PrepareExecuteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID types.ResourceID, calldata []byte, revertOnFail bool) ([]byte, error) {
-	return c.PackMethod("executeProposal", sourceDomainID, depositNonce, calldata, resourceID, revertOnFail)
-}
-
-func (c *BridgeContract) PrepareVoteProposalInput(sourceDomainID uint8, depositNonce uint64, resourceID types.ResourceID, calldata []byte) ([]byte, error) {
-	return c.PackMethod("voteProposal", sourceDomainID, depositNonce, resourceID, calldata)
-}
-
-func (c *BridgeContract) PrepareSetDepositNonceInput(domainID uint8, depositNonce uint64) ([]byte, error) {
-	return c.PackMethod("adminSetDepositNonce", domainID, depositNonce)
-}
-
-func (c *BridgeContract) PrepareSetThresholdInput(threshold *big.Int) ([]byte, error) {
-	return c.PackMethod("adminChangeRelayerThreshold", threshold)
-}
-func (c *BridgeContract) PrepareAdminSetGenericResourceInput(
-	handler common.Address,
-	rId types.ResourceID,
-	addr common.Address,
-	depositFunctionSig [4]byte,
-	depositerOffset *big.Int,
-	executeFunctionSig [4]byte,
-) ([]byte, error) {
-	return c.PackMethod(
-		"adminSetGenericResource", handler, rId, addr, depositFunctionSig, depositerOffset, executeFunctionSig,
-	)
-}
-
 // public function to generate bytedata for adminWithdraw contract method
 // Used to manually withdraw funds from ERC safes
 func (c *BridgeContract) PrepareWithdrawInput(
@@ -129,12 +84,11 @@ func (c *BridgeContract) AddRelayer(
 	relayerAddr common.Address,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
-	input, err := c.PrepareAddRelayerInput(relayerAddr)
-	if err != nil {
-		log.Error().Err(err)
-		return nil, err
-	}
-	return c.executeTransaction(input, opts, "AddRelayer")
+	return c.ExecuteTransaction(
+		"adminAddRelayer",
+		opts,
+		relayerAddr,
+	)
 }
 
 func (c *BridgeContract) AdminSetGenericResource(
@@ -146,14 +100,11 @@ func (c *BridgeContract) AdminSetGenericResource(
 	executeFunctionSig [4]byte,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
-	input, err := c.PrepareAdminSetGenericResourceInput(
+	return c.ExecuteTransaction(
+		"adminSetGenericResource",
+		opts,
 		handler, rID, addr, depositFunctionSig, depositerOffset, executeFunctionSig,
 	)
-	if err != nil {
-		log.Error().Err(err)
-		return nil, err
-	}
-	return c.executeTransaction(input, opts, "AdminSetGenericResource")
 }
 
 func (c *BridgeContract) AdminSetResource(
@@ -162,14 +113,11 @@ func (c *BridgeContract) AdminSetResource(
 	targetContractAddr common.Address,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
-	input, err := c.PrepareAdminSetResourceInput(
+	return c.ExecuteTransaction(
+		"adminSetResource",
+		opts,
 		handlerAddr, resourceIdBytesArr, targetContractAddr,
 	)
-	if err != nil {
-		log.Error().Err(err)
-		return nil, err
-	}
-	return c.executeTransaction(input, opts, "AdminSetResource")
 }
 
 func (c *BridgeContract) SetDepositNonce(
@@ -177,23 +125,22 @@ func (c *BridgeContract) SetDepositNonce(
 	depositNonce uint64,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
-	input, err := c.PrepareSetDepositNonceInput(domainId, depositNonce)
-	if err != nil {
-		log.Error().Err(err)
-		return nil, err
-	}
-	return c.executeTransaction(input, opts, "SetDepositNonce")
+	return c.ExecuteTransaction(
+		"adminSetDepositNonce",
+		opts,
+		domainId, depositNonce,
+	)
 }
 
 func (c *BridgeContract) SetThresholdInput(
 	threshold uint64,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
-	input, err := c.PrepareSetThresholdInput(big.NewInt(0).SetUint64(threshold))
-	if err != nil {
-		return nil, err
-	}
-	return c.executeTransaction(input, opts, "SetThresholdInput")
+	return c.ExecuteTransaction(
+		"adminChangeRelayerThreshold",
+		opts,
+		big.NewInt(0).SetUint64(threshold),
+	)
 }
 
 func (c *BridgeContract) SetBurnableInput(
@@ -201,12 +148,11 @@ func (c *BridgeContract) SetBurnableInput(
 	tokenContractAddr common.Address,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
-	input, err := c.PrepareSetBurnableInput(handlerAddr, tokenContractAddr)
-	if err != nil {
-		log.Error().Err(err)
-		return nil, err
-	}
-	return c.executeTransaction(input, opts, "SetBurnableInput")
+	return c.ExecuteTransaction(
+		"adminSetBurnable",
+		opts,
+		handlerAddr, tokenContractAddr,
+	)
 }
 
 func (c *BridgeContract) Deposit(
@@ -215,13 +161,11 @@ func (c *BridgeContract) Deposit(
 	data []byte,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
-	input, err := c.PrepareDepositInput(destDomainID, resourceID, data)
-	if err != nil {
-		log.Error().Err(err)
-		return nil, err
-	}
-
-	return c.executeTransaction(input, opts, "Deposit")
+	return c.ExecuteTransaction(
+		"deposit",
+		opts,
+		destDomainID, resourceID, data,
+	)
 }
 
 func (c *BridgeContract) Erc721Deposit(
@@ -246,33 +190,27 @@ func (c *BridgeContract) ExecuteProposal(
 	proposal *proposal.Proposal,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
-	// revertOnFail should be constantly false, true is used only for internal contract calls when you need to execute proposal in voteProposal function right after it becomes Passed becouse of votes
-	input, err := c.PrepareExecuteProposalInput(
+	opts = transactor.MergeTransactionOptions(opts, transactor.TransactOptions{GasLimit: 300000})
+	// revertOnFail should be constantly false, true is used only for internal contract calls
+	// when you need to execute proposal in voteProposal function right after it becomes Passed becouse of votes
+	return c.ExecuteTransaction(
+		"executeProposal",
+		opts,
 		proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data, true,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	opts = transactor.MergeTransactionOptions(opts, transactor.TransactOptions{GasLimit: 300000})
-	return c.executeTransaction(input, opts, "ExecuteProposal")
 }
 
 func (c *BridgeContract) VoteProposal(
 	proposal *proposal.Proposal,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
+	opts = transactor.MergeTransactionOptions(opts, transactor.TransactOptions{GasLimit: 300000})
 	// revertOnFail should be constantly false, true is used only for internal contract calls when you need to execute proposal in voteProposal function right after it becomes Passed becouse of votes
-	input, err := c.PrepareVoteProposalInput(
+	return c.ExecuteTransaction(
+		"voteProposal",
+		opts,
 		proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data,
 	)
-	if err != nil {
-		log.Error().Err(err)
-		return nil, err
-	}
-
-	opts = transactor.MergeTransactionOptions(opts, transactor.TransactOptions{GasLimit: 300000})
-	return c.executeTransaction(input, opts, "VoteProposal")
 }
 
 // public function to Withdraw funds from ERC safes
@@ -348,6 +286,21 @@ func (c *BridgeContract) CallContract(method string, args ...interface{}) ([]int
 		}
 	}
 	return c.UnpackResult(method, out)
+}
+
+func (c BridgeContract) ExecuteTransaction(method string, opts transactor.TransactOptions, args ...interface{}) (*common.Hash, error) {
+	input, err := c.PackMethod(method, args...)
+	if err != nil {
+		log.Error().Err(err)
+		return nil, err
+	}
+	h, err := c.Transact(&c.bridgeContractAddress, input, opts)
+	if err != nil {
+		log.Error().Err(err).Msg(method)
+		return nil, err
+	}
+	log.Debug().Str("hash", h.String()).Msgf("%s sent", method)
+	return h, err
 }
 
 func (c *BridgeContract) executeTransaction(
