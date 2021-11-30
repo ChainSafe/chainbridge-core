@@ -51,7 +51,10 @@ func Run() error {
 	mh.RegisterMessageHandler(common.HexToAddress(evm1Cfg.SharedEVMConfig.Erc721Handler), voter.ERC721MessageHandler)
 	mh.RegisterMessageHandler(common.HexToAddress(evm1Cfg.SharedEVMConfig.GenericHandler), voter.GenericMessageHandler)
 
-	evmeVoter, err := voter.NewVoterWithSubscription(mh, evm1Client, evmtransaction.NewTransaction, evmgaspricer.NewLondonGasPriceClient(evm1Client, nil))
+	bridgeAdr1 := common.HexToAddress(evm1Cfg.SharedEVMConfig.Bridge)
+	evmeVoter, err := voter.NewVoterWithSubscription(
+		mh, evm1Client, evmtransaction.NewTransaction, evmgaspricer.NewLondonGasPriceClient(evm1Client, nil), bridgeAdr1,
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -77,7 +80,10 @@ func Run() error {
 	mhEVM.RegisterMessageHandler(common.HexToAddress(evm2Config.SharedEVMConfig.Erc721Handler), voter.ERC721MessageHandler)
 	mhEVM.RegisterMessageHandler(common.HexToAddress(evm2Config.SharedEVMConfig.GenericHandler), voter.GenericMessageHandler)
 
-	evm2Voter, err := voter.NewVoterWithSubscription(mhEVM, evm2Client, evmtransaction.NewTransaction, evmgaspricer.NewLondonGasPriceClient(evm2Client, nil))
+	bridgeAdr2 := common.HexToAddress(evm2Config.SharedEVMConfig.Bridge)
+	evm2Voter, err := voter.NewVoterWithSubscription(
+		mhEVM, evm2Client, evmtransaction.NewTransaction, evmgaspricer.NewLondonGasPriceClient(evm2Client, nil), bridgeAdr2,
+	)
 	if err != nil {
 		panic(err)
 	}

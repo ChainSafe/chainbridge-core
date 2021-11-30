@@ -1,8 +1,10 @@
-package calls
+package centrifuge
 
 import (
 	"context"
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
@@ -12,14 +14,14 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func DeployCentrifugeAssetStore(c ClientDeployer, txFabric TxFabric, gasPriceClient GasPricer) (common.Address, error) {
+func DeployCentrifugeAssetStore(c client.ClientDeployer, txFabric client.TxFabric, gasPriceClient client.GasPricer) (common.Address, error) {
 	log.Debug().Msgf("Deploying Centrifuge asset store")
 	parsed, err := abi.JSON(strings.NewReader(consts.CentrifugeAssetStoreABI))
 	if err != nil {
 		return common.Address{}, err
 	}
 
-	address, err := deployContract(c, parsed, common.FromHex(consts.CentrifugeAssetStoreBin), txFabric, gasPriceClient)
+	address, err := calls.DeployContract(c, parsed, common.FromHex(consts.CentrifugeAssetStoreBin), txFabric, gasPriceClient)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -55,7 +57,7 @@ func parseIsAssetStoredOutput(output []byte) (bool, error) {
 	return isAssetStored, nil
 }
 
-func IsCentrifugeAssetStored(ethClient ContractCallerClient, storeAddr common.Address, hash [32]byte) (bool, error) {
+func IsCentrifugeAssetStored(ethClient client.ContractCallerClient, storeAddr common.Address, hash [32]byte) (bool, error) {
 	input, err := prepareIsAssetStoredInput(hash)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("prepare input error: %v", err))
@@ -68,7 +70,7 @@ func IsCentrifugeAssetStored(ethClient ContractCallerClient, storeAddr common.Ad
 		Data: input,
 	}
 
-	out, err := ethClient.CallContract(context.TODO(), ToCallArg(msg), nil)
+	out, err := ethClient.CallContract(context.TODO(), client.ToCallArg(msg), nil)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("call contract error: %v", err))
 		return false, err

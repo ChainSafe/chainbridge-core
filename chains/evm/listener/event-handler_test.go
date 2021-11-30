@@ -2,10 +2,10 @@ package listener_test
 
 import (
 	"errors"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/bridge"
 	"math/big"
 	"testing"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
@@ -33,7 +33,7 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleEvent() {
 	// 0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b
 	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}
 
-	calldata := calls.ConstructErc20DepositData(recipientByteSlice, big.NewInt(2))
+	calldata := bridge.ConstructErc20DepositData(recipientByteSlice, big.NewInt(2))
 	depositLog := &evmclient.DepositLogs{
 		DestinationDomainID: 0,
 		ResourceID:          [32]byte{0},
@@ -106,7 +106,7 @@ func (s *Erc721HandlerTestSuite) TearDownTest()  {}
 func (s *Erc721HandlerTestSuite) TestErc721EventHandlerEmptyMetadata() {
 	recipient := common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b")
 
-	calldata := calls.ConstructErc721DepositData(recipient.Bytes(), big.NewInt(2), []byte{})
+	calldata := bridge.ConstructErc721DepositData(recipient.Bytes(), big.NewInt(2), []byte{})
 	depositLog := &evmclient.DepositLogs{
 		DestinationDomainID: 0,
 		ResourceID:          [32]byte{0},
@@ -165,7 +165,7 @@ func (s *Erc721HandlerTestSuite) TestErc721EventHandler() {
 	recipient := common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b")
 	metadata := []byte("metadata.url")
 
-	calldata := calls.ConstructErc721DepositData(recipient.Bytes(), big.NewInt(2), metadata)
+	calldata := bridge.ConstructErc721DepositData(recipient.Bytes(), big.NewInt(2), metadata)
 	depositLog := &evmclient.DepositLogs{
 		DestinationDomainID: 0,
 		ResourceID:          [32]byte{0},
@@ -243,7 +243,7 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEventIncorrectDataLen() {
 
 func (s *GenericHandlerTestSuite) TestGenericHandleEventEmptyMetadata() {
 	metadata := []byte("")
-	calldata := calls.ConstructGenericDepositData(metadata)
+	calldata := bridge.ConstructGenericDepositData(metadata)
 
 	depositLog := &evmclient.DepositLogs{
 		DestinationDomainID: 0,
@@ -282,7 +282,7 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEventEmptyMetadata() {
 
 func (s *GenericHandlerTestSuite) TestGenericHandleEvent() {
 	metadata := []byte("0xdeadbeef")
-	calldata := calls.ConstructGenericDepositData(metadata)
+	calldata := bridge.ConstructGenericDepositData(metadata)
 
 	depositLog := &evmclient.DepositLogs{
 		DestinationDomainID: 0,

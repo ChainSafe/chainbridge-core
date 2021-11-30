@@ -3,11 +3,11 @@ package account
 import (
 	"bufio"
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"math/big"
 	"os"
 	"strings"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
@@ -63,10 +63,10 @@ func ProcessTransferBaseCurrencyFlags(cmd *cobra.Command, args []string) error {
 	var err error
 	recipientAddress = common.HexToAddress(Recipient)
 	decimals := big.NewInt(int64(Decimals))
-	weiAmount, err = calls.UserAmountToWei(Amount, decimals)
+	weiAmount, err = client.UserAmountToWei(Amount, decimals)
 	return err
 }
-func TransferBaseCurrency(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
+func TransferBaseCurrency(cmd *cobra.Command, args []string, txFabric client.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 
 	// fetch global flag values
 	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
@@ -82,7 +82,7 @@ func TransferBaseCurrency(cmd *cobra.Command, args []string, txFabric calls.TxFa
 
 	gasPricer.SetClient(ethClient)
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-	txHash, err := calls.Transact(ethClient, txFabric, gasPricer, &recipientAddress, nil, gasLimit, weiAmount)
+	txHash, err := client.Transact(ethClient, txFabric, gasPricer, &recipientAddress, nil, gasLimit, weiAmount)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("base currency deposit error: %v", err))
 		return err

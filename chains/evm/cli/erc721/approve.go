@@ -2,6 +2,7 @@ package erc721
 
 import (
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc721"
@@ -21,7 +22,9 @@ var approveCmd = &cobra.Command{
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		erc721Contract, err := initializeErc721Contract()
+		erc721Contract, err := contracts.InitializeErc721Contract(
+			url, gasLimit, gasPrice, senderKeyPair, erc721Addr,
+		)
 		if err != nil {
 			return err
 		}
@@ -71,7 +74,7 @@ func ProcessApproveFlags(cmd *cobra.Command, args []string) error {
 }
 
 func ApproveCmd(cmd *cobra.Command, args []string, erc721Contract *erc721.ERC721Contract) error {
-	_, err = erc721Contract.Approve(tokenId, recipientAddr, transactor.NewDefaultTransactOptions())
+	_, err = erc721Contract.Approve(tokenId, recipientAddr, transactor.TransactOptions{})
 	if err != nil {
 		return err
 	}

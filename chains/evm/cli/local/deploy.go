@@ -5,6 +5,10 @@ package local
 
 import (
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/centrifuge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc20"
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
@@ -41,39 +45,73 @@ type EVME2EConfig struct {
 }
 
 type E2EClient interface {
-	calls.ContractCallerClient
+	client.ContractCallerClient
 	evmgaspricer.GasPriceClient
-	calls.ClientDeployer
+	client.ClientDeployer
 }
 
 func PrepareLocalEVME2EEnv(
 	ethClient E2EClient,
-	fabric calls.TxFabric,
+	fabric client.TxFabric,
 	domainID uint8,
-	treshHold *big.Int,
+	threshold *big.Int,
 	mintTo common.Address,
 ) (EVME2EConfig, error) {
-	bridgeAddr, err := deployBridgeForTest(ethClient, fabric, domainID, treshHold)
+	conf, err := DeployLocalEVME2EEnv(ethClient, fabric, domainID, threshold)
 	if err != nil {
 		return EVME2EConfig{}, err
 	}
 
-	erc20Addr, erc20HandlerAddr, err := PrepareErc20EVME2EEnv(ethClient, fabric, bridgeAddr, mintTo)
+	staticGasPricer := evmgaspricer.NewStaticGasPriceDeterminant(ethClient, nil)
+	t := transactor.NewSignAndSendTransactor(fabric, staticGasPricer, ethClient)
+
+	bridgeContract := bridge.NewBridgeContract(ethClient, conf.BridgeAddr, t)
+	erc721Contract := erc721.NewErc721Contract(ethClient, conf.Erc721Addr, t)
+
+	err = PrepareErc20EVME2EEnv(ethClient, fabric, mintTo, conf)
 	if err != nil {
 		return EVME2EConfig{}, err
 	}
 
-	erc721Addr, erc721HandlerAddr, err := PrepareErc721EVME2EEnv(ethClient, fabric, bridgeAddr, mintTo)
+	err = PrepareErc721EVME2EEnv(bridgeContract, erc721Contract, conf)
 	if err != nil {
 		return EVME2EConfig{}, err
 	}
 
-	assetStoreAddr, genericHandlerAddr, err := PrepareGenericEVME2EEnv(ethClient, fabric, bridgeAddr)
+	err = PrepareGenericEVME2EEnv(bridgeContract, conf)
 	if err != nil {
 		return EVME2EConfig{}, err
 	}
 
 	log.Debug().Msgf("All deployments and preparations are done")
+	return conf, nil
+}
+
+func DeployLocalEVME2EEnv(
+	ethClient E2EClient,
+	fabric client.TxFabric,
+	domainID uint8,
+	threshold *big.Int,
+) (EVME2EConfig, error) {
+	bridgeAddr, err := deployBridgeForTest(ethClient, fabric, domainID, threshold)
+	if err != nil {
+		return EVME2EConfig{}, err
+	}
+
+	erc20Addr, erc20HandlerAddr, err := deployErc20ForTest(ethClient, fabric, bridgeAddr)
+	if err != nil {
+		return EVME2EConfig{}, err
+	}
+
+	erc721Addr, erc721HandlerAddr, err := deployErc721ForTest(ethClient, fabric, bridgeAddr)
+	if err != nil {
+		return EVME2EConfig{}, err
+	}
+
+	assetStoreAddr, genericHandlerAddr, err := deployGenericForTest(ethClient, fabric, bridgeAddr)
+	if err != nil {
+		return EVME2EConfig{}, err
+	}
 
 	return EVME2EConfig{
 		BridgeAddr: bridgeAddr,
@@ -89,138 +127,97 @@ func PrepareLocalEVME2EEnv(
 	}, nil
 }
 
-func PrepareErc20EVME2EEnv(ethClient E2EClient, fabric calls.TxFabric, bridgeAddr, mintTo common.Address) (common.Address, common.Address, error) {
+func PrepareErc20EVME2EEnv(ethClient E2EClient, fabric client.TxFabric, mintTo common.Address, conf EVME2EConfig) error {
+	// TODO - will be moved once Erc20Contract is refactored
 	staticGasPricer := evmgaspricer.NewStaticGasPriceDeterminant(ethClient, nil)
-	erc20Addr, erc20HandlerAddr, err := deployErc20ForTest(ethClient, fabric, bridgeAddr)
-	if err != nil {
-		return common.Address{}, common.Address{}, err
-	}
+	t := transactor.NewSignAndSendTransactor(fabric, staticGasPricer, ethClient)
+	bridgeContract := bridge.NewBridgeContract(ethClient, conf.BridgeAddr, t)
 
-	gasLimit := uint64(2000000)
-	// Registering resource
-	resourceID := calls.SliceTo32Bytes(append(common.LeftPadBytes(erc20Addr.Bytes(), 31), 0))
-	registerResourceInput, err := calls.PrepareAdminSetResourceInput(erc20HandlerAddr, resourceID, erc20Addr)
+	// Setting resource
+	resourceID := client.SliceTo32Bytes(append(common.LeftPadBytes(conf.Erc20Addr.Bytes(), 31), 0))
+	_, err := bridgeContract.AdminSetResource(conf.Erc20HandlerAddr, resourceID, conf.Erc20Addr, transactor.TransactOptions{GasLimit: 2000000})
 	if err != nil {
-		return common.Address{}, common.Address{}, err
-	}
-	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &bridgeAddr, registerResourceInput, gasLimit, big.NewInt(0))
-	if err != nil {
-		return common.Address{}, common.Address{}, err
+		return err
 	}
 
 	// Minting tokens
 	tenTokens := big.NewInt(0).Mul(big.NewInt(10), big.NewInt(0).Exp(big.NewInt(10), big.NewInt(18), nil))
-	minInput, err := calls.PrepareMintTokensInput(mintTo, tenTokens)
+	minInput, err := erc20.PrepareMintTokensInput(mintTo, tenTokens)
 	if err != nil {
-		return common.Address{}, common.Address{}, err
+		return err
 	}
-	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &erc20Addr, minInput, gasLimit, big.NewInt(0))
+	_, err = client.Transact(ethClient, fabric, staticGasPricer, &conf.Erc20Addr, minInput, 2000000, big.NewInt(0))
 	if err != nil {
-		return common.Address{}, common.Address{}, err
+		return err
 	}
 
 	// Approving tokens
-	approveInput, err := calls.PrepareErc20ApproveInput(erc20HandlerAddr, tenTokens)
+	approveInput, err := erc20.PrepareErc20ApproveInput(conf.Erc20HandlerAddr, tenTokens)
 	if err != nil {
-		return common.Address{}, common.Address{}, err
+		return err
 	}
-	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &erc20Addr, approveInput, gasLimit, big.NewInt(0))
+	_, err = client.Transact(ethClient, fabric, staticGasPricer, &conf.Erc20Addr, approveInput, 2000000, big.NewInt(0))
 	if err != nil {
-		return common.Address{}, common.Address{}, err
+		return err
 	}
 
 	// Adding minter
-	minterInput, err := calls.PrepareErc20AddMinterInput(ethClient, erc20Addr, erc20HandlerAddr)
+	minterInput, err := erc20.PrepareErc20AddMinterInput(ethClient, conf.Erc20Addr, conf.Erc20HandlerAddr)
 	if err != nil {
-		return common.Address{}, common.Address{}, err
+		return err
 	}
-	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &erc20Addr, minterInput, gasLimit, big.NewInt(0))
+	_, err = client.Transact(ethClient, fabric, staticGasPricer, &conf.Erc20Addr, minterInput, 2000000, big.NewInt(0))
 	if err != nil {
-		return common.Address{}, common.Address{}, err
-	}
-
-	setBurnInput, err := calls.PrepareSetBurnableInput(erc20HandlerAddr, erc20Addr)
-	if err != nil {
-		return common.Address{}, common.Address{}, err
-	}
-	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &bridgeAddr, setBurnInput, gasLimit, big.NewInt(0))
-	if err != nil {
-		return common.Address{}, common.Address{}, err
+		return err
 	}
 
-	return erc20Addr, erc20HandlerAddr, nil
+	_, err = bridgeContract.SetBurnableInput(conf.Erc20HandlerAddr, conf.Erc20Addr, transactor.TransactOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func PrepareGenericEVME2EEnv(ethClient E2EClient, fabric calls.TxFabric, bridgeAddr common.Address) (common.Address, common.Address, error) {
-	staticGasPricer := evmgaspricer.NewStaticGasPriceDeterminant(ethClient, nil)
-	assetStoreAddr, genericHandlerAddr, err := deployGenericForTest(ethClient, fabric, bridgeAddr)
-	if err != nil {
-		return common.Address{}, common.Address{}, err
-	}
-
-	gasLimit := uint64(2000000)
-	resourceID := calls.SliceTo32Bytes(append(common.LeftPadBytes(genericHandlerAddr.Bytes(), 31), 1))
-	setGenericResourceInput, err := calls.PrepareAdminSetGenericResourceInput(
-		genericHandlerAddr,
+func PrepareGenericEVME2EEnv(bridgeContract *bridge.BridgeContract, conf EVME2EConfig) error {
+	resourceID := client.SliceTo32Bytes(append(common.LeftPadBytes(conf.GenericHandlerAddr.Bytes(), 31), 1))
+	_, err := bridgeContract.AdminSetGenericResource(
+		conf.GenericHandlerAddr,
 		resourceID,
-		assetStoreAddr,
+		conf.AssetStoreAddr,
 		[4]byte{0x65, 0x4c, 0xf8, 0x8c},
 		big.NewInt(0),
 		[4]byte{0x65, 0x4c, 0xf8, 0x8c},
+		transactor.TransactOptions{GasLimit: 2000000},
 	)
 	if err != nil {
-		return common.Address{}, common.Address{}, err
+		return err
 	}
-	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &bridgeAddr, setGenericResourceInput, gasLimit, big.NewInt(0))
-	if err != nil {
-		return common.Address{}, common.Address{}, err
-	}
-
-	return assetStoreAddr, genericHandlerAddr, nil
+	return nil
 }
 
-func PrepareErc721EVME2EEnv(ethClient E2EClient, fabric calls.TxFabric, bridgeAddr, mintTo common.Address) (common.Address, common.Address, error) {
-	staticGasPricer := evmgaspricer.NewStaticGasPriceDeterminant(ethClient, nil)
-	erc721Addr, erc721HandlerAddr, err := deployErc721ForTest(ethClient, fabric, bridgeAddr)
-	if err != nil {
-		return common.Address{}, common.Address{}, err
-	}
-
-	gasLimit := uint64(2000000)
+func PrepareErc721EVME2EEnv(bridgeContract *bridge.BridgeContract, erc721Contract *erc721.ERC721Contract, conf EVME2EConfig) error {
 	// Registering resource
-	resourceID := calls.SliceTo32Bytes(append(common.LeftPadBytes(erc721Addr.Bytes(), 31), uint8(2)))
-	registerResourceInput, err := calls.PrepareAdminSetResourceInput(erc721HandlerAddr, resourceID, erc721Addr)
+	resourceID := client.SliceTo32Bytes(append(common.LeftPadBytes(conf.Erc20Addr.Bytes(), 31), uint8(2)))
+	_, err := bridgeContract.AdminSetResource(conf.Erc721HandlerAddr, resourceID, conf.Erc721Addr, transactor.TransactOptions{GasLimit: 2000000})
 	if err != nil {
-		return common.Address{}, common.Address{}, err
+		return err
 	}
-	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &bridgeAddr, registerResourceInput, gasLimit, big.NewInt(0))
-	if err != nil {
-		return common.Address{}, common.Address{}, err
-	}
-
 	// Adding minter
-	t := transactor.NewSignAndSendTransactor(fabric, staticGasPricer, ethClient)
-	erc721Contract := erc721.NewErc721Contract(ethClient, erc721Addr, t)
-	_, err = erc721Contract.AddMinter(erc721HandlerAddr, transactor.NewDefaultTransactOptions())
+	_, err = erc721Contract.AddMinter(conf.Erc721HandlerAddr, transactor.TransactOptions{})
 	if err != nil {
-		return common.Address{}, common.Address{}, err
+		return err
 	}
-
-	setBurnInput, err := calls.PrepareSetBurnableInput(erc721HandlerAddr, erc721Addr)
+	// Set burnable input
+	_, err = bridgeContract.SetBurnableInput(conf.Erc721HandlerAddr, conf.Erc721Addr, transactor.TransactOptions{})
 	if err != nil {
-		return common.Address{}, common.Address{}, err
+		return err
 	}
-	_, err = calls.Transact(ethClient, fabric, staticGasPricer, &bridgeAddr, setBurnInput, gasLimit, big.NewInt(0))
-	if err != nil {
-		return common.Address{}, common.Address{}, err
-	}
-
-	return erc721Addr, erc721HandlerAddr, nil
+	return nil
 }
 
 func deployBridgeForTest(
 	c E2EClient,
-	fabric calls.TxFabric,
+	fabric client.TxFabric,
 	domainID uint8,
 	treshHold *big.Int,
 ) (common.Address, error) {
@@ -236,7 +233,7 @@ func deployBridgeForTest(
 
 func deployErc20ForTest(
 	c E2EClient,
-	fabric calls.TxFabric,
+	fabric client.TxFabric,
 	bridgeAddr common.Address,
 ) (common.Address, common.Address, error) {
 	staticGasPricer := evmgaspricer.NewStaticGasPriceDeterminant(c, nil)
@@ -256,7 +253,7 @@ func deployErc20ForTest(
 
 func deployGenericForTest(
 	c E2EClient,
-	fabric calls.TxFabric,
+	fabric client.TxFabric,
 	bridgeAddr common.Address,
 ) (common.Address, common.Address, error) {
 	staticGasPricer := evmgaspricer.NewStaticGasPriceDeterminant(c, nil)
@@ -265,7 +262,7 @@ func deployGenericForTest(
 		return common.Address{}, common.Address{}, fmt.Errorf("Generic handler deploy failed: %w", err)
 	}
 
-	assetStoreAddr, err := calls.DeployCentrifugeAssetStore(c, fabric, staticGasPricer)
+	assetStoreAddr, err := centrifuge.DeployCentrifugeAssetStore(c, fabric, staticGasPricer)
 	if err != nil {
 		return common.Address{}, common.Address{}, fmt.Errorf("Centrifuge asset store deploy failed: %w", err)
 	}
@@ -276,7 +273,7 @@ func deployGenericForTest(
 
 func deployErc721ForTest(
 	c E2EClient,
-	fabric calls.TxFabric,
+	fabric client.TxFabric,
 	bridgeAddr common.Address,
 ) (common.Address, common.Address, error) {
 	staticGasPricer := evmgaspricer.NewStaticGasPriceDeterminant(c, nil)

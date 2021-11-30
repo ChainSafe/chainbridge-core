@@ -2,10 +2,10 @@ package evmclient_test
 
 import (
 	"encoding/hex"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"strings"
 	"testing"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"

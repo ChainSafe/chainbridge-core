@@ -6,13 +6,14 @@ package voter
 import (
 	"context"
 	"fmt"
-	"math/big"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"math/rand"
 	"strings"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -33,10 +34,9 @@ var (
 
 type ChainClient interface {
 	RelayerAddress() common.Address
-	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
 	SubscribePendingTransactions(ctx context.Context, ch chan<- common.Hash) (*rpc.ClientSubscription, error)
 	TransactionByHash(ctx context.Context, hash common.Hash) (tx *ethereumTypes.Transaction, isPending bool, err error)
-	calls.ClientDispatcher
+	client.ContractCallerDispatcherClient
 }
 
 type MessageHandler interface {
@@ -46,8 +46,7 @@ type MessageHandler interface {
 type EVMVoter struct {
 	mh                   MessageHandler
 	client               ChainClient
-	fabric               calls.TxFabric
-	gasPriceClient       calls.GasPricer
+	bridgeContract       *bridge.BridgeContract
 	pendingProposalVotes map[common.Hash]uint8
 }
 
@@ -55,14 +54,14 @@ type EVMVoter struct {
 // that listens to pending voteProposal transactions and avoids wasting gas
 // on sending votes for transactions that will fail.
 // Currently, officialy supported only by Geth nodes.
-func NewVoterWithSubscription(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasPriceClient calls.GasPricer) (*EVMVoter, error) {
-	voter := &EVMVoter{
-		mh:                   mh,
-		client:               client,
-		fabric:               fabric,
-		gasPriceClient:       gasPriceClient,
-		pendingProposalVotes: make(map[common.Hash]uint8),
-	}
+func NewVoterWithSubscription(
+	mh MessageHandler,
+	client ChainClient,
+	fabric client.TxFabric,
+	gasPriceClient client.GasPricer,
+	bridgeAddress common.Address,
+) (*EVMVoter, error) {
+	voter := NewVoter(mh, client, fabric, gasPriceClient, bridgeAddress)
 
 	ch := make(chan common.Hash)
 	_, err := client.SubscribePendingTransactions(context.TODO(), ch)
@@ -77,12 +76,19 @@ func NewVoterWithSubscription(mh MessageHandler, client ChainClient, fabric call
 // NewVoter creates EVMVoter without pending proposal subscription.
 // It is a fallback for nodes that don't support pending transaction subscription
 // and will vote on proposals that already satisfy threshold thus wasting gas.
-func NewVoter(mh MessageHandler, client ChainClient, fabric calls.TxFabric, gasPriceClient calls.GasPricer) *EVMVoter {
+func NewVoter(
+	mh MessageHandler,
+	client ChainClient,
+	fabric client.TxFabric,
+	gasPriceClient client.GasPricer,
+	bridgeAddress common.Address,
+) *EVMVoter {
+	t := transactor.NewSignAndSendTransactor(fabric, gasPriceClient, client)
+	bridgeContract := bridge.NewBridgeContract(client, bridgeAddress, t)
 	return &EVMVoter{
 		mh:                   mh,
 		client:               client,
-		fabric:               fabric,
-		gasPriceClient:       gasPriceClient,
+		bridgeContract:       bridgeContract,
 		pendingProposalVotes: make(map[common.Hash]uint8),
 	}
 }
@@ -95,7 +101,7 @@ func (v *EVMVoter) VoteProposal(m *message.Message) error {
 		return err
 	}
 
-	votedByTheRelayer, err := calls.IsProposalVotedBy(v.client, v.client.RelayerAddress(), prop)
+	votedByTheRelayer, err := v.bridgeContract.IsProposalVotedBy(v.client.RelayerAddress(), prop)
 	if err != nil {
 		return err
 	}
@@ -114,7 +120,7 @@ func (v *EVMVoter) VoteProposal(m *message.Message) error {
 		return nil
 	}
 
-	hash, err := calls.VoteProposal(v.client, v.fabric, v.gasPriceClient, prop)
+	hash, err := v.bridgeContract.VoteProposal(prop, transactor.TransactOptions{})
 	if err != nil {
 		return fmt.Errorf("voting failed. Err: %w", err)
 	}
@@ -135,7 +141,7 @@ func (v *EVMVoter) shouldVoteForProposal(prop *proposal.Proposal, tries int) (bo
 	// at the same time and all of them sending another tx
 	Sleep(time.Duration(rand.Intn(shouldVoteCheckPeriod)) * time.Second)
 
-	ps, err := calls.ProposalStatus(v.client, prop)
+	ps, err := v.bridgeContract.ProposalStatus(prop)
 	if err != nil {
 		return false, err
 	}
@@ -144,7 +150,7 @@ func (v *EVMVoter) shouldVoteForProposal(prop *proposal.Proposal, tries int) (bo
 		return false, nil
 	}
 
-	threshold, err := calls.GetThreshold(v.client, &prop.BridgeAddress)
+	threshold, err := v.bridgeContract.GetThreshold()
 	if err != nil {
 		return false, err
 	}

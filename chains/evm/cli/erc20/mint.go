@@ -2,11 +2,12 @@ package erc20
 
 import (
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc20"
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
@@ -91,7 +92,7 @@ func ProcessMintFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func MintCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
+func MintCmd(cmd *cobra.Command, args []string, txFabric client.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 
 	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
 	if err != nil {
@@ -102,13 +103,13 @@ func MintCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPric
 	gasPricer.SetClient(ethClient)
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
-	mintTokensInput, err := calls.PrepareMintTokensInput(dstAddress, realAmount)
+	mintTokensInput, err := erc20.PrepareMintTokensInput(dstAddress, realAmount)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 mint input error: %v", err))
 		return err
 	}
 
-	_, err = calls.Transact(ethClient, txFabric, gasPricer, &erc20Addr, mintTokensInput, gasLimit, big.NewInt(0))
+	_, err = client.Transact(ethClient, txFabric, gasPricer, &erc20Addr, mintTokensInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Error().Err(err)
 		return err

@@ -3,9 +3,10 @@ package erc20
 import (
 	"errors"
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc20"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
@@ -63,7 +64,7 @@ func ProcessAddMinterFlags(cmd *cobra.Command, args []string) {
 	minterAddr = common.HexToAddress(Minter)
 }
 
-func AddMinterCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
+func AddMinterCmd(cmd *cobra.Command, args []string, txFabric client.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 
 	// fetch global flag values
 	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
@@ -78,12 +79,12 @@ func AddMinterCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, ga
 	}
 	gasPricer.SetClient(ethClient)
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-	mintableInput, err := calls.PrepareErc20AddMinterInput(ethClient, erc20Addr, minterAddr)
+	mintableInput, err := erc20.PrepareErc20AddMinterInput(ethClient, erc20Addr, minterAddr)
 	if err != nil {
 		log.Error().Err(err)
 		return err
 	}
-	_, err = calls.Transact(ethClient, txFabric, gasPricer, &erc20Addr, mintableInput, gasLimit, big.NewInt(0))
+	_, err = client.Transact(ethClient, txFabric, gasPricer, &erc20Addr, mintableInput, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Error().Err(err)
 		return err

@@ -1,11 +1,11 @@
-package calls_test
+package client_test
 
 import (
 	"errors"
+	calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"math/big"
 	"testing"
 
-	calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	mock_calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"

@@ -3,13 +3,13 @@ package erc721
 import (
 	"context"
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc20"
 	"math/big"
 	"strings"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -17,19 +17,19 @@ import (
 )
 
 type ERC721Contract struct {
-	client                calls.ContractCallerDispatcherClient
+	client                client.ContractCallerDispatcherClient
 	erc721ContractAddress common.Address
 	abi                   abi.ABI
 	transactor.Transactor
 }
 
 func NewErc721Contract(
-	client calls.ContractCallerDispatcherClient,
+	client client.ContractCallerDispatcherClient,
 	erc721ContractAddress common.Address,
 	t transactor.Transactor,
 ) *ERC721Contract {
 	// load ABI
-	a, err := abi.JSON(strings.NewReader(consts.ERC721PresetMinterPauserABI))
+	a, err := abi.JSON(strings.NewReader(consts.PresetMinterPauserABI))
 	if err != nil {
 		log.Fatal().Msg("Unable to load ABI") // TODO
 	}
@@ -41,6 +41,7 @@ func NewErc721Contract(
 	}
 }
 
+// Add new minter for ERC721 contract
 func (c *ERC721Contract) AddMinter(minter common.Address, opts transactor.TransactOptions) (*common.Hash, error) {
 	addMinterInput, err := c.prepareErc721AddMinterInput(minter)
 	if err != nil {
@@ -65,17 +66,6 @@ func (c *ERC721Contract) Approve(tokenId *big.Int, recipient common.Address, opt
 	}
 
 	txHash, err := c.Transact(&c.erc721ContractAddress, approveTokenInput, opts)
-	if err != nil {
-		log.Error().Err(err)
-		return nil, err
-	}
-	return txHash, err
-}
-
-// TODO - move to bridge - needs bridge to be refactored
-func (c *ERC721Contract) Deposit(txFabric calls.TxFabric, gasPricer calls.GasPricer, tokenId *big.Int, metadata string, destinationId int, resourceId types.ResourceID, bridgeContract, recipient common.Address, opts transactor.TransactOptions) (*common.Hash, error) {
-	data := calls.ConstructErc721DepositData(recipient.Bytes(), tokenId, []byte(metadata))
-	txHash, err := calls.Deposit(c.client, txFabric, gasPricer, bridgeContract, resourceId, uint8(destinationId), data)
 	if err != nil {
 		log.Error().Err(err)
 		return nil, err
@@ -111,7 +101,7 @@ func (c *ERC721Contract) Owner(tokenId *big.Int) (*common.Address, error) {
 		Data: ownerOfTokenInput,
 	}
 
-	out, err := c.client.CallContract(context.TODO(), calls.ToCallArg(msg), nil)
+	out, err := c.client.CallContract(context.TODO(), client.ToCallArg(msg), nil)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("call contract error: %v", err))
 		return nil, err
@@ -154,7 +144,7 @@ func (c *ERC721Contract) MinterRole() ([32]byte, error) {
 		return [32]byte{}, err
 	}
 	msg := ethereum.CallMsg{From: common.Address{}, To: &c.erc721ContractAddress, Data: input}
-	out, err := c.client.CallContract(context.TODO(), calls.ToCallArg(msg), nil)
+	out, err := c.client.CallContract(context.TODO(), client.ToCallArg(msg), nil)
 	if err != nil {
 		return [32]byte{}, err
 	}
@@ -194,7 +184,7 @@ func (c *ERC721Contract) prepareERC721OwnerInput(tokenId *big.Int) ([]byte, erro
 }
 
 func (c *ERC721Contract) prepareErc721AddMinterInput(minter common.Address) ([]byte, error) {
-	role, err := calls.MinterRole(c.client, c.erc721ContractAddress)
+	role, err := erc20.MinterRole(c.client, c.erc721ContractAddress)
 	if err != nil {
 		return []byte{}, err
 	}

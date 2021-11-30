@@ -1,8 +1,9 @@
-package calls
+package erc20
 
 import (
 	"context"
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"math/big"
 	"strings"
 
@@ -39,7 +40,7 @@ func PrepareErc20ApproveInput(target common.Address, amount *big.Int) ([]byte, e
 	return input, nil
 }
 
-func PrepareErc20AddMinterInput(client ContractCallerClient, erc20Contract, handler common.Address) ([]byte, error) {
+func PrepareErc20AddMinterInput(client client.ContractCallerClient, erc20Contract, handler common.Address) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
 	if err != nil {
 		return []byte{}, err
@@ -96,7 +97,7 @@ func ParseERC20BalanceOutput(output []byte) (*big.Int, error) {
 	return balance, nil
 }
 
-func MinterRole(chainClient ContractCallerClient, erc20Contract common.Address) ([32]byte, error) {
+func MinterRole(chainClient client.ContractCallerClient, erc20Contract common.Address) ([32]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
 	if err != nil {
 		return [32]byte{}, err
@@ -106,7 +107,7 @@ func MinterRole(chainClient ContractCallerClient, erc20Contract common.Address) 
 		return [32]byte{}, err
 	}
 	msg := ethereum.CallMsg{From: common.Address{}, To: &erc20Contract, Data: input}
-	out, err := chainClient.CallContract(context.TODO(), ToCallArg(msg), nil)
+	out, err := chainClient.CallContract(context.TODO(), client.ToCallArg(msg), nil)
 	if err != nil {
 		return [32]byte{}, err
 	}
@@ -118,7 +119,7 @@ func MinterRole(chainClient ContractCallerClient, erc20Contract common.Address) 
 	return out0, nil
 }
 
-func GetERC20Balance(ethClient ContractCheckerCallerClient, erc20Addr, address common.Address) (*big.Int, error) {
+func GetERC20Balance(ethClient client.ContractCheckerCallerClient, erc20Addr, address common.Address) (*big.Int, error) {
 	input, err := PrepareERC20BalanceInput(address)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("prepare input error: %v", err))
@@ -131,7 +132,7 @@ func GetERC20Balance(ethClient ContractCheckerCallerClient, erc20Addr, address c
 		Data: input,
 	}
 
-	out, err := ethClient.CallContract(context.TODO(), ToCallArg(msg), nil)
+	out, err := ethClient.CallContract(context.TODO(), client.ToCallArg(msg), nil)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("call contract error: %v", err))
 		return nil, err

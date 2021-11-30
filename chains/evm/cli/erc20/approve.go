@@ -3,11 +3,12 @@ package erc20
 import (
 	"errors"
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc20"
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
@@ -68,7 +69,7 @@ func ProcessApproveFlags(cmd *cobra.Command, args []string) error {
 	decimals := big.NewInt(int64(Decimals))
 	erc20Addr = common.HexToAddress(Erc20Address)
 	recipientAddress = common.HexToAddress(Recipient)
-	realAmount, err = calls.UserAmountToWei(Amount, decimals)
+	realAmount, err = client.UserAmountToWei(Amount, decimals)
 	if err != nil {
 		return err
 	}
@@ -76,7 +77,7 @@ func ProcessApproveFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func ApproveCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
+func ApproveCmd(cmd *cobra.Command, args []string, txFabric client.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 	log.Debug().Msgf(`
 Approving ERC20
 ERC20 address: %s
@@ -98,12 +99,12 @@ Decimals: %v`,
 	}
 	gasPricer.SetClient(ethClient)
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-	i, err := calls.PrepareErc20ApproveInput(recipientAddress, realAmount)
+	i, err := erc20.PrepareErc20ApproveInput(recipientAddress, realAmount)
 	if err != nil {
 		log.Fatal().Err(err)
 		return err
 	}
-	_, err = calls.Transact(ethClient, txFabric, gasPricer, &erc20Addr, i, gasLimit, big.NewInt(0))
+	_, err = client.Transact(ethClient, txFabric, gasPricer, &erc20Addr, i, gasLimit, big.NewInt(0))
 	if err != nil {
 		log.Fatal().Err(err)
 		return err

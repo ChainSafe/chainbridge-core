@@ -46,6 +46,7 @@ func (s *VoterTestSuite) SetupTest() {
 		s.mockClient,
 		evmtransaction.NewTransaction,
 		&evmgaspricer.LondonGasPriceDeterminant{},
+		common.Address{},
 	)
 	voter.Sleep = func(d time.Duration) {}
 }

@@ -1,4 +1,4 @@
-package calls
+package client
 
 import (
 	"context"
@@ -40,6 +40,7 @@ type ClientDeployer interface {
 type ContractCallerDispatcherClient interface {
 	ContractCallerClient
 	ClientDispatcher
+	ClientContractChecker
 }
 
 type GasPricer interface {

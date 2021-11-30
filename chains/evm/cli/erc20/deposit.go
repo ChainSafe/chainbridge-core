@@ -2,15 +2,14 @@ package erc20
 
 import (
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -24,7 +23,13 @@ var depositCmd = &cobra.Command{
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return DepositCmd(cmd, args, evmtransaction.NewTransaction, &evmgaspricer.LondonGasPriceDeterminant{})
+		bridgeContract, err := contracts.InitializeBridgeContract(
+			url, gasLimit, gasPrice, senderKeyPair, bridgeAddr,
+		)
+		if err != nil {
+			return err
+		}
+		return DepositCmd(cmd, args, bridgeContract)
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateDepositFlags(cmd, args)
@@ -70,7 +75,7 @@ func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 	recipientAddress = common.HexToAddress(Recipient)
 	decimals := big.NewInt(int64(Decimals))
 	bridgeAddr = common.HexToAddress(Bridge)
-	realAmount, err = calls.UserAmountToWei(Amount, decimals)
+	realAmount, err = client.UserAmountToWei(Amount, decimals)
 	if err != nil {
 		return err
 	}
@@ -78,37 +83,14 @@ func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
-
-	// fetch global flag values
-	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
-	if err != nil {
-		return fmt.Errorf("could not get global flags: %v", err)
-	}
-
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
-		return err
-	}
-
-	gasPricer.SetClient(ethClient)
-	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-
-	data := calls.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
-	input, err := calls.PrepareDepositInput(uint8(DomainID), resourceIdBytesArr, data)
-	if err != nil {
-		log.Error().Err(fmt.Errorf("erc20 deposit input error: %v", err))
-		return err
-	}
-
-	// destinationId
-	txHash, err := calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddr, input, gasLimit, big.NewInt(0))
+func DepositCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
+	data := bridge.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
+	hash, err := contract.Deposit(resourceIdBytesArr, uint8(DomainID), data, transactor.TransactOptions{})
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit error: %v", err))
 		return err
 	}
 
-	log.Info().Msgf("%s tokens were transferred to %s from %s with hash %s", Amount, recipientAddress.Hex(), senderKeyPair.CommonAddress().String(), txHash.Hex())
+	log.Info().Msgf("%s tokens were transferred to %s from %s with hash %s", Amount, recipientAddress.Hex(), senderKeyPair.CommonAddress().String(), hash.Hex())
 	return nil
 }

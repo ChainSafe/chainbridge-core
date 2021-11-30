@@ -2,10 +2,11 @@ package evm
 
 import (
 	"context"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"math/big"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc721"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/local"
@@ -26,7 +27,7 @@ type TestClient interface {
 	FetchEventLogs(ctx context.Context, contractAddress common.Address, event string, startBlock *big.Int, endBlock *big.Int) ([]types.Log, error)
 }
 
-func SetupEVM2EVMTestSuite(fabric1, fabric2 calls.TxFabric, endpoint1, endpoint2 string, adminKey *secp256k1.Keypair) *IntegrationTestSuite {
+func SetupEVM2EVMTestSuite(fabric1, fabric2 client.TxFabric, endpoint1, endpoint2 string, adminKey *secp256k1.Keypair) *IntegrationTestSuite {
 	return &IntegrationTestSuite{
 		fabric1:   fabric1,
 		fabric2:   fabric2,
@@ -39,18 +40,18 @@ func SetupEVM2EVMTestSuite(fabric1, fabric2 calls.TxFabric, endpoint1, endpoint2
 type IntegrationTestSuite struct {
 	suite.Suite
 	client             TestClient
-	client2            TestClient
-	gasPricer          calls.GasPricer
-	bridgeAddr         common.Address
+	client2        TestClient
+	gasPricer      client.GasPricer
+	bridgeAddr     common.Address
 	erc20HandlerAddr   common.Address
 	erc20ContractAddr  common.Address
 	erc721HandlerAddr  common.Address
 	erc721ContractAddr common.Address
 	genericHandlerAddr common.Address
-	assetStoreAddr     common.Address
-	fabric1            calls.TxFabric
-	fabric2            calls.TxFabric
-	endpoint1          string
+	assetStoreAddr common.Address
+	fabric1        client.TxFabric
+	fabric2        client.TxFabric
+	endpoint1      string
 	endpoint2          string
 	adminKey           *secp256k1.Keypair
 	erc20RID           [32]byte
@@ -93,9 +94,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.gasPricer = evmgaspricer.NewStaticGasPriceDeterminant(s.client, nil)
 
-	s.erc20RID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.Erc20Addr.Bytes(), 31), uint8(0)))
-	s.genericRID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.GenericHandlerAddr.Bytes(), 31), uint8(1)))
-	s.erc721RID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.Erc721Addr.Bytes(), 31), uint8(2)))
+	s.erc20RID = client.SliceTo32Bytes(append(common.LeftPadBytes(config.Erc20Addr.Bytes(), 31), uint8(0)))
+	s.genericRID = client.SliceTo32Bytes(append(common.LeftPadBytes(config.GenericHandlerAddr.Bytes(), 31), uint8(1)))
+	s.erc721RID = client.SliceTo32Bytes(append(common.LeftPadBytes(config.Erc721Addr.Bytes(), 31), uint8(2)))
 }
 func (s *IntegrationTestSuite) TearDownSuite() {}
 func (s *IntegrationTestSuite) SetupTest()     {}
@@ -109,11 +110,12 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 
 	dstAddr := keystore.TestKeyRing.EthereumKeys[keystore.BobKey].CommonAddress()
 
-	txOptions := transactor.NewDefaultTransactOptions()
+	txOptions := transactor.TransactOptions{}
 
 	// erc721 contract for evm1
 	transactor1 := transactor.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client)
 	erc721Contract1 := erc721.NewErc721Contract(s.client, s.erc721ContractAddr, transactor1)
+	bridgeContract1 := bridge.NewBridgeContract(s.client, s.bridgeAddr, transactor1)
 
 	// erc721 contract for evm2
 	transactor2 := transactor.NewSignAndSendTransactor(s.fabric2, s.gasPricer, s.client2)
@@ -135,7 +137,9 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 	_, err = erc721Contract2.Owner(tokenId)
 	s.Error(err)
 
-	_, err = erc721Contract1.Deposit(s.fabric1, s.gasPricer, tokenId, metadata, 2, s.erc721RID, s.bridgeAddr, dstAddr, txOptions)
+	_, err = bridgeContract1.Erc721Deposit(
+		tokenId, metadata, dstAddr, s.erc721RID, 2, transactor.TransactOptions{},
+	)
 	s.Nil(err)
 
 	//Wait 120 seconds for relayer vote

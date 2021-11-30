@@ -1,6 +1,8 @@
 package bridge
 
 import (
+	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -8,6 +10,15 @@ var BridgeCmd = &cobra.Command{
 	Use:   "bridge",
 	Short: "Bridge-related instructions",
 	Long:  "Bridge-related instructions",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		var err error
+		// fetch global flag values
+		url, gasLimit, gasPrice, senderKeyPair, err = flags.GlobalFlagValues(cmd)
+		if err != nil {
+			return fmt.Errorf("could not get global flags: %v", err)
+		}
+		return nil
+	},
 }
 
 func init() {

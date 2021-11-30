@@ -1,7 +1,7 @@
 package erc20
 
 import (
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
@@ -33,7 +33,7 @@ func init() {
 	BindAllowanceCmdFlags(allowanceCmd)
 }
 
-func AllowanceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func AllowanceCmd(cmd *cobra.Command, args []string, txFabric client.TxFabric) error {
 	log.Debug().Msgf(`
 Determing allowance
 ERC20 address: %s

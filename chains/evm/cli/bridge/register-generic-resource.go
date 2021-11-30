@@ -3,15 +3,14 @@ package bridge
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -38,8 +37,13 @@ var registerGenericResourceCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return RegisterGenericResource(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+		bridgeContract, err := contracts.InitializeBridgeContract(
+			url, gasLimit, gasPrice, senderKeyPair, bridgeAddr,
+		)
+		if err != nil {
+			return err
+		}
+		return RegisterGenericResource(cmd, args, bridgeContract)
 	},
 }
 
@@ -88,11 +92,11 @@ func ProcessGenericResourceFlags(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resourceIdBytesArr = calls.SliceTo32Bytes(resourceIdBytes)
+	resourceIdBytesArr = client.SliceTo32Bytes(resourceIdBytes)
 
 	if Hash {
-		depositSigBytes = calls.GetSolidityFunctionSig([]byte(Deposit))
-		executeSigBytes = calls.GetSolidityFunctionSig([]byte(Execute))
+		depositSigBytes = client.GetSolidityFunctionSig([]byte(Deposit))
+		executeSigBytes = client.GetSolidityFunctionSig([]byte(Execute))
 	} else {
 		copy(depositSigBytes[:], []byte(Deposit)[:])
 		copy(executeSigBytes[:], []byte(Execute)[:])
@@ -101,32 +105,17 @@ func ProcessGenericResourceFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func RegisterGenericResource(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
-	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
-	if err != nil {
-		return fmt.Errorf("could not get global flags: %v", err)
-	}
-
+func RegisterGenericResource(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
 	log.Info().Msgf("Registering contract %s with resource ID %s on handler %s", targetContractAddr, ResourceID, handlerAddr)
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
-		return err
-	}
-	gasPricer.SetClient(ethClient)
-	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-
-	h, err := calls.AdminSetGenericResource(
-		ethClient,
-		txFabric,
-		gasPricer,
+	h, err := contract.AdminSetGenericResource(
 		handlerAddr,
 		resourceIdBytesArr,
 		targetContractAddr,
 		depositSigBytes,
 		big.NewInt(int64(DepositerOffset)),
 		executeSigBytes,
+		transactor.TransactOptions{},
 	)
 	if err != nil {
 		log.Error().Err(err)

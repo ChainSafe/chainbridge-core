@@ -2,17 +2,11 @@ package bridge
 
 import (
 	"fmt"
-	"math/big"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -26,8 +20,13 @@ var setBurnCmd = &cobra.Command{
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return SetBurnCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+		bridgeContract, err := contracts.InitializeBridgeContract(
+			url, gasLimit, gasPrice, senderKeyPair, bridgeAddr,
+		)
+		if err != nil {
+			return err
+		}
+		return SetBurnCmd(cmd, args, bridgeContract)
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateSetBurnFlags(cmd, args)
@@ -51,7 +50,6 @@ func init() {
 	BindSetBurnCmdFlags(setBurnCmd)
 }
 func ValidateSetBurnFlags(cmd *cobra.Command, args []string) error {
-
 	if !common.IsHexAddress(Handler) {
 		return fmt.Errorf("invalid handler address %s", Handler)
 	}
@@ -69,29 +67,9 @@ func ProcessSetBurnFlags(cmd *cobra.Command, args []string) {
 	bridgeAddr = common.HexToAddress(Bridge)
 	tokenContractAddr = common.HexToAddress(TokenContract)
 }
-func SetBurnCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
-	// fetch global flag values
-	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
-	if err != nil {
-		return fmt.Errorf("could not get global flags: %v", err)
-	}
-
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
-		return err
-	}
-	gasPricer.SetClient(ethClient)
-	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-
+func SetBurnCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
 	log.Info().Msgf("Setting contract %s as burnable on handler %s", tokenContractAddr.String(), handlerAddr.String())
-	setBurnableInput, err := calls.PrepareSetBurnableInput(handlerAddr, tokenContractAddr)
-	if err != nil {
-		log.Error().Err(err)
-		return err
-	}
-
-	_, err = calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddr, setBurnableInput, gasLimit, big.NewInt(0))
+	_, err := contract.SetBurnableInput(handlerAddr, tokenContractAddr, transactor.TransactOptions{})
 	if err != nil {
 		log.Error().Err(err)
 		return err

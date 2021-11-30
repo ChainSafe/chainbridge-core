@@ -56,6 +56,21 @@ func (mr *MockChainClientMockRecorder) CallContract(arg0, arg1, arg2 interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CallContract", reflect.TypeOf((*MockChainClient)(nil).CallContract), arg0, arg1, arg2)
 }
 
+// CodeAt mocks base method.
+func (m *MockChainClient) CodeAt(arg0 context.Context, arg1 common.Address, arg2 *big.Int) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CodeAt", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CodeAt indicates an expected call of CodeAt.
+func (mr *MockChainClientMockRecorder) CodeAt(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CodeAt", reflect.TypeOf((*MockChainClient)(nil).CodeAt), arg0, arg1, arg2)
+}
+
 // From mocks base method.
 func (m *MockChainClient) From() common.Address {
 	m.ctrl.T.Helper()

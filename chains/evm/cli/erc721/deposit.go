@@ -2,10 +2,12 @@ package erc721
 
 import (
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
 	"math/big"
 	"strconv"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc721"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ethereum/go-ethereum/common"
@@ -21,11 +23,13 @@ var depositCmd = &cobra.Command{
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		erc721Contract, err := initializeErc721Contract()
+		bridgeContract, err := contracts.InitializeBridgeContract(
+			url, gasLimit, gasPrice, senderKeyPair, bridgeAddr,
+		)
 		if err != nil {
 			return err
 		}
-		return DepositCmd(cmd, args, erc721Contract)
+		return DepositCmd(cmd, args, bridgeContract)
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateDepositFlags(cmd, args)
@@ -84,20 +88,20 @@ func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func DepositCmd(cmd *cobra.Command, args []string, erc721Contract *erc721.ERC721Contract) error {
-	// txHash, err := erc721Contract.Deposit(tokenId, Metadata, destinationID, resourceId, bridgeAddr, recipientAddr, transactor.NewDefaultTransactOptions())
-	// if err != nil {
-	// 	return err
-	// }
+func DepositCmd(cmd *cobra.Command, args []string, bridgeContract *bridge.BridgeContract) error {
+	txHash, err := bridgeContract.Erc721Deposit(
+		tokenId, Metadata, recipientAddr, resourceId, uint8(destinationID), transactor.TransactOptions{})
+	if err != nil {
+		return err
+	}
 
-	// log.Info().Msgf(
-	// 	`erc721 deposit hash: %s
-	// 	%s token were transferred to %s from %s`,
-	// 	txHash.Hex(),
-	// 	tokenId.String(),
-	// 	recipientAddr.Hex(),
-	// 	senderKeyPair.CommonAddress().String(),
-	// )
-	// return err
+	log.Info().Msgf(
+		`erc721 deposit hash: %s
+		%s token were transferred to %s from %s`,
+		txHash.Hex(),
+		tokenId.String(),
+		recipientAddr.Hex(),
+		senderKeyPair.CommonAddress().String(),
+	)
 	return nil
 }

@@ -2,8 +2,9 @@ package erc20
 
 import (
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc20"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
@@ -62,7 +63,7 @@ func ProcessBalanceFlags(cmd *cobra.Command, args []string) {
 	accountAddr = common.HexToAddress(AccountAddress)
 }
 
-func BalanceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func BalanceCmd(cmd *cobra.Command, args []string, txFabric client.TxFabric) error {
 	// fetch global flag values
 	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
@@ -75,7 +76,7 @@ func BalanceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 		return err
 	}
 
-	balance, err := calls.GetERC20Balance(ethClient, erc20Addr, accountAddr)
+	balance, err := erc20.GetERC20Balance(ethClient, erc20Addr, accountAddr)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("failed contract call error: %v", err))
 		return err

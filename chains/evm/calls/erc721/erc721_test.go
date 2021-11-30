@@ -4,8 +4,8 @@ import (
 	"math/big"
 	"testing"
 
+	mock_client "github.com/ChainSafe/chainbridge-core/chains/evm/calls/client/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc721"
-	mock_utils "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	mock_transactor "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/mock"
 	"github.com/ethereum/go-ethereum/common"
@@ -16,8 +16,8 @@ import (
 type ERC721CallsTestSuite struct {
 	suite.Suite
 	gomockController                   *gomock.Controller
-	clientMock                         *mock_utils.MockClientDispatcher
-	mockContractCallerDispatcherClient *mock_utils.MockContractCallerDispatcherClient
+	clientMock                         *mock_client.MockClientDispatcher
+	mockContractCallerDispatcherClient *mock_client.MockContractCallerDispatcherClient
 	mockTransactor                     *mock_transactor.MockTransactor
 	erc721ContractAddress              common.Address
 	erc721Contract                     *erc721.ERC721Contract
@@ -31,8 +31,8 @@ func (s *ERC721CallsTestSuite) SetupSuite()    {}
 func (s *ERC721CallsTestSuite) TearDownSuite() {}
 func (s *ERC721CallsTestSuite) SetupTest() {
 	s.gomockController = gomock.NewController(s.T())
-	s.clientMock = mock_utils.NewMockClientDispatcher(s.gomockController)
-	s.mockContractCallerDispatcherClient = mock_utils.NewMockContractCallerDispatcherClient(s.gomockController)
+	s.clientMock = mock_client.NewMockClientDispatcher(s.gomockController)
+	s.mockContractCallerDispatcherClient = mock_client.NewMockContractCallerDispatcherClient(s.gomockController)
 	s.mockTransactor = mock_transactor.NewMockTransactor(s.gomockController)
 	s.erc721ContractAddress = common.HexToAddress("0x9A0E6F91E6031C08326764655432f8F9c180fBa0")
 	s.erc721Contract = erc721.NewErc721Contract(s.mockContractCallerDispatcherClient, s.erc721ContractAddress, s.mockTransactor)
@@ -77,13 +77,13 @@ func (s *ERC721CallsTestSuite) TestERC721Contract_Approve_Success() {
 	s.mockTransactor.EXPECT().Transact(
 		&s.erc721ContractAddress,
 		gomock.Any(),
-		transactor.NewDefaultTransactOptions(),
+		transactor.TransactOptions{},
 	).Return(&common.Hash{}, nil)
 
 	res, err := s.erc721Contract.Approve(
 		big.NewInt(1),
 		common.HexToAddress("0x9FD320F352539E8A0E9be4B63c91395575420Aac"),
-		transactor.NewDefaultTransactOptions(),
+		transactor.TransactOptions{},
 	)
 
 	s.Nil(err)

@@ -3,8 +3,9 @@ package centrifuge
 import (
 	"errors"
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/centrifuge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
@@ -58,7 +59,7 @@ func ValidateGetHashFlags(cmd *cobra.Command, args []string) error {
 
 func ProcessGetHashFlags(cmd *cobra.Command, args []string) error {
 	storeAddr = common.HexToAddress(Address)
-	byteHash = calls.SliceTo32Bytes([]byte(Hash))
+	byteHash = client.SliceTo32Bytes([]byte(Hash))
 
 	return nil
 }
@@ -75,7 +76,7 @@ func GetHashCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	isAssetStored, err := calls.IsCentrifugeAssetStored(ethClient, storeAddr, byteHash)
+	isAssetStored, err := centrifuge.IsCentrifugeAssetStored(ethClient, storeAddr, byteHash)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("Checking if asset stored failed: %w", err))
 		return err

@@ -2,9 +2,9 @@ package utils
 
 import (
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
@@ -82,7 +82,7 @@ From address: %s`,
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
-	data, err := calls.Simulate(ethClient, blockNumberBigInt, txHash, fromAddr)
+	data, err := client.Simulate(ethClient, blockNumberBigInt, txHash, fromAddr)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("[utils] simulate transact error: %v", err))
 		return err
