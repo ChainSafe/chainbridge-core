@@ -35,6 +35,8 @@ type EVMListener struct {
 	bridgeAddress common.Address
 }
 
+// NewEVMListener creates an EVMListener that listens to deposit events on chain
+// and calls event handler when one occurs
 func NewEVMListener(chainReader ChainClient, handler EventHandler, bridgeAddress common.Address) *EVMListener {
 	return &EVMListener{chainReader: chainReader, eventHandler: handler, bridgeAddress: bridgeAddress}
 }
