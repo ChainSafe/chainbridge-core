@@ -71,10 +71,6 @@ func (c *BridgeContract) PrepareAddRelayerInput(relayer common.Address) ([]byte,
 	return c.PackMethod("adminAddRelayer", relayer)
 }
 
-func (c *BridgeContract) PrepareIsRelayerInput(address common.Address) ([]byte, error) {
-	return c.PackMethod("isRelayer", address)
-}
-
 func (c *BridgeContract) PrepareDepositInput(destDomainID uint8, resourceID types.ResourceID, data []byte) ([]byte, error) {
 	return c.PackMethod("deposit", destDomainID, resourceID, data)
 }
@@ -125,19 +121,6 @@ func (c *BridgeContract) PrepareWithdrawInput(
 	data.Write(common.LeftPadBytes(realAmount.Bytes(), 32))
 
 	return c.PackMethod("adminWithdraw", handlerAddress, data.Bytes())
-}
-
-// ----------------
-
-func (c *BridgeContract) ParseIsRelayerOutput(output []byte) (bool, error) {
-	res, err := c.UnpackResult("isRelayer", output)
-	if err != nil {
-		log.Error().Err(fmt.Errorf("unpack output error: %v", err))
-		return false, err
-	}
-
-	b := abi.ConvertType(res[0], new(bool)).(*bool)
-	return *b, nil
 }
 
 // ------------------
@@ -311,62 +294,25 @@ func (c *BridgeContract) Withdraw(
 }
 
 func (c *BridgeContract) GetThreshold() (uint8, error) {
-	input, err := c.PackMethod("_relayerThreshold")
+	res, err := c.CallContract("_relayerThreshold")
 	if err != nil {
 		return 0, err
 	}
-	msg := ethereum.CallMsg{From: common.Address{}, To: &c.bridgeContractAddress, Data: input}
-	out, err := c.client.CallContract(context.TODO(), client.ToCallArg(msg), nil)
-	if err != nil {
-		return 0, err
-	}
-	res, err := c.UnpackResult("_relayerThreshold", out)
-	if err != nil {
-		return 0, err
-	}
-	out0 := *abi.ConvertType(res[0], new(uint8)).(*uint8)
-	return out0, nil
+	t := *abi.ConvertType(res[0], new(uint8)).(*uint8)
+	return t, nil
 }
 
 func (c *BridgeContract) IsRelayer(relayerAddress common.Address) (bool, error) {
-	input, err := c.PrepareIsRelayerInput(relayerAddress)
+	res, err := c.CallContract("isRelayer", relayerAddress)
 	if err != nil {
 		return false, err
 	}
-
-	msg := ethereum.CallMsg{
-		From: common.Address{},
-		To:   &c.bridgeContractAddress,
-		Data: input,
-	}
-	out, err := c.client.CallContract(context.TODO(), client.ToCallArg(msg), nil)
-	if err != nil {
-		return false, err
-	}
-
-	if len(out) == 0 {
-		// Make sure we have a contract to operate on, and bail out otherwise.
-		if code, err := c.client.CodeAt(context.Background(), c.bridgeContractAddress, nil); err != nil {
-			return false, err
-		} else if len(code) == 0 {
-			return false, fmt.Errorf("no code at provided address %s", c.bridgeContractAddress.String())
-		}
-	}
-
-	return c.ParseIsRelayerOutput(out)
+	b := abi.ConvertType(res[0], new(bool)).(*bool)
+	return *b, nil
 }
 
 func (c *BridgeContract) ProposalStatus(p *proposal.Proposal) (message.ProposalStatus, error) {
-	input, err := c.PackMethod("getProposal", p.Source, p.DepositNonce, p.GetDataHash())
-	if err != nil {
-		return message.ProposalStatus{}, err
-	}
-	msg := ethereum.CallMsg{From: common.Address{}, To: &p.BridgeAddress, Data: input}
-	out, err := c.client.CallContract(context.TODO(), client.ToCallArg(msg), nil)
-	if err != nil {
-		return message.ProposalStatus{}, err
-	}
-	res, err := c.UnpackResult("getProposal", out)
+	res, err := c.CallContract("getProposal", p.Source, p.DepositNonce, p.GetDataHash())
 	if err != nil {
 		return message.ProposalStatus{}, err
 	}
@@ -375,21 +321,33 @@ func (c *BridgeContract) ProposalStatus(p *proposal.Proposal) (message.ProposalS
 }
 
 func (c *BridgeContract) IsProposalVotedBy(by common.Address, p *proposal.Proposal) (bool, error) {
-	input, err := c.PackMethod("_hasVotedOnProposal", idAndNonce(p.Source, p.DepositNonce), p.GetDataHash(), by)
-	if err != nil {
-		return false, err
-	}
-	msg := ethereum.CallMsg{From: common.Address{}, To: &p.BridgeAddress, Data: input}
-	out, err := c.client.CallContract(context.TODO(), client.ToCallArg(msg), nil)
-	if err != nil {
-		return false, err
-	}
-	res, err := c.UnpackResult("_hasVotedOnProposal", out)
+	res, err := c.CallContract("_hasVotedOnProposal", idAndNonce(p.Source, p.DepositNonce), p.GetDataHash(), by)
 	if err != nil {
 		return false, err
 	}
 	out0 := *abi.ConvertType(res[0], new(bool)).(*bool)
 	return out0, nil
+}
+
+func (c *BridgeContract) CallContract(method string, args ...interface{}) ([]interface{}, error) {
+	input, err := c.PackMethod(method, args...)
+	if err != nil {
+		return nil, err
+	}
+	msg := ethereum.CallMsg{From: common.Address{}, To: &c.bridgeContractAddress, Data: input}
+	out, err := c.client.CallContract(context.TODO(), client.ToCallArg(msg), nil)
+	if err != nil {
+		return nil, err
+	}
+	if len(out) == 0 {
+		// Make sure we have a contract to operate on, and bail out otherwise.
+		if code, err := c.client.CodeAt(context.Background(), c.bridgeContractAddress, nil); err != nil {
+			return nil, err
+		} else if len(code) == 0 {
+			return nil, fmt.Errorf("no code at provided address %s", c.bridgeContractAddress.String())
+		}
+	}
+	return c.UnpackResult(method, out)
 }
 
 func (c *BridgeContract) executeTransaction(
