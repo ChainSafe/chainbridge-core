@@ -77,8 +77,6 @@ func (t *signAndSendTransactor) Transact(to *common.Address, data []byte, opts T
 	if err != nil {
 		return &common.Hash{}, err
 	}
-	log.Debug().Msgf("%v", tx)
-	log.Debug().Msgf("%v", gp)
 	h, err := t.client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
 		log.Error().Err(err).Msg("SIGN_AND_SEND")

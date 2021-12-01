@@ -294,7 +294,13 @@ func (c BridgeContract) ExecuteTransaction(method string, opts transactor.Transa
 		log.Error().Err(err)
 		return nil, err
 	}
-	return c.executeTransaction(input, opts, method)
+	h, err := c.Transact(&c.bridgeContractAddress, input, opts)
+	if err != nil {
+		log.Error().Err(err).Msg(method)
+		return nil, err
+	}
+	log.Debug().Str("hash", h.String()).Msgf("%s sent", method)
+	return h, err
 }
 
 func (c *BridgeContract) executeTransaction(
