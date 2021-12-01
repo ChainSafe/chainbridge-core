@@ -119,7 +119,7 @@ func (v *EVMVoter) VoteProposal(m *message.Message) error {
 		log.Debug().Msgf("Proposal %+v already satisfies threshold", prop)
 		return nil
 	}
-	err = v.simulateVoteProposal(prop, 0)
+	err = v.repetitiveSimulateVote(prop, 0)
 	if err != nil {
 		log.Error().Err(err)
 		return err
@@ -170,12 +170,13 @@ func (v *EVMVoter) shouldVoteForProposal(prop *proposal.Proposal, tries int) (bo
 	return true, nil
 }
 
-func (v *EVMVoter) simulateVoteProposal(prop *proposal.Proposal, tries int) error {
+// repetitiveSimulateVote repeatedly tries(5 times) to simulate vore proposal call until it succeeds
+func (v *EVMVoter) repetitiveSimulateVote(prop *proposal.Proposal, tries int) error {
 	err := calls.SimulateVoteProposal(v.client, prop)
 	if err != nil {
 		if tries < maxSimulateVoteChecks {
 			tries++
-			return v.simulateVoteProposal(prop, tries)
+			return v.repetitiveSimulateVote(prop, tries)
 		}
 		return err
 	} else {
