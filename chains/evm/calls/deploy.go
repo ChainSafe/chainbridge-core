@@ -27,12 +27,12 @@ func DeployErc20(c client.ClientDeployer, txFabric client.TxFabric, gasPriceClie
 	return address, nil
 }
 
-func DeployBridge(c client.ClientDeployer, txFabric client.TxFabric, gasPriceClient client.GasPricer, domainID uint8, relayerAddrs []common.Address, initialRelayerThreshold *big.Int, fee *big.Int) (common.Address, error) {
+func DeployBridge(c client.ClientDeployer, txFabric client.TxFabric, gasPriceClient client.GasPricer, domainID uint8, relayerAddr []common.Address, initialRelayerThreshold *big.Int, fee *big.Int) (common.Address, error) {
 	parsed, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return common.Address{}, err
 	}
-	address, err := DeployContract(c, parsed, common.FromHex(consts.BridgeBin), txFabric, gasPriceClient, domainID, relayerAddrs, initialRelayerThreshold, fee, big.NewInt(100))
+	address, err := DeployContract(c, parsed, common.FromHex(consts.BridgeBin), txFabric, gasPriceClient, domainID, relayerAddr, initialRelayerThreshold, fee, big.NewInt(100))
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -40,7 +40,7 @@ func DeployBridge(c client.ClientDeployer, txFabric client.TxFabric, gasPriceCli
 }
 
 func DeployErc20Handler(c client.ClientDeployer, txFabric client.TxFabric, gasPriceClient client.GasPricer, bridgeAddress common.Address) (common.Address, error) {
-	log.Debug().Msgf("Deployng ERC20 Handler with params: %s", bridgeAddress.String())
+	log.Debug().Msgf("Deploying ERC20 Handler with params: %s", bridgeAddress.String())
 	parsed, err := abi.JSON(strings.NewReader(consts.ERC20HandlerABI))
 	if err != nil {
 		return common.Address{}, err
@@ -65,7 +65,7 @@ func DeployErc721(c client.ClientDeployer, txFabric client.TxFabric, gasPriceCli
 }
 
 func DeployErc721Handler(c client.ClientDeployer, txFabric client.TxFabric, gasPriceClient client.GasPricer, bridgeAddress common.Address) (common.Address, error) {
-	log.Debug().Msgf("Deployng ERC721 Handler with params: %s", bridgeAddress.String())
+	log.Debug().Msgf("Deploying ERC721 Handler with params: %s", bridgeAddress.String())
 	parsed, err := abi.JSON(strings.NewReader(consts.HandlerABI))
 	if err != nil {
 		return common.Address{}, err
@@ -127,7 +127,7 @@ func DeployContract(client client.ClientDeployer, abi abi.ABI, bytecode []byte, 
 		return common.Address{}, err
 	}
 	// checks bytecode at address
-	// nil is latest block
+	// nil is the latest block
 	if code, err := client.CodeAt(context.Background(), address, nil); err != nil {
 		return common.Address{}, err
 	} else if len(code) == 0 {

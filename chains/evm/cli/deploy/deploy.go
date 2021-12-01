@@ -76,7 +76,7 @@ func BindDeployEVMFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Erc721Symbol, "erc721Symbol", "", "ERC721 contract symbol")
 	cmd.Flags().StringVar(&Erc721BaseURI, "erc721BaseURI", "", "ERC721 base URI")
 	cmd.Flags().BoolVar(&GenericHandler, "genericHandler", false, "deploy generic handler")
-	cmd.Flags().Uint64Var(&Fee, "fee", 0, "fee to be taken when making a deposit (in ETH, decimas are allowed)")
+	cmd.Flags().Uint64Var(&Fee, "fee", 0, "fee to be taken when making a deposit (in ETH, decimals are allowed)")
 	cmd.Flags().StringSliceVar(&Relayers, "relayers", []string{}, "list of initial relayers")
 	cmd.Flags().Uint64Var(&RelayerThreshold, "relayerTreshold", 1, "number of votes required for a proposal to pass")
 }
@@ -170,7 +170,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric client.TxFabric, gasP
 	}
 	gasPricer.SetClient(ethClient)
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-	log.Debug().Msgf("Relaysers for deploy %+v", Relayers)
+	log.Debug().Msgf("Relayers for deploy %+v", Relayers)
 	log.Debug().Msgf("all bool: %v", DeployAll)
 
 	deployedContracts := make(map[string]string)
