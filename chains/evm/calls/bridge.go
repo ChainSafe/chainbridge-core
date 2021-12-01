@@ -226,6 +226,18 @@ func PrepareVoteProposalInput(sourceDomainID uint8, depositNonce uint64, resourc
 	return input, nil
 }
 
+func SimulateVoteProposal(evmCaller ContractCallerClient, prop *proposal.Proposal) error {
+	input, err := PrepareVoteProposalInput(prop.Source, prop.DepositNonce, prop.ResourceId, prop.Data)
+	if err != nil {
+		return err
+	}
+	msg := ethereum.CallMsg{From: common.Address{}, To: &prop.BridgeAddress, Data: input}
+
+	_, err = evmCaller.CallContract(context.TODO(), ToCallArg(msg), nil)
+
+	return err
+}
+
 func VoteProposal(client ClientDispatcher, fabric TxFabric, gasPriceClient GasPricer, proposal *proposal.Proposal) (common.Hash, error) {
 	// revertOnFail should be constantly false, true is used only for internal contract calls when you need to execute proposal in voteProposal function right after it becomes Passed becouse of votes
 	input, err := PrepareVoteProposalInput(proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data)
