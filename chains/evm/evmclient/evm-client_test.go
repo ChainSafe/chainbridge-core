@@ -29,7 +29,7 @@ func TestRunEvmClientTestSuite(t *testing.T) {
 
 func (s *EvmClientTestSuite) SetupSuite() {
 	s.gomockController = gomock.NewController(s.T())
-	s.client = evmclient.NewEVMClient()
+	s.client = &evmclient.EVMClient{}
 }
 func (s *EvmClientTestSuite) TearDownSuite() {}
 func (s *EvmClientTestSuite) SetupTest() {

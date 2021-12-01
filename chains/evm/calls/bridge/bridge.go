@@ -213,6 +213,20 @@ func (c *BridgeContract) VoteProposal(
 	)
 }
 
+func (c *BridgeContract) Pause(opts transactor.TransactOptions) (*common.Hash, error) {
+	return c.ExecuteTransaction(
+		"adminPauseTransfers",
+		opts,
+	)
+}
+
+func (c *BridgeContract) Unpause(opts transactor.TransactOptions) (*common.Hash, error) {
+	return c.ExecuteTransaction(
+		"adminUnpauseTransfers",
+		opts,
+	)
+}
+
 // public function to Withdraw funds from ERC safes
 func (c *BridgeContract) Withdraw(
 	handlerAddress,

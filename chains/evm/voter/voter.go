@@ -6,10 +6,10 @@ package voter
 import (
 	"context"
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"math/big"
 	"math/rand"
 	"strings"
 	"time"
@@ -34,6 +34,7 @@ var (
 
 type ChainClient interface {
 	RelayerAddress() common.Address
+	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
 	SubscribePendingTransactions(ctx context.Context, ch chan<- common.Hash) (*rpc.ClientSubscription, error)
 	TransactionByHash(ctx context.Context, hash common.Hash) (tx *ethereumTypes.Transaction, isPending bool, err error)
 	client.ContractCallerDispatcherClient
@@ -43,25 +44,34 @@ type MessageHandler interface {
 	HandleMessage(m *message.Message) (*proposal.Proposal, error)
 }
 
+type BridgeContract interface {
+	IsProposalVotedBy(by common.Address, p *proposal.Proposal) (bool, error)
+	VoteProposal(proposal *proposal.Proposal, opts transactor.TransactOptions) (*common.Hash, error)
+	ProposalStatus(p *proposal.Proposal) (message.ProposalStatus, error)
+	GetThreshold() (uint8, error)
+}
+
 type EVMVoter struct {
 	mh                   MessageHandler
 	client               ChainClient
-	bridgeContract       *bridge.BridgeContract
+	bridgeContract       BridgeContract
 	pendingProposalVotes map[common.Hash]uint8
 }
 
-// NewVoterWithSubscription creates EVMVoter with pending proposal subscription
-// that listens to pending voteProposal transactions and avoids wasting gas
-// on sending votes for transactions that will fail.
-// Currently, officialy supported only by Geth nodes.
-func NewVoterWithSubscription(
-	mh MessageHandler,
-	client ChainClient,
-	fabric client.TxFabric,
-	gasPriceClient client.GasPricer,
-	bridgeAddress common.Address,
-) (*EVMVoter, error) {
-	voter := NewVoter(mh, client, fabric, gasPriceClient, bridgeAddress)
+// NewVoterWithSubscription creates an instance of EVMVoter that votes for
+// proposals on chain.
+//
+// It is created with a pending proposal subscription that listens to
+// pending voteProposal transactions and avoids wasting gas on sending votes
+// for transactions that will fail.
+// Currently, officially supported only by Geth nodes.
+func NewVoterWithSubscription(mh MessageHandler, client ChainClient, bridgeContract BridgeContract) (*EVMVoter, error) {
+	voter := &EVMVoter{
+		mh:                   mh,
+		client:               client,
+		bridgeContract:       bridgeContract,
+		pendingProposalVotes: make(map[common.Hash]uint8),
+	}
 
 	ch := make(chan common.Hash)
 	_, err := client.SubscribePendingTransactions(context.TODO(), ch)
@@ -73,18 +83,12 @@ func NewVoterWithSubscription(
 	return voter, nil
 }
 
-// NewVoter creates EVMVoter without pending proposal subscription.
-// It is a fallback for nodes that don't support pending transaction subscription
-// and will vote on proposals that already satisfy threshold thus wasting gas.
-func NewVoter(
-	mh MessageHandler,
-	client ChainClient,
-	fabric client.TxFabric,
-	gasPriceClient client.GasPricer,
-	bridgeAddress common.Address,
-) *EVMVoter {
-	t := transactor.NewSignAndSendTransactor(fabric, gasPriceClient, client)
-	bridgeContract := bridge.NewBridgeContract(client, bridgeAddress, t)
+// NewVoter creates an instance of EVMVoter that votes for proposal on chain.
+//
+// It is created without pending proposal subscription and is a fallback
+// for nodes that don't support pending transaction subscription and will vote
+// on proposals that already satisfy threshold.
+func NewVoter(mh MessageHandler, client ChainClient, bridgeContract BridgeContract) *EVMVoter {
 	return &EVMVoter{
 		mh:                   mh,
 		client:               client,
@@ -179,6 +183,10 @@ func (v *EVMVoter) trackProposalPendingVotes(ch chan common.Hash) {
 		a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 		if err != nil {
 			log.Error().Err(err)
+			continue
+		}
+
+		if len(txData.Data()) < 4 {
 			continue
 		}
 

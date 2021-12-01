@@ -6,12 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"math/big"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+	"github.com/ChainSafe/chainbridge-core/config/chain"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
 
@@ -30,9 +31,9 @@ import (
 
 type EVMClient struct {
 	*ethclient.Client
+	kp         *secp256k1.Keypair
 	gethClient *gethclient.Client
 	rpClient   *rpc.Client
-	config     *EVMConfig
 	nonce      *big.Int
 	nonceLock  sync.Mutex
 }
@@ -64,22 +65,42 @@ type CommonTransaction interface {
 	RawWithSignature(key *ecdsa.PrivateKey, domainID *big.Int) ([]byte, error)
 }
 
-func NewEVMClient() *EVMClient {
-	return &EVMClient{}
-}
-
+// NewEVMClientFromParams creates a client for EVMChain with provided
+// private key.
 func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey) (*EVMClient, error) {
 	rpcClient, err := rpc.DialContext(context.TODO(), url)
 	if err != nil {
 		return nil, err
 	}
-	kp := secp256k1.NewKeypair(*privateKey)
 	c := &EVMClient{}
 	c.Client = ethclient.NewClient(rpcClient)
 	c.gethClient = gethclient.New(rpcClient)
 	c.rpClient = rpcClient
-	c.config = &EVMConfig{}
-	c.config.kp = kp
+	c.kp = secp256k1.NewKeypair(*privateKey)
+	return c, nil
+}
+
+// NewEVMClient creates a client for EVM chain configured with specified config.
+// Private key is chosen by 'from' param in chain config that matches filename inside keystore path.
+func NewEVMClient(cfg *chain.EVMConfig) (*EVMClient, error) {
+	c := &EVMClient{}
+	generalConfig := cfg.GeneralChainConfig
+
+	kp, err := keystore.KeypairFromAddress(generalConfig.From, keystore.EthChain, generalConfig.KeystorePath, generalConfig.Insecure)
+	if err != nil {
+		return c, err
+	}
+	krp := kp.(*secp256k1.Keypair)
+	c.kp = krp
+
+	rpcClient, err := rpc.DialContext(context.TODO(), generalConfig.Endpoint)
+	if err != nil {
+		return c, err
+	}
+	c.Client = ethclient.NewClient(rpcClient)
+	c.rpClient = rpcClient
+	c.gethClient = gethclient.New(rpcClient)
+
 	return c, nil
 }
 
@@ -87,42 +108,17 @@ func (c *EVMClient) SubscribePendingTransactions(ctx context.Context, ch chan<- 
 	return c.gethClient.SubscribePendingTransactions(ctx, ch)
 }
 
-func (c *EVMClient) Configurate(path string, name string) error {
-	rawCfg, err := GetConfig(path, name)
+// LatestBlock returns the latest block from the current chain
+func (c *EVMClient) LatestBlock() (*big.Int, error) {
+	var head *headerNumber
+	err := c.rpClient.CallContext(context.Background(), &head, "eth_getBlockByNumber", toBlockNumArg(nil), false)
+	if err == nil && head == nil {
+		err = ethereum.NotFound
+	}
 	if err != nil {
-		return err
+		return nil, err
 	}
-	cfg, err := ParseConfig(rawCfg)
-	if err != nil {
-		return err
-	}
-	c.config = cfg
-	generalConfig := cfg.SharedEVMConfig.GeneralChainConfig
-
-	kp, err := keystore.KeypairFromAddress(generalConfig.From, keystore.EthChain, generalConfig.KeystorePath, generalConfig.Insecure)
-	if err != nil {
-		panic(err)
-	}
-	krp := kp.(*secp256k1.Keypair)
-	c.config.kp = krp
-
-	log.Info().Str("url", generalConfig.Endpoint).Msg("Connecting to evm chain...")
-	rpcClient, err := rpc.DialContext(context.TODO(), generalConfig.Endpoint)
-	if err != nil {
-		return err
-	}
-	c.Client = ethclient.NewClient(rpcClient)
-	c.rpClient = rpcClient
-	c.gethClient = gethclient.New(rpcClient)
-
-	if generalConfig.LatestBlock {
-		curr, err := c.LatestBlock()
-		if err != nil {
-			return err
-		}
-		cfg.SharedEVMConfig.StartBlock = curr
-	}
-	return nil
+	return head.Number, nil
 }
 
 type headerNumber struct {
@@ -142,19 +138,6 @@ func (h *headerNumber) UnmarshalJSON(input []byte) error {
 	}
 	h.Number = (*big.Int)(dec.Number)
 	return nil
-}
-
-// LatestBlock returns the latest block from the current chain
-func (c *EVMClient) LatestBlock() (*big.Int, error) {
-	var head *headerNumber
-	err := c.rpClient.CallContext(context.Background(), &head, "eth_getBlockByNumber", toBlockNumArg(nil), false)
-	if err == nil && head == nil {
-		err = ethereum.NotFound
-	}
-	if err != nil {
-		return nil, err
-	}
-	return head.Number, nil
 }
 
 func (c *EVMClient) WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error) {
@@ -258,7 +241,7 @@ func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string
 }
 
 func (c *EVMClient) From() common.Address {
-	return c.config.kp.CommonAddress()
+	return c.kp.CommonAddress()
 }
 
 func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransaction) (common.Hash, error) {
@@ -268,7 +251,7 @@ func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransac
 		// Probably chain does not support chainID eg. CELO
 		id = nil
 	}
-	rawTx, err := tx.RawWithSignature(c.config.kp.PrivateKey(), id)
+	rawTx, err := tx.RawWithSignature(c.kp.PrivateKey(), id)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -280,7 +263,7 @@ func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransac
 }
 
 func (c *EVMClient) RelayerAddress() common.Address {
-	return c.config.kp.CommonAddress()
+	return c.kp.CommonAddress()
 }
 
 func (c *EVMClient) LockNonce() {
@@ -295,7 +278,7 @@ func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
 	var err error
 	for i := 0; i <= 10; i++ {
 		if c.nonce == nil {
-			nonce, err := c.PendingNonceAt(context.Background(), c.config.kp.CommonAddress())
+			nonce, err := c.PendingNonceAt(context.Background(), c.kp.CommonAddress())
 			if err != nil {
 				time.Sleep(1 * time.Second)
 				continue
@@ -343,8 +326,4 @@ func buildQuery(contract common.Address, sig string, startBlock *big.Int, endBlo
 		},
 	}
 	return query
-}
-
-func (c *EVMClient) GetConfig() *EVMConfig {
-	return c.config
 }

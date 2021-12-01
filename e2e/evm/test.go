@@ -40,18 +40,18 @@ func SetupEVM2EVMTestSuite(fabric1, fabric2 client.TxFabric, endpoint1, endpoint
 type IntegrationTestSuite struct {
 	suite.Suite
 	client             TestClient
-	client2        TestClient
-	gasPricer      client.GasPricer
-	bridgeAddr     common.Address
+	client2            TestClient
+	gasPricer          client.GasPricer
+	bridgeAddr         common.Address
 	erc20HandlerAddr   common.Address
 	erc20ContractAddr  common.Address
 	erc721HandlerAddr  common.Address
 	erc721ContractAddr common.Address
 	genericHandlerAddr common.Address
-	assetStoreAddr common.Address
-	fabric1        client.TxFabric
-	fabric2        client.TxFabric
-	endpoint1      string
+	assetStoreAddr     common.Address
+	fabric1            client.TxFabric
+	fabric2            client.TxFabric
+	endpoint1          string
 	endpoint2          string
 	adminKey           *secp256k1.Keypair
 	erc20RID           [32]byte
@@ -79,7 +79,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	log.Debug().Msgf("Latest block %s", b.String())
 
-	config, err := local.PrepareLocalEVME2EEnv(ethClient, s.fabric1, 1, big.NewInt(1), s.adminKey.CommonAddress())
+	config, err := local.PrepareLocalEVME2EEnv(ethClient, s.fabric1, 1, big.NewInt(2), s.adminKey.CommonAddress())
 	if err != nil {
 		panic(err)
 	}
@@ -93,6 +93,11 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.assetStoreAddr = config.AssetStoreAddr
 
 	s.gasPricer = evmgaspricer.NewStaticGasPriceDeterminant(s.client, nil)
+
+	_, err = local.PrepareLocalEVME2EEnv(ethClient2, s.fabric2, 2, big.NewInt(2), s.adminKey.CommonAddress())
+	if err != nil {
+		panic(err)
+	}
 
 	s.erc20RID = client.SliceTo32Bytes(append(common.LeftPadBytes(config.Erc20Addr.Bytes(), 31), uint8(0)))
 	s.genericRID = client.SliceTo32Bytes(append(common.LeftPadBytes(config.GenericHandlerAddr.Bytes(), 31), uint8(1)))

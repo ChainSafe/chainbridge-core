@@ -41,7 +41,7 @@ services:
     build:
       context: ../../.
       dockerfile: Dockerfile
-    command: run --config /cfg --testkey alice --fresh
+    command: run --config /cfg/config_evm-evm.json --testkey alice --fresh
     depends_on:
       - evm1-1
       - evm2-1
@@ -56,7 +56,7 @@ services:
     build:
       context: ../../.
       dockerfile: Dockerfile
-    command: run --config /cfg --testkey bob --fresh
+    command: run --config /cfg/config_evm-evm.json --testkey bob --fresh
     depends_on:
       - evm1-1
       - evm2-1
@@ -71,7 +71,7 @@ services:
     build:
       context: ../../.
       dockerfile: Dockerfile
-    command: run --config /cfg --testkey charlie --fresh
+    command: run --config /cfg/config_evm-evm.json --testkey charlie --fresh
     depends_on:
       - evm1-1
       - evm2-1
