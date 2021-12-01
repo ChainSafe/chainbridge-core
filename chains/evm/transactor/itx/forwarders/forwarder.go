@@ -31,11 +31,11 @@ func NewForwarderContract(
 	}
 }
 
-func (c *ForwarderContract) GetAddress() common.Address {
+func (c *ForwarderContract) Address() common.Address {
 	return *c.contractAddress
 }
 
-func (c *ForwarderContract) GetABI() *abi.ABI {
+func (c *ForwarderContract) ABI() *abi.ABI {
 	return &GsnForwarderABI
 }
 

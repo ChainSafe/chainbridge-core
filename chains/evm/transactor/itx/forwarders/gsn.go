@@ -24,8 +24,8 @@ type GsnForwarder struct {
 
 type Forwarder interface {
 	GetNonce(from common.Address) (*big.Int, error)
-	GetAddress() common.Address
-	GetABI() *abi.ABI
+	Address() common.Address
+	ABI() *abi.ABI
 }
 
 type ForwardRequest struct {
@@ -45,7 +45,7 @@ func NewGsnForwarder(chainID uint8, forwarderContract Forwarder) *GsnForwarder {
 	}
 }
 
-func (c *GsnForwarder) GetNonce(from common.Address) (*big.Int, error) {
+func (c *GsnForwarder) NextNonce(from common.Address) (*big.Int, error) {
 	c.nonceLock.Lock()
 	defer c.nonceLock.Unlock()
 
@@ -64,7 +64,7 @@ func (c *GsnForwarder) GetNonce(from common.Address) (*big.Int, error) {
 }
 
 func (c *GsnForwarder) GetForwarderAddress() common.Address {
-	return c.forwarderContract.GetAddress()
+	return c.forwarderContract.Address()
 }
 
 func (c *GsnForwarder) GetChainId() uint8 {
@@ -73,13 +73,18 @@ func (c *GsnForwarder) GetChainId() uint8 {
 
 func (c *GsnForwarder) GetForwarderData(to common.Address, data []byte, kp *secp256k1.Keypair, opts transactor.TransactOptions) ([]byte, error) {
 	from := kp.Address()
+	nonce, err := c.NextNonce(common.HexToAddress(from))
+	if err != nil {
+		return nil, err
+	}
+
 	forwarderHash, domainSeperator, typeHash, err := c.typedHash(
 		from,
 		to.String(),
 		data,
 		math.NewHexOrDecimal256(opts.Value.Int64()),
 		math.NewHexOrDecimal256(opts.GasLimit.Int64()),
-		opts.Nonce,
+		nonce,
 		c.GetForwarderAddress().Hex(),
 	)
 	if err != nil {
@@ -92,17 +97,17 @@ func (c *GsnForwarder) GetForwarderData(to common.Address, data []byte, kp *secp
 	}
 	sig[64] += 27 // Transform V from 0/1 to 27/28
 
-	var suffixData = common.Hex2Bytes("0x")
 	forwardReq := ForwardRequest{
 		From:       common.HexToAddress(from),
 		To:         to,
 		Value:      opts.Value,
 		Gas:        opts.GasLimit,
-		Nonce:      opts.Nonce,
+		Nonce:      nonce,
 		Data:       data,
 		ValidUntil: big.NewInt(0),
 	}
-	return c.forwarderContract.GetABI().Pack("execute", forwardReq, domainSeperator, typeHash, suffixData, sig)
+	suffixData := common.Hex2Bytes("0x")
+	return c.forwarderContract.ABI().Pack("execute", forwardReq, domainSeperator, typeHash, suffixData, sig)
 }
 
 func (c *GsnForwarder) typedHash(
