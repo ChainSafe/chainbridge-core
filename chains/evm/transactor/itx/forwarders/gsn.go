@@ -63,15 +63,15 @@ func (c *GsnForwarder) NextNonce(from common.Address) (*big.Int, error) {
 	return nonce, nil
 }
 
-func (c *GsnForwarder) GetForwarderAddress() common.Address {
+func (c *GsnForwarder) ForwarderAddress() common.Address {
 	return c.forwarderContract.Address()
 }
 
-func (c *GsnForwarder) GetChainId() uint8 {
+func (c *GsnForwarder) ChainId() uint8 {
 	return c.chainID
 }
 
-func (c *GsnForwarder) GetForwarderData(to common.Address, data []byte, kp *secp256k1.Keypair, opts transactor.TransactOptions) ([]byte, error) {
+func (c *GsnForwarder) ForwarderData(to common.Address, data []byte, kp *secp256k1.Keypair, opts transactor.TransactOptions) ([]byte, error) {
 	from := kp.Address()
 	nonce, err := c.NextNonce(common.HexToAddress(from))
 	if err != nil {
@@ -85,7 +85,7 @@ func (c *GsnForwarder) GetForwarderData(to common.Address, data []byte, kp *secp
 		math.NewHexOrDecimal256(opts.Value.Int64()),
 		math.NewHexOrDecimal256(opts.GasLimit.Int64()),
 		nonce,
-		c.GetForwarderAddress().Hex(),
+		c.ForwarderAddress().Hex(),
 	)
 	if err != nil {
 		return nil, err

@@ -11,14 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/rpc"
 )
-
-type Forwarder interface {
-	GetForwarderAddress() common.Address
-	GetChainId() uint8
-	GetForwarderData(to common.Address, data []byte, kp *secp256k1.Keypair, opts transactor.TransactOptions) ([]byte, error)
-}
 
 type RelayTx struct {
 	to   common.Address
@@ -32,28 +25,33 @@ type SignedRelayTx struct {
 	sig  []byte
 }
 
-type ITXTransactor struct {
-	forwarder Forwarder
-	rpcClient *rpc.Client
-	kp        *secp256k1.Keypair
+type RelayCaller interface {
+	CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error
 }
 
-func NewITXTransactor(url string, forwarder Forwarder, kp *secp256k1.Keypair) (*ITXTransactor, error) {
-	rpcClient, err := rpc.DialContext(context.TODO(), url)
-	if err != nil {
-		return nil, err
-	}
+type Forwarder interface {
+	ForwarderAddress() common.Address
+	ChainId() uint8
+	ForwarderData(to common.Address, data []byte, kp *secp256k1.Keypair, opts transactor.TransactOptions) ([]byte, error)
+}
 
+type ITXTransactor struct {
+	forwarder   Forwarder
+	relayCaller RelayCaller
+	kp          *secp256k1.Keypair
+}
+
+func NewITXTransactor(relayCaller RelayCaller, forwarder Forwarder, kp *secp256k1.Keypair) *ITXTransactor {
 	return &ITXTransactor{
-		rpcClient: rpcClient,
-		forwarder: forwarder,
-		kp:        kp,
-	}, nil
+		relayCaller: relayCaller,
+		forwarder:   forwarder,
+		kp:          kp,
+	}
 }
 
 func (itx *ITXTransactor) Transact(to common.Address, data []byte, opts transactor.TransactOptions) (common.Hash, error) {
-	opts.ChainID = itx.forwarder.GetChainId()
-	forwarderData, err := itx.forwarder.GetForwarderData(to, data, itx.kp, opts)
+	opts.ChainID = itx.forwarder.ChainId()
+	forwarderData, err := itx.forwarder.ForwarderData(to, data, itx.kp, opts)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -63,7 +61,7 @@ func (itx *ITXTransactor) Transact(to common.Address, data []byte, opts transact
 		opts.GasLimit, big.NewInt(2),
 	)
 	signedTx, err := itx.signRelayTx(&RelayTx{
-		to:   itx.forwarder.GetForwarderAddress(),
+		to:   itx.forwarder.ForwarderAddress(),
 		data: forwarderData,
 		opts: opts,
 	})
@@ -120,11 +118,13 @@ func (itx *ITXTransactor) sendTransaction(ctx context.Context, signedTx *SignedR
 		"gas":      signedTx.opts.GasLimit.String(),
 		"schedule": signedTx.opts.Priority,
 	}
+	fmt.Println(txArg)
+	fmt.Println(sig)
 
 	resp := struct {
 		RelayTransactionHash hexutil.Bytes
 	}{}
-	err := itx.rpcClient.CallContext(ctx, &resp, "relay_sendTransaction", txArg, sig)
+	err := itx.relayCaller.CallContext(ctx, &resp, "relay_sendTransaction", txArg, sig)
 	if err != nil {
 		return common.Hash{}, err
 	}
