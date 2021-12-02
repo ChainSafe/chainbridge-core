@@ -1,4 +1,4 @@
-package calls
+package contract
 
 import (
 	"context"
@@ -24,10 +24,17 @@ type Contract struct {
 func NewContract(
 	contractAddress common.Address,
 	abi abi.ABI,
+	bytecode []byte,
 	client client.ContractCallerDispatcherClient,
 	transactor transactor.Transactor,
 ) Contract {
-	return Contract{contractAddress: contractAddress, ABI: abi, client: client, Transactor: transactor}
+	return Contract{
+		contractAddress: contractAddress,
+		ABI:             abi,
+		bytecode:        bytecode,
+		client:          client,
+		Transactor:      transactor,
+	}
 }
 
 func (c *Contract) ContractAddress() *common.Address {
@@ -87,20 +94,21 @@ func (c *Contract) CallContract(method string, args ...interface{}) ([]interface
 	return c.UnpackResult(method, out)
 }
 
-func (c Contract) DeployContract(params ...interface{}) (*common.Address, error) {
+func (c Contract) DeployContract(params ...interface{}) (common.Address, error) {
 	input, err := c.PackMethod("", params...)
 	if err != nil {
-		return nil, err
+		return common.Address{}, err
 	}
 	opts := transactor.TransactOptions{GasLimit: consts.DefaultDeployGasLimit}
 	hash, err := c.Transact(nil, append(c.bytecode, input...), opts)
 	if err != nil {
-		return nil, err
+		return common.Address{}, err
 	}
 	tx, _, err := c.client.GetTransactionByHash(*hash)
 	if err != nil {
-		return nil, err
+		return common.Address{}, err
 	}
 	address := crypto.CreateAddress(c.client.From(), tx.Nonce())
-	return &address, nil
+	c.contractAddress = address
+	return address, nil
 }

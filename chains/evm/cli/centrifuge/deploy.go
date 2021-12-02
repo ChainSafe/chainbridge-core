@@ -2,8 +2,10 @@ package centrifuge
 
 import (
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/centrifuge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contract"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
@@ -49,7 +51,8 @@ func DeployCentrifugeAssetStoreCmd(cmd *cobra.Command, args []string, txFabric c
 	gasPricer.SetClient(ethClient)
 	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 
-	assetStoreAddr, err := centrifuge.DeployCentrifugeAssetStore(ethClient, txFabric, gasPricer)
+	t := transactor.NewSignAndSendTransactor(txFabric, gasPricer, ethClient)
+	assetStoreAddr, err := contract.DeployContract(consts.CentrifugeAssetStoreABI, consts.CentrifugeAssetStoreBin, ethClient, t)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("Centrifuge asset store deploy failed: %w", err))
 		return err

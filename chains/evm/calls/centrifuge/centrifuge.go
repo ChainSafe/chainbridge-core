@@ -3,7 +3,6 @@ package centrifuge
 import (
 	"context"
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"strings"
 
@@ -13,20 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
-
-func DeployCentrifugeAssetStore(c client.ClientDeployer, txFabric client.TxFabric, gasPriceClient client.GasPricer) (common.Address, error) {
-	log.Debug().Msgf("Deploying Centrifuge asset store")
-	parsed, err := abi.JSON(strings.NewReader(consts.CentrifugeAssetStoreABI))
-	if err != nil {
-		return common.Address{}, err
-	}
-
-	address, err := calls.DeployContract(c, parsed, common.FromHex(consts.CentrifugeAssetStoreBin), txFabric, gasPriceClient)
-	if err != nil {
-		return common.Address{}, err
-	}
-	return address, nil
-}
 
 func prepareIsAssetStoredInput(hash [32]byte) ([]byte, error) {
 	a, err := abi.JSON(strings.NewReader(consts.CentrifugeAssetStoreABI))

@@ -2,18 +2,14 @@ package erc20
 
 import (
 	"errors"
-	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc20"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
 	"math/big"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -27,8 +23,13 @@ var approveCmd = &cobra.Command{
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return ApproveCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+		erc20Contract, err := contracts.InitializeErc20Contract(
+			url, gasLimit, gasPrice, senderKeyPair, erc20Addr,
+		)
+		if err != nil {
+			return err
+		}
+		return ApproveCmd(cmd, args, erc20Contract)
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateApproveFlags(cmd, args)
@@ -77,7 +78,7 @@ func ProcessApproveFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func ApproveCmd(cmd *cobra.Command, args []string, txFabric client.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
+func ApproveCmd(cmd *cobra.Command, args []string, contract *erc20.ERC20Contract) error {
 	log.Debug().Msgf(`
 Approving ERC20
 ERC20 address: %s
@@ -86,25 +87,7 @@ Amount: %s
 Decimals: %v`,
 		Erc20Address, Recipient, Amount, Decimals)
 
-	// fetch global flag values
-	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
-	if err != nil {
-		return fmt.Errorf("could not get global flags: %v", err)
-	}
-
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
-		return err
-	}
-	gasPricer.SetClient(ethClient)
-	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-	i, err := erc20.PrepareErc20ApproveInput(recipientAddress, realAmount)
-	if err != nil {
-		log.Fatal().Err(err)
-		return err
-	}
-	_, err = client.Transact(ethClient, txFabric, gasPricer, &erc20Addr, i, gasLimit, big.NewInt(0))
+	_, err := contract.ApproveTokens(recipientAddress, realAmount, transactor.TransactOptions{})
 	if err != nil {
 		log.Fatal().Err(err)
 		return err

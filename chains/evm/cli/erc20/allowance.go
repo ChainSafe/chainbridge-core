@@ -1,10 +1,10 @@
 package erc20
 
 import (
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc20"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -17,8 +17,13 @@ var allowanceCmd = &cobra.Command{
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return AllowanceCmd(cmd, args, txFabric)
+		erc20Contract, err := contracts.InitializeErc20Contract(
+			url, gasLimit, gasPrice, senderKeyPair, erc20Addr,
+		)
+		if err != nil {
+			return err
+		}
+		return AllowanceCmd(cmd, args, erc20Contract)
 	},
 }
 
@@ -33,7 +38,7 @@ func init() {
 	BindAllowanceCmdFlags(allowanceCmd)
 }
 
-func AllowanceCmd(cmd *cobra.Command, args []string, txFabric client.TxFabric) error {
+func AllowanceCmd(cmd *cobra.Command, args []string, contract *erc20.ERC20Contract) error {
 	log.Debug().Msgf(`
 Determing allowance
 ERC20 address: %s

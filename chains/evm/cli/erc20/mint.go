@@ -2,17 +2,14 @@ package erc20
 
 import (
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc20"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
 	"math/big"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -27,8 +24,13 @@ var mintCmd = &cobra.Command{
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return MintCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+		erc20Contract, err := contracts.InitializeErc20Contract(
+			url, gasLimit, gasPrice, senderKeyPair, erc20Addr,
+		)
+		if err != nil {
+			return err
+		}
+		return MintCmd(cmd, args, erc20Contract)
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateMintFlags(cmd, args)
@@ -92,24 +94,8 @@ func ProcessMintFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func MintCmd(cmd *cobra.Command, args []string, txFabric client.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
-
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
-		return err
-	}
-
-	gasPricer.SetClient(ethClient)
-	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-
-	mintTokensInput, err := erc20.PrepareMintTokensInput(dstAddress, realAmount)
-	if err != nil {
-		log.Error().Err(fmt.Errorf("erc20 mint input error: %v", err))
-		return err
-	}
-
-	_, err = client.Transact(ethClient, txFabric, gasPricer, &erc20Addr, mintTokensInput, gasLimit, big.NewInt(0))
+func MintCmd(cmd *cobra.Command, args []string, contract *erc20.ERC20Contract) error {
+	_, err := contract.MintTokens(dstAddress, realAmount, transactor.TransactOptions{})
 	if err != nil {
 		log.Error().Err(err)
 		return err

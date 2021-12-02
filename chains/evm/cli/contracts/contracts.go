@@ -3,6 +3,7 @@ package contracts
 import (
 	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc721"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
@@ -13,6 +14,22 @@ import (
 	"github.com/rs/zerolog/log"
 	"math/big"
 )
+
+func InitializeErc20Contract(
+	url string,
+	gasLimit uint64,
+	gasPrice *big.Int,
+	senderKeyPair *secp256k1.Keypair,
+	erc20ContractAddress common.Address,
+) (*erc20.ERC20Contract, error) {
+	ethClient, trans, err := initializeClientAndTransactor(url, gasLimit, gasPrice, senderKeyPair)
+	if err != nil {
+		return nil, err
+	}
+	erc20Contract := erc20.NewERC20Contract(ethClient, erc20ContractAddress, trans)
+
+	return erc20Contract, nil
+}
 
 func InitializeErc721Contract(
 	url string,

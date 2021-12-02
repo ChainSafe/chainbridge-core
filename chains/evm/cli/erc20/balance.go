@@ -2,13 +2,11 @@ package erc20
 
 import (
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc20"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -22,8 +20,13 @@ var balanceCmd = &cobra.Command{
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return BalanceCmd(cmd, args, txFabric)
+		erc20Contract, err := contracts.InitializeErc20Contract(
+			url, gasLimit, gasPrice, senderKeyPair, erc20Addr,
+		)
+		if err != nil {
+			return err
+		}
+		return BalanceCmd(cmd, args, erc20Contract)
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateBalanceFlags(cmd, args)
@@ -63,20 +66,8 @@ func ProcessBalanceFlags(cmd *cobra.Command, args []string) {
 	accountAddr = common.HexToAddress(AccountAddress)
 }
 
-func BalanceCmd(cmd *cobra.Command, args []string, txFabric client.TxFabric) error {
-	// fetch global flag values
-	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
-	if err != nil {
-		return fmt.Errorf("could not get global flags: %v", err)
-	}
-
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
-		return err
-	}
-
-	balance, err := erc20.GetERC20Balance(ethClient, erc20Addr, accountAddr)
+func BalanceCmd(cmd *cobra.Command, args []string, contract *erc20.ERC20Contract) error {
+	balance, err := contract.GetBalance(accountAddr)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("failed contract call error: %v", err))
 		return err
