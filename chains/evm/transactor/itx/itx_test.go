@@ -114,7 +114,7 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSendWithDefaultOpts() {
 	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	data := []byte{}
 	expectedOpts := transactor.TransactOptions{
-		GasLimit: big.NewInt(consts.DefaultGasLimit * 2),
+		GasLimit: big.NewInt(consts.DefaultGasLimit),
 		GasPrice: big.NewInt(1),
 		Priority: "slow",
 		Value:    big.NewInt(0),

@@ -64,10 +64,6 @@ func (itx *ITXTransactor) Transact(to common.Address, data []byte, opts transact
 	if err != nil {
 		return common.Hash{}, err
 	}
-	// increase gas limit because of forwarder overhead
-	opts.GasLimit = opts.GasLimit.Mul(
-		opts.GasLimit, big.NewInt(2),
-	)
 	opts.ChainID = itx.forwarder.ChainId()
 
 	forwarderData, err := itx.forwarder.ForwarderData(to, data, opts)
@@ -75,6 +71,10 @@ func (itx *ITXTransactor) Transact(to common.Address, data []byte, opts transact
 		return common.Hash{}, err
 	}
 
+	// increase gas limit because of forwarder overhead
+	opts.GasLimit = opts.GasLimit.Mul(
+		opts.GasLimit, big.NewInt(2),
+	)
 	signedTx, err := itx.signRelayTx(&RelayTx{
 		to:   itx.forwarder.ForwarderAddress(),
 		data: forwarderData,
