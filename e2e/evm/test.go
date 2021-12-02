@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc20"
 	"math/big"
 	"time"
 
@@ -160,30 +161,35 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 	s.Equal(dstAddr.String(), owner.String())
 }
 
-// func (s *IntegrationTestSuite) TestErc20Deposit() {
-// 	dstAddr := keystore.TestKeyRing.EthereumKeys[keystore.BobKey].CommonAddress()
-// 	senderBalBefore, err := calls.GetERC20Balance(s.client, s.erc20ContractAddr, local.EveKp.CommonAddress())
-// 	s.Nil(err)
-// 	destBalanceBefore, err := calls.GetERC20Balance(s.client2, s.erc20ContractAddr, dstAddr)
-// 	s.Nil(err)
+func (s *IntegrationTestSuite) TestErc20Deposit() {
+	dstAddr := keystore.TestKeyRing.EthereumKeys[keystore.BobKey].CommonAddress()
 
-// 	amountToDeposit := big.NewInt(1000000)
-// 	data := calls.ConstructErc20DepositData(dstAddr.Bytes(), amountToDeposit)
-// 	_, err = calls.Deposit(s.client, s.fabric1, s.gasPricer, s.bridgeAddr, s.erc20RID, 2, data)
-// 	s.Nil(err)
+	transactor1 := transactor.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client)
+	erc20Contract1 := erc20.NewERC20Contract(s.client, s.erc20ContractAddr, transactor1)
+	bridgeContract1 := bridge.NewBridgeContract(s.client, s.bridgeAddr, transactor1)
 
-// 	//Wait 120 seconds for relayer vote
-// 	time.Sleep(120 * time.Second)
+	senderBalBefore, err := erc20Contract1.GetBalance(local.EveKp.CommonAddress())
+	s.Nil(err)
+	destBalanceBefore, err := calls.GetERC20Balance(s.client2, s.erc20ContractAddr, dstAddr)
+	s.Nil(err)
 
-// 	senderBalAfter, err := calls.GetERC20Balance(s.client, s.erc20ContractAddr, s.adminKey.CommonAddress())
-// 	s.Nil(err)
-// 	s.Equal(-1, senderBalAfter.Cmp(senderBalBefore))
+	amountToDeposit := big.NewInt(1000000)
+	data := calls.ConstructErc20DepositData(dstAddr.Bytes(), amountToDeposit)
+	_, err = calls.Deposit(s.client, s.fabric1, s.gasPricer, s.bridgeAddr, s.erc20RID, 2, data)
+	s.Nil(err)
 
-// 	destBalanceAfter, err := calls.GetERC20Balance(s.client2, s.erc20ContractAddr, dstAddr)
-// 	s.Nil(err)
-// 	//Balance has increased
-// 	s.Equal(1, destBalanceAfter.Cmp(destBalanceBefore))
-// }
+	//Wait 120 seconds for relayer vote
+	time.Sleep(120 * time.Second)
+
+	senderBalAfter, err := calls.GetERC20Balance(s.client, s.erc20ContractAddr, s.adminKey.CommonAddress())
+	s.Nil(err)
+	s.Equal(-1, senderBalAfter.Cmp(senderBalBefore))
+
+	destBalanceAfter, err := calls.GetERC20Balance(s.client2, s.erc20ContractAddr, dstAddr)
+	s.Nil(err)
+	//Balance has increased
+	s.Equal(1, destBalanceAfter.Cmp(destBalanceBefore))
+}
 
 // func (s *IntegrationTestSuite) TestGenericDeposit() {
 // 	hash, _ := substrateTypes.GetHash(substrateTypes.NewI64(int64(1)))
