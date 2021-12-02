@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/transactor/itx"
 	mock_itx "github.com/ChainSafe/chainbridge-core/chains/evm/transactor/itx/mock"
@@ -43,7 +44,11 @@ func (s *TransactTestSuite) TestTransact_FailedFetchingForwarderData() {
 	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	data := []byte{}
 	opts := transactor.TransactOptions{
-		ChainID: 5,
+		GasLimit: big.NewInt(200000),
+		GasPrice: big.NewInt(1),
+		Priority: "low",
+		Value:    big.NewInt(0),
+		ChainID:  5,
 	}
 	s.forwarder.EXPECT().ForwarderData(to, data, s.kp, opts).Return(nil, errors.New("error"))
 
@@ -56,8 +61,11 @@ func (s *TransactTestSuite) TestTransact_FailedSendTransaction() {
 	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	data := []byte{}
 	opts := transactor.TransactOptions{
-		ChainID:  5,
 		GasLimit: big.NewInt(200000),
+		GasPrice: big.NewInt(1),
+		Priority: "low",
+		Value:    big.NewInt(0),
+		ChainID:  5,
 	}
 	s.forwarder.EXPECT().ForwarderData(to, data, s.kp, opts).Return([]byte{}, nil)
 	s.forwarder.EXPECT().ForwarderAddress().Return(to)
@@ -78,9 +86,11 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSend() {
 	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	data := []byte{}
 	opts := transactor.TransactOptions{
-		ChainID:  5,
 		GasLimit: big.NewInt(200000),
+		GasPrice: big.NewInt(1),
 		Priority: "low",
+		Value:    big.NewInt(0),
+		ChainID:  5,
 	}
 	s.forwarder.EXPECT().ForwarderData(to, data, s.kp, opts).Return([]byte{}, nil)
 	s.forwarder.EXPECT().ForwarderAddress().Return(to)
@@ -93,6 +103,32 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSend() {
 	).Return(nil)
 
 	hash, err := s.transactor.Transact(to, data, opts)
+
+	s.Nil(err)
+	s.NotNil(hash)
+}
+
+func (s *TransactTestSuite) TestTransact_SuccessfulSendWithDefaultOpts() {
+	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
+	data := []byte{}
+	expectedOpts := transactor.TransactOptions{
+		GasLimit: big.NewInt(consts.DefaultGasLimit * 2),
+		GasPrice: big.NewInt(1),
+		Priority: "low",
+		Value:    big.NewInt(0),
+		ChainID:  5,
+	}
+	s.forwarder.EXPECT().ForwarderData(to, data, s.kp, expectedOpts).Return([]byte{}, nil)
+	s.forwarder.EXPECT().ForwarderAddress().Return(to)
+	s.relayCaller.EXPECT().CallContext(
+		context.Background(),
+		gomock.Any(),
+		"relay_sendTransaction",
+		gomock.Any(),
+		gomock.Any(),
+	).Return(nil)
+
+	hash, err := s.transactor.Transact(to, data, transactor.TransactOptions{})
 
 	s.Nil(err)
 	s.NotNil(hash)

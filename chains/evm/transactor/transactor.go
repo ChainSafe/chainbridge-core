@@ -4,6 +4,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/imdario/mergo"
 )
 
 type TransactOptions struct {
@@ -12,17 +13,17 @@ type TransactOptions struct {
 	Value    *big.Int
 	Nonce    *big.Int
 	ChainID  uint8
-	Priority Priority
+	Priority string
 }
-
-type Priority string
-
-const (
-	LowPriority  Priority = "low"
-	MedPriority           = "medium"
-	HighPriority          = "high"
-)
 
 type Transactor interface {
 	Transact(to *common.Address, data []byte, opts TransactOptions) (common.Hash, error)
+}
+
+func MergeTransactionOptions(primary *TransactOptions, additional *TransactOptions) error {
+	if err := mergo.Merge(primary, additional); err != nil {
+		return err
+	}
+
+	return nil
 }

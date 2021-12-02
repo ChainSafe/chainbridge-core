@@ -6,6 +6,7 @@ require (
 	github.com/centrifuge/go-substrate-rpc-client v2.0.0+incompatible
 	github.com/ethereum/go-ethereum v1.10.12
 	github.com/golang/mock v1.6.0
+	github.com/imdario/mergo v0.3.12
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.25.0
 	github.com/spf13/cobra v1.2.1

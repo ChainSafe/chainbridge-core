@@ -5,12 +5,22 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/transactor"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+)
+
+var (
+	DefaultITXOpts = transactor.TransactOptions{
+		GasLimit: big.NewInt(consts.DefaultGasLimit),
+		GasPrice: big.NewInt(1),
+		Priority: "low",
+		Value:    big.NewInt(0),
+	}
 )
 
 type RelayTx struct {
@@ -50,16 +60,21 @@ func NewITXTransactor(relayCaller RelayCaller, forwarder Forwarder, kp *secp256k
 }
 
 func (itx *ITXTransactor) Transact(to common.Address, data []byte, opts transactor.TransactOptions) (common.Hash, error) {
+	err := transactor.MergeTransactionOptions(&opts, &DefaultITXOpts)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	// increase gas limit because of forwarder overhead
+	opts.GasLimit = opts.GasLimit.Mul(
+		opts.GasLimit, big.NewInt(2),
+	)
 	opts.ChainID = itx.forwarder.ChainId()
+
 	forwarderData, err := itx.forwarder.ForwarderData(to, data, itx.kp, opts)
 	if err != nil {
 		return common.Hash{}, err
 	}
 
-	// increase gas limit because of forwarder overhead
-	opts.GasLimit = opts.GasLimit.Mul(
-		opts.GasLimit, big.NewInt(2),
-	)
 	signedTx, err := itx.signRelayTx(&RelayTx{
 		to:   itx.forwarder.ForwarderAddress(),
 		data: forwarderData,
@@ -118,8 +133,6 @@ func (itx *ITXTransactor) sendTransaction(ctx context.Context, signedTx *SignedR
 		"gas":      signedTx.opts.GasLimit.String(),
 		"schedule": signedTx.opts.Priority,
 	}
-	fmt.Println(txArg)
-	fmt.Println(sig)
 
 	resp := struct {
 		RelayTransactionHash hexutil.Bytes
