@@ -10,7 +10,6 @@ import (
 	reflect "reflect"
 
 	transactor "github.com/ChainSafe/chainbridge-core/chains/evm/transactor"
-	secp256k1 "github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	common "github.com/ethereum/go-ethereum/common"
 	gomock "github.com/golang/mock/gomock"
 )
@@ -109,16 +108,16 @@ func (mr *MockForwarderMockRecorder) ForwarderAddress() *gomock.Call {
 }
 
 // ForwarderData mocks base method.
-func (m *MockForwarder) ForwarderData(to common.Address, data []byte, kp *secp256k1.Keypair, opts transactor.TransactOptions) ([]byte, error) {
+func (m *MockForwarder) ForwarderData(to common.Address, data []byte, opts transactor.TransactOptions) ([]byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ForwarderData", to, data, kp, opts)
+	ret := m.ctrl.Call(m, "ForwarderData", to, data, opts)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ForwarderData indicates an expected call of ForwarderData.
-func (mr *MockForwarderMockRecorder) ForwarderData(to, data, kp, opts interface{}) *gomock.Call {
+func (mr *MockForwarderMockRecorder) ForwarderData(to, data, opts interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ForwarderData", reflect.TypeOf((*MockForwarder)(nil).ForwarderData), to, data, kp, opts)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ForwarderData", reflect.TypeOf((*MockForwarder)(nil).ForwarderData), to, data, opts)
 }

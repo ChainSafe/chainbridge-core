@@ -18,7 +18,7 @@ var (
 	DefaultITXOpts = transactor.TransactOptions{
 		GasLimit: big.NewInt(consts.DefaultGasLimit),
 		GasPrice: big.NewInt(1),
-		Priority: "low",
+		Priority: "slow",
 		Value:    big.NewInt(0),
 	}
 )

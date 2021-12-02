@@ -46,11 +46,11 @@ func (s *TransactTestSuite) TestTransact_FailedFetchingForwarderData() {
 	opts := transactor.TransactOptions{
 		GasLimit: big.NewInt(200000),
 		GasPrice: big.NewInt(1),
-		Priority: "low",
+		Priority: "slow",
 		Value:    big.NewInt(0),
 		ChainID:  big.NewInt(5),
 	}
-	s.forwarder.EXPECT().ForwarderData(to, data, s.kp, opts).Return(nil, errors.New("error"))
+	s.forwarder.EXPECT().ForwarderData(to, data, opts).Return(nil, errors.New("error"))
 
 	_, err := s.transactor.Transact(to, data, opts)
 
@@ -63,11 +63,11 @@ func (s *TransactTestSuite) TestTransact_FailedSendTransaction() {
 	opts := transactor.TransactOptions{
 		GasLimit: big.NewInt(200000),
 		GasPrice: big.NewInt(1),
-		Priority: "low",
+		Priority: "slow",
 		Value:    big.NewInt(0),
 		ChainID:  big.NewInt(5),
 	}
-	s.forwarder.EXPECT().ForwarderData(to, data, s.kp, opts).Return([]byte{}, nil)
+	s.forwarder.EXPECT().ForwarderData(to, data, opts).Return([]byte{}, nil)
 	s.forwarder.EXPECT().ForwarderAddress().Return(to)
 	s.relayCaller.EXPECT().CallContext(
 		context.Background(),
@@ -88,13 +88,13 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSend() {
 	opts := transactor.TransactOptions{
 		GasLimit: big.NewInt(200000),
 		GasPrice: big.NewInt(1),
-		Priority: "low",
+		Priority: "slow",
 		Value:    big.NewInt(0),
 		ChainID:  big.NewInt(5),
 	}
-	expectedSig := "0xafa24e5301229e345fd36ebb41e2b80f7d862e73b314f749ae007d4bf1109871494562826faf8ed5b92e59a5a3d2f25cb9340bee3aaef26e1768d768be63198601"
+	expectedSig := "0x05d295eaee9b9f2e39aec126679857a49495af51877976191cbdb4b5db2c18582b854c6b1c3eb92e33b217882425e291f090089898c16379e9531750f0fbd1ef00"
 
-	s.forwarder.EXPECT().ForwarderData(to, data, s.kp, opts).Return([]byte{}, nil)
+	s.forwarder.EXPECT().ForwarderData(to, data, opts).Return([]byte{}, nil)
 	s.forwarder.EXPECT().ForwarderAddress().Return(to)
 	s.relayCaller.EXPECT().CallContext(
 		context.Background(),
@@ -116,13 +116,13 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSendWithDefaultOpts() {
 	expectedOpts := transactor.TransactOptions{
 		GasLimit: big.NewInt(consts.DefaultGasLimit * 2),
 		GasPrice: big.NewInt(1),
-		Priority: "low",
+		Priority: "slow",
 		Value:    big.NewInt(0),
 		ChainID:  big.NewInt(5),
 	}
-	expectedSig := "0xf57e0e7a9ac2e316f7d08e34b0cb706952ca8e58e7b3ed885346534d0030c4414350b23e070c7a284b2ed203c2513da66f199fde414e687dd4bd5074e73963df01"
+	expectedSig := "0xe6417239b5535ee88f965df7c07c5dee485b2c627555a2eaab2f8f59524582da3c5ad78bc047231976f6900917f2c5b12a6e038b65c983c687d077ae3865fdd001"
 
-	s.forwarder.EXPECT().ForwarderData(to, data, s.kp, expectedOpts).Return([]byte{}, nil)
+	s.forwarder.EXPECT().ForwarderData(to, data, expectedOpts).Return([]byte{}, nil)
 	s.forwarder.EXPECT().ForwarderAddress().Return(to)
 	s.relayCaller.EXPECT().CallContext(
 		context.Background(),
