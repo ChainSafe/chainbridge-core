@@ -77,7 +77,7 @@ func BindDeployEVMFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&GenericHandler, "genericHandler", false, "deploy generic handler")
 	cmd.Flags().Uint64Var(&Fee, "fee", 0, "fee to be taken when making a deposit (in ETH, decimas are allowed)")
 	cmd.Flags().StringSliceVar(&Relayers, "relayers", []string{}, "list of initial relayers")
-	cmd.Flags().Uint64Var(&RelayerThreshold, "relayerTreshold", 1, "number of votes required for a proposal to pass")
+	cmd.Flags().Uint64Var(&RelayerThreshold, "relayerThreshold", 1, "number of votes required for a proposal to pass")
 }
 
 func init() {
