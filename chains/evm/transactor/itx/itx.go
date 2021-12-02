@@ -42,7 +42,7 @@ type RelayCaller interface {
 type Forwarder interface {
 	ForwarderAddress() common.Address
 	ChainId() *big.Int
-	ForwarderData(to common.Address, data []byte, kp *secp256k1.Keypair, opts transactor.TransactOptions) ([]byte, error)
+	ForwarderData(to common.Address, data []byte, opts transactor.TransactOptions) ([]byte, error)
 }
 
 type ITXTransactor struct {
@@ -70,7 +70,7 @@ func (itx *ITXTransactor) Transact(to common.Address, data []byte, opts transact
 	)
 	opts.ChainID = itx.forwarder.ChainId()
 
-	forwarderData, err := itx.forwarder.ForwarderData(to, data, itx.kp, opts)
+	forwarderData, err := itx.forwarder.ForwarderData(to, data, opts)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -133,8 +133,6 @@ func (itx *ITXTransactor) sendTransaction(ctx context.Context, signedTx *SignedR
 		"gas":      signedTx.opts.GasLimit.String(),
 		"schedule": signedTx.opts.Priority,
 	}
-
-	fmt.Println(sig)
 
 	resp := struct {
 		RelayTransactionHash hexutil.Bytes
