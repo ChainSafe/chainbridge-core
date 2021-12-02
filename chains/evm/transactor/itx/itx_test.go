@@ -92,7 +92,7 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSend() {
 		Value:    big.NewInt(0),
 		ChainID:  big.NewInt(5),
 	}
-	expectedSig := "0x05d295eaee9b9f2e39aec126679857a49495af51877976191cbdb4b5db2c18582b854c6b1c3eb92e33b217882425e291f090089898c16379e9531750f0fbd1ef00"
+	expectedSig := "0x68ad089b7daeabcdd76520377822cc32eba0b41ea702358bc8f7249bc296d408781eb60366a3bb6ad9fc62dca08bdf440a7c4f02e3680aa0b477a2dd5423d5af01"
 
 	s.forwarder.EXPECT().ForwarderData(to, data, opts).Return([]byte{}, nil)
 	s.forwarder.EXPECT().ForwarderAddress().Return(to)
@@ -120,7 +120,7 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSendWithDefaultOpts() {
 		Value:    big.NewInt(0),
 		ChainID:  big.NewInt(5),
 	}
-	expectedSig := "0xe6417239b5535ee88f965df7c07c5dee485b2c627555a2eaab2f8f59524582da3c5ad78bc047231976f6900917f2c5b12a6e038b65c983c687d077ae3865fdd001"
+	expectedSig := "0x62ffe54c569cf70e7f62c410eff8f200dd46f0209bfa134484655c0621cc87c46c300cebc8e401b52acb04a5e00fa697be410458175d600c2471d5d7f986dd8501"
 
 	s.forwarder.EXPECT().ForwarderData(to, data, expectedOpts).Return([]byte{}, nil)
 	s.forwarder.EXPECT().ForwarderAddress().Return(to)
