@@ -12,7 +12,7 @@ type TransactOptions struct {
 	GasPrice *big.Int
 	Value    *big.Int
 	Nonce    *big.Int
-	ChainID  uint8
+	ChainID  *big.Int
 	Priority string
 }
 

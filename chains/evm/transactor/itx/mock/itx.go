@@ -6,6 +6,7 @@ package mock_itx
 
 import (
 	context "context"
+	big "math/big"
 	reflect "reflect"
 
 	transactor "github.com/ChainSafe/chainbridge-core/chains/evm/transactor"
@@ -80,10 +81,10 @@ func (m *MockForwarder) EXPECT() *MockForwarderMockRecorder {
 }
 
 // ChainId mocks base method.
-func (m *MockForwarder) ChainId() uint8 {
+func (m *MockForwarder) ChainId() *big.Int {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ChainId")
-	ret0, _ := ret[0].(uint8)
+	ret0, _ := ret[0].(*big.Int)
 	return ret0
 }
 
