@@ -14,14 +14,6 @@ import (
 	signer "github.com/ethereum/go-ethereum/signer/core"
 )
 
-// A forwarder client for sending transactions via a global GSN forwarder
-type GsnForwarder struct {
-	nonce             *big.Int
-	nonceLock         sync.Mutex
-	chainID           uint8
-	forwarderContract Forwarder
-}
-
 type Forwarder interface {
 	GetNonce(from common.Address) (*big.Int, error)
 	Address() common.Address
@@ -38,9 +30,18 @@ type ForwardRequest struct {
 	ValidUntil *big.Int
 }
 
-func NewGsnForwarder(chainID uint8, forwarderContract Forwarder) *GsnForwarder {
+type GsnForwarder struct {
+	kp                *secp256k1.Keypair
+	nonce             *big.Int
+	nonceLock         sync.Mutex
+	chainID           *big.Int
+	forwarderContract Forwarder
+}
+
+func NewGsnForwarder(chainID *big.Int, kp *secp256k1.Keypair, forwarderContract Forwarder) *GsnForwarder {
 	return &GsnForwarder{
 		chainID:           chainID,
+		kp:                kp,
 		forwarderContract: forwarderContract,
 	}
 }
@@ -67,12 +68,12 @@ func (c *GsnForwarder) ForwarderAddress() common.Address {
 	return c.forwarderContract.Address()
 }
 
-func (c *GsnForwarder) ChainId() uint8 {
+func (c *GsnForwarder) ChainId() *big.Int {
 	return c.chainID
 }
 
-func (c *GsnForwarder) ForwarderData(to common.Address, data []byte, kp *secp256k1.Keypair, opts transactor.TransactOptions) ([]byte, error) {
-	from := kp.Address()
+func (c *GsnForwarder) ForwarderData(to common.Address, data []byte, opts transactor.TransactOptions) ([]byte, error) {
+	from := c.kp.Address()
 	nonce, err := c.NextNonce(common.HexToAddress(from))
 	if err != nil {
 		return nil, err
@@ -91,7 +92,7 @@ func (c *GsnForwarder) ForwarderData(to common.Address, data []byte, kp *secp256
 		return nil, err
 	}
 
-	sig, err := crypto.Sign(forwarderHash, kp.PrivateKey())
+	sig, err := crypto.Sign(forwarderHash, c.kp.PrivateKey())
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +118,7 @@ func (c *GsnForwarder) typedHash(
 	nonce *big.Int,
 	verifyingContract string,
 ) ([]byte, *[32]byte, *[32]byte, error) {
-	chainId := math.NewHexOrDecimal256(int64(c.chainID))
+	chainId := math.NewHexOrDecimal256(c.chainID.Int64())
 	typedData := signer.TypedData{
 		Types: signer.Types{
 			"EIP712Domain": []signer.Type{
