@@ -73,7 +73,9 @@ func (itx *ITXTransactor) Transact(to common.Address, data []byte, opts transact
 
 	// increase gas limit because of forwarder overhead
 	opts.GasLimit = opts.GasLimit.Mul(
-		opts.GasLimit, big.NewInt(2),
+		opts.GasLimit, big.NewInt(11),
+	).Div(
+		opts.GasLimit, big.NewInt(10),
 	)
 	signedTx, err := itx.signRelayTx(&RelayTx{
 		to:   itx.forwarder.ForwarderAddress(),
@@ -128,7 +130,7 @@ func (itx *ITXTransactor) signRelayTx(tx *RelayTx) (*SignedRelayTx, error) {
 func (itx *ITXTransactor) sendTransaction(ctx context.Context, signedTx *SignedRelayTx) (common.Hash, error) {
 	sig := "0x" + common.Bytes2Hex(signedTx.sig)
 	txArg := map[string]interface{}{
-		"to":       signedTx.to.String(),
+		"to":       &signedTx.to,
 		"data":     "0x" + common.Bytes2Hex(signedTx.data),
 		"gas":      signedTx.opts.GasLimit.String(),
 		"schedule": signedTx.opts.Priority,
