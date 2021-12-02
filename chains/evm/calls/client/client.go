@@ -50,6 +50,7 @@ type GasPricer interface {
 type ClientDispatcher interface {
 	WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error)
 	SignAndSendTransaction(ctx context.Context, tx evmclient.CommonTransaction) (common.Hash, error)
+	GetTransactionByHash(h common.Hash) (tx *types.Transaction, isPending bool, err error)
 	UnsafeNonce() (*big.Int, error)
 	LockNonce()
 	UnlockNonce()

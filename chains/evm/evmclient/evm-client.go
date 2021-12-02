@@ -157,6 +157,10 @@ func (c *EVMClient) WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error
 	return nil, errors.New("tx did not appear")
 }
 
+func (c *EVMClient) GetTransactionByHash(h common.Hash) (tx *types.Transaction, isPending bool, err error) {
+	return c.Client.TransactionByHash(context.Background(), h)
+}
+
 const (
 	// DepositSignature is a signature of the contract deposit event
 	// destinationDomainID

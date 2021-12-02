@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"math/big"
 	"testing"
 
@@ -20,6 +21,7 @@ type ProposalStatusTestSuite struct {
 	suite.Suite
 	mockContractCaller *mock_client.MockContractCallerDispatcherClient
 	mockTransactor     *mock_transactor.MockTransactor
+	bridgeAddress      common.Address
 }
 
 func TestRunProposalStatusTestSuite(t *testing.T) {
@@ -32,6 +34,7 @@ func (s *ProposalStatusTestSuite) SetupTest() {
 	gomockController := gomock.NewController(s.T())
 	s.mockContractCaller = mock_client.NewMockContractCallerDispatcherClient(gomockController)
 	s.mockTransactor = mock_transactor.NewMockTransactor(gomockController)
+	s.bridgeAddress = common.HexToAddress("0x3162226db165D8eA0f51720CA2bbf44Db2105ADF")
 }
 func (s *ProposalStatusTestSuite) TearDownTest() {}
 
@@ -71,12 +74,13 @@ func (s *ProposalStatusTestSuite) TestPrepareWithdrawInput() {
 	recipientAddress := common.HexToAddress("0x8e5F72B158BEDf0ab50EDa78c70dFC118158C272")
 	amountOrTokenId := big.NewInt(1)
 
-	bc := bridge.NewBridgeContract(s.mockContractCaller, common.Address{}, s.mockTransactor)
-	inputBytes, err := bc.PrepareWithdrawInput(
-		handlerAddress,
-		tokenAddress,
-		recipientAddress,
-		amountOrTokenId,
+	s.mockTransactor.EXPECT().Transact(&s.bridgeAddress, gomock.Any(), gomock.Any()).Times(1).Return(
+		&common.Hash{}, nil,
+	)
+
+	bc := bridge.NewBridgeContract(s.mockContractCaller, s.bridgeAddress, s.mockTransactor)
+	inputBytes, err := bc.Withdraw(
+		handlerAddress, tokenAddress, recipientAddress, amountOrTokenId, transactor.TransactOptions{},
 	)
 
 	if err != nil {

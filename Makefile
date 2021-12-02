@@ -31,7 +31,7 @@ genmocks:
 	mockgen -destination=./relayer/mock/relayer.go -source=./relayer/relayer.go
 	mockgen -source=chains/evm/calls/client/client.go -destination=chains/evm/calls/client/mock/client.go
 	mockgen -source=chains/evm/calls/transactor/transact.go -destination=chains/evm/calls/transactor/mock/transact.go
-	mockgen -destination=chains/evm/voter/mock/voter.go github.com/ChainSafe/chainbridge-core/chains/evm/voter ChainClient,MessageHandler
+	mockgen -destination=chains/evm/voter/mock/voter.go github.com/ChainSafe/chainbridge-core/chains/evm/voter ChainClient,MessageHandler,BridgeContract
 
 e2e-setup:
 	docker-compose --file=./e2e/evm-evm/docker-compose.e2e.yml up

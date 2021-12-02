@@ -3,8 +3,8 @@ package calls_test
 import (
 	"errors"
 
-	calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	mock_calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	mock_calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls/client/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang/mock/gomock"

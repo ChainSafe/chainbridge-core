@@ -2,11 +2,9 @@ package bridge
 
 import (
 	"bytes"
-	"context"
-	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"math/big"
 	"strings"
@@ -14,71 +12,27 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/types"
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
 
 type BridgeContract struct {
-	client                client.ContractCallerDispatcherClient
-	bridgeContractAddress common.Address
-	abi                   abi.ABI
-	transactor.Transactor
+	calls.Contract
 }
 
-func NewBridgeContract(client client.ContractCallerDispatcherClient, bridgeContractAddress common.Address, transactor transactor.Transactor) *BridgeContract {
+func NewBridgeContract(
+	client client.ContractCallerDispatcherClient,
+	bridgeContractAddress common.Address,
+	transactor transactor.Transactor,
+) *BridgeContract {
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		log.Fatal().Msg("Unable to load BridgeABI") // TODO
 	}
 
-	return &BridgeContract{
-		client:                client,
-		bridgeContractAddress: bridgeContractAddress,
-		abi:                   a,
-		Transactor:            transactor,
-	}
+	return &BridgeContract{calls.NewContract(bridgeContractAddress, a, client, transactor)}
 }
-
-func (c *BridgeContract) PackMethod(method string, args ...interface{}) ([]byte, error) {
-	input, err := c.abi.Pack(method, args...)
-	if err != nil {
-		return []byte{}, err
-	}
-	return input, nil
-}
-
-func (c *BridgeContract) UnpackResult(method string, output []byte) ([]interface{}, error) {
-	res, err := c.abi.Unpack(method, output)
-	if err != nil {
-		log.Error().Err(fmt.Errorf("unpack output error: %v", err))
-		return nil, err
-	}
-	return res, err
-}
-
-// public function to generate bytedata for adminWithdraw contract method
-// Used to manually withdraw funds from ERC safes
-func (c *BridgeContract) PrepareWithdrawInput(
-	handlerAddress,
-	tokenAddress,
-	recipientAddress common.Address,
-	realAmount *big.Int,
-) ([]byte, error) {
-	// @dev withdrawal data should include:
-	// tokenAddress
-	// recipientAddress
-	// realAmount
-	data := bytes.Buffer{}
-	data.Write(common.LeftPadBytes(tokenAddress.Bytes(), 32))
-	data.Write(common.LeftPadBytes(recipientAddress.Bytes(), 32))
-	data.Write(common.LeftPadBytes(realAmount.Bytes(), 32))
-
-	return c.PackMethod("adminWithdraw", handlerAddress, data.Bytes())
-}
-
-// ------------------
 
 func (c *BridgeContract) AddRelayer(
 	relayerAddr common.Address,
@@ -235,14 +189,16 @@ func (c *BridgeContract) Withdraw(
 	amountOrTokenId *big.Int,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
-	withdrawInput, err := c.PrepareWithdrawInput(
-		handlerAddress, tokenAddress, recipientAddress, amountOrTokenId,
-	)
-	if err != nil {
-		log.Error().Err(err)
-		return nil, err
-	}
-	return c.executeTransaction(withdrawInput, opts, "Withdraw")
+	// @dev withdrawal data should include:
+	// tokenAddress
+	// recipientAddress
+	// realAmount
+	data := bytes.Buffer{}
+	data.Write(common.LeftPadBytes(tokenAddress.Bytes(), 32))
+	data.Write(common.LeftPadBytes(recipientAddress.Bytes(), 32))
+	data.Write(common.LeftPadBytes(amountOrTokenId.Bytes(), 32))
+
+	return c.ExecuteTransaction("adminWithdraw", opts, handlerAddress, data.Bytes())
 }
 
 func (c *BridgeContract) GetThreshold() (uint8, error) {
@@ -279,56 +235,6 @@ func (c *BridgeContract) IsProposalVotedBy(by common.Address, p *proposal.Propos
 	}
 	out0 := *abi.ConvertType(res[0], new(bool)).(*bool)
 	return out0, nil
-}
-
-func (c *BridgeContract) CallContract(method string, args ...interface{}) ([]interface{}, error) {
-	input, err := c.PackMethod(method, args...)
-	if err != nil {
-		return nil, err
-	}
-	msg := ethereum.CallMsg{From: common.Address{}, To: &c.bridgeContractAddress, Data: input}
-	out, err := c.client.CallContract(context.TODO(), client.ToCallArg(msg), nil)
-	if err != nil {
-		return nil, err
-	}
-	if len(out) == 0 {
-		// Make sure we have a contract to operate on, and bail out otherwise.
-		if code, err := c.client.CodeAt(context.Background(), c.bridgeContractAddress, nil); err != nil {
-			return nil, err
-		} else if len(code) == 0 {
-			return nil, fmt.Errorf("no code at provided address %s", c.bridgeContractAddress.String())
-		}
-	}
-	return c.UnpackResult(method, out)
-}
-
-func (c BridgeContract) ExecuteTransaction(method string, opts transactor.TransactOptions, args ...interface{}) (*common.Hash, error) {
-	input, err := c.PackMethod(method, args...)
-	if err != nil {
-		log.Error().Err(err)
-		return nil, err
-	}
-	h, err := c.Transact(&c.bridgeContractAddress, input, opts)
-	if err != nil {
-		log.Error().Err(err).Msg(method)
-		return nil, err
-	}
-	log.Debug().Str("hash", h.String()).Msgf("%s sent", method)
-	return h, err
-}
-
-func (c *BridgeContract) executeTransaction(
-	input []byte,
-	opts transactor.TransactOptions,
-	opName string,
-) (*common.Hash, error) {
-	h, err := c.Transact(&c.bridgeContractAddress, input, opts)
-	if err != nil {
-		log.Error().Err(err).Msg(opName)
-		return nil, err
-	}
-	log.Debug().Str("hash", h.String()).Msgf("%s sent", opName)
-	return h, err
 }
 
 func idAndNonce(srcId uint8, nonce uint64) *big.Int {

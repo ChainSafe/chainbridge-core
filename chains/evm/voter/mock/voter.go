@@ -86,6 +86,22 @@ func (mr *MockChainClientMockRecorder) From() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "From", reflect.TypeOf((*MockChainClient)(nil).From))
 }
 
+// GetTransactionByHash mocks base method.
+func (m *MockChainClient) GetTransactionByHash(arg0 common.Hash) (*types.Transaction, bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTransactionByHash", arg0)
+	ret0, _ := ret[0].(*types.Transaction)
+	ret1, _ := ret[1].(bool)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetTransactionByHash indicates an expected call of GetTransactionByHash.
+func (mr *MockChainClientMockRecorder) GetTransactionByHash(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionByHash", reflect.TypeOf((*MockChainClient)(nil).GetTransactionByHash), arg0)
+}
+
 // LockNonce mocks base method.
 func (m *MockChainClient) LockNonce() {
 	m.ctrl.T.Helper()

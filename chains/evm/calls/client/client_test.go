@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"testing"
 
-	mock_calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
+	mock_calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls/client/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum"

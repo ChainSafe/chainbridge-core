@@ -5,7 +5,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/centrifuge"
 	"testing"
 
-	mock_utils "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
+	mock_utils "github.com/ChainSafe/chainbridge-core/chains/evm/calls/client/mock"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
