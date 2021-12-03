@@ -25,7 +25,7 @@ func NewBlockStore(db KeyValueReaderWriter) *BlockStore {
 // StoreBlock stores block number per domainID into blockstore
 func (bs *BlockStore) StoreBlock(block *big.Int, domainID uint8) error {
 	key := bytes.Buffer{}
-	keyS := fmt.Sprintf("chain:%s:block", string(domainID))
+	keyS := fmt.Sprintf("chain:%d:block", domainID)
 	key.WriteString(keyS)
 
 	err := bs.db.SetByKey(key.Bytes(), block.Bytes())
@@ -39,7 +39,7 @@ func (bs *BlockStore) StoreBlock(block *big.Int, domainID uint8) error {
 // GetLastStoredBlock queries the blockstore and returns latest known block
 func (bs *BlockStore) GetLastStoredBlock(domainID uint8) (*big.Int, error) {
 	key := bytes.Buffer{}
-	keyS := fmt.Sprintf("chain:%s:block", string(domainID))
+	keyS := fmt.Sprintf("chain:%d:block", domainID)
 	key.WriteString(keyS)
 
 	v, err := bs.db.GetByKey(key.Bytes())

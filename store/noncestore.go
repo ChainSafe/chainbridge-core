@@ -25,7 +25,7 @@ func NewNonceStore(db KeyValueReaderWriter) *NonceStore {
 // StoreNonce stores nonce per chainID
 func (ns *NonceStore) StoreNonce(chainID *big.Int, nonce *big.Int) error {
 	key := bytes.Buffer{}
-	keyS := fmt.Sprintf("chain:%s:nonce", chainID.String())
+	keyS := fmt.Sprintf("chain:%d:nonce", chainID.Int64())
 	key.WriteString(keyS)
 
 	err := ns.db.SetByKey(key.Bytes(), nonce.Bytes())
@@ -39,7 +39,7 @@ func (ns *NonceStore) StoreNonce(chainID *big.Int, nonce *big.Int) error {
 // GetNonce queries the blockstore and returns latest nonce
 func (ns *NonceStore) GetNonce(chainID *big.Int) (*big.Int, error) {
 	key := bytes.Buffer{}
-	keyS := fmt.Sprintf("chain:%s:nonce", chainID.String())
+	keyS := fmt.Sprintf("chain:%d:nonce", chainID.Int64())
 	key.WriteString(keyS)
 
 	v, err := ns.db.GetByKey(key.Bytes())
