@@ -1,70 +1,40 @@
 package centrifuge
 
 import (
-	"context"
-	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contract"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
 
-func prepareIsAssetStoredInput(hash [32]byte) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(consts.CentrifugeAssetStoreABI))
-	if err != nil {
-		return []byte{}, err
-	}
-
-	input, err := a.Pack("_assetsStored", hash)
-	if err != nil {
-		return []byte{}, err
-	}
-
-	return input, nil
+type AssetStoreContract struct {
+	contract.Contract
 }
 
-func parseIsAssetStoredOutput(output []byte) (bool, error) {
+func NewAssetStoreContract(
+	client client.ContractCallerDispatcherClient,
+	assetStoreContractAddress common.Address,
+	transactor transactor.Transactor,
+) *AssetStoreContract {
 	a, err := abi.JSON(strings.NewReader(consts.CentrifugeAssetStoreABI))
 	if err != nil {
-		return false, err
+		log.Fatal().Msg("Unable to load AssetStore ABI") // TODO
 	}
+	b := common.FromHex(consts.CentrifugeAssetStoreBin)
+	return &AssetStoreContract{contract.NewContract(assetStoreContractAddress, a, b, client, transactor)}
+}
 
-	res, err := a.Unpack("_assetsStored", output)
+func (c AssetStoreContract) IsCentrifugeAssetStored(hash [32]byte) (bool, error) {
+	res, err := c.CallContract("_assetsStored", hash)
 	if err != nil {
 		return false, err
 	}
 
 	isAssetStored := *abi.ConvertType(res[0], new(bool)).(*bool)
-	return isAssetStored, nil
-}
-
-func IsCentrifugeAssetStored(ethClient client.ContractCallerClient, storeAddr common.Address, hash [32]byte) (bool, error) {
-	input, err := prepareIsAssetStoredInput(hash)
-	if err != nil {
-		log.Error().Err(fmt.Errorf("prepare input error: %v", err))
-		return false, err
-	}
-
-	msg := ethereum.CallMsg{
-		From: common.Address{},
-		To:   &storeAddr,
-		Data: input,
-	}
-
-	out, err := ethClient.CallContract(context.TODO(), client.ToCallArg(msg), nil)
-	if err != nil {
-		log.Error().Err(fmt.Errorf("call contract error: %v", err))
-		return false, err
-	}
-
-	isAssetStored, err := parseIsAssetStoredOutput(out)
-	if err != nil {
-		return false, nil
-	}
-
 	return isAssetStored, nil
 }

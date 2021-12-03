@@ -1,18 +1,11 @@
 package centrifuge
 
 import (
-	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contract"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/centrifuge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
+	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -25,8 +18,13 @@ var deployCmd = &cobra.Command{
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return DeployCentrifugeAssetStoreCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+		assetStoreContract, err := contracts.InitializeAssetStoreContract(
+			url, gasLimit, gasPrice, senderKeyPair, common.Address{},
+		)
+		if err != nil {
+			return err
+		}
+		return DeployCentrifugeAssetStoreCmd(cmd, args, assetStoreContract)
 	},
 }
 
@@ -36,28 +34,12 @@ func init() {
 	BindDeployCmdFlags(deployCmd)
 }
 
-func DeployCentrifugeAssetStoreCmd(cmd *cobra.Command, args []string, txFabric client.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
-	url, _, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+func DeployCentrifugeAssetStoreCmd(cmd *cobra.Command, args []string, contract *centrifuge.AssetStoreContract) error {
+	assetStoreAddress, err := contract.DeployContract()
 	if err != nil {
 		return err
 	}
 
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("ethereum client error: %v", err)).Msg("error initializing new EVM client")
-		return err
-	}
-
-	gasPricer.SetClient(ethClient)
-	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-
-	t := transactor.NewSignAndSendTransactor(txFabric, gasPricer, ethClient)
-	assetStoreAddr, err := contract.DeployContract(consts.CentrifugeAssetStoreABI, consts.CentrifugeAssetStoreBin, ethClient, t)
-	if err != nil {
-		log.Error().Err(fmt.Errorf("Centrifuge asset store deploy failed: %w", err))
-		return err
-	}
-
-	log.Info().Msgf("Deployed Centrifuge asset store to address: %s", assetStoreAddr.String())
+	log.Info().Msgf("Deployed Centrifuge asset store to address: %s", assetStoreAddress.String())
 	return nil
 }

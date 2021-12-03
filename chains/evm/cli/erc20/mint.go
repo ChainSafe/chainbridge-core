@@ -10,7 +10,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -61,23 +60,10 @@ func ValidateMintFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-var (
-	dstAddress    common.Address
-	url           string
-	gasLimit      uint64
-	gasPrice      *big.Int
-	senderKeyPair *secp256k1.Keypair
-)
-
 func ProcessMintFlags(cmd *cobra.Command, args []string) error {
 	var err error
 	decimals := big.NewInt(int64(Decimals))
 	erc20Addr = common.HexToAddress(Erc20Address)
-	// fetch global flag values
-	url, gasLimit, gasPrice, senderKeyPair, err = flags.GlobalFlagValues(cmd)
-	if err != nil {
-		return fmt.Errorf("could not get global flags: %v", err)
-	}
 
 	if !common.IsHexAddress(DstAddress) {
 		dstAddress = senderKeyPair.CommonAddress()

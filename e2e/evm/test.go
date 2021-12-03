@@ -3,8 +3,10 @@ package evm
 import (
 	"context"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/centrifuge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc20"
+	substrateTypes "github.com/centrifuge/go-substrate-rpc-client/types"
 	"math/big"
 	"time"
 
@@ -168,51 +170,53 @@ func (s *IntegrationTestSuite) TestErc20Deposit() {
 	erc20Contract1 := erc20.NewERC20Contract(s.client, s.erc20ContractAddr, transactor1)
 	bridgeContract1 := bridge.NewBridgeContract(s.client, s.bridgeAddr, transactor1)
 
+	transactor2 := transactor.NewSignAndSendTransactor(s.fabric2, s.gasPricer, s.client2)
+	erc20Contract2 := erc20.NewERC20Contract(s.client2, s.erc20ContractAddr, transactor2)
+
 	senderBalBefore, err := erc20Contract1.GetBalance(local.EveKp.CommonAddress())
 	s.Nil(err)
-	destBalanceBefore, err := calls.GetERC20Balance(s.client2, s.erc20ContractAddr, dstAddr)
+	destBalanceBefore, err := erc20Contract2.GetBalance(dstAddr)
 	s.Nil(err)
 
 	amountToDeposit := big.NewInt(1000000)
-	data := calls.ConstructErc20DepositData(dstAddr.Bytes(), amountToDeposit)
-	_, err = calls.Deposit(s.client, s.fabric1, s.gasPricer, s.bridgeAddr, s.erc20RID, 2, data)
+	_, err = bridgeContract1.Erc20Deposit(dstAddr, amountToDeposit, s.erc20RID, 2, transactor.TransactOptions{})
+	if err != nil {
+		return
+	}
 	s.Nil(err)
 
 	//Wait 120 seconds for relayer vote
 	time.Sleep(120 * time.Second)
 
-	senderBalAfter, err := calls.GetERC20Balance(s.client, s.erc20ContractAddr, s.adminKey.CommonAddress())
+	senderBalAfter, err := erc20Contract1.GetBalance(s.adminKey.CommonAddress())
 	s.Nil(err)
 	s.Equal(-1, senderBalAfter.Cmp(senderBalBefore))
 
-	destBalanceAfter, err := calls.GetERC20Balance(s.client2, s.erc20ContractAddr, dstAddr)
+	destBalanceAfter, err := erc20Contract2.GetBalance(dstAddr)
 	s.Nil(err)
 	//Balance has increased
 	s.Equal(1, destBalanceAfter.Cmp(destBalanceBefore))
 }
 
-// func (s *IntegrationTestSuite) TestGenericDeposit() {
-// 	hash, _ := substrateTypes.GetHash(substrateTypes.NewI64(int64(1)))
-// 	data := calls.ConstructGenericDepositData(hash[:])
-// 	_, err := calls.Deposit(
-// 		s.client,
-// 		s.fabric1,
-// 		s.gasPricer,
-// 		s.bridgeAddr,
-// 		s.genericRID,
-// 		2,
-// 		data,
-// 	)
-// 	s.Nil(err)
+func (s *IntegrationTestSuite) TestGenericDeposit() {
+	transactor1 := transactor.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client)
+	transactor2 := transactor.NewSignAndSendTransactor(s.fabric2, s.gasPricer, s.client2)
 
-// 	time.Sleep(120 * time.Second)
+	bridgeContract1 := bridge.NewBridgeContract(s.client, s.bridgeAddr, transactor1)
+	assetStoreContract2 := centrifuge.NewAssetStoreContract(s.client2, s.assetStoreAddr, transactor2)
 
-// 	// Asset hash sent is stored in centrifuge asset store contract
-// 	exists, err := calls.IsCentrifugeAssetStored(
-// 		s.client2,
-// 		s.assetStoreAddr,
-// 		hash,
-// 	)
-// 	s.Nil(err)
-// 	s.Equal(true, exists)
-// }
+	hash, _ := substrateTypes.GetHash(substrateTypes.NewI64(int64(1)))
+
+	_, err := bridgeContract1.GenericDeposit(hash[:], s.genericRID, 2, transactor.TransactOptions{})
+	if err != nil {
+		return
+	}
+	s.Nil(err)
+
+	time.Sleep(120 * time.Second)
+
+	// Asset hash sent is stored in centrifuge asset store contract
+	exists, err := assetStoreContract2.IsCentrifugeAssetStored(hash)
+	s.Nil(err)
+	s.Equal(true, exists)
+}

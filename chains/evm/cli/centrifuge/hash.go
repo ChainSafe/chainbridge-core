@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/centrifuge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -22,7 +22,13 @@ var getHashCmd = &cobra.Command{
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return GetHashCmd(cmd, args)
+		assetStoreContract, err := contracts.InitializeAssetStoreContract(
+			url, gasLimit, gasPrice, senderKeyPair, storeAddr,
+		)
+		if err != nil {
+			return err
+		}
+		return GetHashCmd(cmd, args, assetStoreContract)
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateGetHashFlags(cmd, args)
@@ -64,19 +70,8 @@ func ProcessGetHashFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func GetHashCmd(cmd *cobra.Command, args []string) error {
-	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
-	if err != nil {
-		return fmt.Errorf("could not get global flags: %v", err)
-	}
-
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
-		return err
-	}
-
-	isAssetStored, err := centrifuge.IsCentrifugeAssetStored(ethClient, storeAddr, byteHash)
+func GetHashCmd(cmd *cobra.Command, args []string, contract *centrifuge.AssetStoreContract) error {
+	isAssetStored, err := contract.IsCentrifugeAssetStored(byteHash)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("Checking if asset stored failed: %w", err))
 		return err

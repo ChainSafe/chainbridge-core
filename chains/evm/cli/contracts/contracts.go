@@ -3,6 +3,7 @@ package contracts
 import (
 	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/centrifuge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc721"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
@@ -45,6 +46,22 @@ func InitializeErc721Contract(
 	erc721Contract := erc721.NewErc721Contract(ethClient, erc721ContractAddress, trans)
 
 	return erc721Contract, nil
+}
+
+func InitializeAssetStoreContract(
+	url string,
+	gasLimit uint64,
+	gasPrice *big.Int,
+	senderKeyPair *secp256k1.Keypair,
+	assetStoreContractAddress common.Address,
+) (*centrifuge.AssetStoreContract, error) {
+	ethClient, trans, err := initializeClientAndTransactor(url, gasLimit, gasPrice, senderKeyPair)
+	if err != nil {
+		return nil, err
+	}
+
+	assetStoreContract := centrifuge.NewAssetStoreContract(ethClient, assetStoreContractAddress, trans)
+	return assetStoreContract, nil
 }
 
 func InitializeBridgeContract(

@@ -122,6 +122,23 @@ func (c *BridgeContract) Deposit(
 	)
 }
 
+func (c BridgeContract) Erc20Deposit(
+	recipient common.Address,
+	amount *big.Int,
+	resourceID types.ResourceID,
+	destDomainID uint8,
+	opts transactor.TransactOptions,
+) (*common.Hash, error) {
+	data := ConstructErc20DepositData(recipient.Bytes(), amount)
+	txHash, err := c.Deposit(resourceID, destDomainID, data, opts)
+	if err != nil {
+		log.Error().Err(err)
+		return nil, err
+	}
+	// TODO - log success
+	return txHash, err
+}
+
 func (c *BridgeContract) Erc721Deposit(
 	tokenId *big.Int,
 	metadata string,
@@ -131,6 +148,22 @@ func (c *BridgeContract) Erc721Deposit(
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
 	data := ConstructErc721DepositData(recipient.Bytes(), tokenId, []byte(metadata))
+	txHash, err := c.Deposit(resourceID, destDomainID, data, opts)
+	if err != nil {
+		log.Error().Err(err)
+		return nil, err
+	}
+	// TODO - log success
+	return txHash, err
+}
+
+func (c BridgeContract) GenericDeposit(
+	metadata []byte,
+	resourceID types.ResourceID,
+	destDomainID uint8,
+	opts transactor.TransactOptions,
+) (*common.Hash, error) {
+	data := ConstructGenericDepositData(metadata)
 	txHash, err := c.Deposit(resourceID, destDomainID, data, opts)
 	if err != nil {
 		log.Error().Err(err)
