@@ -20,6 +20,11 @@ type Forwarder interface {
 	ABI() *abi.ABI
 }
 
+type NonceStorer interface {
+	StoreNonce(chainID *big.Int, nonce *big.Int) error
+	GetNonce(chainID *big.Int) (*big.Int, error)
+}
+
 type ForwardRequest struct {
 	From       common.Address
 	To         common.Address
@@ -36,13 +41,15 @@ type GsnForwarder struct {
 	nonceLock         sync.Mutex
 	chainID           *big.Int
 	forwarderContract Forwarder
+	nonceStore        NonceStorer
 }
 
-func NewGsnForwarder(chainID *big.Int, kp *secp256k1.Keypair, forwarderContract Forwarder) *GsnForwarder {
+func NewGsnForwarder(chainID *big.Int, kp *secp256k1.Keypair, forwarderContract Forwarder, nonceStore NonceStorer) *GsnForwarder {
 	return &GsnForwarder{
 		chainID:           chainID,
 		kp:                kp,
 		forwarderContract: forwarderContract,
+		nonceStore:        nonceStore,
 	}
 }
 
@@ -51,9 +58,21 @@ func (c *GsnForwarder) NextNonce(from common.Address) (*big.Int, error) {
 	defer c.nonceLock.Unlock()
 
 	if c.nonce == nil {
-		nonce, err := c.forwarderContract.GetNonce(from)
+		storedNonce, err := c.nonceStore.GetNonce(c.chainID)
 		if err != nil {
 			return nil, err
+		}
+
+		contractNonce, err := c.forwarderContract.GetNonce(from)
+		if err != nil {
+			return nil, err
+		}
+
+		var nonce *big.Int
+		if storedNonce.Cmp(contractNonce) >= 0 {
+			nonce = storedNonce
+		} else {
+			nonce = contractNonce
 		}
 
 		c.nonce = nonce
@@ -61,6 +80,12 @@ func (c *GsnForwarder) NextNonce(from common.Address) (*big.Int, error) {
 
 	nonce := big.NewInt(c.nonce.Int64())
 	c.nonce.Add(c.nonce, big.NewInt(1))
+
+	err := c.nonceStore.StoreNonce(c.chainID, nonce)
+	if err != nil {
+		return nonce, err
+	}
+
 	return nonce, nil
 }
 
