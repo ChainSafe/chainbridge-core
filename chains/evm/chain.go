@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/blockstore"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
@@ -15,12 +14,13 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 	"github.com/ChainSafe/chainbridge-core/config/chain"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
+	"github.com/ChainSafe/chainbridge-core/store"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
 
 type EventListener interface {
-	ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *message.Message
+	ListenToEvents(startBlock *big.Int, domainID uint8, blockstore *store.BlockStore, stopChn <-chan struct{}, errChn chan<- error) <-chan *message.Message
 }
 
 type ProposalVoter interface {
@@ -29,14 +29,14 @@ type ProposalVoter interface {
 
 // EVMChain is struct that aggregates all data required for
 type EVMChain struct {
-	listener EventListener
-	writer   ProposalVoter
-	kvdb     blockstore.KeyValueReaderWriter
-	config   *chain.EVMConfig
+	listener   EventListener
+	writer     ProposalVoter
+	blockstore *store.BlockStore
+	config     *chain.EVMConfig
 }
 
 // SetupDefaultEVMChain sets up an EVMChain with all supported handlers configured
-func SetupDefaultEVMChain(rawConfig map[string]interface{}, txFabric calls.TxFabric, db blockstore.KeyValueReaderWriter) (*EVMChain, error) {
+func SetupDefaultEVMChain(rawConfig map[string]interface{}, txFabric calls.TxFabric, blockstore *store.BlockStore) (*EVMChain, error) {
 	config, err := chain.NewEVMConfig(rawConfig)
 	if err != nil {
 		return nil, err
@@ -62,11 +62,11 @@ func SetupDefaultEVMChain(rawConfig map[string]interface{}, txFabric calls.TxFab
 		return nil, err
 	}
 
-	return NewEVMChain(evmListener, evmVoter, db, config), nil
+	return NewEVMChain(evmListener, evmVoter, blockstore, config), nil
 }
 
-func NewEVMChain(listener EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, config *chain.EVMConfig) *EVMChain {
-	return &EVMChain{listener: listener, writer: writer, kvdb: kvdb, config: config}
+func NewEVMChain(listener EventListener, writer ProposalVoter, blockstore *store.BlockStore, config *chain.EVMConfig) *EVMChain {
+	return &EVMChain{listener: listener, writer: writer, blockstore: blockstore, config: config}
 }
 
 // PollEvents is the goroutine that polls blocks and searches Deposit events in them.
@@ -74,8 +74,7 @@ func NewEVMChain(listener EventListener, writer ProposalVoter, kvdb blockstore.K
 func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *message.Message) {
 	log.Info().Msg("Polling Blocks...")
 
-	startBlock, err := blockstore.GetStartBlock(
-		c.kvdb,
+	startBlock, err := c.blockstore.GetStartBlock(
 		*c.config.GeneralChainConfig.Id,
 		c.config.StartBlock,
 		c.config.GeneralChainConfig.LatestBlock,
@@ -86,7 +85,7 @@ func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsC
 		return
 	}
 
-	ech := c.listener.ListenToEvents(startBlock, *c.config.GeneralChainConfig.Id, c.kvdb, stop, sysErr)
+	ech := c.listener.ListenToEvents(startBlock, *c.config.GeneralChainConfig.Id, c.blockstore, stop, sysErr)
 	for {
 		select {
 		case <-stop:

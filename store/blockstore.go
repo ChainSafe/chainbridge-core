@@ -16,6 +16,12 @@ type BlockStore struct {
 	db KeyValueReaderWriter
 }
 
+func NewBlockStore(db KeyValueReaderWriter) *BlockStore {
+	return &BlockStore{
+		db: db,
+	}
+}
+
 // StoreBlock stores block number per domainID into blockstore
 func (bs *BlockStore) StoreBlock(block *big.Int, domainID uint8) error {
 	key := bytes.Buffer{}

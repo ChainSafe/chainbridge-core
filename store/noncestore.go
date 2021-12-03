@@ -16,6 +16,12 @@ type NonceStore struct {
 	db KeyValueReaderWriter
 }
 
+func NewNonceStore(db KeyValueReaderWriter) *NonceStore {
+	return &NonceStore{
+		db: db,
+	}
+}
+
 // StoreNonce stores nonce per chainID
 func (ns *NonceStore) StoreNonce(chainID *big.Int, nonce *big.Int) error {
 	key := bytes.Buffer{}
@@ -30,8 +36,8 @@ func (ns *NonceStore) StoreNonce(chainID *big.Int, nonce *big.Int) error {
 	return nil
 }
 
-// GetLastNonce queries the blockstore and returns latest nonce
-func (ns *NonceStore) GetLastNonce(chainID *big.Int, nonce *big.Int) (*big.Int, error) {
+// GetNonce queries the blockstore and returns latest nonce
+func (ns *NonceStore) GetNonce(chainID *big.Int) (*big.Int, error) {
 	key := bytes.Buffer{}
 	keyS := fmt.Sprintf("chain:%s:nonce", chainID.String())
 	key.WriteString(keyS)
