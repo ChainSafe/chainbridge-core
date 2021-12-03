@@ -200,6 +200,14 @@ func (c *BridgeContract) VoteProposal(
 	)
 }
 
+func (c *BridgeContract) SimulateVoteProposal(proposal *proposal.Proposal) error {
+	_, err := c.CallContract(
+		"voteProposal",
+		proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data,
+	)
+	return err
+}
+
 func (c *BridgeContract) Pause(opts transactor.TransactOptions) (*common.Hash, error) {
 	return c.ExecuteTransaction(
 		"adminPauseTransfers",

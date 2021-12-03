@@ -336,6 +336,20 @@ func (mr *MockBridgeContractMockRecorder) ProposalStatus(arg0 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProposalStatus", reflect.TypeOf((*MockBridgeContract)(nil).ProposalStatus), arg0)
 }
 
+// SimulateVoteProposal mocks base method.
+func (m *MockBridgeContract) SimulateVoteProposal(arg0 *proposal.Proposal) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SimulateVoteProposal", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SimulateVoteProposal indicates an expected call of SimulateVoteProposal.
+func (mr *MockBridgeContractMockRecorder) SimulateVoteProposal(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SimulateVoteProposal", reflect.TypeOf((*MockBridgeContract)(nil).SimulateVoteProposal), arg0)
+}
+
 // VoteProposal mocks base method.
 func (m *MockBridgeContract) VoteProposal(arg0 *proposal.Proposal, arg1 transactor.TransactOptions) (*common.Hash, error) {
 	m.ctrl.T.Helper()

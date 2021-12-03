@@ -24,6 +24,7 @@ import (
 )
 
 const (
+	maxSimulateVoteChecks = 5
 	maxShouldVoteChecks   = 40
 	shouldVoteCheckPeriod = 15
 )
@@ -47,6 +48,7 @@ type MessageHandler interface {
 type BridgeContract interface {
 	IsProposalVotedBy(by common.Address, p *proposal.Proposal) (bool, error)
 	VoteProposal(proposal *proposal.Proposal, opts transactor.TransactOptions) (*common.Hash, error)
+	SimulateVoteProposal(proposal *proposal.Proposal) error
 	ProposalStatus(p *proposal.Proposal) (message.ProposalStatus, error)
 	GetThreshold() (uint8, error)
 }
@@ -123,6 +125,11 @@ func (v *EVMVoter) VoteProposal(m *message.Message) error {
 		log.Debug().Msgf("Proposal %+v already satisfies threshold", prop)
 		return nil
 	}
+	err = v.repetitiveSimulateVote(prop, 0)
+	if err != nil {
+		log.Error().Err(err)
+		return err
+	}
 
 	hash, err := v.bridgeContract.VoteProposal(prop, transactor.TransactOptions{})
 	if err != nil {
@@ -167,6 +174,20 @@ func (v *EVMVoter) shouldVoteForProposal(prop *proposal.Proposal, tries int) (bo
 	}
 
 	return true, nil
+}
+
+// repetitiveSimulateVote repeatedly tries(5 times) to simulate vore proposal call until it succeeds
+func (v *EVMVoter) repetitiveSimulateVote(prop *proposal.Proposal, tries int) error {
+	err := v.bridgeContract.SimulateVoteProposal(prop)
+	if err != nil {
+		if tries < maxSimulateVoteChecks {
+			tries++
+			return v.repetitiveSimulateVote(prop, tries)
+		}
+		return err
+	} else {
+		return nil
+	}
 }
 
 // trackProposalPendingVotes tracks pending voteProposal txs from
