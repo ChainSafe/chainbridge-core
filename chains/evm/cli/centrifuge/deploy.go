@@ -16,7 +16,7 @@ import (
 
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
-	Short: "Deploy centrifuge asset store contract",
+	Short: "Deploy a centrifuge asset store contract",
 	Long:  "The deploy subcommand deploys a Centrifuge asset store contract that represents bridged Centrifuge assets",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
