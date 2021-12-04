@@ -17,7 +17,7 @@ import (
 var isRelayerCmd = &cobra.Command{
 	Use:   "is-relayer",
 	Short: "Check if an address is registered as a relayer",
-	Long:  "The is-relayer subcommand check if an address is registered as a relayer",
+	Long:  "The is-relayer subcommand checks if an address is registered as a relayer",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
