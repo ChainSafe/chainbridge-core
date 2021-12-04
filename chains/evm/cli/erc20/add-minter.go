@@ -18,7 +18,7 @@ import (
 
 var addMinterCmd = &cobra.Command{
 	Use:   "add-minter",
-	Short: "Add new ERC20 minter",
+	Short: "Add a new ERC20 minter",
 	Long:  "The add-minter subcommand adds a minter to an ERC20 mintable contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())

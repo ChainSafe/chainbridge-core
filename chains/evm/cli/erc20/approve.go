@@ -20,8 +20,8 @@ import (
 
 var approveCmd = &cobra.Command{
 	Use:   "approve",
-	Short: "Approve ERC20 tokens",
-	Long:  "The approve command approves tokens in an ERC20 contract for transfer",
+	Short: "Approve an ERC20 tokens",
+	Long:  "The approve subcommand approves tokens in an ERC20 contract for transfer",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},

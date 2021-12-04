@@ -15,8 +15,8 @@ import (
 
 var balanceCmd = &cobra.Command{
 	Use:   "balance",
-	Short: "Query ERC20 token balance",
-	Long:  "The query command queries balance of an account in an ERC20 contract",
+	Short: "Query an ERC20 token balance",
+	Long:  "The balance subcommand queries the balance of an account in an ERC20 contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
