@@ -17,7 +17,7 @@ import (
 var hashListCmd = &cobra.Command{
 	Use:   "hash-list",
 	Short: "List tx hashes within N number of blocks",
-	Long:  "The hash-list subcommand loops over N number of blocks and prints a list of blocks to review hashes contaiend within",
+	Long:  "The hash-list subcommand accepts a starting block to query, loops over N number of blocks past it, then prints this list of blocks to review hashes contained within",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
