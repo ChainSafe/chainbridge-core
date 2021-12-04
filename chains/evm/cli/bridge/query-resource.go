@@ -9,7 +9,7 @@ import (
 
 var queryResourceCmd = &cobra.Command{
 	Use:   "query-resource",
-	Short: "Query the contract address",
+	Short: "Query the resource ID for a handler contract",
 	Long:  "The query-resource subcommand queries the contract address with the provided resource ID for a specific handler contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
