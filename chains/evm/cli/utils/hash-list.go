@@ -9,14 +9,15 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
 var hashListCmd = &cobra.Command{
 	Use:   "hash-list",
-	Short: "List tx hashes",
-	Long:  "The hash-list subcommand ",
+	Short: "List tx hashes within N number of blocks",
+	Long:  "The hash-list subcommand loops over N number of blocks and prints a list of blocks to review hashes contaiend within",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -26,7 +27,9 @@ var hashListCmd = &cobra.Command{
 }
 
 func BindHashListCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&BlockNumber, "blockNumber", "", "block number")
+	cmd.Flags().StringVar(&BlockNumber, "blockNumber", "", "Block number to start at")
+	cmd.Flags().StringVar(&NumberOfBlocks, "numberOfBlocks", "", "Number of blocks past the provided blockNumber to review")
+	flags.MarkFlagsAsRequired(cmd, "blockNumber", "numberOfBlocks")
 }
 
 func init() {
@@ -34,7 +37,6 @@ func init() {
 }
 
 func HashListCmd(cmd *cobra.Command, args []string) error {
-
 	// fetch global flag values
 	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
@@ -47,23 +49,26 @@ func HashListCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	blockNum, err := strconv.Atoi(BlockNumber)
+	// convert NumberOfBlocks string to int for looping
+	numberOfBlocks, err := strconv.Atoi(NumberOfBlocks)
 	if err != nil {
-		log.Error().Err(fmt.Errorf("block string->int conversion error: %v", err))
+		log.Error().Err(fmt.Errorf("error converting NumberOfBlocks string -> int: %v", err))
 		return err
 	}
 
-	blockNumStr := strconv.Itoa(blockNum)
-	blockNumberBigInt, _ := new(big.Int).SetString(blockNumStr, 10)
+	// convert block number to string
+	blockNumberBigInt, _ := new(big.Int).SetString(BlockNumber, 10)
 
+	// declare empty slice of blocks to hold blocks for printing all at once
+	blockSlice := make([]*types.Block, 0)
+
+	// loop over blocks provided by user
 	// check block by hash
 	// see if transaction block data is there
-	for i := 0; i < 50; i++ {
+	for i := 0; i < numberOfBlocks; i++ {
 		log.Debug().Msgf("blockNum: %v", blockNumberBigInt)
 
 		// convert string block number to big.Int
-		// ignore success bool
-
 		blockNumberBigInt.Add(blockNumberBigInt, big.NewInt(1))
 
 		block, err := ethClient.BlockByNumber(context.Background(), blockNumberBigInt)
@@ -76,7 +81,13 @@ func HashListCmd(cmd *cobra.Command, args []string) error {
 			// return err
 		}
 
-		log.Debug().Msgf("block: %v", block)
+		// performance: append to block to slice of blocks to return all at once
+		// rather than printing each, one-by-one
+		blockSlice = append(blockSlice, block)
 	}
+
+	// log full struct of block
+	log.Debug().Msgf("block slice: %+v", blockSlice)
+
 	return nil
 }
