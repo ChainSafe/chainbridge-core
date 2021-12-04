@@ -17,7 +17,7 @@ import (
 
 var getThresholdCmd = &cobra.Command{
 	Use:   "get-threshold",
-	Short: "Get relayer vote threshold",
+	Short: "Get the relayer vote threshold",
 	Long:  "The get-threshold subcommand returns the relayer vote threshold",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
