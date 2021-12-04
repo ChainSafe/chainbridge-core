@@ -18,7 +18,7 @@ import (
 
 var mintCmd = &cobra.Command{
 	Use:   "mint",
-	Short: "Mint ERC721 token",
+	Short: "Mint an ERC721 token",
 	Long:  "The mint subcommand mints a token on an ERC721 mintable contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
