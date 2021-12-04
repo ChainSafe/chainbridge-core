@@ -19,8 +19,8 @@ var queryResourceCmd = &cobra.Command{
 
 func BindQueryResourceFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Handler, "handler", "", "Handler contract address")
-	cmd.Flags().StringVar(&ResourceID, "resource-id", "", "Resource ID to query")
-	flags.MarkFlagsAsRequired(cmd, "handler", "resource-id")
+	cmd.Flags().StringVar(&ResourceID, "resourceId", "", "Resource ID to query")
+	flags.MarkFlagsAsRequired(cmd, "handler", "resourceId")
 }
 
 func init() {
