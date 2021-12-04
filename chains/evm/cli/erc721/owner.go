@@ -18,8 +18,8 @@ import (
 
 var ownerCmd = &cobra.Command{
 	Use:   "owner",
-	Short: "Get ERC721 token owner",
-	Long:  "The owner subcommand gets token owner from an ERC721 mintable contract",
+	Short: "Get an ERC721 token owner",
+	Long:  "The owner subcommand gets a token owner from an ERC721 mintable contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -40,8 +40,8 @@ var ownerCmd = &cobra.Command{
 
 func BindOwnerCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Erc721Address, "contract", "", "ERC721 contract address")
-	cmd.Flags().StringVar(&TokenId, "token-id", "", "ERC721 token ID")
-	flags.MarkFlagsAsRequired(cmd, "contract", "token-id")
+	cmd.Flags().StringVar(&TokenId, "tokenId", "", "ERC721 token ID")
+	flags.MarkFlagsAsRequired(cmd, "contract", "tokenId")
 }
 
 func init() {
