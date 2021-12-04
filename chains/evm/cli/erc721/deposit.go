@@ -20,7 +20,7 @@ import (
 var depositCmd = &cobra.Command{
 	Use:   "deposit",
 	Short: "Deposit ERC721 token",
-	Long:  "The deposit command creates new ERC721 token deposit on bridge contract",
+	Long:  "The deposit subcommand creates a new ERC721 token deposit on the bridge contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
