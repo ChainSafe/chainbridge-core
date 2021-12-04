@@ -9,7 +9,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -59,14 +58,11 @@ func HashListCmd(cmd *cobra.Command, args []string) error {
 	// convert block number to string
 	blockNumberBigInt, _ := new(big.Int).SetString(BlockNumber, 10)
 
-	// declare empty slice of blocks to hold blocks for printing all at once
-	blockSlice := make([]*types.Block, 0)
-
 	// loop over blocks provided by user
 	// check block by hash
 	// see if transaction block data is there
 	for i := 0; i < numberOfBlocks; i++ {
-		log.Debug().Msgf("blockNum: %v", blockNumberBigInt)
+		log.Debug().Msgf("Block Number: %v", blockNumberBigInt)
 
 		// convert string block number to big.Int
 		blockNumberBigInt.Add(blockNumberBigInt, big.NewInt(1))
@@ -78,16 +74,14 @@ func HashListCmd(cmd *cobra.Command, args []string) error {
 			// will return early and not print debug log if block not found
 			// Error: not found
 
-			// return err
+			return err
 		}
 
-		// performance: append to block to slice of blocks to return all at once
-		// rather than printing each, one-by-one
-		blockSlice = append(blockSlice, block)
+		// loop over all transactions within block
+		// add newline for readability
+		for _, tx := range block.Body().Transactions {
+			log.Debug().Msgf("Tx hashes: %v\n", tx.Hash())
+		}
 	}
-
-	// log full struct of block
-	log.Debug().Msgf("block slice: %+v", blockSlice)
-
 	return nil
 }
