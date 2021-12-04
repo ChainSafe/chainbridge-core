@@ -11,7 +11,7 @@ import (
 
 var importPrivKeyCmd = &cobra.Command{
 	Use:   "import",
-	Short: "Import bridge keystore",
+	Short: "Import a bridge keystore",
 	Long:  "The import subcommand is used to import a keystore for the bridge",
 	RunE:  importPrivKey,
 }
