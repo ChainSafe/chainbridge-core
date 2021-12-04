@@ -18,7 +18,7 @@ import (
 
 var approveCmd = &cobra.Command{
 	Use:   "approve",
-	Short: "Approve ERC721 token",
+	Short: "Approve an ERC721 token",
 	Long:  "The approve subcommand approves a token in an ERC721 contract for transfer",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
