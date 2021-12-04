@@ -11,8 +11,8 @@ import (
 
 var LocalSetupCmd = &cobra.Command{
 	Use:   "local-setup",
-	Short: "Local setup",
-	Long:  "The local-setup command deploys bridge and ERC20, ERC721 and generic handler contracts with preconfigured accounts and appropriate handlers",
+	Short: "Deploy and prefund a local bridge for testing",
+	Long:  "The local-setup command deploys a bridge, ERC20, ERC721 and generic handler contracts with preconfigured accounts and appropriate handlers",
 	RunE:  localSetup,
 }
 
