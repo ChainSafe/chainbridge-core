@@ -30,9 +30,9 @@ The chainbridge-core-example currently supports two modules:
 3. [Substrate](#substrate)
 
 ## Usage
-Since chainbridge-core is the modular framework it will require writing some code to get it running. Here you can find some examples
+Since chainbridge-core is the modular framework it will require writing some code to get it running. 
 
-[Example](https://github.com/ChainSafe/chainbridge-core-example)
+You can find some examples [here](https://github.com/ChainSafe/chainbridge-core-example).
 
 &nbsp;
 
@@ -622,7 +622,7 @@ Flags:
   -h, --help                         help for add-minter
 ```
 
-### Utils
+### `Utils`
 Utils-related instructions.
 *Useful for debugging*
 
@@ -631,23 +631,24 @@ Usage:
    evm-cli utils [command]
 
 Available Commands:
-  hashList    List tx hashes
+  hash-list   List tx hashes within N number of blocks
   simulate    Simulate transaction invocation
 
 Flags:
   -h, --help   help for utils
 ```
 
-#### `hashlist`
-List tx hashes.
+#### `hash-list`
+The hash-list subcommand accepts a starting block to query, loops over N number of blocks past it, then prints this list of blocks to review hashes contained within.
 
 ```bash
 Usage:
-   evm-cli utils hashList [flags]
+   evm-cli utils hash-list [flags]
 
 Flags:
-      --blockNumber string   block number
-  -h, --help                 help for hashList
+      --blockNumber string      Block number to start at
+  -h, --help                    help for hash-list
+      --numberOfBlocks string   Number of blocks past the provided blockNumber to review
 ```
 
 #### `simulate`
