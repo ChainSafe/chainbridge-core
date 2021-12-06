@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/init"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/util"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -18,7 +19,11 @@ var transferBaseCurrencyCmd = &cobra.Command{
 	Short: "Transfer base currency",
 	Long:  "The generate subcommand is used to transfer the base currency",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		_, t, err := contracts.InitializeClientAndTransactor(url, gasLimit, gasPrice, senderKeyPair)
+		c, err := init.InitializeClient(url, senderKeyPair)
+		if err != nil {
+			return err
+		}
+		t, err := init.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
 		if err != nil {
 			return err
 		}

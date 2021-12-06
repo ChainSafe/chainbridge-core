@@ -4,9 +4,10 @@ import (
 	"errors"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/init"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/util"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -24,13 +25,15 @@ var addMinterCmd = &cobra.Command{
 		return util.CallPersistentPreRun(cmd, args)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		erc20Contract, err := contracts.InitializeErc20Contract(
-			url, gasLimit, gasPrice, senderKeyPair, erc20Addr,
-		)
+		c, err := init.InitializeClient(url, senderKeyPair)
 		if err != nil {
 			return err
 		}
-		return AddMinterCmd(cmd, args, erc20Contract)
+		t, err := init.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		if err != nil {
+			return err
+		}
+		return AddMinterCmd(cmd, args, erc20.NewERC20Contract(c, erc20Addr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateAddMinterFlags(cmd, args)

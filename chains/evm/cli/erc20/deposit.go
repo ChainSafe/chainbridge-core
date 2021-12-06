@@ -5,7 +5,8 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/init"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/util"
 	"math/big"
 
@@ -27,13 +28,15 @@ var depositCmd = &cobra.Command{
 		return util.CallPersistentPreRun(cmd, args)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		bridgeContract, err := contracts.InitializeBridgeContract(
-			url, gasLimit, gasPrice, senderKeyPair, bridgeAddr,
-		)
+		c, err := init.InitializeClient(url, senderKeyPair)
 		if err != nil {
 			return err
 		}
-		return DepositCmd(cmd, args, bridgeContract)
+		t, err := init.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		if err != nil {
+			return err
+		}
+		return DepositCmd(cmd, args, bridge.NewBridgeContract(c, erc20Addr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateDepositFlags(cmd, args)

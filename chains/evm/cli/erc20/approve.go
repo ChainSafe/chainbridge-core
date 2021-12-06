@@ -5,7 +5,8 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/init"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/util"
 	"math/big"
 
@@ -27,13 +28,15 @@ var approveCmd = &cobra.Command{
 		return util.CallPersistentPreRun(cmd, args)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		erc20Contract, err := contracts.InitializeErc20Contract(
-			url, gasLimit, gasPrice, senderKeyPair, erc20Addr,
-		)
+		c, err := init.InitializeClient(url, senderKeyPair)
 		if err != nil {
 			return err
 		}
-		return ApproveCmd(cmd, args, erc20Contract)
+		t, err := init.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		if err != nil {
+			return err
+		}
+		return ApproveCmd(cmd, args, erc20.NewERC20Contract(c, erc20Addr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateApproveFlags(cmd, args)

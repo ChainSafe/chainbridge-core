@@ -2,7 +2,8 @@ package erc721
 
 import (
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/init"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/util"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc721"
@@ -24,13 +25,15 @@ var addMinterCmd = &cobra.Command{
 		return util.CallPersistentPreRun(cmd, args)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		erc721Contract, err := contracts.InitializeErc721Contract(
-			url, gasLimit, gasPrice, senderKeyPair, erc721Addr,
-		)
+		c, err := init.InitializeClient(url, senderKeyPair)
 		if err != nil {
 			return err
 		}
-		return AddMinterCmd(cmd, args, erc721Contract)
+		t, err := init.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		if err != nil {
+			return err
+		}
+		return AddMinterCmd(cmd, args, erc721.NewErc721Contract(c, erc721Addr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateAddMinterFlags(cmd, args)
