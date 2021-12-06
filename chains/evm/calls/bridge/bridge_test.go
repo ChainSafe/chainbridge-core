@@ -82,12 +82,6 @@ func (s *ProposalStatusTestSuite) TestPrepareWithdrawInput() {
 	inputBytes, err := bc.Withdraw(
 		handlerAddress, tokenAddress, recipientAddress, amountOrTokenId, transactor.TransactOptions{},
 	)
-
-	if err != nil {
-		s.Fail("could not prepare withdraw input: %v", err)
-	}
-
-	if len(inputBytes) == 0 {
-		s.Fail("prepared input byte slice empty")
-	}
+	s.NotNil(inputBytes)
+	s.Nil(err)
 }

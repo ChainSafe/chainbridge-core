@@ -20,7 +20,6 @@ var (
 
 // global flags
 var (
-	dstAddress    common.Address
 	url           string
 	gasLimit      uint64
 	gasPrice      *big.Int

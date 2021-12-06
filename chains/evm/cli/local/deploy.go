@@ -66,17 +66,17 @@ func PrepareLocalEVME2EEnv(
 		return EVME2EConfig{}, err
 	}
 
-	erc721Contract, erc721ContractAddress, erc721HandlerContractAddress, err := deployErc721(ethClient, t, err)
+	erc721Contract, erc721ContractAddress, erc721HandlerContractAddress, err := deployErc721(ethClient, t)
 	if err != nil {
 		return EVME2EConfig{}, err
 	}
 
-	erc20Contract, erc20ContractAddress, erc20HandlerContractAddress, err := deployErc20(ethClient, t, err)
+	erc20Contract, erc20ContractAddress, erc20HandlerContractAddress, err := deployErc20(ethClient, t)
 	if err != nil {
 		return EVME2EConfig{}, err
 	}
 
-	genericHandlerAddress, assetStoreAddress, err := deployGeneric(ethClient, err, t, bridgeContractAddress)
+	genericHandlerAddress, assetStoreAddress, err := deployGeneric(ethClient, t, bridgeContractAddress)
 	if err != nil {
 		return EVME2EConfig{}, err
 	}
@@ -114,7 +114,7 @@ func PrepareLocalEVME2EEnv(
 }
 
 func deployGeneric(
-	ethClient E2EClient, err error, t transactor.Transactor, bridgeContractAddress common.Address,
+	ethClient E2EClient, t transactor.Transactor, bridgeContractAddress common.Address,
 ) (common.Address, common.Address, error) {
 	genericHandlerAddress, err := contract.DeployContract(
 		consts.GenericHandlerABI, consts.GenericHandlerBin, ethClient, t, bridgeContractAddress,
@@ -125,6 +125,9 @@ func deployGeneric(
 	assetStoreAddress, err := contract.DeployContract(
 		consts.CentrifugeAssetStoreABI, consts.CentrifugeAssetStoreBin, ethClient, t, bridgeContractAddress,
 	)
+	if err != nil {
+		return common.Address{}, common.Address{}, err
+	}
 	log.Debug().Msgf(
 		"Centrifuge asset store deployed to: %s; \n Generic Handler deployed to: %s",
 		assetStoreAddress, genericHandlerAddress,
@@ -133,7 +136,7 @@ func deployGeneric(
 }
 
 func deployErc20(
-	ethClient E2EClient, t transactor.Transactor, err error,
+	ethClient E2EClient, t transactor.Transactor,
 ) (*erc20.ERC20Contract, common.Address, common.Address, error) {
 	erc20Contract := erc20.NewERC20Contract(ethClient, common.Address{}, t)
 	erc20ContractAddress, err := erc20Contract.DeployContract("Test", "TST")
@@ -143,6 +146,9 @@ func deployErc20(
 	erc20HandlerContractAddress, err := contract.DeployContract(
 		consts.ERC20HandlerABI, consts.ERC20HandlerBin, ethClient, t, erc20ContractAddress,
 	)
+	if err != nil {
+		return nil, common.Address{}, common.Address{}, err
+	}
 	log.Debug().Msgf(
 		"Erc20 deployed to: %s; \n Erc20 Handler deployed to: %s",
 		erc20ContractAddress, erc20HandlerContractAddress,
@@ -151,7 +157,7 @@ func deployErc20(
 }
 
 func deployErc721(
-	ethClient E2EClient, t transactor.Transactor, err error,
+	ethClient E2EClient, t transactor.Transactor,
 ) (*erc721.ERC721Contract, common.Address, common.Address, error) {
 	erc721Contract := erc721.NewErc721Contract(ethClient, common.Address{}, t)
 	erc721ContractAddress, err := erc721Contract.DeployContract("TestERC721", "TST721", "")
@@ -161,6 +167,9 @@ func deployErc721(
 	erc721HandlerContractAddress, err := contract.DeployContract(
 		consts.HandlerABI, consts.HandlerBin, ethClient, t, erc721ContractAddress,
 	)
+	if err != nil {
+		return nil, common.Address{}, common.Address{}, err
+	}
 	log.Debug().Msgf(
 		"Erc721 deployed to: %s; \n Erc721 Handler deployed to: %s",
 		erc721ContractAddress, erc721HandlerContractAddress,

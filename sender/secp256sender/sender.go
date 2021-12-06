@@ -8,9 +8,8 @@ import (
 
 type SecpInMemory256Sender struct {
 	privateKey *ecdsa.PrivateKey
-	address common.Address
+	address    common.Address
 }
-
 
 func (s *SecpInMemory256Sender) PrivateKey() *ecdsa.PrivateKey {
 	return s.privateKey

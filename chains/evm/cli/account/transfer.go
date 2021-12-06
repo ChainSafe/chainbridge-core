@@ -1,20 +1,16 @@
 package account
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
-	"github.com/ChainSafe/chainbridge-core/util"
-	"math/big"
-	"os"
-	"strings"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/util"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+	"math/big"
 )
 
 var transferBaseCurrencyCmd = &cobra.Command{
@@ -76,22 +72,4 @@ func TransferBaseCurrency(cmd *cobra.Command, args []string, t transactor.Transa
 
 	log.Info().Msgf("%s tokens were transferred to %s from %s", Amount, recipientAddress.Hex(), senderKeyPair.CommonAddress().String())
 	return nil
-}
-
-func confirmTransfer(cmd *cobra.Command, args []string) {
-	reader := bufio.NewReader(os.Stdin)
-	for {
-		fmt.Printf("Send transaction %s(%d) to %s (Y/N)?", Amount, Decimals, Recipient)
-		s, _ := reader.ReadString('\n')
-
-		s = strings.ToLower(strings.TrimSuffix(s, "\n"))
-
-		if strings.Compare(s, "n") == 0 {
-			os.Exit(0)
-		} else if strings.Compare(s, "y") == 0 {
-			break
-		} else {
-			continue
-		}
-	}
 }

@@ -20,7 +20,6 @@ func ImportPrivKey(datadir, key string, password []byte) (string, error) {
 	}
 	keystorepath, err := keystoreDir(datadir)
 
-
 	var kp crypto.Keypair
 	// Hex must not have leading 0x
 	if key[0:2] == "0x" {
@@ -28,7 +27,7 @@ func ImportPrivKey(datadir, key string, password []byte) (string, error) {
 	}
 	kp, err = secp256k1.NewKeypairFromString(key)
 	if err != nil {
-			return "", fmt.Errorf("could not generate secp256k1 keypair from given string: %w", err)
+		return "", fmt.Errorf("could not generate secp256k1 keypair from given string: %w", err)
 	}
 
 	fp, err := filepath.Abs(keystorepath + "/" + kp.Address() + ".key")
