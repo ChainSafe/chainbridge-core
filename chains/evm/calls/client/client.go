@@ -116,37 +116,6 @@ func UserAmountToWei(amount string, decimal *big.Int) (*big.Int, error) {
 	return i, nil
 }
 
-func Transact(client ClientDispatcher, txFabric TxFabric, gasPriceClient GasPricer, to *common.Address, data []byte, gasLimit uint64, value *big.Int) (common.Hash, error) {
-	defer client.UnlockNonce()
-	client.LockNonce()
-	n, err := client.UnsafeNonce()
-	if err != nil {
-		return common.Hash{}, nil
-	}
-	gp, err := gasPriceClient.GasPrice()
-	if err != nil {
-		return common.Hash{}, err
-	}
-	tx, err := txFabric(n.Uint64(), to, value, gasLimit, gp, data)
-	if err != nil {
-		return common.Hash{}, err
-	}
-	_, err = client.SignAndSendTransaction(context.TODO(), tx)
-	if err != nil {
-		return common.Hash{}, err
-	}
-	log.Debug().Msgf("hash: %v from: %s", tx.Hash(), client.From())
-	_, err = client.WaitAndReturnTxReceipt(tx.Hash())
-	if err != nil {
-		return common.Hash{}, err
-	}
-	err = client.UnsafeIncreaseNonce()
-	if err != nil {
-		return common.Hash{}, err
-	}
-	return tx.Hash(), nil
-}
-
 // Simulate function gets transaction info by hash and then executes a message call transaction, which is directly executed in the VM
 // of the node, but never mined into the blockchain. Execution happens against provided block.
 func Simulate(c SimulateCallerClient, block *big.Int, txHash common.Hash, from common.Address) ([]byte, error) {
