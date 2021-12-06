@@ -3,7 +3,7 @@ package erc721
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contract"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts"
 	"math/big"
 	"strings"
 
@@ -14,7 +14,7 @@ import (
 )
 
 type ERC721Contract struct {
-	contract.Contract
+	contracts.Contract
 }
 
 func NewErc721Contract(
@@ -23,12 +23,12 @@ func NewErc721Contract(
 	t transactor.Transactor,
 ) *ERC721Contract {
 	// load ABI
-	a, err := abi.JSON(strings.NewReader(consts.PresetMinterPauserABI))
+	a, err := abi.JSON(strings.NewReader(consts.ERC721PresetMinterPauserABI))
 	if err != nil {
 		log.Fatal().Msg("Unable to load ABI") // TODO
 	}
-	b := common.FromHex(consts.PresetMinterPauserBin)
-	return &ERC721Contract{contract.NewContract(erc721ContractAddress, a, b, client, t)}
+	b := common.FromHex(consts.ERC721PresetMinterPauserBin)
+	return &ERC721Contract{contracts.NewContract(erc721ContractAddress, a, b, client, t)}
 }
 
 // Add new minter for ERC721 contract

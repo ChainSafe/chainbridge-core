@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contract"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"math/big"
 	"strings"
@@ -18,7 +18,7 @@ import (
 )
 
 type BridgeContract struct {
-	contract.Contract
+	contracts.Contract
 }
 
 func NewBridgeContract(
@@ -31,7 +31,7 @@ func NewBridgeContract(
 		log.Fatal().Msg("Unable to load BridgeABI") // TODO
 	}
 	b := common.FromHex(consts.BridgeBin)
-	return &BridgeContract{contract.NewContract(bridgeContractAddress, a, b, client, transactor)}
+	return &BridgeContract{contracts.NewContract(bridgeContractAddress, a, b, client, transactor)}
 }
 
 func (c *BridgeContract) AddRelayer(

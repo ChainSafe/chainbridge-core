@@ -2,10 +2,10 @@ package erc20
 
 import (
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	bridge2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/init"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/util"
 	"math/big"
@@ -28,15 +28,15 @@ var depositCmd = &cobra.Command{
 		return util.CallPersistentPreRun(cmd, args)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := init.InitializeClient(url, senderKeyPair)
+		c, err := initialize.InitializeClient(url, senderKeyPair)
 		if err != nil {
 			return err
 		}
-		t, err := init.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
 		if err != nil {
 			return err
 		}
-		return DepositCmd(cmd, args, bridge.NewBridgeContract(c, erc20Addr, t))
+		return DepositCmd(cmd, args, bridge2.NewBridgeContract(c, erc20Addr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateDepositFlags(cmd, args)
@@ -90,8 +90,8 @@ func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func DepositCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
-	data := bridge.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
+func DepositCmd(cmd *cobra.Command, args []string, contract *bridge2.BridgeContract) error {
+	data := bridge2.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
 	hash, err := contract.Deposit(resourceIdBytesArr, uint8(DomainID), data, transactor.TransactOptions{})
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit error: %v", err))

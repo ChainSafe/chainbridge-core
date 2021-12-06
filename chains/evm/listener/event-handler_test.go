@@ -2,7 +2,7 @@ package listener_test
 
 import (
 	"errors"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"math/big"
 	"testing"
 

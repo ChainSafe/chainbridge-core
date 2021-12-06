@@ -1,11 +1,11 @@
 package erc721_test
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc721"
 	"math/big"
 	"testing"
 
 	mock_client "github.com/ChainSafe/chainbridge-core/chains/evm/calls/client/mock"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/erc721"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	mock_transactor "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/mock"
 	"github.com/ethereum/go-ethereum/common"

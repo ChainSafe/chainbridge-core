@@ -1,4 +1,4 @@
-package contract
+package contracts
 
 import (
 	"errors"
@@ -34,8 +34,8 @@ func (s *ContractTestSuite) SetupTest() {
 	s.mockContractCallerDispatcherClient = mock_client.NewMockContractCallerDispatcherClient(s.gomockController)
 	s.mockTransactor = mock_transactor.NewMockTransactor(s.gomockController)
 	// Use ERC721 contract ABI inside the contract test
-	a, _ := abi.JSON(strings.NewReader(consts.PresetMinterPauserABI))
-	b := common.FromHex(consts.PresetMinterPauserBin)
+	a, _ := abi.JSON(strings.NewReader(consts.ERC721PresetMinterPauserABI))
+	b := common.FromHex(consts.ERC721PresetMinterPauserBin)
 	s.contract = NewContract(
 		common.Address{}, a, b, s.mockContractCallerDispatcherClient, s.mockTransactor,
 	)

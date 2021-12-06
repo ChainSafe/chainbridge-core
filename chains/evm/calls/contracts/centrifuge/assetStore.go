@@ -2,7 +2,7 @@ package centrifuge
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contract"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"strings"
 
@@ -13,7 +13,7 @@ import (
 )
 
 type AssetStoreContract struct {
-	contract.Contract
+	contracts.Contract
 }
 
 func NewAssetStoreContract(
@@ -26,7 +26,7 @@ func NewAssetStoreContract(
 		log.Fatal().Msg("Unable to load AssetStore ABI") // TODO
 	}
 	b := common.FromHex(consts.CentrifugeAssetStoreBin)
-	return &AssetStoreContract{contract.NewContract(assetStoreContractAddress, a, b, client, transactor)}
+	return &AssetStoreContract{contracts.NewContract(assetStoreContractAddress, a, b, client, transactor)}
 }
 
 func (c AssetStoreContract) IsCentrifugeAssetStored(hash [32]byte) (bool, error) {

@@ -2,7 +2,7 @@ package erc20
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contract"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"math/big"
 	"strings"
@@ -15,7 +15,7 @@ import (
 )
 
 type ERC20Contract struct {
-	contract.Contract
+	contracts.Contract
 }
 
 func NewERC20Contract(
@@ -28,7 +28,7 @@ func NewERC20Contract(
 		log.Fatal().Msg("Unable to load BridgeABI") // TODO
 	}
 	b := common.FromHex(consts.ERC20HandlerBin)
-	return &ERC20Contract{contract.NewContract(erc20ContractAddress, a, b, client, transactor)}
+	return &ERC20Contract{contracts.NewContract(erc20ContractAddress, a, b, client, transactor)}
 }
 
 func (c *ERC20Contract) GetBalance(address common.Address) (*big.Int, error) {

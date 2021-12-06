@@ -2,8 +2,8 @@ package centrifuge_test
 
 import (
 	"errors"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/centrifuge"
 	mock_client "github.com/ChainSafe/chainbridge-core/chains/evm/calls/client/mock"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/centrifuge"
 	mock_transactor "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/mock"
 	"testing"
 
