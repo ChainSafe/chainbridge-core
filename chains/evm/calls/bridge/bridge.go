@@ -177,9 +177,6 @@ func (c *BridgeContract) ExecuteProposal(
 	proposal *proposal.Proposal,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
-	opts = transactor.MergeTransactionOptions(opts, transactor.TransactOptions{GasLimit: 300000})
-	// revertOnFail should be constantly false, true is used only for internal contract calls
-	// when you need to execute proposal in voteProposal function right after it becomes Passed becouse of votes
 	return c.ExecuteTransaction(
 		"executeProposal",
 		opts,
@@ -191,8 +188,6 @@ func (c *BridgeContract) VoteProposal(
 	proposal *proposal.Proposal,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
-	opts = transactor.MergeTransactionOptions(opts, transactor.TransactOptions{GasLimit: 300000})
-	// revertOnFail should be constantly false, true is used only for internal contract calls when you need to execute proposal in voteProposal function right after it becomes Passed becouse of votes
 	return c.ExecuteTransaction(
 		"voteProposal",
 		opts,
