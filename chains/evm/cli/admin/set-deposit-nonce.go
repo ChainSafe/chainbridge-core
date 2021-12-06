@@ -76,7 +76,7 @@ Set Deposit Nonce
 Domain ID: %v
 Deposit Nonce: %v
 Bridge Address: %s`, DomainID, DepositNonce, Bridge)
-	_, err := contract.SetDepositNonce(DomainID, DepositNonce, transactor.TransactOptions{})
+	_, err := contract.SetDepositNonce(DomainID, DepositNonce, transactor.TransactOptions{GasLimit: gasLimit})
 	if err != nil {
 		return err
 	}

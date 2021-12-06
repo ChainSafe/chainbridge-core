@@ -75,8 +75,13 @@ func ProcessSetBurnFlags(cmd *cobra.Command, args []string) {
 	tokenContractAddr = common.HexToAddress(TokenContract)
 }
 func SetBurnCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
-	log.Info().Msgf("Setting contract %s as burnable on handler %s", tokenContractAddr.String(), handlerAddr.String())
-	_, err := contract.SetBurnableInput(handlerAddr, tokenContractAddr, transactor.TransactOptions{})
+	log.Info().Msgf(
+		"Setting contract %s as burnable on handler %s",
+		tokenContractAddr.String(), handlerAddr.String(),
+	)
+	_, err := contract.SetBurnableInput(
+		handlerAddr, tokenContractAddr, transactor.TransactOptions{GasLimit: gasLimit},
+	)
 	if err != nil {
 		log.Error().Err(err)
 		return err

@@ -94,11 +94,14 @@ Amount: %s
 Decimals: %v`,
 		Erc20Address, Recipient, Amount, Decimals)
 
-	_, err := contract.ApproveTokens(recipientAddress, realAmount, transactor.TransactOptions{})
+	_, err := contract.ApproveTokens(recipientAddress, realAmount, transactor.TransactOptions{GasLimit: gasLimit})
 	if err != nil {
 		log.Fatal().Err(err)
 		return err
 	}
-	log.Info().Msgf("%s account granted allowance on %v tokens of %s", recipientAddress.String(), Amount, recipientAddress.String())
+	log.Info().Msgf(
+		"%s account granted allowance on %v tokens of %s",
+		recipientAddress.String(), Amount, recipientAddress.String(),
+	)
 	return nil
 }

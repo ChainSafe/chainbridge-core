@@ -90,7 +90,9 @@ Target address: %s
 Bridge address: %s
 `, Handler, ResourceID, Target, Bridge)
 
-	h, err := contract.AdminSetResource(handlerAddr, resourceIdBytesArr, targetContractAddr, transactor.TransactOptions{})
+	h, err := contract.AdminSetResource(
+		handlerAddr, resourceIdBytesArr, targetContractAddr, transactor.TransactOptions{GasLimit: gasLimit},
+	)
 	if err != nil {
 		log.Error().Err(err)
 		return err

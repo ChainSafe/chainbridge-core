@@ -106,7 +106,9 @@ func ProcessWithdrawCmdFlags(cmd *cobra.Command, args []string) error {
 }
 
 func WithdrawCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
-	h, err := contract.Withdraw(handlerAddr, tokenAddr, recipientAddr, realAmount, transactor.TransactOptions{})
+	h, err := contract.Withdraw(
+		handlerAddr, tokenAddr, recipientAddr, realAmount, transactor.TransactOptions{GasLimit: gasLimit},
+	)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("admin withdrawal error: %v", err))
 		return err

@@ -3,7 +3,7 @@ package erc20
 import (
 	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
-	bridge2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
@@ -36,7 +36,7 @@ var depositCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return DepositCmd(cmd, args, bridge2.NewBridgeContract(c, erc20Addr, t))
+		return DepositCmd(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateDepositFlags(cmd, args)
@@ -90,14 +90,19 @@ func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func DepositCmd(cmd *cobra.Command, args []string, contract *bridge2.BridgeContract) error {
-	data := bridge2.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
-	hash, err := contract.Deposit(resourceIdBytesArr, uint8(DomainID), data, transactor.TransactOptions{})
+func DepositCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
+	data := bridge.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
+	hash, err := contract.Deposit(
+		resourceIdBytesArr, uint8(DomainID), data, transactor.TransactOptions{GasLimit: gasLimit},
+	)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit error: %v", err))
 		return err
 	}
 
-	log.Info().Msgf("%s tokens were transferred to %s from %s with hash %s", Amount, recipientAddress.Hex(), senderKeyPair.CommonAddress().String(), hash.Hex())
+	log.Info().Msgf(
+		"%s tokens were transferred to %s from %s with hash %s",
+		Amount, recipientAddress.Hex(), senderKeyPair.CommonAddress().String(), hash.Hex(),
+	)
 	return nil
 }

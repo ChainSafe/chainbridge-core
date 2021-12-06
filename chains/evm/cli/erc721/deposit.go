@@ -97,7 +97,8 @@ func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 
 func DepositCmd(cmd *cobra.Command, args []string, bridgeContract *bridge.BridgeContract) error {
 	txHash, err := bridgeContract.Erc721Deposit(
-		tokenId, Metadata, recipientAddr, resourceId, uint8(destinationID), transactor.TransactOptions{})
+		tokenId, Metadata, recipientAddr, resourceId, uint8(destinationID), transactor.TransactOptions{GasLimit: gasLimit},
+	)
 	if err != nil {
 		return err
 	}

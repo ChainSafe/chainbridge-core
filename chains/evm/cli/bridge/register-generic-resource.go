@@ -122,7 +122,7 @@ func RegisterGenericResource(cmd *cobra.Command, args []string, contract *bridge
 		depositSigBytes,
 		big.NewInt(int64(DepositerOffset)),
 		executeSigBytes,
-		transactor.TransactOptions{},
+		transactor.TransactOptions{GasLimit: gasLimit},
 	)
 	if err != nil {
 		log.Error().Err(err)

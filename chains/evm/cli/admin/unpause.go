@@ -69,7 +69,7 @@ func ProcessUnpauseCmdFlags(cmd *cobra.Command, args []string) {
 }
 
 func UnpauseCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
-	hash, err := contract.Unpause(transactor.TransactOptions{})
+	hash, err := contract.Unpause(transactor.TransactOptions{GasLimit: gasLimit})
 	if err != nil {
 		log.Error().Err(fmt.Errorf("admin unpause error: %v", err))
 		return err

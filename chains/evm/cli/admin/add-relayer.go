@@ -77,6 +77,6 @@ func AddRelayerEVMCMD(cmd *cobra.Command, args []string, contract *bridge.Bridge
 Adding relayer
 Relayer address: %s
 Bridge address: %s`, Relayer, Bridge)
-	_, err := contract.AddRelayer(relayerAddr, transactor.TransactOptions{})
+	_, err := contract.AddRelayer(relayerAddr, transactor.TransactOptions{GasLimit: gasLimit})
 	return err
 }

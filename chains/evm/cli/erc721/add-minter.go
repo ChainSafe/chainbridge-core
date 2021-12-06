@@ -72,7 +72,9 @@ func ProcessAddMinterFlags(cmd *cobra.Command, args []string) error {
 }
 
 func AddMinterCmd(cmd *cobra.Command, args []string, erc721Contract *erc721.ERC721Contract) error {
-	_, err = erc721Contract.AddMinter(minterAddr, transactor.TransactOptions{})
+	_, err = erc721Contract.AddMinter(
+		minterAddr, transactor.TransactOptions{GasLimit: gasLimit},
+	)
 	if err != nil {
 		return err
 	}

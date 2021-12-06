@@ -88,7 +88,9 @@ func ProcessMintFlags(cmd *cobra.Command, args []string) error {
 }
 
 func MintCmd(cmd *cobra.Command, args []string, contract *erc20.ERC20Contract) error {
-	_, err := contract.MintTokens(dstAddress, realAmount, transactor.TransactOptions{})
+	_, err := contract.MintTokens(
+		dstAddress, realAmount, transactor.TransactOptions{GasLimit: gasLimit},
+	)
 	if err != nil {
 		log.Error().Err(err)
 		return err

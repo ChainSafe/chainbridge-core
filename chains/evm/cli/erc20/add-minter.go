@@ -71,7 +71,7 @@ func ProcessAddMinterFlags(cmd *cobra.Command, args []string) {
 }
 
 func AddMinterCmd(cmd *cobra.Command, args []string, contract *erc20.ERC20Contract) error {
-	_, err := contract.AddMinter(minterAddr, transactor.TransactOptions{})
+	_, err := contract.AddMinter(minterAddr, transactor.TransactOptions{GasLimit: gasLimit})
 	if err != nil {
 		log.Error().Err(err)
 		return err

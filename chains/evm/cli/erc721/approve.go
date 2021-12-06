@@ -81,7 +81,9 @@ func ProcessApproveFlags(cmd *cobra.Command, args []string) error {
 }
 
 func ApproveCmd(cmd *cobra.Command, args []string, erc721Contract *erc721.ERC721Contract) error {
-	_, err = erc721Contract.Approve(tokenId, recipientAddr, transactor.TransactOptions{})
+	_, err = erc721Contract.Approve(
+		tokenId, recipientAddr, transactor.TransactOptions{GasLimit: gasLimit},
+	)
 	if err != nil {
 		return err
 	}

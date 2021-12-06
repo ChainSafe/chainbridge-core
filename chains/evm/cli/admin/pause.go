@@ -69,7 +69,7 @@ func ProcessPauseCmdFlags(cmd *cobra.Command, args []string) {
 }
 
 func PauseCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
-	hash, err := contract.Pause(transactor.TransactOptions{})
+	hash, err := contract.Pause(transactor.TransactOptions{GasLimit: gasLimit})
 	if err != nil {
 		log.Error().Err(fmt.Errorf("admin pause error: %v", err))
 		return err
