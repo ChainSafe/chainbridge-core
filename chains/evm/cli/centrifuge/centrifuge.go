@@ -10,7 +10,7 @@ var CentrifugeCmd = &cobra.Command{
 	Use:   "centrifuge",
 	Short: "Centrifuge related instructions",
 	Long:  "Centrifuge related instructions",
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 		// fetch global flag values
 		url, gasLimit, gasPrice, senderKeyPair, err = flags.GlobalFlagValues(cmd)

@@ -7,6 +7,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
+	"github.com/ChainSafe/chainbridge-core/util"
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
@@ -23,6 +24,18 @@ var registerGenericResourceCmd = &cobra.Command{
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return util.CallPersistentPreRun(cmd, args)
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		bridgeContract, err := contracts.InitializeBridgeContract(
+			url, gasLimit, gasPrice, senderKeyPair, bridgeAddr,
+		)
+		if err != nil {
+			return err
+		}
+		return RegisterGenericResource(cmd, args, bridgeContract)
+	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateGenericResourceFlags(cmd, args)
 		if err != nil {
@@ -35,15 +48,6 @@ var registerGenericResourceCmd = &cobra.Command{
 		}
 
 		return nil
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		bridgeContract, err := contracts.InitializeBridgeContract(
-			url, gasLimit, gasPrice, senderKeyPair, bridgeAddr,
-		)
-		if err != nil {
-			return err
-		}
-		return RegisterGenericResource(cmd, args, bridgeContract)
 	},
 }
 

@@ -10,7 +10,7 @@ var BridgeCmd = &cobra.Command{
 	Use:   "bridge",
 	Short: "Bridge-related instructions",
 	Long:  "Bridge-related instructions",
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 		// fetch global flag values
 		url, gasLimit, gasPrice, senderKeyPair, err = flags.GlobalFlagValues(cmd)

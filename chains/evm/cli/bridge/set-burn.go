@@ -7,6 +7,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
+	"github.com/ChainSafe/chainbridge-core/util"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -18,6 +19,9 @@ var setBurnCmd = &cobra.Command{
 	Long:  "Set a token contract as mintable/burnable in a handler",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return util.CallPersistentPreRun(cmd, args)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		bridgeContract, err := contracts.InitializeBridgeContract(

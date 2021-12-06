@@ -10,7 +10,7 @@ var AdminCmd = &cobra.Command{
 	Use:   "admin",
 	Short: "Admin-related instructions",
 	Long:  "Admin-related instructions",
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 		// fetch global flag values
 		url, gasLimit, gasPrice, senderKeyPair, err = flags.GlobalFlagValues(cmd)

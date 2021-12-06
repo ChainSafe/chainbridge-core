@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
+	"github.com/ChainSafe/chainbridge-core/util"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
@@ -18,6 +19,9 @@ var isRelayerCmd = &cobra.Command{
 	Long:  "Check if an address is registered as a relayer",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return util.CallPersistentPreRun(cmd, args)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		bridgeContract, err := contracts.InitializeBridgeContract(

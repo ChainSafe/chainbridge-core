@@ -23,7 +23,7 @@ func InitializeErc20Contract(
 	senderKeyPair *secp256k1.Keypair,
 	erc20ContractAddress common.Address,
 ) (*erc20.ERC20Contract, error) {
-	ethClient, trans, err := initializeClientAndTransactor(url, gasLimit, gasPrice, senderKeyPair)
+	ethClient, trans, err := InitializeClientAndTransactor(url, gasLimit, gasPrice, senderKeyPair)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func InitializeErc721Contract(
 	senderKeyPair *secp256k1.Keypair,
 	erc721ContractAddress common.Address,
 ) (*erc721.ERC721Contract, error) {
-	ethClient, trans, err := initializeClientAndTransactor(url, gasLimit, gasPrice, senderKeyPair)
+	ethClient, trans, err := InitializeClientAndTransactor(url, gasLimit, gasPrice, senderKeyPair)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func InitializeAssetStoreContract(
 	senderKeyPair *secp256k1.Keypair,
 	assetStoreContractAddress common.Address,
 ) (*centrifuge.AssetStoreContract, error) {
-	ethClient, trans, err := initializeClientAndTransactor(url, gasLimit, gasPrice, senderKeyPair)
+	ethClient, trans, err := InitializeClientAndTransactor(url, gasLimit, gasPrice, senderKeyPair)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func InitializeBridgeContract(
 	senderKeyPair *secp256k1.Keypair,
 	bridgeContractAddress common.Address,
 ) (*bridge.BridgeContract, error) {
-	ethClient, trans, err := initializeClientAndTransactor(url, gasLimit, gasPrice, senderKeyPair)
+	ethClient, trans, err := InitializeClientAndTransactor(url, gasLimit, gasPrice, senderKeyPair)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func InitializeBridgeContract(
 	return bridgeContract, nil
 }
 
-func initializeClientAndTransactor(
+func InitializeClientAndTransactor(
 	url string,
 	gasLimit uint64,
 	gasPrice *big.Int,

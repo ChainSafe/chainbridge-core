@@ -10,7 +10,7 @@ var ERC20Cmd = &cobra.Command{
 	Use:   "erc20",
 	Short: "ERC20-related instructions",
 	Long:  "ERC20-related instructions",
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 		// fetch global flag values
 		url, gasLimit, gasPrice, senderKeyPair, err = flags.GlobalFlagValues(cmd)

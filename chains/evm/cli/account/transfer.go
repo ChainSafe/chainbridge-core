@@ -4,16 +4,14 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/contracts"
+	"github.com/ChainSafe/chainbridge-core/util"
 	"math/big"
 	"os"
 	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -23,13 +21,15 @@ var transferBaseCurrencyCmd = &cobra.Command{
 	Use:   "transfer",
 	Short: "Transfer base currency",
 	Long:  "The generate subcommand is used to transfer the base currency",
-	PreRun: func(cmd *cobra.Command, args []string) {
-		confirmTransfer(cmd, args)
-		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
-	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return TransferBaseCurrency(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+		_, t, err := contracts.InitializeClientAndTransactor(url, gasLimit, gasPrice, senderKeyPair)
+		if err != nil {
+			return err
+		}
+		return TransferBaseCurrency(cmd, args, t)
+	},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return util.CallPersistentPreRun(cmd, args)
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateTransferBaseCurrencyFlags(cmd, args)
@@ -66,29 +66,13 @@ func ProcessTransferBaseCurrencyFlags(cmd *cobra.Command, args []string) error {
 	weiAmount, err = client.UserAmountToWei(Amount, decimals)
 	return err
 }
-func TransferBaseCurrency(cmd *cobra.Command, args []string, txFabric client.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
-
-	// fetch global flag values
-	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
-	if err != nil {
-		return fmt.Errorf("could not get global flags: %v", err)
-	}
-
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
-		return err
-	}
-
-	gasPricer.SetClient(ethClient)
-	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-	txHash, err := client.Transact(ethClient, txFabric, gasPricer, &recipientAddress, nil, gasLimit, weiAmount)
+func TransferBaseCurrency(cmd *cobra.Command, args []string, t transactor.Transactor) error {
+	hash, err := t.Transact(&recipientAddress, nil, transactor.TransactOptions{Value: weiAmount})
 	if err != nil {
 		log.Error().Err(fmt.Errorf("base currency deposit error: %v", err))
 		return err
 	}
-
-	log.Debug().Msgf("base currency transaction hash: %s", txHash.Hex())
+	log.Debug().Msgf("base currency transaction hash: %s", hash.Hex())
 
 	log.Info().Msgf("%s tokens were transferred to %s from %s", Amount, recipientAddress.Hex(), senderKeyPair.CommonAddress().String())
 	return nil
