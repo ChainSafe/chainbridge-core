@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -76,16 +75,4 @@ func (c *ERC20Contract) AddMinter(
 		return nil, err
 	}
 	return c.ExecuteTransaction("grantRole", opts, role, minter)
-}
-
-func PrepareRegisterGenericResourceInput(handler common.Address, resourceID types.ResourceID, addr common.Address, depositSig, executeSig [4]byte) ([]byte, error) {
-	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
-	if err != nil {
-		return []byte{}, err // Not sure what status to use here
-	}
-	input, err := a.Pack("adminSetGenericResource", handler, resourceID, addr, depositSig, executeSig)
-	if err != nil {
-		return []byte{}, err
-	}
-	return input, nil
 }
