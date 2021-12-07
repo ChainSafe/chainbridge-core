@@ -44,6 +44,7 @@ func (c *Contract) ContractAddress() *common.Address {
 func (c *Contract) PackMethod(method string, args ...interface{}) ([]byte, error) {
 	input, err := c.ABI.Pack(method, args...)
 	if err != nil {
+		log.Error().Err(fmt.Errorf("pack method error: %v", err))
 		return []byte{}, err
 	}
 	return input, nil
@@ -61,15 +62,20 @@ func (c *Contract) UnpackResult(method string, output []byte) ([]interface{}, er
 func (c *Contract) ExecuteTransaction(method string, opts transactor.TransactOptions, args ...interface{}) (*common.Hash, error) {
 	input, err := c.PackMethod(method, args...)
 	if err != nil {
-		log.Error().Err(err)
 		return nil, err
 	}
 	h, err := c.Transact(&c.contractAddress, input, opts)
 	if err != nil {
-		log.Error().Err(err).Msg(method)
+		log.Error().
+			Str("contract", c.contractAddress.String()).
+			Err(err).
+			Msgf("error on executing %s", method)
 		return nil, err
 	}
-	log.Debug().Str("hash", h.String()).Msgf("%s sent", method)
+	log.Debug().
+		Str("txHash", h.String()).
+		Str("contract", c.contractAddress.String()).
+		Msgf("%s executed", method)
 	return h, err
 }
 
@@ -81,6 +87,10 @@ func (c *Contract) CallContract(method string, args ...interface{}) ([]interface
 	msg := ethereum.CallMsg{From: common.Address{}, To: &c.contractAddress, Data: input}
 	out, err := c.client.CallContract(context.TODO(), client.ToCallArg(msg), nil)
 	if err != nil {
+		log.Error().
+			Str("contract", c.contractAddress.String()).
+			Err(err).
+			Msgf("error on calling %s", method)
 		return nil, err
 	}
 	if len(out) == 0 {
@@ -91,6 +101,9 @@ func (c *Contract) CallContract(method string, args ...interface{}) ([]interface
 			return nil, fmt.Errorf("no code at provided address %s", c.contractAddress.String())
 		}
 	}
+	log.Debug().
+		Str("contract", c.contractAddress.String()).
+		Msgf("%s called", method)
 	return c.UnpackResult(method, out)
 }
 
@@ -110,5 +123,9 @@ func (c Contract) DeployContract(params ...interface{}) (common.Address, error) 
 	}
 	address := crypto.CreateAddress(c.client.From(), tx.Nonce())
 	c.contractAddress = address
+	log.Debug().
+		Str("txHash", hash.String()).
+		Str("deployedAddress", address.String()).
+		Msgf("successful contract deployment")
 	return address, nil
 }

@@ -31,8 +31,10 @@ func NewErc721Contract(
 	return &ERC721Contract{contracts.NewContract(erc721ContractAddress, a, b, client, t)}
 }
 
-// Add new minter for ERC721 contract
-func (c *ERC721Contract) AddMinter(minter common.Address, opts transactor.TransactOptions) (*common.Hash, error) {
+func (c *ERC721Contract) AddMinter(
+	minter common.Address, opts transactor.TransactOptions,
+) (*common.Hash, error) {
+	log.Debug().Msgf("Adding new minter %s", minter.String())
 	role, err := c.MinterRole()
 	if err != nil {
 		return nil, err
@@ -40,15 +42,22 @@ func (c *ERC721Contract) AddMinter(minter common.Address, opts transactor.Transa
 	return c.ExecuteTransaction("grantRole", opts, role, minter)
 }
 
-func (c *ERC721Contract) Approve(tokenId *big.Int, recipient common.Address, opts transactor.TransactOptions) (*common.Hash, error) {
+func (c *ERC721Contract) Approve(
+	tokenId *big.Int, recipient common.Address, opts transactor.TransactOptions,
+) (*common.Hash, error) {
+	log.Debug().Msgf("Approving %s token for %s", tokenId.String(), recipient.String())
 	return c.ExecuteTransaction("approve", opts, recipient, tokenId)
 }
 
-func (c *ERC721Contract) Mint(tokenId *big.Int, metadata string, destination common.Address, opts transactor.TransactOptions) (*common.Hash, error) {
+func (c *ERC721Contract) Mint(
+	tokenId *big.Int, metadata string, destination common.Address, opts transactor.TransactOptions,
+) (*common.Hash, error) {
+	log.Debug().Msgf("Minting tokens %s to %s", tokenId.String(), destination.String())
 	return c.ExecuteTransaction("mint", opts, destination, tokenId, metadata)
 }
 
 func (c *ERC721Contract) Owner(tokenId *big.Int) (*common.Address, error) {
+	log.Debug().Msgf("Getting owner of %s", tokenId.String())
 	res, err := c.CallContract("ownerOf", tokenId)
 	if err != nil {
 		return nil, err

@@ -31,6 +31,7 @@ func NewERC20Contract(
 }
 
 func (c *ERC20Contract) GetBalance(address common.Address) (*big.Int, error) {
+	log.Debug().Msgf("Getting balance for %s", address.String())
 	res, err := c.CallContract("balanceOf", address)
 	if err != nil {
 		return nil, err
@@ -44,7 +45,7 @@ func (c *ERC20Contract) MintTokens(
 	amount *big.Int,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
-	log.Debug().Msgf("Minting tokens %s %s", to.String(), amount.String())
+	log.Debug().Msgf("Minting %s tokens to %s", amount.String(), to.String())
 	return c.ExecuteTransaction("mint", opts, to, amount)
 }
 
@@ -53,7 +54,7 @@ func (c *ERC20Contract) ApproveTokens(
 	amount *big.Int,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
-	log.Debug().Msgf("Approving tokens %s %s", target.String(), amount.String())
+	log.Debug().Msgf("Approving %s tokens for %s", target.String(), amount.String())
 	return c.ExecuteTransaction("approve", opts, target, amount)
 }
 
@@ -70,6 +71,7 @@ func (c *ERC20Contract) AddMinter(
 	minter common.Address,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
+	log.Debug().Msgf("Adding new minter %s", minter.String())
 	role, err := c.MinterRole()
 	if err != nil {
 		return nil, err
