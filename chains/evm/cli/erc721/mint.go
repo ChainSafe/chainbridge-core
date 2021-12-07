@@ -45,9 +45,9 @@ func init() {
 func BindMintFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Erc721Address, "contract", "", "ERC721 contract address")
 	cmd.Flags().StringVar(&DstAddress, "recipient", "", "Recipient address")
-	cmd.Flags().StringVar(&TokenId, "token-id", "", "ERC721 token ID")
+	cmd.Flags().StringVar(&TokenId, "token", "", "ERC721 token ID")
 	cmd.Flags().StringVar(&Metadata, "metadata", "", "ERC721 token metadata")
-	flags.MarkFlagsAsRequired(cmd, "contract", "recipient", "token-id", "metadata")
+	flags.MarkFlagsAsRequired(cmd, "contract", "recipient", "token", "metadata")
 }
 
 func ValidateMintFlags(cmd *cobra.Command, args []string) error {

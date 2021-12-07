@@ -45,13 +45,13 @@ var registerGenericResourceCmd = &cobra.Command{
 
 func BindRegisterGenericResourceFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Handler, "handler", "", "Handler contract address")
-	cmd.Flags().StringVar(&ResourceID, "resource-id", "", "Resource ID to query")
+	cmd.Flags().StringVar(&ResourceID, "resource", "", "Resource ID to query")
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	cmd.Flags().StringVar(&Target, "target", "", "Contract address or hash storage to be registered")
 	cmd.Flags().StringVar(&Deposit, "deposit", "0x00000000", "Deposit function signature")
 	cmd.Flags().StringVar(&Execute, "execute", "0x00000000", "Execute proposal function signature")
 	cmd.Flags().BoolVar(&Hash, "hash", false, "Treat signature inputs as function prototype strings, hash and take the first 4 bytes")
-	flags.MarkFlagsAsRequired(cmd, "handler", "resource-id", "bridge", "target")
+	flags.MarkFlagsAsRequired(cmd, "handler", "resource", "bridge", "target")
 }
 
 func init() {

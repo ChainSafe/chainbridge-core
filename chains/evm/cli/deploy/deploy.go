@@ -64,7 +64,7 @@ func BindDeployEVMFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&Bridge, "bridge", false, "Deploy bridge")
 	cmd.Flags().StringVar(&BridgeAddress, "bridge-address", "", "Bridge contract address. Should be provided if handlers are deployed separately")
 	cmd.Flags().BoolVar(&DeployAll, "all", false, "Deploy all")
-	cmd.Flags().Uint8Var(&DomainId, "domain-id", 1, "Domain ID for the instance")
+	cmd.Flags().Uint8Var(&DomainId, "domain", 1, "Domain ID for the instance")
 	cmd.Flags().BoolVar(&Erc20, "erc20", false, "Deploy ERC20")
 	cmd.Flags().BoolVar(&Erc20Handler, "erc20-handler", false, "Deploy ERC20 handler")
 	cmd.Flags().StringVar(&Erc20Name, "erc20-name", "", "ERC20 contract name")
@@ -87,7 +87,7 @@ func init() {
 func ValidateDeployFlags(cmd *cobra.Command, args []string) error {
 	deployments = make([]string, 0)
 	if DeployAll {
-		flags.MarkFlagsAsRequired(cmd, "relayer-threshold", "domain-id", "fee", "erc20-symbol", "erc20-name")
+		flags.MarkFlagsAsRequired(cmd, "relayer-threshold", "domain", "fee", "erc20-symbol", "erc20-name")
 		deployments = append(deployments, []string{"bridge", "erc20-handler", "erc721-handler", "generic-handler", "erc20", "erc721"}...)
 	} else {
 		if Bridge {
