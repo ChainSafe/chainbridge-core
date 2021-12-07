@@ -76,7 +76,7 @@ func (c *Contract) ExecuteTransaction(method string, opts transactor.TransactOpt
 	log.Debug().
 		Str("txHash", h.String()).
 		Str("contract", c.contractAddress.String()).
-		Msgf("%s executed", method)
+		Msgf("method %s executed", method)
 	return h, err
 }
 
@@ -104,7 +104,7 @@ func (c *Contract) CallContract(method string, args ...interface{}) ([]interface
 	}
 	log.Debug().
 		Str("contract", c.contractAddress.String()).
-		Msgf("%s called", method)
+		Msgf("method %s called", method)
 	return c.UnpackResult(method, out)
 }
 

@@ -57,14 +57,6 @@ func (s *ContractTestSuite) TestContract_PackMethod_InvalidRequest_Fail() {
 	s.NotNil(err)
 }
 
-// TODO
-//func (s *ContractTestSuite) TestContract_UnpackResult_ValidRequest_Success() {
-//	rawValidApproveData := common.Hex2Bytes("095ea7b30000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a")
-//	res, err := s.contract.UnpackResult("approve", rawValidApproveData)
-//	s.NotNil(res)
-//	s.Nil(err)
-//}
-
 func (s *ContractTestSuite) TestContract_UnpackResult_InvalidRequest_Fail() {
 	rawInvalidApproveData := common.Hex2Bytes("095ea7b30000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a")
 	res, err := s.contract.UnpackResult("approve", rawInvalidApproveData)
