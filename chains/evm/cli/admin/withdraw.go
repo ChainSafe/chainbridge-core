@@ -3,9 +3,9 @@ package admin
 import (
 	"errors"
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	util2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/util"
@@ -98,7 +98,7 @@ func ProcessWithdrawCmdFlags(cmd *cobra.Command, args []string) error {
 	tokenAddr = common.HexToAddress(Token)
 	recipientAddr = common.HexToAddress(Recipient)
 	decimals := big.NewInt(int64(Decimals))
-	realAmount, err = client.UserAmountToWei(Amount, decimals)
+	realAmount, err = util2.UserAmountToWei(Amount, decimals)
 	if err != nil {
 		return err
 	}

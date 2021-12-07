@@ -3,7 +3,7 @@ package flags
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
@@ -71,7 +71,7 @@ func ProcessResourceID(resourceID string) (types.ResourceID, error) {
 	if err != nil {
 		return [32]byte{}, err
 	}
-	return client.SliceTo32Bytes(resourceIdBytes), nil
+	return util.SliceTo32Bytes(resourceIdBytes), nil
 }
 
 func MarkFlagsAsRequired(cmd *cobra.Command, flags ...string) {

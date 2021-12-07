@@ -3,8 +3,8 @@ package listener
 import (
 	"context"
 	"errors"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"math/big"
 	"strings"
 
@@ -60,7 +60,7 @@ func (e *ETHEventHandler) matchResourceIDToHandlerAddress(resourceID types.Resou
 		return common.Address{}, err
 	}
 	msg := ethereum.CallMsg{From: common.Address{}, To: &e.bridgeAddress, Data: input}
-	out, err := e.client.CallContract(context.TODO(), client.ToCallArg(msg), nil)
+	out, err := e.client.CallContract(context.TODO(), util.ToCallArg(msg), nil)
 	if err != nil {
 		return common.Address{}, err
 	}

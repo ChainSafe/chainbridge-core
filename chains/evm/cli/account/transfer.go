@@ -2,8 +2,8 @@ package account
 
 import (
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	util2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
@@ -64,7 +64,7 @@ func ProcessTransferBaseCurrencyFlags(cmd *cobra.Command, args []string) error {
 	var err error
 	recipientAddress = common.HexToAddress(Recipient)
 	decimals := big.NewInt(int64(Decimals))
-	weiAmount, err = client.UserAmountToWei(Amount, decimals)
+	weiAmount, err = util2.UserAmountToWei(Amount, decimals)
 	return err
 }
 func TransferBaseCurrency(cmd *cobra.Command, args []string, t transactor.Transactor) error {

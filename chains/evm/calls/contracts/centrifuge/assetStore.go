@@ -4,12 +4,13 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/rs/zerolog/log"
 	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/rs/zerolog/log"
 )
 
 type AssetStoreContract struct {
@@ -21,15 +22,15 @@ func NewAssetStoreContract(
 	assetStoreContractAddress common.Address,
 	transactor transactor.Transactor,
 ) *AssetStoreContract {
-	a, err := abi.JSON(strings.NewReader(consts.CentrifugeAssetStoreABI))
-	if err != nil {
-		log.Fatal().Msg("Unable to load AssetStore ABI") // TODO
-	}
+	a, _ := abi.JSON(strings.NewReader(consts.CentrifugeAssetStoreABI))
 	b := common.FromHex(consts.CentrifugeAssetStoreBin)
 	return &AssetStoreContract{contracts.NewContract(assetStoreContractAddress, a, b, client, transactor)}
 }
 
 func (c AssetStoreContract) IsCentrifugeAssetStored(hash [32]byte) (bool, error) {
+	log.Debug().
+		Str("hash", hexutil.Encode(hash[:])).
+		Msgf("Getting is centrifuge asset stored")
 	res, err := c.CallContract("_assetsStored", hash)
 	if err != nil {
 		return false, err

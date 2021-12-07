@@ -5,8 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"math/big"
 	"strings"
 
@@ -67,7 +67,7 @@ func (mh *EVMMessageHandler) matchResourceIDToHandlerAddress(resourceID types.Re
 		return common.Address{}, err
 	}
 	msg := ethereum.CallMsg{From: common.Address{}, To: &mh.bridgeAddress, Data: input}
-	out, err := mh.client.CallContract(context.TODO(), client.ToCallArg(msg), nil)
+	out, err := mh.client.CallContract(context.TODO(), util.ToCallArg(msg), nil)
 	if err != nil {
 		return common.Address{}, err
 	}

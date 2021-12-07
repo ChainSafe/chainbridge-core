@@ -22,11 +22,7 @@ func NewErc721Contract(
 	erc721ContractAddress common.Address,
 	t transactor.Transactor,
 ) *ERC721Contract {
-	// load ABI
-	a, err := abi.JSON(strings.NewReader(consts.ERC721PresetMinterPauserABI))
-	if err != nil {
-		log.Fatal().Msg("Unable to load ABI") // TODO
-	}
+	a, _ := abi.JSON(strings.NewReader(consts.ERC721PresetMinterPauserABI))
 	b := common.FromHex(consts.ERC721PresetMinterPauserBin)
 	return &ERC721Contract{contracts.NewContract(erc721ContractAddress, a, b, client, t)}
 }

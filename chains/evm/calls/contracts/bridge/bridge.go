@@ -7,7 +7,9 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/deposit"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"math/big"
+	"strconv"
 	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
@@ -27,10 +29,7 @@ func NewBridgeContract(
 	bridgeContractAddress common.Address,
 	transactor transactor.Transactor,
 ) *BridgeContract {
-	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
-	if err != nil {
-		log.Fatal().Msg("Unable to load BridgeABI") // TODO
-	}
+	a, _ := abi.JSON(strings.NewReader(consts.BridgeABI))
 	b := common.FromHex(consts.BridgeBin)
 	return &BridgeContract{contracts.NewContract(bridgeContractAddress, a, b, client, transactor)}
 }
@@ -39,6 +38,7 @@ func (c *BridgeContract) AddRelayer(
 	relayerAddr common.Address,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
+	log.Debug().Msgf("Adding new relayer %s", relayerAddr.String())
 	return c.ExecuteTransaction(
 		"adminAddRelayer",
 		opts,
@@ -55,6 +55,7 @@ func (c *BridgeContract) AdminSetGenericResource(
 	executeFunctionSig [4]byte,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
+	log.Debug().Msgf("Setting generic resource %s", hexutil.Encode(rID[:]))
 	return c.ExecuteTransaction(
 		"adminSetGenericResource",
 		opts,
@@ -64,14 +65,15 @@ func (c *BridgeContract) AdminSetGenericResource(
 
 func (c *BridgeContract) AdminSetResource(
 	handlerAddr common.Address,
-	resourceIdBytesArr types.ResourceID,
+	rID types.ResourceID,
 	targetContractAddr common.Address,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
+	log.Debug().Msgf("Setting resource %s", hexutil.Encode(rID[:]))
 	return c.ExecuteTransaction(
 		"adminSetResource",
 		opts,
-		handlerAddr, resourceIdBytesArr, targetContractAddr,
+		handlerAddr, rID, targetContractAddr,
 	)
 }
 
@@ -80,6 +82,7 @@ func (c *BridgeContract) SetDepositNonce(
 	depositNonce uint64,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
+	log.Debug().Msgf("Setting deposit nonce %d for %d", depositNonce, domainId)
 	return c.ExecuteTransaction(
 		"adminSetDepositNonce",
 		opts,
@@ -91,6 +94,7 @@ func (c *BridgeContract) SetThresholdInput(
 	threshold uint64,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
+	log.Debug().Msgf("Setting threshold %d", threshold)
 	return c.ExecuteTransaction(
 		"adminChangeRelayerThreshold",
 		opts,
@@ -103,6 +107,7 @@ func (c *BridgeContract) SetBurnableInput(
 	tokenContractAddr common.Address,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
+	log.Debug().Msgf("Setting burnable input for %s", tokenContractAddr.String())
 	return c.ExecuteTransaction(
 		"adminSetBurnable",
 		opts,
@@ -130,13 +135,17 @@ func (c BridgeContract) Erc20Deposit(
 	destDomainID uint8,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
+	log.Debug().
+		Str("recipient", recipient.String()).
+		Str("resourceID", hexutil.Encode(resourceID[:])).
+		Str("amount", amount.String()).
+		Msgf("ERC20 deposit")
 	data := deposit.ConstructErc20DepositData(recipient.Bytes(), amount)
 	txHash, err := c.Deposit(resourceID, destDomainID, data, opts)
 	if err != nil {
 		log.Error().Err(err)
 		return nil, err
 	}
-	// TODO - log success
 	return txHash, err
 }
 
@@ -148,13 +157,17 @@ func (c *BridgeContract) Erc721Deposit(
 	destDomainID uint8,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
+	log.Debug().
+		Str("recipient", recipient.String()).
+		Str("resourceID", hexutil.Encode(resourceID[:])).
+		Str("tokenID", tokenId.String()).
+		Msgf("ERC721 deposit")
 	data := deposit.ConstructErc721DepositData(recipient.Bytes(), tokenId, []byte(metadata))
 	txHash, err := c.Deposit(resourceID, destDomainID, data, opts)
 	if err != nil {
 		log.Error().Err(err)
 		return nil, err
 	}
-	// TODO - log success
 	return txHash, err
 }
 
@@ -164,13 +177,15 @@ func (c BridgeContract) GenericDeposit(
 	destDomainID uint8,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
+	log.Debug().
+		Str("resourceID", hexutil.Encode(resourceID[:])).
+		Msgf("Generic deposit")
 	data := deposit.ConstructGenericDepositData(metadata)
 	txHash, err := c.Deposit(resourceID, destDomainID, data, opts)
 	if err != nil {
 		log.Error().Err(err)
 		return nil, err
 	}
-	// TODO - log success
 	return txHash, err
 }
 
@@ -178,6 +193,11 @@ func (c *BridgeContract) ExecuteProposal(
 	proposal *proposal.Proposal,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
+	log.Debug().
+		Str("depositNonce", strconv.FormatUint(proposal.DepositNonce, 10)).
+		Str("resourceID", hexutil.Encode(proposal.ResourceId[:])).
+		Str("handler", proposal.HandlerAddress.String()).
+		Msgf("Execute proposal")
 	return c.ExecuteTransaction(
 		"executeProposal",
 		opts,
@@ -189,6 +209,11 @@ func (c *BridgeContract) VoteProposal(
 	proposal *proposal.Proposal,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
+	log.Debug().
+		Str("depositNonce", strconv.FormatUint(proposal.DepositNonce, 10)).
+		Str("resourceID", hexutil.Encode(proposal.ResourceId[:])).
+		Str("handler", proposal.HandlerAddress.String()).
+		Msgf("Vote proposal")
 	return c.ExecuteTransaction(
 		"voteProposal",
 		opts,
@@ -197,6 +222,11 @@ func (c *BridgeContract) VoteProposal(
 }
 
 func (c *BridgeContract) SimulateVoteProposal(proposal *proposal.Proposal) error {
+	log.Debug().
+		Str("depositNonce", strconv.FormatUint(proposal.DepositNonce, 10)).
+		Str("resourceID", hexutil.Encode(proposal.ResourceId[:])).
+		Str("handler", proposal.HandlerAddress.String()).
+		Msgf("Simulate vote proposal")
 	_, err := c.CallContract(
 		"voteProposal",
 		proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data,
@@ -205,6 +235,7 @@ func (c *BridgeContract) SimulateVoteProposal(proposal *proposal.Proposal) error
 }
 
 func (c *BridgeContract) Pause(opts transactor.TransactOptions) (*common.Hash, error) {
+	log.Debug().Msg("Pause transfers")
 	return c.ExecuteTransaction(
 		"adminPauseTransfers",
 		opts,
@@ -212,13 +243,13 @@ func (c *BridgeContract) Pause(opts transactor.TransactOptions) (*common.Hash, e
 }
 
 func (c *BridgeContract) Unpause(opts transactor.TransactOptions) (*common.Hash, error) {
+	log.Debug().Msg("Unpause transfers")
 	return c.ExecuteTransaction(
 		"adminUnpauseTransfers",
 		opts,
 	)
 }
 
-// public function to Withdraw funds from ERC safes
 func (c *BridgeContract) Withdraw(
 	handlerAddress,
 	tokenAddress,
@@ -239,6 +270,7 @@ func (c *BridgeContract) Withdraw(
 }
 
 func (c *BridgeContract) GetThreshold() (uint8, error) {
+	log.Debug().Msg("Getting threshold")
 	res, err := c.CallContract("_relayerThreshold")
 	if err != nil {
 		return 0, err
@@ -248,6 +280,7 @@ func (c *BridgeContract) GetThreshold() (uint8, error) {
 }
 
 func (c *BridgeContract) IsRelayer(relayerAddress common.Address) (bool, error) {
+	log.Debug().Msgf("Getting is %s a relayer", relayerAddress.String())
 	res, err := c.CallContract("isRelayer", relayerAddress)
 	if err != nil {
 		return false, err
@@ -257,6 +290,11 @@ func (c *BridgeContract) IsRelayer(relayerAddress common.Address) (bool, error) 
 }
 
 func (c *BridgeContract) ProposalStatus(p *proposal.Proposal) (message.ProposalStatus, error) {
+	log.Debug().
+		Str("depositNonce", strconv.FormatUint(p.DepositNonce, 10)).
+		Str("resourceID", hexutil.Encode(p.ResourceId[:])).
+		Str("handler", p.HandlerAddress.String()).
+		Msg("Getting proposal status")
 	res, err := c.CallContract("getProposal", p.Source, p.DepositNonce, p.GetDataHash())
 	if err != nil {
 		return message.ProposalStatus{}, err
@@ -266,6 +304,11 @@ func (c *BridgeContract) ProposalStatus(p *proposal.Proposal) (message.ProposalS
 }
 
 func (c *BridgeContract) IsProposalVotedBy(by common.Address, p *proposal.Proposal) (bool, error) {
+	log.Debug().
+		Str("depositNonce", strconv.FormatUint(p.DepositNonce, 10)).
+		Str("resourceID", hexutil.Encode(p.ResourceId[:])).
+		Str("handler", p.HandlerAddress.String()).
+		Msgf("Getting is proposal voted by %s", by.String())
 	res, err := c.CallContract("_hasVotedOnProposal", idAndNonce(p.Source, p.DepositNonce), p.GetDataHash(), by)
 	if err != nil {
 		return false, err

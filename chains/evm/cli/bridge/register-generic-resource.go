@@ -3,9 +3,9 @@ package bridge
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	util2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/util"
@@ -99,11 +99,11 @@ func ProcessGenericResourceFlags(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resourceIdBytesArr = client.SliceTo32Bytes(resourceIdBytes)
+	resourceIdBytesArr = util2.SliceTo32Bytes(resourceIdBytes)
 
 	if Hash {
-		depositSigBytes = client.GetSolidityFunctionSig([]byte(Deposit))
-		executeSigBytes = client.GetSolidityFunctionSig([]byte(Execute))
+		depositSigBytes = util2.GetSolidityFunctionSig([]byte(Deposit))
+		executeSigBytes = util2.GetSolidityFunctionSig([]byte(Execute))
 	} else {
 		copy(depositSigBytes[:], []byte(Deposit)[:])
 		copy(executeSigBytes[:], []byte(Execute)[:])

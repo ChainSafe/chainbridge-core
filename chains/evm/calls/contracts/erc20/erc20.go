@@ -22,10 +22,7 @@ func NewERC20Contract(
 	erc20ContractAddress common.Address,
 	transactor transactor.Transactor,
 ) *ERC20Contract {
-	a, err := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
-	if err != nil {
-		log.Fatal().Msg("Unable to load BridgeABI") // TODO
-	}
+	a, _ := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
 	b := common.FromHex(consts.ERC20HandlerBin)
 	return &ERC20Contract{contracts.NewContract(erc20ContractAddress, a, b, client, transactor)}
 }

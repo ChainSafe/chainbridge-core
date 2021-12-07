@@ -19,7 +19,6 @@ func NewERC721HandlerContract(
 	erc721HandlerContractAddress common.Address,
 	t transactor.Transactor,
 ) *ERC721HandlerContract {
-	// load ABI
 	a, _ := abi.JSON(strings.NewReader(consts.ERC721HandlerABI))
 	b := common.FromHex(consts.ERC721HandlerBin)
 	return &ERC721HandlerContract{contracts.NewContract(erc721HandlerContractAddress, a, b, client, t)}

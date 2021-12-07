@@ -7,6 +7,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/centrifuge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc721"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	substrateTypes "github.com/centrifuge/go-substrate-rpc-client/types"
 	"math/big"
 	"time"
@@ -102,9 +103,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		panic(err)
 	}
 
-	s.erc20RID = client.SliceTo32Bytes(append(common.LeftPadBytes(config.Erc20Addr.Bytes(), 31), uint8(0)))
-	s.genericRID = client.SliceTo32Bytes(append(common.LeftPadBytes(config.GenericHandlerAddr.Bytes(), 31), uint8(1)))
-	s.erc721RID = client.SliceTo32Bytes(append(common.LeftPadBytes(config.Erc721Addr.Bytes(), 31), uint8(2)))
+	s.erc20RID = util.SliceTo32Bytes(append(common.LeftPadBytes(config.Erc20Addr.Bytes(), 31), uint8(0)))
+	s.genericRID = util.SliceTo32Bytes(append(common.LeftPadBytes(config.GenericHandlerAddr.Bytes(), 31), uint8(1)))
+	s.erc721RID = util.SliceTo32Bytes(append(common.LeftPadBytes(config.Erc721Addr.Bytes(), 31), uint8(2)))
 }
 func (s *IntegrationTestSuite) TearDownSuite() {}
 func (s *IntegrationTestSuite) SetupTest()     {}

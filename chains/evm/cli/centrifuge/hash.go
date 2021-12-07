@@ -3,8 +3,8 @@ package centrifuge
 import (
 	"errors"
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/centrifuge"
+	util2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/util"
@@ -72,7 +72,7 @@ func ValidateGetHashFlags(cmd *cobra.Command, args []string) error {
 
 func ProcessGetHashFlags(cmd *cobra.Command, args []string) error {
 	storeAddr = common.HexToAddress(Address)
-	byteHash = client.SliceTo32Bytes([]byte(Hash))
+	byteHash = util2.SliceTo32Bytes([]byte(Hash))
 
 	return nil
 }

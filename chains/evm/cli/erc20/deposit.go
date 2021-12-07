@@ -2,10 +2,10 @@ package erc20
 
 import (
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/deposit"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	util2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/util"
@@ -83,7 +83,7 @@ func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 	recipientAddress = common.HexToAddress(Recipient)
 	decimals := big.NewInt(int64(Decimals))
 	bridgeAddr = common.HexToAddress(Bridge)
-	realAmount, err = client.UserAmountToWei(Amount, decimals)
+	realAmount, err = util2.UserAmountToWei(Amount, decimals)
 	if err != nil {
 		return err
 	}
