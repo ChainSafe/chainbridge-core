@@ -19,10 +19,10 @@ var cancelProposalCmd = &cobra.Command{
 
 func BindCancelProposalFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
-	cmd.Flags().StringVar(&DataHash, "dataHash", "", "Hash of proposal metadata")
-	cmd.Flags().Uint64Var(&DomainID, "domainId", 0, "Domain ID of proposal to cancel")
-	cmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "Deposit nonce of proposal to cancel")
-	flags.MarkFlagsAsRequired(cmd, "bridge", "dataHash", "domainId", "depositNonce")
+	cmd.Flags().StringVar(&DataHash, "data-hash", "", "Hash of proposal metadata")
+	cmd.Flags().Uint64Var(&DomainID, "domain-id", 0, "Domain ID of proposal to cancel")
+	cmd.Flags().Uint64Var(&DepositNonce, "deposit-nonce", 0, "Deposit nonce of proposal to cancel")
+	flags.MarkFlagsAsRequired(cmd, "bridge", "data-hash", "domain-id", "deposit-nonce")
 }
 
 func init() {

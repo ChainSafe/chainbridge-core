@@ -39,10 +39,10 @@ var setDepositNonceCmd = &cobra.Command{
 }
 
 func BindSetDepositNonceFlags(cmd *cobra.Command) {
-	cmd.Flags().Uint8Var(&DomainID, "domainId", 0, "Domain ID of chain")
-	cmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "Deposit nonce to set (does not decrement)")
+	cmd.Flags().Uint8Var(&DomainID, "domain-id", 0, "Domain ID of chain")
+	cmd.Flags().Uint64Var(&DepositNonce, "deposit-nonce", 0, "Deposit nonce to set (does not decrement)")
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
-	flags.MarkFlagsAsRequired(cmd, "domainId", "depositNonce", "bridge")
+	flags.MarkFlagsAsRequired(cmd, "domain-id", "deposit-nonce", "bridge")
 }
 
 func init() {
