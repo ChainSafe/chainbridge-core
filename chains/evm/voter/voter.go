@@ -23,6 +23,7 @@ import (
 )
 
 const (
+	maxSimulateVoteChecks = 5
 	maxShouldVoteChecks   = 40
 	shouldVoteCheckPeriod = 15
 )
@@ -118,6 +119,11 @@ func (v *EVMVoter) VoteProposal(m *message.Message) error {
 		log.Debug().Msgf("Proposal %+v already satisfies threshold", prop)
 		return nil
 	}
+	err = v.repetitiveSimulateVote(prop, 0)
+	if err != nil {
+		log.Error().Err(err)
+		return err
+	}
 
 	hash, err := calls.VoteProposal(v.client, v.fabric, v.gasPriceClient, prop)
 	if err != nil {
@@ -162,6 +168,20 @@ func (v *EVMVoter) shouldVoteForProposal(prop *proposal.Proposal, tries int) (bo
 	}
 
 	return true, nil
+}
+
+// repetitiveSimulateVote repeatedly tries(5 times) to simulate vore proposal call until it succeeds
+func (v *EVMVoter) repetitiveSimulateVote(prop *proposal.Proposal, tries int) error {
+	err := calls.SimulateVoteProposal(v.client, prop)
+	if err != nil {
+		if tries < maxSimulateVoteChecks {
+			tries++
+			return v.repetitiveSimulateVote(prop, tries)
+		}
+		return err
+	} else {
+		return nil
+	}
 }
 
 // trackProposalPendingVotes tracks pending voteProposal txs from
