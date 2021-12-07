@@ -5,6 +5,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/deposit"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"math/big"
 	"strings"
@@ -129,7 +130,7 @@ func (c BridgeContract) Erc20Deposit(
 	destDomainID uint8,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
-	data := ConstructErc20DepositData(recipient.Bytes(), amount)
+	data := deposit.ConstructErc20DepositData(recipient.Bytes(), amount)
 	txHash, err := c.Deposit(resourceID, destDomainID, data, opts)
 	if err != nil {
 		log.Error().Err(err)
@@ -147,7 +148,7 @@ func (c *BridgeContract) Erc721Deposit(
 	destDomainID uint8,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
-	data := ConstructErc721DepositData(recipient.Bytes(), tokenId, []byte(metadata))
+	data := deposit.ConstructErc721DepositData(recipient.Bytes(), tokenId, []byte(metadata))
 	txHash, err := c.Deposit(resourceID, destDomainID, data, opts)
 	if err != nil {
 		log.Error().Err(err)
@@ -163,7 +164,7 @@ func (c BridgeContract) GenericDeposit(
 	destDomainID uint8,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
-	data := ConstructGenericDepositData(metadata)
+	data := deposit.ConstructGenericDepositData(metadata)
 	txHash, err := c.Deposit(resourceID, destDomainID, data, opts)
 	if err != nil {
 		log.Error().Err(err)

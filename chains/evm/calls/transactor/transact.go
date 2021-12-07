@@ -2,7 +2,6 @@ package transactor
 
 import (
 	"context"
-	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/imdario/mergo"
 	"math/big"
@@ -17,16 +16,10 @@ type TransactOptions struct {
 	Value    *big.Int
 }
 
-func DEFAULT_TRANSACTION_OPTIONS() TransactOptions {
-	return TransactOptions{
-		GasLimit: 2000000,
-		GasPrice: big.NewInt(0),
-		Value:    big.NewInt(0),
-	}
-}
-
-func FillTransactOptions(t TransactOptions) TransactOptions {
-	return MergeTransactionOptions(t, DEFAULT_TRANSACTION_OPTIONS())
+var DefaultTransactionOptions = TransactOptions{
+	GasLimit: 2000000,
+	GasPrice: big.NewInt(0),
+	Value:    big.NewInt(0),
 }
 
 func MergeTransactionOptions(primary TransactOptions, additional TransactOptions) TransactOptions {
@@ -62,16 +55,14 @@ func (t *signAndSendTransactor) Transact(to *common.Address, data []byte, opts T
 	if err != nil {
 		return &common.Hash{}, nil
 	}
-	opts = FillTransactOptions(opts)
+	opts = fillTransactOptionsWithDefaultValues(opts)
 	gp := []*big.Int{opts.GasPrice}
-	fmt.Println(gp)
 	if opts.GasPrice.Cmp(big.NewInt(0)) == 0 {
 		gp, err = t.gasPriceClient.GasPrice()
 		if err != nil {
 			return &common.Hash{}, err
 		}
 	}
-	fmt.Println(gp)
 
 	tx, err := t.TxFabric(n.Uint64(), to, opts.Value, opts.GasLimit, gp, data)
 	if err != nil {
@@ -82,7 +73,6 @@ func (t *signAndSendTransactor) Transact(to *common.Address, data []byte, opts T
 		log.Error().Err(err).Msg("SIGN_AND_SEND")
 		return &common.Hash{}, err
 	}
-	log.Debug().Msgf("hash: %v from: %s", h, t.client.From())
 	_, err = t.client.WaitAndReturnTxReceipt(h)
 	if err != nil {
 		return &common.Hash{}, err
@@ -91,6 +81,9 @@ func (t *signAndSendTransactor) Transact(to *common.Address, data []byte, opts T
 	if err != nil {
 		return &common.Hash{}, err
 	}
-	// h := tx.Hash()
 	return &h, nil
+}
+
+func fillTransactOptionsWithDefaultValues(t TransactOptions) TransactOptions {
+	return MergeTransactionOptions(t, DefaultTransactionOptions)
 }

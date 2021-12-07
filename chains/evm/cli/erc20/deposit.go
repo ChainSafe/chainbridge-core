@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/deposit"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
@@ -91,7 +92,7 @@ func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 }
 
 func DepositCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
-	data := bridge.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
+	data := deposit.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
 	hash, err := contract.Deposit(
 		resourceIdBytesArr, uint8(DomainID), data, transactor.TransactOptions{GasLimit: gasLimit},
 	)
