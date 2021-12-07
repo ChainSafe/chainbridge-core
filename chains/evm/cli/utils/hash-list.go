@@ -26,9 +26,9 @@ var hashListCmd = &cobra.Command{
 }
 
 func BindHashListCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&BlockNumber, "blockNumber", "", "Block number to start at")
-	cmd.Flags().StringVar(&NumberOfBlocks, "numberOfBlocks", "", "Number of blocks past the provided blockNumber to review")
-	flags.MarkFlagsAsRequired(cmd, "blockNumber", "numberOfBlocks")
+	cmd.Flags().StringVar(&BlockNumber, "block-number", "", "Block number to start at")
+	cmd.Flags().StringVar(&Blocks, "blocks", "", "Number of blocks past the provided block-number to review")
+	flags.MarkFlagsAsRequired(cmd, "block-number", "blocks")
 }
 
 func init() {
@@ -48,8 +48,8 @@ func HashListCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// convert NumberOfBlocks string to int for looping
-	numberOfBlocks, err := strconv.Atoi(NumberOfBlocks)
+	// convert Blocks string to int for looping
+	numBlocks, err := strconv.Atoi(Blocks)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("error converting NumberOfBlocks string -> int: %v", err))
 		return err
@@ -61,7 +61,7 @@ func HashListCmd(cmd *cobra.Command, args []string) error {
 	// loop over blocks provided by user
 	// check block by hash
 	// see if transaction block data is there
-	for i := 0; i < numberOfBlocks; i++ {
+	for i := 0; i < numBlocks; i++ {
 		log.Debug().Msgf("Block Number: %v", blockNumberBigInt)
 
 		// convert string block number to big.Int

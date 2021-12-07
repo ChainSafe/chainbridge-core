@@ -6,10 +6,10 @@ import (
 
 //flag vars
 var (
-	BlockNumber    string
-	NumberOfBlocks string
-	TxHash         string
-	FromAddress    string
+	BlockNumber string
+	Blocks      string
+	TxHash      string
+	FromAddress string
 )
 
 //processed flag vars
