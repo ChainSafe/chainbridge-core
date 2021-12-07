@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/ChainSafe/chainbridge-core/config"
+	"github.com/ChainSafe/chainbridge-core/config/relayer"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -30,7 +31,7 @@ func (s *GetConfigTestSuite) Test_InvalidPath() {
 }
 
 func (s *GetConfigTestSuite) Test_MissingChainType() {
-	data := config.Config{
+	data := config.RawConfig{
 		ChainConfigs: []map[string]interface{}{{
 			"name": "chain1",
 		}},
@@ -45,8 +46,30 @@ func (s *GetConfigTestSuite) Test_MissingChainType() {
 	s.Equal(err.Error(), "Chain 'type' must be provided for every configured chain")
 }
 
+func (s *GetConfigTestSuite) Test_InvalidRelayerConfig() {
+	data := config.RawConfig{
+		RelayerConfig: relayer.RawRelayerConfig{
+			LogLevel: "invalid",
+		},
+		ChainConfigs: []map[string]interface{}{{
+			"name": "chain1",
+		}},
+	}
+	file, _ := json.Marshal(data)
+	_ = ioutil.WriteFile("test.json", file, 0644)
+
+	_, err := config.GetConfig("test.json")
+
+	_ = os.Remove("test.json")
+	s.NotNil(err)
+	s.Equal(err.Error(), "Unknown log level: invalid")
+}
+
 func (s *GetConfigTestSuite) Test_ValidConfig() {
-	data := config.Config{
+	data := config.RawConfig{
+		RelayerConfig: relayer.RawRelayerConfig{
+			LogLevel: "info",
+		},
 		ChainConfigs: []map[string]interface{}{{
 			"type": "evm",
 			"name": "evm1",
@@ -60,6 +83,11 @@ func (s *GetConfigTestSuite) Test_ValidConfig() {
 	_ = os.Remove("test.json")
 	s.Nil(err)
 	s.Equal(actualConfig, config.Config{
+		RelayerConfig: relayer.RelayerConfig{
+			LogLevel:                  1,
+			LogFile:                   "",
+			OpenTelemetryCollectorURL: "",
+		},
 		ChainConfigs: []map[string]interface{}{{
 			"type": "evm",
 			"name": "evm1",
