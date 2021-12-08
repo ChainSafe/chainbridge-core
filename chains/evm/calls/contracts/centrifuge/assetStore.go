@@ -27,7 +27,7 @@ func NewAssetStoreContract(
 	return &AssetStoreContract{contracts.NewContract(assetStoreContractAddress, a, b, client, transactor)}
 }
 
-func (c AssetStoreContract) IsCentrifugeAssetStored(hash [32]byte) (bool, error) {
+func (c *AssetStoreContract) IsCentrifugeAssetStored(hash [32]byte) (bool, error) {
 	log.Debug().
 		Str("hash", hexutil.Encode(hash[:])).
 		Msgf("Getting is centrifuge asset stored")

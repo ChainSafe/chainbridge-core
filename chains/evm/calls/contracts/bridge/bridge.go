@@ -128,7 +128,7 @@ func (c *BridgeContract) Deposit(
 	)
 }
 
-func (c BridgeContract) Erc20Deposit(
+func (c *BridgeContract) Erc20Deposit(
 	recipient common.Address,
 	amount *big.Int,
 	resourceID types.ResourceID,
@@ -171,7 +171,7 @@ func (c *BridgeContract) Erc721Deposit(
 	return txHash, err
 }
 
-func (c BridgeContract) GenericDeposit(
+func (c *BridgeContract) GenericDeposit(
 	metadata []byte,
 	resourceID types.ResourceID,
 	destDomainID uint8,
