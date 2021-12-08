@@ -91,7 +91,7 @@ func ValidateDeployFlags(cmd *cobra.Command, args []string) error {
 		deployments = append(deployments, []string{"bridge", "erc20-handler", "erc721-handler", "generic-handler", "erc20", "erc721"}...)
 	} else {
 		if Bridge {
-			flags.MarkFlagsAsRequired(cmd, "relayer-threshold", "domain-id", "fee")
+			flags.MarkFlagsAsRequired(cmd, "relayer-threshold", "domain", "fee")
 			deployments = append(deployments, "bridge")
 		}
 		if Erc20Handler {
