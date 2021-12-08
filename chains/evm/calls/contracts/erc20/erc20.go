@@ -23,7 +23,7 @@ func NewERC20Contract(
 	transactor transactor.Transactor,
 ) *ERC20Contract {
 	a, _ := abi.JSON(strings.NewReader(consts.ERC20PresetMinterPauserABI))
-	b := common.FromHex(consts.ERC20HandlerBin)
+	b := common.FromHex(consts.ERC20PresetMinterPauserBin)
 	return &ERC20Contract{contracts.NewContract(erc20ContractAddress, a, b, client, transactor)}
 }
 
