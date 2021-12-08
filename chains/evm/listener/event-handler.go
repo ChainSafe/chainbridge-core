@@ -1,19 +1,13 @@
 package listener
 
 import (
-	"context"
 	"errors"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
-	"math/big"
-	"strings"
-
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/rs/zerolog/log"
+	"math/big"
 
-	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -21,22 +15,20 @@ type EventHandlers map[common.Address]EventHandlerFunc
 type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error)
 
 type ETHEventHandler struct {
-	bridgeAddress common.Address
-	eventHandlers EventHandlers
-	client        ChainClient
+	bridgeContract bridge.BridgeContract
+	eventHandlers  EventHandlers
 }
 
 // NewETHEventHandler creates an instance of ETHEventHandler that contains
 // handler functions for processing deposit events
-func NewETHEventHandler(address common.Address, client ChainClient) *ETHEventHandler {
+func NewETHEventHandler(bridgeContract bridge.BridgeContract) *ETHEventHandler {
 	return &ETHEventHandler{
-		bridgeAddress: address,
-		client:        client,
+		bridgeContract: bridgeContract,
 	}
 }
 
 func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
-	handlerAddr, err := e.matchResourceIDToHandlerAddress(resourceID)
+	handlerAddr, err := e.bridgeContract.GetHandlerAddressForResourceID(resourceID)
 	if err != nil {
 		return nil, err
 	}
@@ -47,29 +39,6 @@ func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint6
 	}
 
 	return eventHandler(sourceID, destID, depositNonce, resourceID, calldata, handlerResponse)
-}
-
-// matchResourceIDToHandlerAddress is a private method that matches a previously registered resource ID to its corresponding handler address
-func (e *ETHEventHandler) matchResourceIDToHandlerAddress(resourceID types.ResourceID) (common.Address, error) {
-	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
-	if err != nil {
-		return common.Address{}, err
-	}
-	input, err := a.Pack("_resourceIDToHandlerAddress", resourceID)
-	if err != nil {
-		return common.Address{}, err
-	}
-	msg := ethereum.CallMsg{From: common.Address{}, To: &e.bridgeAddress, Data: input}
-	out, err := e.client.CallContract(context.TODO(), util.ToCallArg(msg), nil)
-	if err != nil {
-		return common.Address{}, err
-	}
-	res, err := a.Unpack("_resourceIDToHandlerAddress", out)
-	if err != nil {
-		return common.Address{}, err
-	}
-	out0 := *abi.ConvertType(res[0], new(common.Address)).(*common.Address)
-	return out0, nil
 }
 
 // matchAddressWithHandlerFunc matches a handler address with an associated handler function

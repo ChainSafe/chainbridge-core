@@ -53,7 +53,7 @@ func SetupDefaultEVMChain(rawConfig map[string]interface{}, txFabric client.TxFa
 	t := transactor.NewSignAndSendTransactor(txFabric, gasPricer, client)
 	bridgeContract := bridge.NewBridgeContract(client, common.HexToAddress(config.Bridge), t)
 
-	eventHandler := listener.NewETHEventHandler(common.HexToAddress(config.Bridge), client)
+	eventHandler := listener.NewETHEventHandler(*bridgeContract)
 	eventHandler.RegisterEventHandler(config.Erc20Handler, listener.Erc20EventHandler)
 	eventHandler.RegisterEventHandler(config.Erc721Handler, listener.Erc721EventHandler)
 	eventHandler.RegisterEventHandler(config.GenericHandler, listener.GenericEventHandler)
