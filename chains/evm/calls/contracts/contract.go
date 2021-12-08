@@ -108,7 +108,7 @@ func (c *Contract) CallContract(method string, args ...interface{}) ([]interface
 	return c.UnpackResult(method, out)
 }
 
-func (c Contract) DeployContract(params ...interface{}) (common.Address, error) {
+func (c *Contract) DeployContract(params ...interface{}) (common.Address, error) {
 	input, err := c.PackMethod("", params...)
 	if err != nil {
 		return common.Address{}, err
