@@ -5,11 +5,11 @@ package listener
 
 import (
 	"context"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"math/big"
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/blockstore"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"

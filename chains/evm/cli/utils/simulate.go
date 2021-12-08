@@ -3,11 +3,11 @@ package utils
 import (
 	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/rs/zerolog/log"

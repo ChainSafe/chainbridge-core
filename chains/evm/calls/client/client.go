@@ -3,8 +3,8 @@ package client
 import (
 	"context"
 	"encoding/hex"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"

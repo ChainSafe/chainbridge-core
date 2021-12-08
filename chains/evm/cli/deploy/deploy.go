@@ -9,15 +9,15 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc721"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/generic"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
+	evmgaspricer2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
@@ -154,7 +154,7 @@ func ProcessDeployFlags(cmd *cobra.Command, args []string) error {
 
 func CallDeployCLI(cmd *cobra.Command, args []string) error {
 	txFabric := evmtransaction.NewTransaction
-	return DeployCLI(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+	return DeployCLI(cmd, args, txFabric, &evmgaspricer2.LondonGasPriceDeterminant{})
 }
 
 func DeployCLI(cmd *cobra.Command, args []string, txFabric client.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
@@ -173,7 +173,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric client.TxFabric, gasP
 		return err
 	}
 	gasPricer.SetClient(ethClient)
-	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
+	gasPricer.SetOpts(&evmgaspricer2.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 	log.Debug().Msgf("Relayers for deploy %+v", Relayers)
 	log.Debug().Msgf("all bool: %v", DeployAll)
 

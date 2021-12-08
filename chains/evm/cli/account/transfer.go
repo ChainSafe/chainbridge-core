@@ -2,11 +2,11 @@ package account
 
 import (
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	util2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/util"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"

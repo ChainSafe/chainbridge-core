@@ -6,10 +6,10 @@ package mock_client
 
 import (
 	context "context"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	big "math/big"
 	reflect "reflect"
 
-	evmclient "github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	common "github.com/ethereum/go-ethereum/common"
 	types "github.com/ethereum/go-ethereum/core/types"
 	gomock "github.com/golang/mock/gomock"

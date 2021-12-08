@@ -2,9 +2,9 @@ package centrifuge
 
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/centrifuge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/util"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"

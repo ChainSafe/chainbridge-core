@@ -3,9 +3,9 @@ package erc20
 import (
 	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/util"
 	"math/big"
 

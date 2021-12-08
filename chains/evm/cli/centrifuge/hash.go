@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/centrifuge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	util2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/util"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"

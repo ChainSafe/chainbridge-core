@@ -3,12 +3,12 @@ package utils
 import (
 	"context"
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"math/big"
 	"strconv"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )

@@ -2,12 +2,12 @@ package evmgaspricer
 
 import (
 	"errors"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer/mock"
 	"math/big"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 
-	mock_evmgaspricer "github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer/mock"
 	"github.com/stretchr/testify/suite"
 )
 

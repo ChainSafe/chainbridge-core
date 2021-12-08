@@ -6,11 +6,11 @@ package mock_voter
 
 import (
 	context "context"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	big "math/big"
 	reflect "reflect"
 
 	transactor "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	evmclient "github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	proposal "github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	message "github.com/ChainSafe/chainbridge-core/relayer/message"
 	common "github.com/ethereum/go-ethereum/common"

@@ -3,10 +3,10 @@ package listener_test
 import (
 	"errors"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/deposit"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"math/big"
 	"testing"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/common"
