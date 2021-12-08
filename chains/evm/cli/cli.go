@@ -33,12 +33,12 @@ var EvmRootCLI = &cobra.Command{
 var (
 	// Flags for all EVM CLI commands
 	UrlFlagName                = "url"
-	GasLimitFlagName           = "gasLimit"
-	GasPriceFlagName           = "gasPrice"
-	NetworkIdFlagName          = "networkid"
-	PrivateKeyFlagName         = "privateKey"
-	JsonWalletFlagName         = "jsonWallet"
-	JsonWalletPasswordFlagName = "jsonWalletPassword"
+	GasLimitFlagName           = "gas-limit"
+	GasPriceFlagName           = "gas-price"
+	NetworkIdFlagName          = "network"
+	PrivateKeyFlagName         = "private-key"
+	JsonWalletFlagName         = "json-wallet"
+	JsonWalletPasswordFlagName = "json-wallet-password"
 )
 
 func BindEVMCLIFlags(evmRootCLI *cobra.Command) {

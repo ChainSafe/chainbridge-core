@@ -51,25 +51,34 @@ This module provides instruction for communicating with EVM-compatible chains.
 
 ```bash
 Usage:
+   evm-cli [flags]
    evm-cli [command]
 
 Available Commands:
-  accounts    Account instructions
-  admin       Admin-related instructions
-  bridge      Bridge-related instructions
+  accounts    Set of commands for managing accounts
+  admin       Set of commands for executing various admin actions
+  bridge      Set of commands for interacting with a bridge
+  centrifuge  Set of commands for interacting with a cetrifuge asset store contract
   deploy      Deploy smart contracts
-  erc20       ERC20-related instructions
-  erc721      ERC721-related instructions
-  utils       Utils-related instructions
+  erc20       Set of commands for interacting with ERC20 contract
+  erc721      Set of commands for interacting with an ERC721 contract
+  utils       Set of utility commands
 
 Flags:
   -h, --help   help for evm-cli
+      --gas-limit uint              Gas limit used in transactions (default 6721975)
+      --gas-price uint              Used as upperLimitGasPrice for transactions if not 0. Transactions gasPrice is defined by estimating it on network for pre London fork networks and by estimating BaseFee and MaxTipFeePerGas in post London networks
+      --json-wallet string          Encrypted JSON wallet
+      --json-wallet-password string Password for encrypted JSON wallet
+      --network uint                ID of the Network
+      --private-key string          Private key to use
+      --url string                  URL of the node to receive RPC calls (default "ws://localhost:8545")
 ```
 
 &nbsp;
 
 ### `Accounts`
-Account instructions, allowing us to generate keypairs or import existing keypairs for use.
+Set of commands for managing accounts.
 
 ```bash
 Usage:
@@ -77,7 +86,7 @@ Usage:
 
 Available Commands:
   generate    Generate bridge keystore (Secp256k1)
-  import      Import bridge keystore
+  import      Import a bridge keystore
   transfer    Transfer base currency
 
 Flags:
@@ -103,180 +112,209 @@ Usage:
    evm-cli accounts import [flags]
 
 Flags:
-  -h, --help              help for import
-      --password string   password to encrypt with
+  -h, --help               help for import
+      --private-key string Private key to use
+      --password string    Password to encrypt with
 ```
 
 #### `transfer`
-The generate subcommand is used to transfer the base currency.
+The transfer subcommand is used to transfer the base currency.
 
 ```bash
 Usage:
    evm-cli accounts transfer [flags]
 
 Flags:
-      --amount string      transfer amount
-      --decimals uint      base token decimals (default 18)
+      --amount string      Transfer amount
+      --decimals uint      Base token decimals (default 0)
   -h, --help               help for transfer
-      --recipient string   recipient address
+      --recipient string   Recipient address
 ```
 
 &nbsp;
 
 ### `Admin`
-Admin-related instructions.
+Set of commands for executing various admin actions.
 
 ```bash
 Usage:
    evm-cli admin [command]
 
 Available Commands:
-  add-admin      Add a new admin
-  add-relayer    Add a new relayer
-  is-relayer     Check if an address is registered as a relayer
-  pause          Pause deposits and proposals
-  remove-admin   Remove an existing admin
-  remove-relayer Remove a relayer
-  set-fee        Set a new fee for deposits
-  set-threshold  Set a new relayer vote threshold
-  unpause        Unpause deposits and proposals
-  withdraw       Withdraw tokens from a handler contract
+  add-admin         Add a new admin
+  add-relayer       Add a new relayer
+  get-threshold     Get the relayer vote threshold
+  is-relayer        Check if an address is registered as a relayer
+  pause             Pause deposits and proposals
+  remove-admin      Remove an existing admin
+  remove-relayer    Remove an existing relayer
+  set-deposit-nonce Set the deposit nonce
+  set-fee           Set a new fee for deposits
+  set-threshold     Set a new relayer vote threshold
+  unpause           Unpause deposits and proposals
+  withdraw          Withdraw tokens from a handler contract
 
 Flags:
   -h, --help   help for admin
 ```
 
 #### `add-admin`
-Add a new admin.
+The add-admin subcommand sets an address as a bridge admin.
 
 ```bash
 Usage:
    evm-cli admin add-admin [flags]
 
 Flags:
-      --admin string    address to add
-      --bridge string   bridge contract address
+      --admin string    Address to add
+      --bridge string   Bridge contract address
   -h, --help            help for add-admin
 ```
 
 #### `add-relayer`
-Add a new relayer.
+The add-relayer subcommand sets an address as a bridge relayer.
 
 ```bash
 Usage:
    evm-cli admin add-relayer [flags]
 
 Flags:
-      --bridge string    bridge contract address
+      --bridge string    Bridge contract address
   -h, --help             help for add-relayer
-      --relayer string   address to add
+      --relayer string   Address to add
+```
+
+#### `get-threshold`
+The get-threshold subcommand returns the relayer vote threshold.
+
+```bash
+Usage:
+   evm-cli admin get-threshold [flags]
+
+Flags:
+      --bridge string    Bridge contract address
+  -h, --help             help for get-threshold
 ```
 
 #### `is-relayer`
-Check if an address is registered as a relayer.
+The is-relayer subcommand checks if an address is registered as a relayer.
 
 ```bash
 Usage:
    evm-cli admin is-relayer [flags]
 
 Flags:
-      --bridge string    bridge contract address
+      --bridge string    Bridge contract address
   -h, --help             help for is-relayer
-      --relayer string   address to check
+      --relayer string   Address to check
 ```
 
 #### `pause`
-Pause deposits and proposals,
+The pause subcommand pauses deposits and proposals.
 
 ```bash
 Usage:
    evm-cli admin pause [flags]
 
 Flags:
-      --bridge string   bridge contract address
+      --bridge string   Bridge contract address
   -h, --help            help for pause
 
 ```
 
 #### `remove-admin`
-Remove an existing admin.
+The remove-admin subcommand removes an existing admin.
 
 ```bash
 Usage:
    evm-cli admin remove-admin [flags]
 
 Flags:
-      --admin string    address to remove
-      --bridge string   bridge contract address
+      --admin string    Address to remove
+      --bridge string   Bridge contract address
   -h, --help            help for remove-admin
 ```
 
 #### `remove-relayer`
-Remove a relayer.
+The remove-relayer subcommand removes an existing relayer.
 
 ```bash
 Usage:
    evm-cli admin remove-relayer [flags]
 
 Flags:
-      --bridge string    bridge contract address
+      --bridge string    Bridge contract address
   -h, --help             help for remove-relayer
-      --relayer string   address to remove
+      --relayer string   Address to remove
+```
+
+#### `set-deposit-nonce`
+The set-deposit-nonce subcommand sets the deposit nonce. This nonce cannot be less than what is currently stored in the contract.
+
+```bash
+Usage:
+   evm-cli admin set-deposit-nonce [flags]
+
+Flags:
+      --domain string   Domain ID of chain
+      --deposit-nonce   Deposit nonce to set (does not decrement)
+      --bridge string   Bridge contract address
+  -h, --help            help for set-fee
 ```
 
 #### `set-fee`
-Set a new fee for deposits.
+The set-fee subcommand sets a new fee for deposits.
 
 ```bash
 Usage:
    evm-cli admin set-fee [flags]
 
 Flags:
-      --bridge string   bridge contract address
+      --bridge string   Bridge contract address
       --fee string      New fee (in ether)
   -h, --help            help for set-fee
 ```
 
 #### `set-threshold`
-Set a new relayer vote threshold.
+The set-threshold subcommand sets a new relayer vote threshold.
 
 ```bash
 Usage:
    evm-cli admin set-threshold [flags]
 
 Flags:
-      --bridge string    bridge contract address
+      --bridge string    Bridge contract address
   -h, --help             help for set-threshold
-      --threshold uint   new relayer threshold
+      --threshold uint   New relayer threshold
 ```
 
 #### `unpause`
-Unpause deposits and proposals.
+The unpause subcommand unpauses deposits and proposals.
 
 ```bash
 Usage:
    evm-cli admin unpause [flags]
 
 Flags:
-      --bridge string   bridge contract address
+      --bridge string   Bridge contract address
   -h, --help            help for unpause
 ```
 
 #### `withdraw`
-Withdraw tokens from a handler contract.
+The withdraw subcommand withdrawals tokens from a handler contract.
 
 ```bash
 Usage:
    evm-cli admin withdraw [flags]
 
 Flags:
-      --amount string      token amount to withdraw. Should be set or ID or amount if both set error will occur
-      --bridge string      bridge contract address
+      --amount string      Token amount to withdraw, use only if ERC20 token is withdrawn. If both amount and token-id are set an error will occur
+      --token-id string    Token ID to withdraw, use only if ERC721 token is withdrawn. If both amount and token-id are set an error will occur
+      --bridge string      Bridge contract address
       --decimals uint      ERC20 token decimals
-      --handler string     handler contract address
+      --handler string     Handler contract address
   -h, --help               help for withdraw
-      --id string          token ID to withdraw. Should be set or ID or amount if both set error will occur
-      --recipient string   address to withdraw to
+      --recipient string   Address to withdraw to
       --token string       ERC20 or ERC721 token contract address
 ```
 
