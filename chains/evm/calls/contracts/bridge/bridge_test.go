@@ -85,3 +85,17 @@ func (s *ProposalStatusTestSuite) TestPrepareWithdrawInput() {
 	s.NotNil(inputBytes)
 	s.Nil(err)
 }
+
+func (s *ProposalStatusTestSuite) TestDeployContract() {
+	bc := bridge.NewBridgeContract(s.mockContractCaller, s.bridgeAddress, s.mockTransactor)
+	a := common.HexToAddress("0x12847465a15b58D4351AfB47F0CBbeebE93B06e3")
+	address, err := bc.PackMethod("",
+		uint8(1),
+		[]common.Address{a},
+		big.NewInt(0).SetUint64(1),
+		big.NewInt(0).SetUint64(1),
+		big.NewInt(0),
+	)
+	s.Nil(err)
+	s.NotNil(address)
+}

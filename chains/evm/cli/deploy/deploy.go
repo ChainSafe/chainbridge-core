@@ -186,7 +186,11 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric client.TxFabric, gasP
 			log.Debug().Msgf("deploying bridge..")
 			bc := bridge.NewBridgeContract(ethClient, common.Address{}, t)
 			bridgeAddr, err = bc.DeployContract(
-				DomainId, relayerAddresses, big.NewInt(0).SetUint64(RelayerThreshold), big.NewInt(0).SetUint64(Fee),
+				DomainId,
+				relayerAddresses,
+				big.NewInt(0).SetUint64(RelayerThreshold),
+				big.NewInt(0).SetUint64(Fee),
+				big.NewInt(0),
 			)
 			if err != nil {
 				log.Error().Err(fmt.Errorf("bridge deploy failed: %w", err))
