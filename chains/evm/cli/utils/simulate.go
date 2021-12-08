@@ -17,7 +17,7 @@ import (
 var simulateCmd = &cobra.Command{
 	Use:   "simulate",
 	Short: "Simulate the invocation of a transaction",
-	Long:  "Simulate a transaction result by simulating invocation; not state-altering",
+	Long:  "The simulate subcommand simulates a transaction result by simulating invocation; not state-altering",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},

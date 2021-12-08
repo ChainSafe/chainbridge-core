@@ -6,8 +6,8 @@ import (
 
 var ERC20Cmd = &cobra.Command{
 	Use:   "erc20",
-	Short: "Set of commands for interacting with ERC20 contract",
-	Long:  "Set of commands for interacting with ERC20 contract",
+	Short: "Set of commands for interacting with an ERC20 contract",
+	Long:  "Set of commands for interacting with an ERC20 contract",
 }
 
 func init() {
