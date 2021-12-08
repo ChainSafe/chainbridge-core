@@ -2,7 +2,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
-name: Lint & Test
+name: Unit tests
 jobs:
   test:
     strategy:

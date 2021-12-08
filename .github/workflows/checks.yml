@@ -1,5 +1,5 @@
 on: [pull_request]
-name: checks
+name: Linter check
 env:
   GO111MODULE: on
 
