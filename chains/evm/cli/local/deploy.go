@@ -123,7 +123,7 @@ func deployGeneric(
 	ethClient E2EClient, t transactor.Transactor, bridgeContractAddress common.Address,
 ) (common.Address, common.Address, error) {
 	assetStoreContract := centrifuge.NewAssetStoreContract(ethClient, common.Address{}, t)
-	assetStoreAddress, err := assetStoreContract.DeployContract(bridgeContractAddress)
+	assetStoreAddress, err := assetStoreContract.DeployContract()
 	if err != nil {
 		return common.Address{}, common.Address{}, err
 	}
