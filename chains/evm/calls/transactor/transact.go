@@ -55,7 +55,7 @@ func (t *signAndSendTransactor) Transact(to *common.Address, data []byte, opts T
 	if err != nil {
 		return &common.Hash{}, nil
 	}
-	opts = fillTransactOptionsWithDefaultValues(opts)
+	opts = MergeTransactionOptions(opts, DefaultTransactionOptions)
 	gp := []*big.Int{opts.GasPrice}
 	if opts.GasPrice.Cmp(big.NewInt(0)) == 0 {
 		gp, err = t.gasPriceClient.GasPrice()
@@ -82,8 +82,4 @@ func (t *signAndSendTransactor) Transact(to *common.Address, data []byte, opts T
 		return &common.Hash{}, err
 	}
 	return &h, nil
-}
-
-func fillTransactOptionsWithDefaultValues(t TransactOptions) TransactOptions {
-	return MergeTransactionOptions(t, DefaultTransactionOptions)
 }

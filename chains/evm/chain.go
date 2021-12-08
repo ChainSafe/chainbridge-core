@@ -49,19 +49,21 @@ func SetupDefaultEVMChain(rawConfig map[string]interface{}, txFabric client.TxFa
 		return nil, err
 	}
 
+	gasPricer := evmgaspricer.NewLondonGasPriceClient(client, nil)
+	t := transactor.NewSignAndSendTransactor(txFabric, gasPricer, client)
+	bridgeContract := bridge.NewBridgeContract(client, common.HexToAddress(config.Bridge), t)
+
 	eventHandler := listener.NewETHEventHandler(common.HexToAddress(config.Bridge), client)
 	eventHandler.RegisterEventHandler(config.Erc20Handler, listener.Erc20EventHandler)
 	eventHandler.RegisterEventHandler(config.Erc721Handler, listener.Erc721EventHandler)
 	eventHandler.RegisterEventHandler(config.GenericHandler, listener.GenericEventHandler)
 	evmListener := listener.NewEVMListener(client, eventHandler, common.HexToAddress(config.Bridge))
 
-	mh := voter.NewEVMMessageHandler(client, common.HexToAddress(config.Bridge))
+	mh := voter.NewEVMMessageHandler(*bridgeContract)
 	mh.RegisterMessageHandler(config.Erc20Handler, voter.ERC20MessageHandler)
 	mh.RegisterMessageHandler(config.Erc721Handler, voter.ERC721MessageHandler)
 	mh.RegisterMessageHandler(config.GenericHandler, voter.GenericMessageHandler)
-	gasPricer := evmgaspricer.NewLondonGasPriceClient(client, nil)
-	t := transactor.NewSignAndSendTransactor(txFabric, gasPricer, client)
-	bridgeContract := bridge.NewBridgeContract(client, common.HexToAddress(config.Bridge), t)
+
 	evmVoter, err := voter.NewVoterWithSubscription(mh, client, bridgeContract)
 	if err != nil {
 		return nil, err

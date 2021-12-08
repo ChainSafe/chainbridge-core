@@ -275,8 +275,8 @@ func (c *BridgeContract) GetThreshold() (uint8, error) {
 	if err != nil {
 		return 0, err
 	}
-	t := *abi.ConvertType(res[0], new(uint8)).(*uint8)
-	return t, nil
+	out := *abi.ConvertType(res[0], new(uint8)).(*uint8)
+	return out, nil
 }
 
 func (c *BridgeContract) IsRelayer(relayerAddress common.Address) (bool, error) {
@@ -285,8 +285,8 @@ func (c *BridgeContract) IsRelayer(relayerAddress common.Address) (bool, error) 
 	if err != nil {
 		return false, err
 	}
-	b := abi.ConvertType(res[0], new(bool)).(*bool)
-	return *b, nil
+	out := abi.ConvertType(res[0], new(bool)).(*bool)
+	return *out, nil
 }
 
 func (c *BridgeContract) ProposalStatus(p *proposal.Proposal) (message.ProposalStatus, error) {
@@ -299,8 +299,8 @@ func (c *BridgeContract) ProposalStatus(p *proposal.Proposal) (message.ProposalS
 	if err != nil {
 		return message.ProposalStatus{}, err
 	}
-	ps := *abi.ConvertType(res[0], new(message.ProposalStatus)).(*message.ProposalStatus)
-	return ps, nil
+	out := *abi.ConvertType(res[0], new(message.ProposalStatus)).(*message.ProposalStatus)
+	return out, nil
 }
 
 func (c *BridgeContract) IsProposalVotedBy(by common.Address, p *proposal.Proposal) (bool, error) {
@@ -313,8 +313,20 @@ func (c *BridgeContract) IsProposalVotedBy(by common.Address, p *proposal.Propos
 	if err != nil {
 		return false, err
 	}
-	out0 := *abi.ConvertType(res[0], new(bool)).(*bool)
-	return out0, nil
+	out := *abi.ConvertType(res[0], new(bool)).(*bool)
+	return out, nil
+}
+
+func (c *BridgeContract) GetHandlerAddressForResourceID(
+	resourceID types.ResourceID,
+) (common.Address, error) {
+	log.Debug().Msgf("Getting handler address for resource %s", hexutil.Encode(resourceID[:]))
+	res, err := c.CallContract("_resourceIDToHandlerAddress", resourceID)
+	if err != nil {
+		return common.Address{}, err
+	}
+	out := *abi.ConvertType(res[0], new(common.Address)).(*common.Address)
+	return out, nil
 }
 
 func idAndNonce(srcId uint8, nonce uint64) *big.Int {
