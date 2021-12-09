@@ -233,7 +233,7 @@ func PrepareGenericEVME2EEnv(bridgeContract *bridge.BridgeContract, conf EVME2EC
 
 func PrepareErc721EVME2EEnv(bridgeContract *bridge.BridgeContract, erc721Contract *erc721.ERC721Contract, conf EVME2EConfig) error {
 	// Registering resource
-	resourceID := util.SliceTo32Bytes(append(common.LeftPadBytes(conf.Erc20Addr.Bytes(), 31), uint8(2)))
+	resourceID := util.SliceTo32Bytes(append(common.LeftPadBytes(conf.Erc721Addr.Bytes(), 31), uint8(2)))
 	_, err := bridgeContract.AdminSetResource(conf.Erc721HandlerAddr, resourceID, conf.Erc721Addr, transactor.TransactOptions{GasLimit: 2000000})
 	if err != nil {
 		return err

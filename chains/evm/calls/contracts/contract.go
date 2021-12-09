@@ -85,7 +85,7 @@ func (c *Contract) CallContract(method string, args ...interface{}) ([]interface
 	if err != nil {
 		return nil, err
 	}
-	msg := ethereum.CallMsg{From: common.Address{}, To: &c.contractAddress, Data: input}
+	msg := ethereum.CallMsg{From: c.client.From(), To: &c.contractAddress, Data: input}
 	out, err := c.client.CallContract(context.TODO(), util.ToCallArg(msg), nil)
 	if err != nil {
 		log.Error().
