@@ -6,7 +6,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	util2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
+	callsUtil "github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/util"
 	"math/big"
@@ -98,7 +98,7 @@ func ProcessWithdrawCmdFlags(cmd *cobra.Command, args []string) error {
 	tokenAddr = common.HexToAddress(Token)
 	recipientAddr = common.HexToAddress(Recipient)
 	decimals := big.NewInt(int64(Decimals))
-	realAmount, err = util2.UserAmountToWei(Amount, decimals)
+	realAmount, err = callsUtil.UserAmountToWei(Amount, decimals)
 	if err != nil {
 		return err
 	}

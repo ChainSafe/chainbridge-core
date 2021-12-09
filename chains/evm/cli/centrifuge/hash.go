@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/centrifuge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
-	util2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
+	callsUtil "github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/util"
 
@@ -72,7 +72,7 @@ func ValidateGetHashFlags(cmd *cobra.Command, args []string) error {
 
 func ProcessGetHashFlags(cmd *cobra.Command, args []string) error {
 	storeAddr = common.HexToAddress(Address)
-	byteHash = util2.SliceTo32Bytes([]byte(Hash))
+	byteHash = callsUtil.SliceTo32Bytes([]byte(Hash))
 
 	return nil
 }
