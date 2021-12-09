@@ -44,7 +44,7 @@ func BindSetBurnCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Handler, "handler", "", "ERC20 handler contract address")
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	cmd.Flags().StringVar(&TokenContract, "token-contract", "", "Token contract to be registered")
-	flags.MarkFlagsAsRequired(cmd, "handler", "bridge", "token")
+	flags.MarkFlagsAsRequired(cmd, "handler", "bridge", "token-contract")
 }
 
 func init() {
