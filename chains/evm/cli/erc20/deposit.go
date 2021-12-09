@@ -3,7 +3,6 @@ package erc20
 import (
 	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/deposit"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	callsUtil "github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
@@ -92,9 +91,9 @@ func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 }
 
 func DepositCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
-	data := deposit.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
-	hash, err := contract.Deposit(
-		resourceIdBytesArr, uint8(DomainID), data, transactor.TransactOptions{GasLimit: gasLimit},
+	hash, err := contract.Erc20Deposit(
+		recipientAddress, realAmount, resourceIdBytesArr,
+		uint8(DomainID), transactor.TransactOptions{GasLimit: gasLimit},
 	)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit error: %v", err))

@@ -115,7 +115,7 @@ func (c *BridgeContract) SetBurnableInput(
 	)
 }
 
-func (c *BridgeContract) Deposit(
+func (c *BridgeContract) deposit(
 	resourceID types.ResourceID,
 	destDomainID uint8,
 	data []byte,
@@ -141,7 +141,7 @@ func (c *BridgeContract) Erc20Deposit(
 		Str("amount", amount.String()).
 		Msgf("ERC20 deposit")
 	data := deposit.ConstructErc20DepositData(recipient.Bytes(), amount)
-	txHash, err := c.Deposit(resourceID, destDomainID, data, opts)
+	txHash, err := c.deposit(resourceID, destDomainID, data, opts)
 	if err != nil {
 		log.Error().Err(err)
 		return nil, err
@@ -163,7 +163,7 @@ func (c *BridgeContract) Erc721Deposit(
 		Str("tokenID", tokenId.String()).
 		Msgf("ERC721 deposit")
 	data := deposit.ConstructErc721DepositData(recipient.Bytes(), tokenId, []byte(metadata))
-	txHash, err := c.Deposit(resourceID, destDomainID, data, opts)
+	txHash, err := c.deposit(resourceID, destDomainID, data, opts)
 	if err != nil {
 		log.Error().Err(err)
 		return nil, err
@@ -181,7 +181,7 @@ func (c *BridgeContract) GenericDeposit(
 		Str("resourceID", hexutil.Encode(resourceID[:])).
 		Msgf("Generic deposit")
 	data := deposit.ConstructGenericDepositData(metadata)
-	txHash, err := c.Deposit(resourceID, destDomainID, data, opts)
+	txHash, err := c.deposit(resourceID, destDomainID, data, opts)
 	if err != nil {
 		log.Error().Err(err)
 		return nil, err
