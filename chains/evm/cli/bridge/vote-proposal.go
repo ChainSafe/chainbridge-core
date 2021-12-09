@@ -54,7 +54,7 @@ func BindVoteProposalCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint64Var(&DomainID, "domain", 0, "origin domain ID of proposal")
 	cmd.Flags().Uint64Var(&DepositNonce, "deposit-nonce", 0, "deposit nonce of proposal to vote on")
 	cmd.Flags().StringVar(&ResourceID, "resource", "", "resource id of asset")
-	flags.MarkFlagsAsRequired(cmd, "bridge", "domain", "deposit-nonce", "domain", "resource", "data")
+	flags.MarkFlagsAsRequired(cmd, "bridge", "deposit-nonce", "domain", "resource", "data")
 }
 
 func init() {
