@@ -8,11 +8,19 @@ import (
 )
 
 type Config struct {
-	RelayerConfig relayer.RelayerConfig    `mapstructure:"relayer" json:"relayer"`
+	RelayerConfig relayer.RelayerConfig
+	ChainConfigs  []map[string]interface{}
+}
+
+type RawConfig struct {
+	RelayerConfig relayer.RawRelayerConfig `mapstructure:"relayer" json:"relayer"`
 	ChainConfigs  []map[string]interface{} `mapstructure:"chains" json:"chains"`
 }
 
+// GetConfig reads config from file, validates it and parses
+// it into config suitable for application
 func GetConfig(path string) (Config, error) {
+	rawConfig := RawConfig{}
 	config := Config{}
 
 	viper.SetConfigFile(path)
@@ -23,20 +31,23 @@ func GetConfig(path string) (Config, error) {
 		return config, err
 	}
 
-	err = viper.Unmarshal(&config)
+	err = viper.Unmarshal(&rawConfig)
 	if err != nil {
 		return config, err
 	}
 
-	err = config.RelayerConfig.Validate()
+	relayerConfig, err := relayer.NewRelayerConfig(rawConfig.RelayerConfig)
 	if err != nil {
 		return config, err
 	}
-	for _, chain := range config.ChainConfigs {
+	for _, chain := range rawConfig.ChainConfigs {
 		if chain["type"] == "" || chain["type"] == nil {
 			return config, fmt.Errorf("Chain 'type' must be provided for every configured chain")
 		}
 	}
+
+	config.RelayerConfig = relayerConfig
+	config.ChainConfigs = rawConfig.ChainConfigs
 
 	return config, nil
 }
