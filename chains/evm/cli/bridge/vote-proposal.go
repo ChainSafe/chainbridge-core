@@ -6,10 +6,10 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	callUtils "github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"github.com/ChainSafe/chainbridge-core/util"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -50,14 +50,15 @@ var votaProposalCmd = &cobra.Command{
 
 func BindVoteProposalCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	cmd.Flags().StringVar(&DataHash, "data-hash", "", "hash of proposal metadata")
+	cmd.Flags().StringVar(&DataHash, "data", "", "hex proposal metadata")
 	cmd.Flags().Uint64Var(&DomainID, "domain", 0, "origin domain ID of proposal")
 	cmd.Flags().Uint64Var(&DepositNonce, "deposit-nonce", 0, "deposit nonce of proposal to vote on")
-	flags.MarkFlagsAsRequired(cmd, "bridge", "domain", "deposit-nonce", "domain")
+	cmd.Flags().StringVar(&ResourceID, "resource", "", "resource id of asset")
+	flags.MarkFlagsAsRequired(cmd, "bridge", "domain", "deposit-nonce", "domain", "resource", "data")
 }
 
 func init() {
-	BindVoteProposalCmdFlags(registerResourceCmd)
+	BindVoteProposalCmdFlags(votaProposalCmd)
 }
 
 func ValidateVoteProposalFlags(cmd *cobra.Command, args []string) error {
@@ -73,20 +74,19 @@ func ValidateVoteProposalFlags(cmd *cobra.Command, args []string) error {
 func ProcessVoteProposalFlags(cmd *cobra.Command, args []string) error {
 	var err error
 	bridgeAddr = common.HexToAddress(Bridge)
-	handlerAddr = common.HexToAddress(Bridge)
+	dataBytes = common.Hex2Bytes(DataHash)
 
+	resourceIdBytesArr, err = flags.ProcessResourceID(ResourceID)
 	return err
 }
 
 func VoteProposalCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
-	prop, err := contract.GetProposal(
-		uint8(DomainID),
-		DepositNonce,
-		callUtils.SliceTo32Bytes(common.Hex2Bytes(DataHash)))
-	if err != nil {
-		return err
+	prop := &proposal.Proposal{
+		Source:       uint8(DomainID),
+		DepositNonce: DepositNonce,
+		Data:         dataBytes,
+		ResourceId:   resourceIdBytesArr,
 	}
-
 	h, err := contract.VoteProposal(prop, transactor.TransactOptions{})
 	if err != nil {
 		return err

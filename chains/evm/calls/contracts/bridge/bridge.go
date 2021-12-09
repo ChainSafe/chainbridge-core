@@ -280,16 +280,6 @@ func (c *BridgeContract) GetThreshold() (uint8, error) {
 	return out, nil
 }
 
-func (c *BridgeContract) GetProposal(domainID uint8, depositNonce uint64, dataHash [32]byte) (*proposal.Proposal, error) {
-	log.Debug().Msg("Getting proposal")
-	res, err := c.CallContract("getProposal", domainID, depositNonce, dataHash)
-	if err != nil {
-		return nil, err
-	}
-	out := abi.ConvertType(res[0], new(proposal.Proposal)).(*proposal.Proposal)
-	return out, nil
-}
-
 func (c *BridgeContract) IsRelayer(relayerAddress common.Address) (bool, error) {
 	log.Debug().Msgf("Getting is %s a relayer", relayerAddress.String())
 	res, err := c.CallContract("isRelayer", relayerAddress)
