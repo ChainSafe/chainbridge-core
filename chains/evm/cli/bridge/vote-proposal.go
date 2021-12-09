@@ -16,10 +16,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var votaProposalCmd = &cobra.Command{
+var voteProposalCmd = &cobra.Command{
 	Use:   "vote-proposal",
-	Short: "Vote on a on-chain proposal",
-	Long:  "Votes on a on-chain proposal. Valid relayer private key required for transaction to be successful.",
+	Short: "Vote on proposal",
+	Long:  "Votes on an on-chain proposal. Valid relayer private key required for transaction to be successful.",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -58,15 +58,12 @@ func BindVoteProposalCmdFlags(cmd *cobra.Command) {
 }
 
 func init() {
-	BindVoteProposalCmdFlags(votaProposalCmd)
+	BindVoteProposalCmdFlags(voteProposalCmd)
 }
 
 func ValidateVoteProposalFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Bridge) {
 		return fmt.Errorf("invalid bridge address %s", Bridge)
-	}
-	if !common.IsHexAddress(Handler) {
-		return fmt.Errorf("invalid handler address %s", Handler)
 	}
 	return nil
 }
@@ -87,6 +84,12 @@ func VoteProposalCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeC
 		Data:         dataBytes,
 		ResourceId:   resourceIdBytesArr,
 	}
+
+	err := contract.SimulateVoteProposal(prop)
+	if err != nil {
+		return err
+	}
+
 	h, err := contract.VoteProposal(prop, transactor.TransactOptions{})
 	if err != nil {
 		return err
