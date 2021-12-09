@@ -48,7 +48,7 @@ func BindDepositCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Recipient, "recipient", "", "Address of recipient")
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "Address of bridge contract")
 	cmd.Flags().StringVar(&Amount, "amount", "", "Amount to deposit")
-	cmd.Flags().Uint64Var(&DomainID, "domain", 0, "Destination domain ID")
+	cmd.Flags().Uint8Var(&DomainID, "domain", 0, "Destination domain ID")
 	cmd.Flags().StringVar(&ResourceID, "resource", "", "Resource ID for transfer")
 	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
 	flags.MarkFlagsAsRequired(cmd, "recipient", "bridge", "amount", "domain", "resource", "decimals")
