@@ -107,6 +107,8 @@ func (s *ContractTestSuite) TestContract_CallContract_CallContractError_Fail() {
 		gomock.Any(),
 		nil,
 	).Return(nil, errors.New("error"))
+	s.mockContractCallerDispatcherClient.EXPECT().From().Times(1).Return(common.Address{})
+
 	res, err := s.contract.CallContract("ownerOf", big.NewInt(0))
 	if err != nil {
 		return
@@ -130,6 +132,7 @@ func (s *ContractTestSuite) TestContract_CallContract_MissingContract_Fail() {
 		gomock.Any(),
 		nil,
 	).Return(nil, errors.New("error"))
+	s.mockContractCallerDispatcherClient.EXPECT().From().Times(1).Return(common.Address{})
 	res, err := s.contract.CallContract("ownerOf", big.NewInt(0))
 	if err != nil {
 		return

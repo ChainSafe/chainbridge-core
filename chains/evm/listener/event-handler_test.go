@@ -117,7 +117,8 @@ func (s *Erc721HandlerTestSuite) TestErc721EventHandlerEmptyMetadata() {
 
 	sourceID := uint8(1)
 	tokenId := calldata[:32]
-	recipientAddressParsed := calldata[64:]
+	recipientAddressParsed := calldata[64:84]
+	var metadata []byte
 
 	expected := &message.Message{
 		Source:       sourceID,
@@ -128,14 +129,14 @@ func (s *Erc721HandlerTestSuite) TestErc721EventHandlerEmptyMetadata() {
 		Payload: []interface{}{
 			tokenId,
 			recipientAddressParsed,
-			[]byte{},
+			metadata,
 		},
 	}
 
-	message, err := listener.Erc721EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
+	m, err := listener.Erc721EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
 	s.Nil(err)
-	s.NotNil(message)
-	s.Equal(message, expected)
+	s.NotNil(m)
+	s.Equal(expected, m)
 }
 
 func (s *Erc721HandlerTestSuite) TestErc721EventHandlerIncorrectDataLen() {
@@ -156,8 +157,8 @@ func (s *Erc721HandlerTestSuite) TestErc721EventHandlerIncorrectDataLen() {
 
 	sourceID := uint8(1)
 
-	message, err := listener.Erc721EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
-	s.Nil(message)
+	m, err := listener.Erc721EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
+	s.Nil(m)
 	s.EqualError(err, "invalid calldata length: less than 84 bytes")
 }
 
@@ -177,7 +178,7 @@ func (s *Erc721HandlerTestSuite) TestErc721EventHandler() {
 	sourceID := uint8(1)
 	tokenId := calldata[:32]
 	recipientAddressParsed := calldata[64:84]
-	parsedMetadata := calldata[84:]
+	parsedMetadata := calldata[116:]
 
 	expected := &message.Message{
 		Source:       sourceID,
@@ -192,10 +193,10 @@ func (s *Erc721HandlerTestSuite) TestErc721EventHandler() {
 		},
 	}
 
-	message, err := listener.Erc721EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
+	m, err := listener.Erc721EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
 	s.Nil(err)
-	s.NotNil(message)
-	s.Equal(message, expected)
+	s.NotNil(m)
+	s.Equal(expected, m)
 }
 
 type GenericHandlerTestSuite struct {

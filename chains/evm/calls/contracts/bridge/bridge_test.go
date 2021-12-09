@@ -40,6 +40,7 @@ func (s *ProposalStatusTestSuite) TearDownTest() {}
 
 func (s *ProposalStatusTestSuite) TestProposalStatusFailedContractCall() {
 	s.mockContractCaller.EXPECT().CallContract(gomock.Any(), gomock.Any(), nil).Return(nil, errors.New("error"))
+	s.mockContractCaller.EXPECT().From().Times(1).Return(common.Address{})
 	bc := bridge.NewBridgeContract(s.mockContractCaller, common.Address{}, s.mockTransactor)
 	status, err := bc.ProposalStatus(&proposal.Proposal{})
 	s.Equal(message.ProposalStatus{}, status)
@@ -48,7 +49,7 @@ func (s *ProposalStatusTestSuite) TestProposalStatusFailedContractCall() {
 
 func (s *ProposalStatusTestSuite) TestProposalStatusFailedUnpack() {
 	s.mockContractCaller.EXPECT().CallContract(gomock.Any(), gomock.Any(), nil).Return([]byte("invalid"), nil)
-
+	s.mockContractCaller.EXPECT().From().Times(1).Return(common.Address{})
 	bc := bridge.NewBridgeContract(s.mockContractCaller, common.Address{}, s.mockTransactor)
 	status, err := bc.ProposalStatus(&proposal.Proposal{})
 
@@ -59,7 +60,7 @@ func (s *ProposalStatusTestSuite) TestProposalStatusFailedUnpack() {
 func (s *ProposalStatusTestSuite) TestProposalStatusSuccessfulCall() {
 	proposalStatus, _ := hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000001c0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000001f")
 	s.mockContractCaller.EXPECT().CallContract(gomock.Any(), gomock.Any(), nil).Return(proposalStatus, nil)
-
+	s.mockContractCaller.EXPECT().From().Times(1).Return(common.Address{})
 	bc := bridge.NewBridgeContract(s.mockContractCaller, common.Address{}, s.mockTransactor)
 	status, err := bc.ProposalStatus(&proposal.Proposal{})
 

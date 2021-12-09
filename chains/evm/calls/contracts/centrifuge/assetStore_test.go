@@ -41,7 +41,7 @@ func (s *IsCentrifugeAssetStoredTestSuite) TearDownTest() {}
 func (s *IsCentrifugeAssetStoredTestSuite) TestCallContractFails() {
 	s.mockContractCallerDispatcherClient.EXPECT().CallContract(
 		gomock.Any(), gomock.Any(), gomock.Any()).Return([]byte{}, errors.New("error"))
-
+	s.mockContractCallerDispatcherClient.EXPECT().From().Times(1).Return(common.Address{})
 	isStored, err := s.assetStoreContract.IsCentrifugeAssetStored([32]byte{})
 
 	s.NotNil(err)
@@ -51,7 +51,7 @@ func (s *IsCentrifugeAssetStoredTestSuite) TestCallContractFails() {
 func (s *IsCentrifugeAssetStoredTestSuite) TestUnpackingInvalidOutput() {
 	s.mockContractCallerDispatcherClient.EXPECT().CallContract(
 		gomock.Any(), gomock.Any(), gomock.Any()).Return([]byte("invalid"), nil)
-
+	s.mockContractCallerDispatcherClient.EXPECT().From().Times(1).Return(common.Address{})
 	isStored, err := s.assetStoreContract.IsCentrifugeAssetStored([32]byte{})
 
 	s.NotNil(err)
@@ -65,6 +65,7 @@ func (s *IsCentrifugeAssetStoredTestSuite) TestEmptyOutput() {
 	s.mockContractCallerDispatcherClient.EXPECT().CodeAt(
 		gomock.Any(), gomock.Any(), gomock.Any(),
 	).Return(nil, errors.New("error"))
+	s.mockContractCallerDispatcherClient.EXPECT().From().Times(1).Return(common.Address{})
 
 	isStored, err := s.assetStoreContract.IsCentrifugeAssetStored([32]byte{})
 
@@ -76,7 +77,8 @@ func (s *IsCentrifugeAssetStoredTestSuite) TestValidStoredAsset() {
 	response := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
 	s.mockContractCallerDispatcherClient.EXPECT().CallContract(
 		gomock.Any(), gomock.Any(), gomock.Any()).Return(response, nil)
-
+	s.mockContractCallerDispatcherClient.EXPECT().From().Times(1).Return(common.Address{})
+	
 	isStored, err := s.assetStoreContract.IsCentrifugeAssetStored([32]byte{})
 
 	s.Nil(err)
