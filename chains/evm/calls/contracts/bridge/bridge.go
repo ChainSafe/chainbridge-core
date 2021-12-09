@@ -2,15 +2,16 @@ package bridge
 
 import (
 	"bytes"
+	"math/big"
+	"strconv"
+	"strings"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/deposit"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"math/big"
-	"strconv"
-	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
@@ -276,6 +277,16 @@ func (c *BridgeContract) GetThreshold() (uint8, error) {
 		return 0, err
 	}
 	out := *abi.ConvertType(res[0], new(uint8)).(*uint8)
+	return out, nil
+}
+
+func (c *BridgeContract) GetProposal(domainID uint8, depositNonce uint64, dataHash [32]byte) (*proposal.Proposal, error) {
+	log.Debug().Msg("Getting proposal")
+	res, err := c.CallContract("getProposal", domainID, depositNonce, dataHash)
+	if err != nil {
+		return nil, err
+	}
+	out := abi.ConvertType(res[0], new(proposal.Proposal)).(*proposal.Proposal)
 	return out, nil
 }
 
