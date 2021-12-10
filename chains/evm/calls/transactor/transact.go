@@ -2,7 +2,7 @@ package transactor
 
 import (
 	"context"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/imdario/mergo"
 	"math/big"
 
@@ -35,12 +35,12 @@ type Transactor interface {
 }
 
 type signAndSendTransactor struct {
-	TxFabric       client.TxFabric
-	gasPriceClient client.GasPricer
-	client         client.ClientDispatcher
+	TxFabric       calls.TxFabric
+	gasPriceClient calls.GasPricer
+	client         calls.ClientDispatcher
 }
 
-func NewSignAndSendTransactor(txFabric client.TxFabric, gasPriceClient client.GasPricer, client client.ClientDispatcher) Transactor {
+func NewSignAndSendTransactor(txFabric calls.TxFabric, gasPriceClient calls.GasPricer, client calls.ClientDispatcher) Transactor {
 	return &signAndSendTransactor{
 		TxFabric:       txFabric,
 		gasPriceClient: gasPriceClient,

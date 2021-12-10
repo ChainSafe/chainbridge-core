@@ -4,7 +4,7 @@
 package local
 
 import (
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/centrifuge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
@@ -44,14 +44,13 @@ type EVME2EConfig struct {
 }
 
 type E2EClient interface {
-	client.ContractCallerClient
+	calls.ContractCallerDispatcher
 	evmgaspricer2.GasPriceClient
-	client.ClientDeployer
 }
 
 func PrepareLocalEVME2EEnv(
 	ethClient E2EClient,
-	fabric client.TxFabric,
+	fabric calls.TxFabric,
 	domainID uint8,
 	threshold *big.Int,
 	mintTo common.Address,

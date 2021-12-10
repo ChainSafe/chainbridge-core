@@ -5,7 +5,7 @@ package evm
 
 import (
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
@@ -38,7 +38,7 @@ type EVMChain struct {
 }
 
 // SetupDefaultEVMChain sets up an EVMChain with all supported handlers configured
-func SetupDefaultEVMChain(rawConfig map[string]interface{}, txFabric client.TxFabric, db blockstore.KeyValueReaderWriter) (*EVMChain, error) {
+func SetupDefaultEVMChain(rawConfig map[string]interface{}, txFabric calls.TxFabric, db blockstore.KeyValueReaderWriter) (*EVMChain, error) {
 	config, err := chain.NewEVMConfig(rawConfig)
 	if err != nil {
 		return nil, err

@@ -2,7 +2,6 @@ package listener
 
 import (
 	"errors"
-	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/types"
@@ -136,8 +135,7 @@ func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.R
 
 	// 64 - (64 + recipient address length) is recipient address
 	recipientAddress := calldata[64:(64 + recipientAddressLength.Int64())]
-	t := calldata[(64 + recipientAddressLength.Int64()):((64 + recipientAddressLength.Int64()) + 32)]
-	fmt.Print(t)
+
 	// (64 + recipient address length) - ((64 + recipient address length) + 32) is metadata length
 	medataLength := big.NewInt(0).SetBytes(
 		calldata[(64 + recipientAddressLength.Int64()):((64 + recipientAddressLength.Int64()) + 32)],

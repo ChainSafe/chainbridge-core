@@ -1,7 +1,7 @@
 package generic
 
 import (
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
@@ -15,7 +15,7 @@ type GenericHandlerContract struct {
 }
 
 func NewGenericHandlerContract(
-	client client.ContractCallerDispatcherClient,
+	client calls.ContractCallerDispatcher,
 	assetStoreContractAddress common.Address,
 	transactor transactor.Transactor,
 ) *GenericHandlerContract {

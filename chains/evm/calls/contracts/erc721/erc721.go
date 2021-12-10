@@ -1,7 +1,7 @@
 package erc721
 
 import (
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts"
 	"math/big"
@@ -18,7 +18,7 @@ type ERC721Contract struct {
 }
 
 func NewErc721Contract(
-	client client.ContractCallerDispatcherClient,
+	client calls.ContractCallerDispatcher,
 	erc721ContractAddress common.Address,
 	t transactor.Transactor,
 ) *ERC721Contract {

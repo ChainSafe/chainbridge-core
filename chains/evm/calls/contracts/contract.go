@@ -3,7 +3,7 @@ package contracts
 import (
 	"context"
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
@@ -18,7 +18,7 @@ type Contract struct {
 	contractAddress common.Address
 	ABI             abi.ABI
 	bytecode        []byte
-	client          client.ContractCallerDispatcherClient
+	client          calls.ContractCallerDispatcher
 	transactor.Transactor
 }
 
@@ -26,7 +26,7 @@ func NewContract(
 	contractAddress common.Address,
 	abi abi.ABI,
 	bytecode []byte,
-	client client.ContractCallerDispatcherClient,
+	client calls.ContractCallerDispatcher,
 	transactor transactor.Transactor,
 ) Contract {
 	return Contract{

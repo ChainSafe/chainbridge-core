@@ -1,4 +1,4 @@
-package client
+package calls
 
 import (
 	"context"
@@ -14,28 +14,12 @@ import (
 
 type TxFabric func(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrices []*big.Int, data []byte) (evmclient.CommonTransaction, error)
 
-type ClientContractChecker interface {
+type ContractChecker interface {
 	CodeAt(ctx context.Context, contract common.Address, blockNumber *big.Int) ([]byte, error)
 }
 
-type ContractCallerClient interface {
+type ContractCaller interface {
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
-}
-
-type ContractCheckerCallerClient interface {
-	ContractCallerClient
-	ClientContractChecker
-}
-
-type ClientDeployer interface {
-	ClientDispatcher
-	ClientContractChecker
-}
-
-type ContractCallerDispatcherClient interface {
-	ContractCallerClient
-	ClientDispatcher
-	ClientContractChecker
 }
 
 type GasPricer interface {
@@ -53,14 +37,20 @@ type ClientDispatcher interface {
 	From() common.Address
 }
 
-type SimulateCallerClient interface {
-	ContractCallerClient
+type ContractCallerDispatcher interface {
+	ContractCaller
+	ClientDispatcher
+	ContractChecker
+}
+
+type SimulateCaller interface {
+	ContractCaller
 	TransactionByHash(ctx context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error)
 }
 
 // Simulate function gets transaction info by hash and then executes a message call transaction, which is directly executed in the VM
 // of the node, but never mined into the blockchain. Execution happens against provided block.
-func Simulate(c SimulateCallerClient, block *big.Int, txHash common.Hash, from common.Address) ([]byte, error) {
+func Simulate(c SimulateCaller, block *big.Int, txHash common.Hash, from common.Address) ([]byte, error) {
 	tx, _, err := c.TransactionByHash(context.TODO(), txHash)
 	if err != nil {
 		log.Debug().Msgf("[client] tx by hash error: %v", err)

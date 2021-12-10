@@ -4,11 +4,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
+	mock_calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"math/big"
 	"testing"
 
-	mock_client "github.com/ChainSafe/chainbridge-core/chains/evm/calls/client/mock"
 	mock_transactor "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
@@ -19,7 +19,7 @@ import (
 
 type ProposalStatusTestSuite struct {
 	suite.Suite
-	mockContractCaller *mock_client.MockContractCallerDispatcherClient
+	mockContractCaller *mock_calls.MockContractCallerDispatcher
 	mockTransactor     *mock_transactor.MockTransactor
 	bridgeAddress      common.Address
 }
@@ -32,7 +32,7 @@ func (s *ProposalStatusTestSuite) SetupSuite()    {}
 func (s *ProposalStatusTestSuite) TearDownSuite() {}
 func (s *ProposalStatusTestSuite) SetupTest() {
 	gomockController := gomock.NewController(s.T())
-	s.mockContractCaller = mock_client.NewMockContractCallerDispatcherClient(gomockController)
+	s.mockContractCaller = mock_calls.NewMockContractCallerDispatcher(gomockController)
 	s.mockTransactor = mock_transactor.NewMockTransactor(gomockController)
 	s.bridgeAddress = common.HexToAddress("0x3162226db165D8eA0f51720CA2bbf44Db2105ADF")
 }

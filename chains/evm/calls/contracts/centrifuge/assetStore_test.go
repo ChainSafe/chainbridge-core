@@ -2,8 +2,8 @@ package centrifuge_test
 
 import (
 	"errors"
-	mock_client "github.com/ChainSafe/chainbridge-core/chains/evm/calls/client/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/centrifuge"
+	mock_calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
 	mock_transactor "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/mock"
 	"testing"
 
@@ -15,7 +15,7 @@ import (
 type IsCentrifugeAssetStoredTestSuite struct {
 	suite.Suite
 	gomockController                   *gomock.Controller
-	mockContractCallerDispatcherClient *mock_client.MockContractCallerDispatcherClient
+	mockContractCallerDispatcherClient *mock_calls.MockContractCallerDispatcher
 	mockTransactor                     *mock_transactor.MockTransactor
 	assetStoreContractAddress          common.Address
 	assetStoreContract                 *centrifuge.AssetStoreContract
@@ -29,7 +29,7 @@ func (s *IsCentrifugeAssetStoredTestSuite) SetupSuite()    {}
 func (s *IsCentrifugeAssetStoredTestSuite) TearDownSuite() {}
 func (s *IsCentrifugeAssetStoredTestSuite) SetupTest() {
 	s.gomockController = gomock.NewController(s.T())
-	s.mockContractCallerDispatcherClient = mock_client.NewMockContractCallerDispatcherClient(s.gomockController)
+	s.mockContractCallerDispatcherClient = mock_calls.NewMockContractCallerDispatcher(s.gomockController)
 	s.mockTransactor = mock_transactor.NewMockTransactor(s.gomockController)
 	s.assetStoreContractAddress = common.HexToAddress("0x9A0E6F91E6031C08326764655432f8F9c180fBa0")
 	s.assetStoreContract = centrifuge.NewAssetStoreContract(
@@ -78,7 +78,7 @@ func (s *IsCentrifugeAssetStoredTestSuite) TestValidStoredAsset() {
 	s.mockContractCallerDispatcherClient.EXPECT().CallContract(
 		gomock.Any(), gomock.Any(), gomock.Any()).Return(response, nil)
 	s.mockContractCallerDispatcherClient.EXPECT().From().Times(1).Return(common.Address{})
-	
+
 	isStored, err := s.assetStoreContract.IsCentrifugeAssetStored([32]byte{})
 
 	s.Nil(err)

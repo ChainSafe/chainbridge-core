@@ -2,7 +2,7 @@ package initialize
 
 import (
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	evmgaspricer2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
@@ -26,7 +26,7 @@ func InitializeClient(
 
 func InitializeTransactor(
 	gasPrice *big.Int,
-	txFabric client.TxFabric,
+	txFabric calls.TxFabric,
 	client *evmclient.EVMClient,
 ) (transactor.Transactor, error) {
 	gasPricer := evmgaspricer2.NewLondonGasPriceClient(

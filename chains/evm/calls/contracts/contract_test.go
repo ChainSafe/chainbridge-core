@@ -2,8 +2,8 @@ package contracts
 
 import (
 	"errors"
-	mock_client "github.com/ChainSafe/chainbridge-core/chains/evm/calls/client/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+	mock_calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	mock_transactor "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/mock"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -18,7 +18,7 @@ import (
 type ContractTestSuite struct {
 	suite.Suite
 	gomockController                   *gomock.Controller
-	mockContractCallerDispatcherClient *mock_client.MockContractCallerDispatcherClient
+	mockContractCallerDispatcherClient *mock_calls.MockContractCallerDispatcher
 	mockTransactor                     *mock_transactor.MockTransactor
 	contract                           Contract
 }
@@ -31,7 +31,7 @@ func (s *ContractTestSuite) SetupSuite()    {}
 func (s *ContractTestSuite) TearDownSuite() {}
 func (s *ContractTestSuite) SetupTest() {
 	s.gomockController = gomock.NewController(s.T())
-	s.mockContractCallerDispatcherClient = mock_client.NewMockContractCallerDispatcherClient(s.gomockController)
+	s.mockContractCallerDispatcherClient = mock_calls.NewMockContractCallerDispatcher(s.gomockController)
 	s.mockTransactor = mock_transactor.NewMockTransactor(s.gomockController)
 	// Use ERC721 contract ABI inside the contract test
 	a, _ := abi.JSON(strings.NewReader(consts.ERC721PresetMinterPauserABI))

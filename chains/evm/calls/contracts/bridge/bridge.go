@@ -2,7 +2,7 @@ package bridge
 
 import (
 	"bytes"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/deposit"
@@ -25,7 +25,7 @@ type BridgeContract struct {
 }
 
 func NewBridgeContract(
-	client client.ContractCallerDispatcherClient,
+	client calls.ContractCallerDispatcher,
 	bridgeContractAddress common.Address,
 	transactor transactor.Transactor,
 ) *BridgeContract {

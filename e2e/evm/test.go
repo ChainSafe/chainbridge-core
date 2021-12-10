@@ -2,7 +2,7 @@ package evm
 
 import (
 	"context"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/centrifuge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
@@ -31,7 +31,7 @@ type TestClient interface {
 	FetchEventLogs(ctx context.Context, contractAddress common.Address, event string, startBlock *big.Int, endBlock *big.Int) ([]types.Log, error)
 }
 
-func SetupEVM2EVMTestSuite(fabric1, fabric2 client.TxFabric, endpoint1, endpoint2 string, adminKey *secp256k1.Keypair) *IntegrationTestSuite {
+func SetupEVM2EVMTestSuite(fabric1, fabric2 calls.TxFabric, endpoint1, endpoint2 string, adminKey *secp256k1.Keypair) *IntegrationTestSuite {
 	return &IntegrationTestSuite{
 		fabric1:   fabric1,
 		fabric2:   fabric2,
@@ -45,7 +45,7 @@ type IntegrationTestSuite struct {
 	suite.Suite
 	client             TestClient
 	client2            TestClient
-	gasPricer          client.GasPricer
+	gasPricer          calls.GasPricer
 	bridgeAddr         common.Address
 	erc20HandlerAddr   common.Address
 	erc20ContractAddr  common.Address
@@ -53,8 +53,8 @@ type IntegrationTestSuite struct {
 	erc721ContractAddr common.Address
 	genericHandlerAddr common.Address
 	assetStoreAddr     common.Address
-	fabric1            client.TxFabric
-	fabric2            client.TxFabric
+	fabric1            calls.TxFabric
+	fabric2            calls.TxFabric
 	endpoint1          string
 	endpoint2          string
 	adminKey           *secp256k1.Keypair

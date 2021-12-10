@@ -1,7 +1,7 @@
 package erc20
 
 import (
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"math/big"
@@ -18,7 +18,7 @@ type ERC20Contract struct {
 }
 
 func NewERC20Contract(
-	client client.ContractCallerDispatcherClient,
+	client calls.ContractCallerDispatcher,
 	erc20ContractAddress common.Address,
 	transactor transactor.Transactor,
 ) *ERC20Contract {
