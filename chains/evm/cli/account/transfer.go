@@ -22,7 +22,7 @@ import (
 var transferBaseCurrencyCmd = &cobra.Command{
 	Use:   "transfer",
 	Short: "Transfer base currency",
-	Long:  "The generate subcommand is used to transfer the base currency",
+	Long:  "The transfer subcommand is used to transfer the base currency",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		confirmTransfer(cmd, args)
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
@@ -43,9 +43,9 @@ var transferBaseCurrencyCmd = &cobra.Command{
 }
 
 func BindTransferCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Recipient, "recipient", "", "recipient address")
-	cmd.Flags().StringVar(&Amount, "amount", "", "transfer amount")
-	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "base token decimals")
+	cmd.Flags().StringVar(&Recipient, "recipient", "", "Recipient address")
+	cmd.Flags().StringVar(&Amount, "amount", "", "Transfer amount")
+	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "Base token decimals")
 	flags.MarkFlagsAsRequired(cmd, "recipient", "amount", "decimals")
 }
 

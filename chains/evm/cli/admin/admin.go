@@ -6,8 +6,8 @@ import (
 
 var AdminCmd = &cobra.Command{
 	Use:   "admin",
-	Short: "Admin-related instructions",
-	Long:  "Admin-related instructions",
+	Short: "Set of commands for executing various admin actions",
+	Long:  "Set of commands for executing various admin actions",
 }
 
 func init() {

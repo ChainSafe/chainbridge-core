@@ -223,7 +223,7 @@ func deployBridgeForTest(
 	staticGasPricer := evmgaspricer.NewStaticGasPriceDeterminant(c, nil)
 	bridgeAddr, err := calls.DeployBridge(c, fabric, staticGasPricer, domainID, DefaultRelayerAddresses, threshold, big.NewInt(0))
 	if err != nil {
-		return common.Address{}, fmt.Errorf("Bridge deploy failed: %w", err)
+		return common.Address{}, fmt.Errorf("bridge deploy failed: %w", err)
 	}
 
 	log.Debug().Msgf("Bridge deployed to address: %s", bridgeAddr)
@@ -258,12 +258,12 @@ func deployGenericForTest(
 	staticGasPricer := evmgaspricer.NewStaticGasPriceDeterminant(c, nil)
 	genericHandlerAddr, err := calls.DeployGenericHandler(c, fabric, staticGasPricer, bridgeAddr)
 	if err != nil {
-		return common.Address{}, common.Address{}, fmt.Errorf("Generic handler deploy failed: %w", err)
+		return common.Address{}, common.Address{}, fmt.Errorf("generic handler deploy failed: %w", err)
 	}
 
 	assetStoreAddr, err := calls.DeployCentrifugeAssetStore(c, fabric, staticGasPricer)
 	if err != nil {
-		return common.Address{}, common.Address{}, fmt.Errorf("Centrifuge asset store deploy failed: %w", err)
+		return common.Address{}, common.Address{}, fmt.Errorf("centrifuge asset store deploy failed: %w", err)
 	}
 
 	log.Debug().Msgf("Centrifuge asset store deployed to: %s; \n Generic Handler deployed to: %s", assetStoreAddr, genericHandlerAddr)

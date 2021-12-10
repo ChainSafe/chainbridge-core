@@ -18,8 +18,8 @@ import (
 
 var depositCmd = &cobra.Command{
 	Use:   "deposit",
-	Short: "Initiate a transfer of ERC20 tokens",
-	Long:  "Initiate a transfer of ERC20 tokens",
+	Short: "Deposit an ERC20 token",
+	Long:  "The deposit subcommand creates a new ERC20 token deposit on the bridge contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -45,13 +45,13 @@ func init() {
 }
 
 func BindDepositCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "address of bridge contract")
-	cmd.Flags().StringVar(&Amount, "amount", "", "amount to deposit")
-	cmd.Flags().Uint64Var(&DomainID, "domainId", 0, "destination domain ID")
-	cmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID for transfer")
+	cmd.Flags().StringVar(&Recipient, "recipient", "", "Address of recipient")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Address of bridge contract")
+	cmd.Flags().StringVar(&Amount, "amount", "", "Amount to deposit")
+	cmd.Flags().Uint8Var(&DomainID, "domain", 0, "Destination domain ID")
+	cmd.Flags().StringVar(&ResourceID, "resource", "", "Resource ID for transfer")
 	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
-	flags.MarkFlagsAsRequired(cmd, "recipient", "bridge", "amount", "domainId", "resourceId", "decimals")
+	flags.MarkFlagsAsRequired(cmd, "recipient", "bridge", "amount", "domain", "resource", "decimals")
 }
 
 func ValidateDepositFlags(cmd *cobra.Command, args []string) error {

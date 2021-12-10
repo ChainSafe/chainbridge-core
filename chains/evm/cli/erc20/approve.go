@@ -20,8 +20,8 @@ import (
 
 var approveCmd = &cobra.Command{
 	Use:   "approve",
-	Short: "Approve tokens in an ERC20 contract for transfer",
-	Long:  "Approve tokens in an ERC20 contract for transfer",
+	Short: "Approve an ERC20 tokens",
+	Long:  "The approve subcommand approves tokens in an ERC20 contract for transfer",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -41,11 +41,11 @@ var approveCmd = &cobra.Command{
 }
 
 func BindApproveCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
-	cmd.Flags().StringVar(&Amount, "amount", "", "amount to grant allowance")
-	cmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
+	cmd.Flags().StringVar(&Erc20Address, "contract", "", "ERC20 contract address")
+	cmd.Flags().StringVar(&Amount, "amount", "", "Amount to grant allowance")
+	cmd.Flags().StringVar(&Recipient, "recipient", "", "Recipient address")
 	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
-	flags.MarkFlagsAsRequired(cmd, "erc20Address", "amount", "recipient", "decimals")
+	flags.MarkFlagsAsRequired(cmd, "contract", "amount", "recipient", "decimals")
 }
 
 func init() {

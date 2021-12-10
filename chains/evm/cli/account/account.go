@@ -6,8 +6,8 @@ import (
 
 var AccountRootCMD = &cobra.Command{
 	Use:   "accounts",
-	Short: "Account instructions",
-	Long:  "Account instructions",
+	Short: "Set of commands for managing accounts",
+	Long:  "Set of commands for managing accounts",
 }
 
 func init() {

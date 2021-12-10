@@ -9,7 +9,7 @@ import (
 var (
 	Bridge          string
 	DataHash        string
-	DomainID        uint64
+	DomainID        uint8
 	DepositNonce    uint64
 	Handler         string
 	ResourceID      string
