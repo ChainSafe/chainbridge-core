@@ -10,7 +10,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc721"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/generic"
-	evmgaspricer2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
+	evmgaspricer "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum/common"
@@ -44,7 +44,7 @@ type EVME2EConfig struct {
 
 type E2EClient interface {
 	calls.ContractCallerDispatcher
-	evmgaspricer2.GasPriceClient
+	evmgaspricer.GasPriceClient
 }
 
 func PrepareLocalEVME2EEnv(
@@ -54,7 +54,7 @@ func PrepareLocalEVME2EEnv(
 	threshold *big.Int,
 	mintTo common.Address,
 ) (EVME2EConfig, error) {
-	staticGasPricer := evmgaspricer2.NewStaticGasPriceDeterminant(ethClient, nil)
+	staticGasPricer := evmgaspricer.NewStaticGasPriceDeterminant(ethClient, nil)
 	t := transactor.NewSignAndSendTransactor(fabric, staticGasPricer, ethClient)
 
 	bridgeContract := bridge.NewBridgeContract(ethClient, common.Address{}, t)

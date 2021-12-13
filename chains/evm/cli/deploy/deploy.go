@@ -10,7 +10,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc721"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/generic"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
-	evmgaspricer2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
+	evmgaspricer "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"math/big"
@@ -154,7 +154,7 @@ func ProcessDeployFlags(cmd *cobra.Command, args []string) error {
 
 func CallDeployCLI(cmd *cobra.Command, args []string) error {
 	txFabric := evmtransaction.NewTransaction
-	return DeployCLI(cmd, args, txFabric, &evmgaspricer2.LondonGasPriceDeterminant{})
+	return DeployCLI(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
 }
 
 func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
@@ -173,7 +173,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPr
 		return err
 	}
 	gasPricer.SetClient(ethClient)
-	gasPricer.SetOpts(&evmgaspricer2.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
+	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
 	log.Debug().Msgf("Relayers for deploy %+v", Relayers)
 	log.Debug().Msgf("all bool: %v", DeployAll)
 

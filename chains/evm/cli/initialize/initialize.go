@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
-	evmgaspricer2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
+	evmgaspricer "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/rs/zerolog/log"
@@ -29,9 +29,9 @@ func InitializeTransactor(
 	txFabric calls.TxFabric,
 	client *evmclient.EVMClient,
 ) (transactor.Transactor, error) {
-	gasPricer := evmgaspricer2.NewLondonGasPriceClient(
+	gasPricer := evmgaspricer.NewLondonGasPriceClient(
 		client,
-		&evmgaspricer2.GasPricerOpts{UpperLimitFeePerGas: gasPrice},
+		&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice},
 	)
 
 	trans := transactor.NewSignAndSendTransactor(txFabric, gasPricer, client)
