@@ -2,7 +2,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
-name: E2E test
+name: E2E tests
 jobs:
   e2e:
     name: E2E Tests
