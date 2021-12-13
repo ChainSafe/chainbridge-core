@@ -33,19 +33,19 @@ var EvmRootCLI = &cobra.Command{
 var (
 	// Flags for all EVM CLI commands
 	UrlFlagName                = "url"
-	GasLimitFlagName           = "gasLimit"
-	GasPriceFlagName           = "gasPrice"
-	NetworkIdFlagName          = "networkid"
-	PrivateKeyFlagName         = "privateKey"
-	JsonWalletFlagName         = "jsonWallet"
-	JsonWalletPasswordFlagName = "jsonWalletPassword"
+	GasLimitFlagName           = "gas-limit"
+	GasPriceFlagName           = "gas-price"
+	NetworkIdFlagName          = "network"
+	PrivateKeyFlagName         = "private-key"
+	JsonWalletFlagName         = "json-wallet"
+	JsonWalletPasswordFlagName = "json-wallet-password"
 )
 
 func BindEVMCLIFlags(evmRootCLI *cobra.Command) {
-	evmRootCLI.PersistentFlags().String(UrlFlagName, "ws://localhost:8545", "node url")
-	evmRootCLI.PersistentFlags().Uint64(GasLimitFlagName, 6721975, "gasLimit used in transactions")
-	evmRootCLI.PersistentFlags().Uint64(GasPriceFlagName, 0, "used as upperLimitGasPrice for transactions if not 0. Transactions gasPrice is defined by estimating it on network for pre London fork networks and by estimating BaseFee and MaxTipFeePerGas in post London networks")
-	evmRootCLI.PersistentFlags().Uint64(NetworkIdFlagName, 0, "networkid")
+	evmRootCLI.PersistentFlags().String(UrlFlagName, "ws://localhost:8545", "URL of the node to receive RPC calls")
+	evmRootCLI.PersistentFlags().Uint64(GasLimitFlagName, 6721975, "Gas limit to be used in transactions")
+	evmRootCLI.PersistentFlags().Uint64(GasPriceFlagName, 0, "Used as upperLimitGasPrice for transactions if not 0. Transactions gasPrice is defined by estimating it on network for pre London fork networks and by estimating BaseFee and MaxTipFeePerGas in post London networks")
+	evmRootCLI.PersistentFlags().Uint64(NetworkIdFlagName, 0, "ID of the Network")
 	evmRootCLI.PersistentFlags().String(PrivateKeyFlagName, "", "Private key to use")
 	evmRootCLI.PersistentFlags().String(JsonWalletFlagName, "", "Encrypted JSON wallet")
 	evmRootCLI.PersistentFlags().String(JsonWalletPasswordFlagName, "", "Password for encrypted JSON wallet")

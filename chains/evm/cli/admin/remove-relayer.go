@@ -3,23 +3,27 @@ package admin
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
+	"github.com/ChainSafe/chainbridge-core/util"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
 var removeRelayerCmd = &cobra.Command{
 	Use:   "remove-relayer",
-	Short: "Remove a relayer",
-	Long:  "Remove a relayer",
+	Short: "Remove an existing relayer",
+	Long:  "The remove-relayer subcommand removes an existing relayer",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return util.CallPersistentPreRun(cmd, args)
 	},
 	Run: removeRelayer,
 }
 
 func BindRemoveRelayerFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Relayer, "relayer", "", "address to remove")
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	cmd.Flags().StringVar(&Relayer, "relayer", "", "Address to remove")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	flags.MarkFlagsAsRequired(cmd, "relayer", "bridge")
 }
 func init() {

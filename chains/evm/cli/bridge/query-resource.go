@@ -3,24 +3,28 @@ package bridge
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
+	"github.com/ChainSafe/chainbridge-core/util"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
 var queryResourceCmd = &cobra.Command{
 	Use:   "query-resource",
-	Short: "Query the contract address",
-	Long:  "Query the contract address with the provided resource ID for a specific handler contract",
+	Short: "Query the resource ID for a handler contract",
+	Long:  "The query-resource subcommand queries the contract address with the provided resource ID for a specific handler contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return util.CallPersistentPreRun(cmd, args)
 	},
 	Run: queryResource,
 }
 
 func BindQueryResourceFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Handler, "handler", "", "handler contract address")
-	cmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID to query")
-	flags.MarkFlagsAsRequired(cmd, "handler", "resourceId")
+	cmd.Flags().StringVar(&Handler, "handler", "", "Handler contract address")
+	cmd.Flags().StringVar(&ResourceID, "resource", "", "Resource ID to query")
+	flags.MarkFlagsAsRequired(cmd, "handler", "resource")
 }
 
 func init() {

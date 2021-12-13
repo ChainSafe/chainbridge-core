@@ -2,12 +2,11 @@ package utils
 
 import (
 	"errors"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
 	gomath "math"
 	"math/big"
 	"strings"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
 
 	"github.com/spf13/cobra"
 
@@ -17,8 +16,8 @@ import (
 
 var UtilsCmd = &cobra.Command{
 	Use:   "utils",
-	Short: "Utils-related instructions",
-	Long:  "Utils-related instructions",
+	Short: "Set of utility commands",
+	Long:  "Set of utility commands",
 }
 
 func init() {

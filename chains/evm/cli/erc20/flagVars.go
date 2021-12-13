@@ -1,6 +1,7 @@
 package erc20
 
 import (
+	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/types"
@@ -15,7 +16,7 @@ var (
 	Erc20Address   string
 	Recipient      string
 	Bridge         string
-	DomainID       uint64
+	DomainID       uint8
 	ResourceID     string
 	AccountAddress string
 	OwnerAddress   string
@@ -31,4 +32,13 @@ var (
 	minterAddr         common.Address
 	bridgeAddr         common.Address
 	resourceIdBytesArr types.ResourceID
+)
+
+// global flags
+var (
+	dstAddress    common.Address
+	url           string
+	gasLimit      uint64
+	gasPrice      *big.Int
+	senderKeyPair *secp256k1.Keypair
 )

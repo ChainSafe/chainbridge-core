@@ -2,17 +2,13 @@ package bridge
 
 import (
 	"fmt"
-	"math/big"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
+	"github.com/ChainSafe/chainbridge-core/util"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -21,13 +17,23 @@ import (
 var setBurnCmd = &cobra.Command{
 	Use:   "set-burn",
 	Short: "Set a token contract as mintable/burnable",
-	Long:  "Set a token contract as mintable/burnable in a handler",
+	Long:  "The set-burn subcommand sets a token contract as mintable/burnable in a handler",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return util.CallPersistentPreRun(cmd, args)
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return SetBurnCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+		c, err := initialize.InitializeClient(url, senderKeyPair)
+		if err != nil {
+			return err
+		}
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		if err != nil {
+			return err
+		}
+		return SetBurnCmd(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateSetBurnFlags(cmd, args)
@@ -42,16 +48,15 @@ var setBurnCmd = &cobra.Command{
 
 func BindSetBurnCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Handler, "handler", "", "ERC20 handler contract address")
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	cmd.Flags().StringVar(&TokenContract, "tokenContract", "", "token contract to be registered")
-	flags.MarkFlagsAsRequired(cmd, "handler", "bridge", "tokenContract")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
+	cmd.Flags().StringVar(&TokenContract, "token-contract", "", "Token contract to be registered")
+	flags.MarkFlagsAsRequired(cmd, "handler", "bridge", "token-contract")
 }
 
 func init() {
 	BindSetBurnCmdFlags(setBurnCmd)
 }
 func ValidateSetBurnFlags(cmd *cobra.Command, args []string) error {
-
 	if !common.IsHexAddress(Handler) {
 		return fmt.Errorf("invalid handler address %s", Handler)
 	}
@@ -69,29 +74,14 @@ func ProcessSetBurnFlags(cmd *cobra.Command, args []string) {
 	bridgeAddr = common.HexToAddress(Bridge)
 	tokenContractAddr = common.HexToAddress(TokenContract)
 }
-func SetBurnCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
-	// fetch global flag values
-	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
-	if err != nil {
-		return fmt.Errorf("could not get global flags: %v", err)
-	}
-
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
-		return err
-	}
-	gasPricer.SetClient(ethClient)
-	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-
-	log.Info().Msgf("Setting contract %s as burnable on handler %s", tokenContractAddr.String(), handlerAddr.String())
-	setBurnableInput, err := calls.PrepareSetBurnableInput(handlerAddr, tokenContractAddr)
-	if err != nil {
-		log.Error().Err(err)
-		return err
-	}
-
-	_, err = calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddr, setBurnableInput, gasLimit, big.NewInt(0))
+func SetBurnCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
+	log.Info().Msgf(
+		"Setting contract %s as burnable on handler %s",
+		tokenContractAddr.String(), handlerAddr.String(),
+	)
+	_, err := contract.SetBurnableInput(
+		handlerAddr, tokenContractAddr, transactor.TransactOptions{GasLimit: gasLimit},
+	)
 	if err != nil {
 		log.Error().Err(err)
 		return err

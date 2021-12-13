@@ -3,15 +3,16 @@ package admin
 import (
 	"errors"
 	"fmt"
+	callsUtil "github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
+	"github.com/ChainSafe/chainbridge-core/util"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -20,12 +21,23 @@ import (
 var withdrawCmd = &cobra.Command{
 	Use:   "withdraw",
 	Short: "Withdraw tokens from a handler contract",
-	Long:  "Withdraw tokens from a handler contract",
+	Long:  "The withdraw subcommand withdrawals tokens from a handler contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return util.CallPersistentPreRun(cmd, args)
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithdrawCmd(cmd, args, evmtransaction.NewTransaction, &evmgaspricer.LondonGasPriceDeterminant{})
+		c, err := initialize.InitializeClient(url, senderKeyPair)
+		if err != nil {
+			return err
+		}
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		if err != nil {
+			return err
+		}
+		return WithdrawCmd(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateWithdrawCmdFlags(cmd, args)
@@ -42,14 +54,14 @@ var withdrawCmd = &cobra.Command{
 }
 
 func BindWithdrawCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Amount, "amount", "", "token amount to withdraw. Should be set or ID or amount if both set error will occur")
-	cmd.Flags().StringVar(&TokenID, "tokenId", "", "token ID to withdraw. Should be set or ID or amount if both set error will occur")
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	cmd.Flags().StringVar(&Handler, "handler", "", "handler contract address")
-	cmd.Flags().StringVar(&Token, "token", "", "ERC20 or ERC721 token contract address")
-	cmd.Flags().StringVar(&Recipient, "recipient", "", "address to withdraw to")
+	cmd.Flags().StringVar(&Amount, "amount", "", "Token amount to withdraw, use only if ERC20 token is withdrawn. If both amount and token-id are set an error will occur")
+	cmd.Flags().StringVar(&TokenID, "token", "", "Token ID to withdraw, use only if ERC721 token is withdrawn. If both amount and token-id are set an error will occur")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
+	cmd.Flags().StringVar(&Handler, "handler", "", "Handler contract address")
+	cmd.Flags().StringVar(&Token, "token-contract", "", "ERC20 or ERC721 token contract address")
+	cmd.Flags().StringVar(&Recipient, "recipient", "", "Address to withdraw to")
 	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
-	flags.MarkFlagsAsRequired(withdrawCmd, "amount", "tokenId", "bridge", "handler", "token", "recipient", "decimals")
+	flags.MarkFlagsAsRequired(withdrawCmd, "amount", "token", "bridge", "handler", "token-contract", "recipient", "decimals")
 }
 
 func init() {
@@ -70,10 +82,10 @@ func ValidateWithdrawCmdFlags(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid recipient address: %s", Recipient)
 	}
 	if TokenID != "" && Amount != "" {
-		return errors.New("only id or amount should be set")
+		return errors.New("only token-id or amount should be set")
 	}
 	if TokenID == "" && Amount == "" {
-		return errors.New("id or amount flag should be set")
+		return errors.New("token-id or amount flag should be set")
 	}
 	return nil
 }
@@ -86,47 +98,22 @@ func ProcessWithdrawCmdFlags(cmd *cobra.Command, args []string) error {
 	tokenAddr = common.HexToAddress(Token)
 	recipientAddr = common.HexToAddress(Recipient)
 	decimals := big.NewInt(int64(Decimals))
-	realAmount, err = calls.UserAmountToWei(Amount, decimals)
+	realAmount, err = callsUtil.UserAmountToWei(Amount, decimals)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func WithdrawCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
-	// fetch global flag values
-	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
-	if err != nil {
-		return fmt.Errorf("could not get global flags: %v", err)
-	}
-
-	fmt.Printf("Withdrawing %s token from handler: %s", Amount, Handler)
-
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("eth client initialization error: %v", err))
-		return err
-	}
-	gasPricer.SetClient(ethClient)
-	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-
-	txHash, err := calls.Withdraw(
-		ethClient,
-		txFabric,
-		gasPricer,
-		gasLimit,
-		bridgeAddr,
-		handlerAddr,
-		tokenAddr,
-		recipientAddr,
-		realAmount,
+func WithdrawCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
+	h, err := contract.Withdraw(
+		handlerAddr, tokenAddr, recipientAddr, realAmount, transactor.TransactOptions{GasLimit: gasLimit},
 	)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("admin withdrawal error: %v", err))
 		return err
 	}
 
-	log.Info().Msgf("%s tokens were withdrawn from handler contract %s into recipient %s; tx hash: %s", Amount, Handler, Recipient, txHash.Hex())
-
+	log.Info().Msgf("%s tokens were withdrawn from handler contract %s into recipient %s; tx hash: %s", Amount, Handler, Recipient, h.Hex())
 	return nil
 }
