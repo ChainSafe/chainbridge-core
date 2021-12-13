@@ -6,6 +6,11 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+var (
+	validAddr   = "0xd606A00c1A39dA53EA7Bb3Ab570BBE40b156EB66"
+	invalidAddr = "0xd606A00c1A39dA53EA7Bb3Ab570BBE40b156EXYZ"
+)
+
 type TransferTestSuite struct {
 	suite.Suite
 }
@@ -23,7 +28,7 @@ func (s *TransferTestSuite) TearDownTest() {}
 func (s *TransferTestSuite) TestValidateTransferBaseCurrencyFlags() {
 	cmd := transferBaseCurrencyCmd
 
-	cmd.Flag("recipient").Value.Set("0xd606A00c1A39dA53EA7Bb3Ab570BBE40b156EB66")
+	cmd.Flag("recipient").Value.Set(validAddr)
 
 	err := ValidateTransferBaseCurrencyFlags(
 		cmd,
@@ -35,7 +40,7 @@ func (s *TransferTestSuite) TestValidateTransferBaseCurrencyFlags() {
 func (s *TransferTestSuite) TestValidateTransferBaseCurrencyFlagsInvalidAddress() {
 	cmd := transferBaseCurrencyCmd
 
-	cmd.Flag("recipient").Value.Set("0xd606A00c1A39dA53EA7Bb3Ab570BBE40b156EXYZ") // invalid address
+	cmd.Flag("recipient").Value.Set(invalidAddr)
 
 	err := ValidateTransferBaseCurrencyFlags(
 		cmd,
