@@ -2,12 +2,13 @@ package erc20
 
 import (
 	"fmt"
+	"math/big"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/util"
-	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
@@ -63,6 +64,9 @@ func BindMintCmdFlags(cmd *cobra.Command) {
 func ValidateMintFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Erc20Address) {
 		return fmt.Errorf("invalid erc20address %s", Erc20Address)
+	}
+	if !common.IsHexAddress(DstAddress) {
+		return fmt.Errorf("invalid destination address %s", DstAddress)
 	}
 	return nil
 }
