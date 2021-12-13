@@ -6,7 +6,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -86,7 +85,7 @@ func (c *Contract) CallContract(method string, args ...interface{}) ([]interface
 		return nil, err
 	}
 	msg := ethereum.CallMsg{From: c.client.From(), To: &c.contractAddress, Data: input}
-	out, err := c.client.CallContract(context.TODO(), util.ToCallArg(msg), nil)
+	out, err := c.client.CallContract(context.TODO(), calls.ToCallArg(msg), nil)
 	if err != nil {
 		log.Error().
 			Str("contract", c.contractAddress.String()).

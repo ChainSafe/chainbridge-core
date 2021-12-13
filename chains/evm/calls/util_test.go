@@ -1,8 +1,8 @@
-package util_test
+package calls_test
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	mock_calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"math/big"
 	"testing"
 
@@ -31,7 +31,7 @@ func (s *GetSolidityFunctionSigTestSuite) SetupTest() {
 func (s *GetSolidityFunctionSigTestSuite) TearDownTest() {}
 
 func (s *GetSolidityFunctionSigTestSuite) TestReturnsValidSolidityFunctionSig() {
-	sig := util.GetSolidityFunctionSig([]byte("store(bytes32)"))
+	sig := calls.GetSolidityFunctionSig([]byte("store(bytes32)"))
 
 	s.Equal(sig, [4]byte{0x65, 0x4c, 0xf8, 0x8c})
 }
@@ -69,7 +69,7 @@ func (s *UtilsTestSuite) TestToCallArg() {
 		GasPrice: big.NewInt(3000),
 		Data:     []byte("test"),
 	}
-	got := util.ToCallArg(msg)
+	got := calls.ToCallArg(msg)
 	want := map[string]interface{}{
 		"from":     msg.From,
 		"to":       msg.To,
@@ -83,7 +83,7 @@ func (s *UtilsTestSuite) TestToCallArg() {
 
 func (s *UtilsTestSuite) TestToCallArgWithEmptyMessage() {
 	msg := ethereum.CallMsg{}
-	got := util.ToCallArg(msg)
+	got := calls.ToCallArg(msg)
 	want := map[string]interface{}{
 		"from": common.HexToAddress(""),
 		"to":   (*common.Address)(nil),
@@ -92,7 +92,7 @@ func (s *UtilsTestSuite) TestToCallArgWithEmptyMessage() {
 }
 
 func (s *UtilsTestSuite) TestUserAmountToWei() {
-	wei, err := util.UserAmountToWei("1", big.NewInt(18))
+	wei, err := calls.UserAmountToWei("1", big.NewInt(18))
 	s.Nil(err)
 	s.Equal(big.NewInt(1000000000000000000), wei)
 }

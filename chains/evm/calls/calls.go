@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -67,7 +66,7 @@ func Simulate(c SimulateCaller, block *big.Int, txHash common.Hash, from common.
 		Value:    tx.Value(),
 		Data:     tx.Data(),
 	}
-	res, err := c.CallContract(context.TODO(), util.ToCallArg(msg), block)
+	res, err := c.CallContract(context.TODO(), ToCallArg(msg), block)
 	if err != nil {
 		log.Debug().Msgf("[client] call contract error: %v", err)
 		return nil, err
