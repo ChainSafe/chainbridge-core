@@ -10,8 +10,8 @@ import (
 
 var queryResourceCmd = &cobra.Command{
 	Use:   "query-resource",
-	Short: "Query the contract address",
-	Long:  "Query the contract address with the provided resource ID for a specific handler contract",
+	Short: "Query the resource ID for a handler contract",
+	Long:  "The query-resource subcommand queries the contract address with the provided resource ID for a specific handler contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -22,9 +22,9 @@ var queryResourceCmd = &cobra.Command{
 }
 
 func BindQueryResourceFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Handler, "handler", "", "handler contract address")
-	cmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID to query")
-	flags.MarkFlagsAsRequired(cmd, "handler", "resourceId")
+	cmd.Flags().StringVar(&Handler, "handler", "", "Handler contract address")
+	cmd.Flags().StringVar(&ResourceID, "resource", "", "Resource ID to query")
+	flags.MarkFlagsAsRequired(cmd, "handler", "resource")
 }
 
 func init() {

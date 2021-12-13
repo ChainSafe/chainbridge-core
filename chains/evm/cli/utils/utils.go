@@ -16,8 +16,8 @@ import (
 
 var UtilsCmd = &cobra.Command{
 	Use:   "utils",
-	Short: "Utils-related instructions",
-	Long:  "Utils-related instructions",
+	Short: "Set of utility commands",
+	Long:  "Set of utility commands",
 }
 
 func init() {

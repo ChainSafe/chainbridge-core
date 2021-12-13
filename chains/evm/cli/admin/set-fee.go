@@ -11,7 +11,7 @@ import (
 var setFeeCmd = &cobra.Command{
 	Use:   "set-fee",
 	Short: "Set a new fee for deposits",
-	Long:  "Set a new fee for deposits",
+	Long:  "The set-fee subcommand sets a new fee for deposits",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -23,9 +23,10 @@ var setFeeCmd = &cobra.Command{
 
 func BindSetFeeFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Fee, "fee", "", "New fee (in ether)")
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	flags.MarkFlagsAsRequired(cmd, "fee", "bridge")
 }
+
 func init() {
 	BindSetFeeFlags(setFeeCmd)
 }

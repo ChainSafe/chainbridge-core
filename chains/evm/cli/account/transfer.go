@@ -1,23 +1,31 @@
 package account
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	callsUtil "github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/util"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"math/big"
+	"os"
+	"strings"
 )
 
 var transferBaseCurrencyCmd = &cobra.Command{
 	Use:   "transfer",
 	Short: "Transfer base currency",
-	Long:  "The generate subcommand is used to transfer the base currency",
+	Long:  "The transfer subcommand is used to transfer the base currency",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		confirmTransfer(cmd, args)
+		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c, err := initialize.InitializeClient(url, senderKeyPair)
 		if err != nil {
@@ -44,9 +52,9 @@ var transferBaseCurrencyCmd = &cobra.Command{
 }
 
 func BindTransferCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Recipient, "recipient", "", "recipient address")
-	cmd.Flags().StringVar(&Amount, "amount", "", "transfer amount")
-	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "base token decimals")
+	cmd.Flags().StringVar(&Recipient, "recipient", "", "Recipient address")
+	cmd.Flags().StringVar(&Amount, "amount", "", "Transfer amount")
+	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "Base token decimals")
 	flags.MarkFlagsAsRequired(cmd, "recipient", "amount", "decimals")
 }
 
@@ -79,4 +87,22 @@ func TransferBaseCurrency(cmd *cobra.Command, args []string, t transactor.Transa
 
 	log.Info().Msgf("%s tokens were transferred to %s from %s", Amount, recipientAddress.Hex(), senderKeyPair.CommonAddress().String())
 	return nil
+}
+
+func confirmTransfer(cmd *cobra.Command, args []string) {
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Printf("Send transaction %s(%d) to %s (Y/N)?", Amount, Decimals, Recipient)
+		s, _ := reader.ReadString('\n')
+
+		s = strings.ToLower(strings.TrimSuffix(s, "\n"))
+
+		if strings.Compare(s, "n") == 0 {
+			os.Exit(0)
+		} else if strings.Compare(s, "y") == 0 {
+			break
+		} else {
+			continue
+		}
+	}
 }

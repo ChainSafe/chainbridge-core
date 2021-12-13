@@ -17,7 +17,7 @@ import (
 var isRelayerCmd = &cobra.Command{
 	Use:   "is-relayer",
 	Short: "Check if an address is registered as a relayer",
-	Long:  "Check if an address is registered as a relayer",
+	Long:  "The is-relayer subcommand checks if an address is registered as a relayer",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -47,8 +47,8 @@ var isRelayerCmd = &cobra.Command{
 }
 
 func BindIsRelayerFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Relayer, "relayer", "", "address to check")
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	cmd.Flags().StringVar(&Relayer, "relayer", "", "Address to check")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	flags.MarkFlagsAsRequired(cmd, "relayer", "bridge")
 }
 

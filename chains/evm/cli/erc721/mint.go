@@ -18,8 +18,8 @@ import (
 
 var mintCmd = &cobra.Command{
 	Use:   "mint",
-	Short: "Mint token on an ERC721 mintable contract",
-	Long:  "Mint token on an ERC721 mintable contract",
+	Short: "Mint an ERC721 token",
+	Long:  "The mint subcommand mints a token on an ERC721 mintable contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -53,11 +53,11 @@ func init() {
 }
 
 func BindMintFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Erc721Address, "contract-address", "", "address of contract")
-	cmd.Flags().StringVar(&DstAddress, "destination-address", "", "address of recipient")
-	cmd.Flags().StringVar(&TokenId, "tokenId", "", "ERC721 token ID")
+	cmd.Flags().StringVar(&Erc721Address, "contract", "", "ERC721 contract address")
+	cmd.Flags().StringVar(&DstAddress, "recipient", "", "Recipient address")
+	cmd.Flags().StringVar(&TokenId, "token", "", "ERC721 token ID")
 	cmd.Flags().StringVar(&Metadata, "metadata", "", "ERC721 token metadata")
-	flags.MarkFlagsAsRequired(cmd, "contract-address", "destination-address", "tokenId", "metadata", "contract-address")
+	flags.MarkFlagsAsRequired(cmd, "contract", "recipient", "token", "metadata")
 }
 
 func ValidateMintFlags(cmd *cobra.Command, args []string) error {
@@ -71,7 +71,6 @@ func ValidateMintFlags(cmd *cobra.Command, args []string) error {
 }
 
 func ProcessMintFlags(cmd *cobra.Command, args []string) error {
-	var err error
 	erc721Addr = common.HexToAddress(Erc721Address)
 
 	if !common.IsHexAddress(DstAddress) {

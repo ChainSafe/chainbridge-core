@@ -19,8 +19,8 @@ import (
 
 var mintCmd = &cobra.Command{
 	Use:   "mint",
-	Short: "Mint tokens on an ERC20 mintable contract",
-	Long:  "Mint tokens on an ERC20 mintable contract",
+	Short: "Mint an ERC20 token",
+	Long:  "The mint subcommand mints a token on an ERC20 mintable contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -53,11 +53,11 @@ func init() {
 	BindMintCmdFlags(mintCmd)
 }
 func BindMintCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Amount, "amount", "", "amount to deposit")
+	cmd.Flags().StringVar(&Erc20Address, "contract", "", "ERC20 contract address")
+	cmd.Flags().StringVar(&Amount, "amount", "", "Deposit amount")
 	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
-	cmd.Flags().StringVar(&DstAddress, "dstAddress", "", "Where tokens should be minted. Defaults to TX sender")
-	cmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
-	flags.MarkFlagsAsRequired(cmd, "amount", "decimals", "dstAddress", "erc20Address")
+	cmd.Flags().StringVar(&DstAddress, "destination", "", "Where tokens should be minted. Defaults to TX sender")
+	flags.MarkFlagsAsRequired(cmd, "contract", "amount", "decimals", "destination")
 }
 
 func ValidateMintFlags(cmd *cobra.Command, args []string) error {

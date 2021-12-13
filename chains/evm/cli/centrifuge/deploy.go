@@ -1,6 +1,7 @@
 package centrifuge
 
 import (
+	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/centrifuge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
@@ -13,8 +14,8 @@ import (
 
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
-	Short: "Deploy centrifuge asset store contract",
-	Long:  "This command can be used to deploy Centrifuge asset store contract that represents bridged Centrifuge assets.",
+	Short: "Deploy a centrifuge asset store contract",
+	Long:  "The deploy subcommand deploys a Centrifuge asset store contract that represents bridged Centrifuge assets",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -43,6 +44,7 @@ func init() {
 func DeployCentrifugeAssetStoreCmd(cmd *cobra.Command, args []string, contract *centrifuge.AssetStoreContract) error {
 	assetStoreAddress, err := contract.DeployContract()
 	if err != nil {
+		log.Error().Err(fmt.Errorf("centrifuge asset store deploy failed: %w", err))
 		return err
 	}
 

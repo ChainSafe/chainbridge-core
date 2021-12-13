@@ -16,8 +16,8 @@ import (
 
 var addMinterCmd = &cobra.Command{
 	Use:   "add-minter",
-	Short: "Add a minter to an ERC721 mintable contract",
-	Long:  "Add a minter to an ERC721 mintable contract",
+	Short: "Add a new ERC721 minter",
+	Long:  "The add-minter subcommand adds a new minter address to an ERC721 mintable contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -47,8 +47,8 @@ var addMinterCmd = &cobra.Command{
 }
 
 func BindAddMinterCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Erc721Address, "contract-address", "", "address of contract")
-	cmd.Flags().StringVar(&Minter, "minter", "", "minter address")
+	cmd.Flags().StringVar(&Erc721Address, "contract", "", "ERC721 contract address")
+	cmd.Flags().StringVar(&Minter, "minter", "", "Minter address")
 }
 
 func init() {

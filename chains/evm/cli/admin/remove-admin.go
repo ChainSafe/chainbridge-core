@@ -11,7 +11,7 @@ import (
 var removeAdminCmd = &cobra.Command{
 	Use:   "remove-admin",
 	Short: "Remove an existing admin",
-	Long:  "Remove an existing admin",
+	Long:  "The remove-admin subcommand removes an existing admin",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -22,8 +22,8 @@ var removeAdminCmd = &cobra.Command{
 }
 
 func BindRemoveAdminFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Admin, "admin", "", "address to remove")
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	cmd.Flags().StringVar(&Admin, "admin", "", "Address to remove")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	flags.MarkFlagsAsRequired(cmd, "admin", "bridge")
 }
 

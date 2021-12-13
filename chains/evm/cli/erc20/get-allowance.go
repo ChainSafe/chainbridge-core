@@ -11,10 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var allowanceCmd = &cobra.Command{
-	Use:   "allowance",
+var getAllowanceCmd = &cobra.Command{
+	Use:   "get-allowance",
 	Short: "Get the allowance of a spender for an address",
-	Long:  "Get the allowance of a spender for an address",
+	Long:  "The get-allowance subcommand returns the allowance of a spender for an address",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -30,22 +30,22 @@ var allowanceCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return AllowanceCmd(cmd, args, erc20.NewERC20Contract(c, erc20Addr, t))
+		return GetAllowanceCmd(cmd, args, erc20.NewERC20Contract(c, erc20Addr, t))
 	},
 }
 
-func BindAllowanceCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
-	cmd.Flags().StringVar(&OwnerAddress, "owner", "", "address of token owner")
-	cmd.Flags().StringVar(&SpenderAddress, "spender", "", "address of spender")
-	flags.MarkFlagsAsRequired(cmd, "erc20Address", "owner", "spender")
+func BindGetAllowanceCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&Erc20Address, "contract", "", "ERC20 contract address")
+	cmd.Flags().StringVar(&OwnerAddress, "owner", "", "Address of token owner")
+	cmd.Flags().StringVar(&SpenderAddress, "spender", "", "Address of spender")
+	flags.MarkFlagsAsRequired(cmd, "contract", "owner", "spender")
 }
 
 func init() {
-	BindAllowanceCmdFlags(allowanceCmd)
+	BindGetAllowanceCmdFlags(getAllowanceCmd)
 }
 
-func AllowanceCmd(cmd *cobra.Command, args []string, contract *erc20.ERC20Contract) error {
+func GetAllowanceCmd(cmd *cobra.Command, args []string, contract *erc20.ERC20Contract) error {
 	log.Debug().Msgf(`
 Determing allowance
 ERC20 address: %s

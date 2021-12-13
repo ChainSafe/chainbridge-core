@@ -17,7 +17,7 @@ import (
 var registerResourceCmd = &cobra.Command{
 	Use:   "register-resource",
 	Short: "Register a resource ID",
-	Long:  "Register a resource ID with a contract address for a handler",
+	Long:  "The register-resource subcommand registers a resource ID with a contract address for a handler",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -47,11 +47,11 @@ var registerResourceCmd = &cobra.Command{
 }
 
 func BindRegisterResourceCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Handler, "handler", "", "handler contract address")
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	cmd.Flags().StringVar(&Target, "target", "", "contract address to be registered")
-	cmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID to be registered")
-	flags.MarkFlagsAsRequired(cmd, "handler", "bridge", "target", "resourceId")
+	cmd.Flags().StringVar(&Handler, "handler", "", "Handler contract address")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
+	cmd.Flags().StringVar(&Target, "target", "", "Contract address to be registered")
+	cmd.Flags().StringVar(&ResourceID, "resource", "", "Resource ID to be registered")
+	flags.MarkFlagsAsRequired(cmd, "handler", "bridge", "target", "resource")
 }
 
 func init() {

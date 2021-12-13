@@ -16,7 +16,7 @@ var (
 	Erc20Address   string
 	Recipient      string
 	Bridge         string
-	DomainID       uint64
+	DomainID       uint8
 	ResourceID     string
 	AccountAddress string
 	OwnerAddress   string

@@ -17,7 +17,7 @@ import (
 var setThresholdCmd = &cobra.Command{
 	Use:   "set-threshold",
 	Short: "Set a new relayer vote threshold",
-	Long:  "Set a new relayer vote threshold",
+	Long:  "The set-threshold subcommand sets a new relayer vote threshold",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -47,10 +47,11 @@ var setThresholdCmd = &cobra.Command{
 }
 
 func BindSetThresholdFlags(cmd *cobra.Command) {
-	cmd.Flags().Uint64Var(&RelayerThreshold, "threshold", 0, "new relayer threshold")
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	cmd.Flags().Uint64Var(&RelayerThreshold, "threshold", 0, "New relayer threshold")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	flags.MarkFlagsAsRequired(cmd, "threshold", "bridge")
 }
+
 func init() {
 	BindSetThresholdFlags(setThresholdCmd)
 }

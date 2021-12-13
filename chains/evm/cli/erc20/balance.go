@@ -16,8 +16,8 @@ import (
 
 var balanceCmd = &cobra.Command{
 	Use:   "balance",
-	Short: "Query balance of an account in an ERC20 contract",
-	Long:  "Query balance of an account in an ERC20 contract",
+	Short: "Query an ERC20 token balance",
+	Long:  "The balance subcommand queries the balance of an account in an ERC20 contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -47,9 +47,9 @@ var balanceCmd = &cobra.Command{
 }
 
 func BindBalanceCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
-	cmd.Flags().StringVar(&AccountAddress, "accountAddress", "", "address to receive balance of")
-	flags.MarkFlagsAsRequired(cmd, "erc20Address", "accountAddress")
+	cmd.Flags().StringVar(&Erc20Address, "contract", "", "ERC20 contract address")
+	cmd.Flags().StringVar(&AccountAddress, "address", "", "Address to receive balance of")
+	flags.MarkFlagsAsRequired(cmd, "contract", "address")
 }
 
 func init() {

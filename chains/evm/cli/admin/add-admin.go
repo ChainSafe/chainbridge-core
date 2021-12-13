@@ -11,7 +11,7 @@ import (
 var addAdminCmd = &cobra.Command{
 	Use:   "add-admin",
 	Short: "Add a new admin",
-	Long:  "Add a new admin",
+	Long:  "The add-admin subcommand sets an address as a bridge admin",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -22,8 +22,8 @@ var addAdminCmd = &cobra.Command{
 }
 
 func BindAddAdminFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Admin, "admin", "", "address to add")
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	cmd.Flags().StringVar(&Admin, "admin", "", "Address to add")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	flags.MarkFlagsAsRequired(cmd, "admin", "bridge")
 }
 

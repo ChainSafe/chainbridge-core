@@ -14,9 +14,9 @@ import (
 )
 
 var hashListCmd = &cobra.Command{
-	Use:   "hashList",
-	Short: "List tx hashes",
-	Long:  "List tx hashes",
+	Use:   "hash-list",
+	Short: "List tx hashes within N number of blocks",
+	Long:  "The hash-list subcommand accepts a starting block to query, loops over N number of blocks past it, then prints this list of blocks to review hashes contained within",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -26,7 +26,9 @@ var hashListCmd = &cobra.Command{
 }
 
 func BindHashListCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&BlockNumber, "blockNumber", "", "block number")
+	cmd.Flags().StringVar(&BlockNumber, "block-number", "", "Block number to start at")
+	cmd.Flags().StringVar(&Blocks, "blocks", "", "Number of blocks past the provided block-number to review")
+	flags.MarkFlagsAsRequired(cmd, "block-number", "blocks")
 }
 
 func init() {
@@ -34,7 +36,6 @@ func init() {
 }
 
 func HashListCmd(cmd *cobra.Command, args []string) error {
-
 	// fetch global flag values
 	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
@@ -47,23 +48,23 @@ func HashListCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	blockNum, err := strconv.Atoi(BlockNumber)
+	// convert Blocks string to int for looping
+	numBlocks, err := strconv.Atoi(Blocks)
 	if err != nil {
-		log.Error().Err(fmt.Errorf("block string->int conversion error: %v", err))
+		log.Error().Err(fmt.Errorf("error converting NumberOfBlocks string -> int: %v", err))
 		return err
 	}
 
-	blockNumStr := strconv.Itoa(blockNum)
-	blockNumberBigInt, _ := new(big.Int).SetString(blockNumStr, 10)
+	// convert block number to string
+	blockNumberBigInt, _ := new(big.Int).SetString(BlockNumber, 10)
 
+	// loop over blocks provided by user
 	// check block by hash
 	// see if transaction block data is there
-	for i := 0; i < 50; i++ {
-		log.Debug().Msgf("blockNum: %v", blockNumberBigInt)
+	for i := 0; i < numBlocks; i++ {
+		log.Debug().Msgf("Block Number: %v", blockNumberBigInt)
 
 		// convert string block number to big.Int
-		// ignore success bool
-
 		blockNumberBigInt.Add(blockNumberBigInt, big.NewInt(1))
 
 		block, err := ethClient.BlockByNumber(context.Background(), blockNumberBigInt)
@@ -73,10 +74,14 @@ func HashListCmd(cmd *cobra.Command, args []string) error {
 			// will return early and not print debug log if block not found
 			// Error: not found
 
-			// return err
+			return err
 		}
 
-		log.Debug().Msgf("block: %v", block)
+		// loop over all transactions within block
+		// add newline for readability
+		for _, tx := range block.Body().Transactions {
+			log.Debug().Msgf("Tx hashes: %v\n", tx.Hash())
+		}
 	}
 	return nil
 }

@@ -16,8 +16,8 @@ import (
 
 var getThresholdCmd = &cobra.Command{
 	Use:   "get-threshold",
-	Short: "get relayer vote threshold",
-	Long:  "get relayer vote threshold",
+	Short: "Get the relayer vote threshold",
+	Long:  "The get-threshold subcommand returns the relayer vote threshold",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -47,7 +47,7 @@ var getThresholdCmd = &cobra.Command{
 }
 
 func BindGetThresholdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	flags.MarkFlagsAsRequired(cmd, "bridge")
 }
 func init() {

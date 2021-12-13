@@ -18,7 +18,7 @@ import (
 var unpauseCmd = &cobra.Command{
 	Use:   "unpause",
 	Short: "Unpause deposits and proposals",
-	Long:  "Unpause deposits and proposals",
+	Long:  "The unpause subcommand unpauses deposits and proposals",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -49,7 +49,7 @@ var unpauseCmd = &cobra.Command{
 }
 
 func BindUnpauseCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	flags.MarkFlagsAsRequired(cmd, "bridge")
 }
 

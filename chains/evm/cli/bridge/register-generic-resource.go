@@ -21,7 +21,7 @@ import (
 var registerGenericResourceCmd = &cobra.Command{
 	Use:   "register-generic-resource",
 	Short: "Register a generic resource ID",
-	Long:  "Register a resource ID with a contract address for a generic handler",
+	Long:  "The register-generic-resource subcommand registers a resource ID with a contract address for a generic handler",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -55,14 +55,14 @@ var registerGenericResourceCmd = &cobra.Command{
 }
 
 func BindRegisterGenericResourceFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Handler, "handler", "", "handler contract address")
-	cmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID to query")
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	cmd.Flags().StringVar(&Target, "target", "", "contract address to be registered") // TODO change the description (target is not necessary a contract address, could be hash storage)
-	cmd.Flags().StringVar(&Deposit, "deposit", "0x00000000", "deposit function signature")
-	cmd.Flags().StringVar(&Execute, "execute", "0x00000000", "execute proposal function signature")
-	cmd.Flags().BoolVar(&Hash, "hash", false, "treat signature inputs as function prototype strings, hash and take the first 4 bytes")
-	flags.MarkFlagsAsRequired(cmd, "handler", "resourceId", "bridge", "target")
+	cmd.Flags().StringVar(&Handler, "handler", "", "Handler contract address")
+	cmd.Flags().StringVar(&ResourceID, "resource", "", "Resource ID to query")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
+	cmd.Flags().StringVar(&Target, "target", "", "Contract address or hash storage to be registered")
+	cmd.Flags().StringVar(&Deposit, "deposit", "0x00000000", "Deposit function signature")
+	cmd.Flags().StringVar(&Execute, "execute", "0x00000000", "Execute proposal function signature")
+	cmd.Flags().BoolVar(&Hash, "hash", false, "Treat signature inputs as function prototype strings, hash and take the first 4 bytes")
+	flags.MarkFlagsAsRequired(cmd, "handler", "resource", "bridge", "target")
 }
 
 func init() {

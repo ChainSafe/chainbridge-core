@@ -11,8 +11,8 @@ import (
 
 var LocalSetupCmd = &cobra.Command{
 	Use:   "local-setup",
-	Short: "Local setup",
-	Long:  "Locally deploy bridge and ERC20 handler contracts with preconfigured accounts and ERC20 handler",
+	Short: "Deploy and prefund a local bridge for testing",
+	Long:  "The local-setup command deploys a bridge, ERC20, ERC721 and generic handler contracts with preconfigured accounts and appropriate handlers",
 	RunE:  localSetup,
 }
 
@@ -65,6 +65,8 @@ func prettyPrint(config, config2 EVME2EConfig) {
 Bridge: %s
 ERC20: %s
 ERC20 Handler: %s
+ERC721: %s
+ERC721 Handler: %s
 Generic Handler: %s
 Asset Store: %s
 
@@ -72,6 +74,8 @@ Asset Store: %s
 Bridge: %s
 ERC20: %s
 ERC20 Handler: %s
+ERC721: %s
+ERC721 Handler: %s
 Generic Handler: %s
 Asset Store: %s
 
@@ -81,12 +85,16 @@ Asset Store: %s
 		config.BridgeAddr,
 		config.Erc20Addr,
 		config.Erc20HandlerAddr,
+		config.Erc721Addr,
+		config.Erc721HandlerAddr,
 		config.GenericHandlerAddr,
 		config.AssetStoreAddr,
 		// config2
 		config2.BridgeAddr,
 		config2.Erc20Addr,
 		config2.Erc20HandlerAddr,
+		config.Erc721Addr,
+		config.Erc721HandlerAddr,
 		config2.GenericHandlerAddr,
 		config2.AssetStoreAddr,
 	)

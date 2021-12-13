@@ -8,8 +8,8 @@ import (
 
 var BridgeCmd = &cobra.Command{
 	Use:   "bridge",
-	Short: "Bridge-related instructions",
-	Long:  "Bridge-related instructions",
+	Short: "Set of commands for interacting with a bridge",
+	Long:  "Set of commands for interacting with a bridge",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 		// fetch global flag values

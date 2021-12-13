@@ -16,8 +16,8 @@ import (
 
 var simulateCmd = &cobra.Command{
 	Use:   "simulate",
-	Short: "Simulate transaction invocation",
-	Long:  "Replay a failed transaction by simulating invocation; not state-altering",
+	Short: "Simulate the invocation of a transaction",
+	Long:  "The simulate subcommand simulates a transaction result by simulating invocation; not state-altering",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -36,10 +36,10 @@ var simulateCmd = &cobra.Command{
 }
 
 func BindSimulateCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&TxHash, "txHash", "", "transaction hash")
-	cmd.Flags().StringVar(&BlockNumber, "blockNumber", "", "block number")
-	cmd.Flags().StringVar(&FromAddress, "fromAddress", "", "address of sender")
-	flags.MarkFlagsAsRequired(cmd, "txHash", "blockNumber", "fromAddress")
+	cmd.Flags().StringVar(&TxHash, "tx-hash", "", "Transaction hash")
+	cmd.Flags().StringVar(&BlockNumber, "block-number", "", "Block number")
+	cmd.Flags().StringVar(&FromAddress, "from", "", "Address of sender")
+	flags.MarkFlagsAsRequired(cmd, "tx-hash", "block-number", "from")
 }
 
 func init() {
