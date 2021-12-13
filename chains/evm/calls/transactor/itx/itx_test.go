@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/transactor"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/transactor/itx"
-	mock_itx "github.com/ChainSafe/chainbridge-core/chains/evm/transactor/itx/mock"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/itx"
+	mock_itx "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/itx/mock"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang/mock/gomock"
@@ -44,7 +44,7 @@ func (s *TransactTestSuite) TestTransact_FailedFetchingForwarderData() {
 	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	data := []byte{}
 	opts := transactor.TransactOptions{
-		GasLimit: big.NewInt(200000),
+		GasLimit: 200000,
 		GasPrice: big.NewInt(1),
 		Priority: "slow",
 		Value:    big.NewInt(0),
@@ -61,7 +61,7 @@ func (s *TransactTestSuite) TestTransact_FailedSendTransaction() {
 	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	data := []byte{}
 	opts := transactor.TransactOptions{
-		GasLimit: big.NewInt(200000),
+		GasLimit: 200000,
 		GasPrice: big.NewInt(1),
 		Priority: "slow",
 		Value:    big.NewInt(0),
@@ -86,7 +86,7 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSend() {
 	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	data := []byte{}
 	opts := transactor.TransactOptions{
-		GasLimit: big.NewInt(200000),
+		GasLimit: 200000,
 		GasPrice: big.NewInt(1),
 		Priority: "slow",
 		Value:    big.NewInt(0),
@@ -114,7 +114,7 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSendWithDefaultOpts() {
 	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	data := []byte{}
 	expectedOpts := transactor.TransactOptions{
-		GasLimit: big.NewInt(consts.DefaultGasLimit),
+		GasLimit: consts.DefaultGasLimit,
 		GasPrice: big.NewInt(1),
 		Priority: "slow",
 		Value:    big.NewInt(0),

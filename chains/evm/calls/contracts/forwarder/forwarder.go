@@ -17,12 +17,12 @@ var (
 )
 
 type ForwarderContract struct {
-	client          calls.ContractCallerDispatcherClient
+	client          calls.ContractCallerDispatcher
 	contractAddress *common.Address
 }
 
 func NewForwarderContract(
-	client calls.ContractCallerDispatcherClient,
+	client calls.ContractCallerDispatcher,
 	contractAddress common.Address,
 ) *ForwarderContract {
 	return &ForwarderContract{

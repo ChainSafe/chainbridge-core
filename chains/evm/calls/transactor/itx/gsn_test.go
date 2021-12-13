@@ -1,13 +1,14 @@
-package forwarder_test
+package itx_test
 
 import (
 	"errors"
 	"math/big"
 	"testing"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/transactor"
-	forwarder "github.com/ChainSafe/chainbridge-core/chains/evm/transactor/itx/forwarders"
-	mock_forwarder "github.com/ChainSafe/chainbridge-core/chains/evm/transactor/itx/forwarders/mock"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/forwarder"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/itx"
+	mock_forwarder "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/itx/mock"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang/mock/gomock"
@@ -16,8 +17,8 @@ import (
 
 type GsnForwarderTestSuite struct {
 	suite.Suite
-	gsnForwarder      *forwarder.GsnForwarder
-	forwarderContract *mock_forwarder.MockForwarder
+	gsnForwarder      *itx.GsnForwarder
+	forwarderContract *mock_forwarder.MockForwarderContract
 	nonceStore        *mock_forwarder.MockNonceStorer
 	kp                *secp256k1.Keypair
 }
@@ -31,9 +32,9 @@ func (s *GsnForwarderTestSuite) TearDownSuite() {}
 func (s *GsnForwarderTestSuite) SetupTest() {
 	gomockController := gomock.NewController(s.T())
 	s.kp, _ = secp256k1.NewKeypairFromPrivateKey(common.Hex2Bytes("e8e0f5427111dee651e63a6f1029da6929ebf7d2d61cefaf166cebefdf2c012e"))
-	s.forwarderContract = mock_forwarder.NewMockForwarder(gomockController)
+	s.forwarderContract = mock_forwarder.NewMockForwarderContract(gomockController)
 	s.nonceStore = mock_forwarder.NewMockNonceStorer(gomockController)
-	s.gsnForwarder = forwarder.NewGsnForwarder(big.NewInt(5), s.kp, s.forwarderContract, s.nonceStore)
+	s.gsnForwarder = itx.NewGsnForwarder(big.NewInt(5), s.kp, s.forwarderContract, s.nonceStore)
 }
 func (s *GsnForwarderTestSuite) TearDownTest() {}
 
@@ -63,7 +64,7 @@ func (s *GsnForwarderTestSuite) TestForwarderData_ValidData() {
 
 	data, err := s.gsnForwarder.ForwarderData(to, []byte{}, transactor.TransactOptions{
 		Value:    big.NewInt(0),
-		GasLimit: big.NewInt(200000),
+		GasLimit: 200000,
 		Nonce:    big.NewInt(1),
 	})
 

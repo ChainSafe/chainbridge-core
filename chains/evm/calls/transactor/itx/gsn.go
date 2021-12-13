@@ -1,11 +1,11 @@
-package forwarder
+package itx
 
 import (
 	"fmt"
 	"math/big"
 	"sync"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/transactor"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -14,7 +14,7 @@ import (
 	signer "github.com/ethereum/go-ethereum/signer/core"
 )
 
-type Forwarder interface {
+type ForwarderContract interface {
 	GetNonce(from common.Address) (*big.Int, error)
 	Address() common.Address
 	ABI() *abi.ABI
@@ -29,7 +29,7 @@ type ForwardRequest struct {
 	From       common.Address
 	To         common.Address
 	Value      *big.Int
-	Gas        *big.Int
+	Gas        uint64
 	Nonce      *big.Int
 	Data       []byte
 	ValidUntil *big.Int
@@ -40,11 +40,11 @@ type GsnForwarder struct {
 	nonce             *big.Int
 	nonceLock         sync.Mutex
 	chainID           *big.Int
-	forwarderContract Forwarder
+	forwarderContract ForwarderContract
 	nonceStore        NonceStorer
 }
 
-func NewGsnForwarder(chainID *big.Int, kp *secp256k1.Keypair, forwarderContract Forwarder, nonceStore NonceStorer) *GsnForwarder {
+func NewGsnForwarder(chainID *big.Int, kp *secp256k1.Keypair, forwarderContract ForwarderContract, nonceStore NonceStorer) *GsnForwarder {
 	return &GsnForwarder{
 		chainID:           chainID,
 		kp:                kp,
@@ -109,7 +109,7 @@ func (c *GsnForwarder) ForwarderData(to common.Address, data []byte, opts transa
 		to.String(),
 		data,
 		math.NewHexOrDecimal256(opts.Value.Int64()),
-		math.NewHexOrDecimal256(opts.GasLimit.Int64()),
+		math.NewHexOrDecimal256(int64(opts.GasLimit)),
 		nonce,
 		c.ForwarderAddress().Hex(),
 	)

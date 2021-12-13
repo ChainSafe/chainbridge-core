@@ -6,7 +6,7 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/transactor"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	DefaultITXOpts = transactor.TransactOptions{
-		GasLimit: big.NewInt(consts.DefaultGasLimit),
+	DefaultTransactionOptions = transactor.TransactOptions{
+		GasLimit: consts.DefaultGasLimit,
 		GasPrice: big.NewInt(1),
 		Priority: "slow",
 		Value:    big.NewInt(0),
@@ -60,7 +60,7 @@ func NewITXTransactor(relayCaller RelayCaller, forwarder Forwarder, kp *secp256k
 }
 
 func (itx *ITXTransactor) Transact(to common.Address, data []byte, opts transactor.TransactOptions) (common.Hash, error) {
-	err := transactor.MergeTransactionOptions(&opts, &DefaultITXOpts)
+	err := transactor.MergeTransactionOptions(&opts, &DefaultTransactionOptions)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -72,11 +72,7 @@ func (itx *ITXTransactor) Transact(to common.Address, data []byte, opts transact
 	}
 
 	// increase gas limit because of forwarder overhead
-	opts.GasLimit = opts.GasLimit.Mul(
-		opts.GasLimit, big.NewInt(11),
-	).Div(
-		opts.GasLimit, big.NewInt(10),
-	)
+	opts.GasLimit = opts.GasLimit * 11 / 10
 	signedTx, err := itx.signRelayTx(&RelayTx{
 		to:   itx.forwarder.ForwarderAddress(),
 		data: forwarderData,
@@ -132,7 +128,7 @@ func (itx *ITXTransactor) sendTransaction(ctx context.Context, signedTx *SignedR
 	txArg := map[string]interface{}{
 		"to":       &signedTx.to,
 		"data":     "0x" + common.Bytes2Hex(signedTx.data),
-		"gas":      signedTx.opts.GasLimit.String(),
+		"gas":      fmt.Sprint(signedTx.opts.GasLimit),
 		"schedule": signedTx.opts.Priority,
 	}
 
