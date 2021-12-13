@@ -3,6 +3,10 @@ package account
 import (
 	"bufio"
 	"fmt"
+	"math/big"
+	"os"
+	"strings"
+
 	callsUtil "github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
@@ -13,9 +17,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"math/big"
-	"os"
-	"strings"
 )
 
 var transferBaseCurrencyCmd = &cobra.Command{
