@@ -308,8 +308,8 @@ Usage:
    evm-cli admin withdraw [flags]
 
 Flags:
-      --amount string         Token amount to withdraw, use only if ERC20 token is withdrawn. If both amount and token-id are set an error will occur
-      --token string          Token ID to withdraw, use only if ERC721 token is withdrawn. If both amount and token-id are set an error will occur
+      --amount string         Token amount to withdraw, use only if ERC20 token is withdrawn. If both amount and token are set an error will occur
+      --token string          Token ID to withdraw, use only if ERC721 token is withdrawn. If both amount and token are set an error will occur
       --bridge string         Bridge contract address
       --decimals uint         ERC20 token decimals
       --handler string        Handler contract address
