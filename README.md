@@ -712,7 +712,7 @@ Currently there is no CLI for this, though more information can be found about t
 ## `Contributing`
 
 Chainbridge-core is a open project and welcomes contributions of all kinds: code, docs, and more. If you wish to submit more complex changes,
-please check up with the core devs first on our [Discord Server](https://discord.gg/ykXsJKfhgq) or submit an issue on the repo to ensure those changes are in line with the general
+please check up with the core devs first on our [Discord Server](https://discord.gg/ykXsJKfhgq) (look for CHAINBRIDGE category) or submit an issue on the repo to ensure those changes are in line with the general
 philoshophy of the project or get some early feedback.
 
 When implementing a change:
@@ -740,10 +740,11 @@ A great way to contribute to the project is to send a detailed report when you e
 When reporting issues, always include:
  - chainbridge-core version
  - modules used
- - logs
+ - logs (don't forget to remove sensitive data)
  - tx hashes related to issue (if applicable)
+ - steps required to reproduce the problem
 
- Also, include the steps required to reproduce the problem if possible. Don't forget to remove sensitive data from your log files and consider posting them as a [gist](https://gist.github.com).
+ Putting large logs into a [gist](https://gist.github.com) will be appreciated.
 
 ## `Local Setup`
 
