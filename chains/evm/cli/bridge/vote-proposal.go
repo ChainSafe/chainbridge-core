@@ -51,7 +51,7 @@ var voteProposalCmd = &cobra.Command{
 func BindVoteProposalCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
 	cmd.Flags().StringVar(&Data, "data", "", "hex proposal metadata")
-	cmd.Flags().Uint64Var(&DomainID, "domain", 0, "origin domain ID of proposal")
+	cmd.Flags().Uint8Var(&DomainID, "domain", 0, "origin domain ID of proposal")
 	cmd.Flags().Uint64Var(&DepositNonce, "deposit-nonce", 0, "deposit nonce of proposal to vote on")
 	cmd.Flags().StringVar(&ResourceID, "resource", "", "resource id of asset")
 	flags.MarkFlagsAsRequired(cmd, "bridge", "deposit-nonce", "domain", "resource", "data")

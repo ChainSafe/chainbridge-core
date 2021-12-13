@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/bridge"
 	mock_bridge "github.com/ChainSafe/chainbridge-core/chains/evm/cli/bridge/mock"
@@ -58,7 +58,7 @@ func (s *VoteProposalTestSuite) SetupTest() {
 func (s *VoteProposalTestSuite) TestValidate_InvalidBridgeAddress() {
 	rootCmdArgs := []string{
 		"--url", "test-url",
-		"--privateKey", "test-private-key",
+		"--private-key", "test-private-key",
 		"--bridge", "invalid",
 		"--data", "hex-data",
 		"--resource", "test-resource",
@@ -75,7 +75,7 @@ func (s *VoteProposalTestSuite) TestValidate_InvalidBridgeAddress() {
 func (s *VoteProposalTestSuite) TestValidate_InvalidResourceID() {
 	rootCmdArgs := []string{
 		"--url", "test-url",
-		"--privateKey", "test-private-key",
+		"--private-key", "test-private-key",
 		"--bridge", "0x829bd824b016326a401d083b33d092293333a830",
 		"--data", "hex-data",
 		"--resource", "111",
@@ -92,7 +92,7 @@ func (s *VoteProposalTestSuite) TestValidate_InvalidResourceID() {
 func (s *VoteProposalTestSuite) TestValidate_FailedSimulateCall() {
 	rootCmdArgs := []string{
 		"--url", "test-url",
-		"--privateKey", "test-private-key",
+		"--private-key", "test-private-key",
 		"--bridge", "0x829bd824b016326a401d083b33d092293333a830",
 		"--data", "00000000000000000000000000000000000000000000000000000000000f424000000000000000000000000000000000000000000000000000000000000000148e0a907331554af72563bd8d43051c2e64be5d35",
 		"--resource", "0x000000000000000000000075df75bcdca8ea2360c562b4aadbaf3dfaf5b19b00",
@@ -105,7 +105,7 @@ func (s *VoteProposalTestSuite) TestValidate_FailedSimulateCall() {
 		Source:       1,
 		DepositNonce: 2,
 		Data:         common.Hex2Bytes("00000000000000000000000000000000000000000000000000000000000f424000000000000000000000000000000000000000000000000000000000000000148e0a907331554af72563bd8d43051c2e64be5d35"),
-		ResourceId:   util.SliceTo32Bytes(resourceID),
+		ResourceId:   calls.SliceTo32Bytes(resourceID),
 	}).Return(errors.New("failed simulating call"))
 
 	err := s.mockVoteProposalCmd.Execute()
@@ -117,7 +117,7 @@ func (s *VoteProposalTestSuite) TestValidate_FailedSimulateCall() {
 func (s *VoteProposalTestSuite) TestValidate_FailedVoteCall() {
 	rootCmdArgs := []string{
 		"--url", "test-url",
-		"--privateKey", "test-private-key",
+		"--private-key", "test-private-key",
 		"--bridge", "0x829bd824b016326a401d083b33d092293333a830",
 		"--data", "00000000000000000000000000000000000000000000000000000000000f424000000000000000000000000000000000000000000000000000000000000000148e0a907331554af72563bd8d43051c2e64be5d35",
 		"--resource", "0x000000000000000000000075df75bcdca8ea2360c562b4aadbaf3dfaf5b19b00",
@@ -130,13 +130,13 @@ func (s *VoteProposalTestSuite) TestValidate_FailedVoteCall() {
 		Source:       1,
 		DepositNonce: 2,
 		Data:         common.Hex2Bytes("00000000000000000000000000000000000000000000000000000000000f424000000000000000000000000000000000000000000000000000000000000000148e0a907331554af72563bd8d43051c2e64be5d35"),
-		ResourceId:   util.SliceTo32Bytes(resourceID),
+		ResourceId:   calls.SliceTo32Bytes(resourceID),
 	}).Return(nil)
 	s.voter.EXPECT().VoteProposal(&proposal.Proposal{
 		Source:       1,
 		DepositNonce: 2,
 		Data:         common.Hex2Bytes("00000000000000000000000000000000000000000000000000000000000f424000000000000000000000000000000000000000000000000000000000000000148e0a907331554af72563bd8d43051c2e64be5d35"),
-		ResourceId:   util.SliceTo32Bytes(resourceID),
+		ResourceId:   calls.SliceTo32Bytes(resourceID),
 	}, transactor.TransactOptions{}).Return(&common.Hash{}, errors.New("failed vote call"))
 
 	err := s.mockVoteProposalCmd.Execute()
@@ -148,7 +148,7 @@ func (s *VoteProposalTestSuite) TestValidate_FailedVoteCall() {
 func (s *VoteProposalTestSuite) TestValidate_SuccessfulVote() {
 	rootCmdArgs := []string{
 		"--url", "test-url",
-		"--privateKey", "test-private-key",
+		"--private-key", "test-private-key",
 		"--bridge", "0x829bd824b016326a401d083b33d092293333a830",
 		"--data", "00000000000000000000000000000000000000000000000000000000000f424000000000000000000000000000000000000000000000000000000000000000148e0a907331554af72563bd8d43051c2e64be5d35",
 		"--resource", "0x000000000000000000000075df75bcdca8ea2360c562b4aadbaf3dfaf5b19b00",
@@ -161,13 +161,13 @@ func (s *VoteProposalTestSuite) TestValidate_SuccessfulVote() {
 		Source:       1,
 		DepositNonce: 2,
 		Data:         common.Hex2Bytes("00000000000000000000000000000000000000000000000000000000000f424000000000000000000000000000000000000000000000000000000000000000148e0a907331554af72563bd8d43051c2e64be5d35"),
-		ResourceId:   util.SliceTo32Bytes(resourceID),
+		ResourceId:   calls.SliceTo32Bytes(resourceID),
 	}).Return(nil)
 	s.voter.EXPECT().VoteProposal(&proposal.Proposal{
 		Source:       1,
 		DepositNonce: 2,
 		Data:         common.Hex2Bytes("00000000000000000000000000000000000000000000000000000000000f424000000000000000000000000000000000000000000000000000000000000000148e0a907331554af72563bd8d43051c2e64be5d35"),
-		ResourceId:   util.SliceTo32Bytes(resourceID),
+		ResourceId:   calls.SliceTo32Bytes(resourceID),
 	}, transactor.TransactOptions{}).Return(&common.Hash{}, nil)
 
 	err := s.mockVoteProposalCmd.Execute()
