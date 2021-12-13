@@ -1,10 +1,10 @@
 package main
 
 import (
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"testing"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/local"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/e2e/evm"
 	"github.com/stretchr/testify/suite"
 )

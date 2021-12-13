@@ -2,15 +2,13 @@ package admin
 
 import (
 	"fmt"
-	"math/big"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
+	"github.com/ChainSafe/chainbridge-core/util"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -23,9 +21,19 @@ var setThresholdCmd = &cobra.Command{
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return util.CallPersistentPreRun(cmd, args)
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return SetThresholdCMD(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+		c, err := initialize.InitializeClient(url, senderKeyPair)
+		if err != nil {
+			return err
+		}
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		if err != nil {
+			return err
+		}
+		return SetThresholdCMD(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateSetThresholdFlags(cmd, args)
@@ -59,36 +67,14 @@ func ProcessSetThresholdFlags(cmd *cobra.Command, args []string) {
 	bridgeAddr = common.HexToAddress(Bridge)
 }
 
-func SetThresholdCMD(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
+func SetThresholdCMD(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
 	log.Debug().Msgf(`
 Setting new threshold
 Threshold: %d
 Bridge address: %s`, RelayerThreshold, Bridge)
-
-	// fetch global flag values
-	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	_, err := contract.SetThresholdInput(RelayerThreshold, transactor.TransactOptions{GasLimit: gasLimit})
 	if err != nil {
-		return fmt.Errorf("could not get global flags: %v", err)
-	}
-
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err
 	}
-
-	gasPricer.SetClient(ethClient)
-	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-	setThresholdInput, err := calls.PrepareSetThresholdInput(big.NewInt(0).SetUint64(RelayerThreshold))
-	if err != nil {
-		log.Error().Err(fmt.Errorf("prepare set threshold input error: %v", err))
-		return err
-	}
-	_, err = calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddr, setThresholdInput, gasLimit, big.NewInt(0))
-	if err != nil {
-		log.Error().Err(fmt.Errorf("transact error: %v", err))
-		return err
-	}
-	log.Info().Msgf("New threshold set to %v", RelayerThreshold)
 	return nil
 }

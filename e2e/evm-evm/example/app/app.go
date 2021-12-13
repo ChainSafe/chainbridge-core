@@ -5,12 +5,12 @@ package app
 
 import (
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/config"
 	"github.com/ChainSafe/chainbridge-core/flags"
 	"github.com/ChainSafe/chainbridge-core/lvldb"

@@ -2,22 +2,14 @@ package voter
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
-	"math/big"
-	"strings"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
-	"github.com/ChainSafe/chainbridge-core/types"
-
-	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
+	"math/big"
 )
 
 type MessageHandlerFunc func(m *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error)
@@ -25,22 +17,20 @@ type MessageHandlerFunc func(m *message.Message, handlerAddr, bridgeAddress comm
 // NewEVMMessageHandler creates an instance of EVMMessageHandler that contains
 // message handler functions for converting deposit message into a chain specific
 // proposal
-func NewEVMMessageHandler(client ChainClient, bridgeAddress common.Address) *EVMMessageHandler {
+func NewEVMMessageHandler(bridgeContract bridge.BridgeContract) *EVMMessageHandler {
 	return &EVMMessageHandler{
-		bridgeAddress: bridgeAddress,
-		client:        client,
+		bridgeContract: bridgeContract,
 	}
 }
 
 type EVMMessageHandler struct {
-	client        ChainClient
-	handlers      map[common.Address]MessageHandlerFunc
-	bridgeAddress common.Address
+	bridgeContract bridge.BridgeContract
+	handlers       map[common.Address]MessageHandlerFunc
 }
 
 func (mh *EVMMessageHandler) HandleMessage(m *message.Message) (*proposal.Proposal, error) {
 	// Matching resource ID with handler.
-	addr, err := mh.matchResourceIDToHandlerAddress(m.ResourceId)
+	addr, err := mh.bridgeContract.GetHandlerAddressForResourceID(m.ResourceId)
 	if err != nil {
 		return nil, err
 	}
@@ -50,36 +40,11 @@ func (mh *EVMMessageHandler) HandleMessage(m *message.Message) (*proposal.Propos
 		return nil, err
 	}
 	log.Info().Str("type", string(m.Type)).Uint8("src", m.Source).Uint8("dst", m.Destination).Uint64("nonce", m.DepositNonce).Str("resourceID", fmt.Sprintf("%x", m.ResourceId)).Msg("Handling new message")
-	prop, err := handleMessage(m, addr, mh.bridgeAddress)
+	prop, err := handleMessage(m, addr, *mh.bridgeContract.ContractAddress())
 	if err != nil {
 		return nil, err
 	}
 	return prop, nil
-}
-
-func (mh *EVMMessageHandler) matchResourceIDToHandlerAddress(resourceID types.ResourceID) (common.Address, error) {
-	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
-	if err != nil {
-		return common.Address{}, err
-	}
-	input, err := a.Pack("_resourceIDToHandlerAddress", resourceID)
-	if err != nil {
-		return common.Address{}, err
-	}
-	msg := ethereum.CallMsg{From: common.Address{}, To: &mh.bridgeAddress, Data: input}
-	out, err := mh.client.CallContract(context.TODO(), calls.ToCallArg(msg), nil)
-	if err != nil {
-		return common.Address{}, err
-	}
-	res, err := a.Unpack("_resourceIDToHandlerAddress", out)
-	if err != nil {
-		return common.Address{}, err
-	}
-	if len(res) == 0 {
-		return common.Address{}, errors.New("no handler associated with such resourceID")
-	}
-	out0 := *abi.ConvertType(res[0], new(common.Address)).(*common.Address)
-	return out0, nil
 }
 
 func (mh *EVMMessageHandler) MatchAddressWithHandlerFunc(addr common.Address) (MessageHandlerFunc, error) {

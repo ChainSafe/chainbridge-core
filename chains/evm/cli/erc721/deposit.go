@@ -2,16 +2,16 @@ package erc721
 
 import (
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
+	"github.com/ChainSafe/chainbridge-core/util"
 	"math/big"
 	"strconv"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -24,9 +24,19 @@ var depositCmd = &cobra.Command{
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return util.CallPersistentPreRun(cmd, args)
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return DepositCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+		c, err := initialize.InitializeClient(url, senderKeyPair)
+		if err != nil {
+			return err
+		}
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		if err != nil {
+			return err
+		}
+		return DepositCmd(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateDepositFlags(cmd, args)
@@ -64,8 +74,6 @@ func ValidateDepositFlags(cmd *cobra.Command, args []string) error {
 }
 
 func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
-	var err error
-
 	recipientAddr = common.HexToAddress(Recipient)
 	bridgeAddr = common.HexToAddress(Bridge)
 
@@ -85,16 +93,9 @@ func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
-	ethClient, err := evmclient.NewEVMClientFromParams(
-		url, senderKeyPair.PrivateKey())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
-		return err
-	}
-
-	txHash, err := calls.ERC721Deposit(
-		ethClient, txFabric, gasPricer.(calls.GasPricer), gasLimit, tokenId, Metadata, destinationID, resourceId, bridgeAddr, recipientAddr,
+func DepositCmd(cmd *cobra.Command, args []string, bridgeContract *bridge.BridgeContract) error {
+	txHash, err := bridgeContract.Erc721Deposit(
+		tokenId, Metadata, recipientAddr, resourceId, uint8(destinationID), transactor.TransactOptions{GasLimit: gasLimit},
 	)
 	if err != nil {
 		return err
@@ -108,5 +109,5 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasP
 		recipientAddr.Hex(),
 		senderKeyPair.CommonAddress().String(),
 	)
-	return err
+	return nil
 }

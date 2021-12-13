@@ -1,10 +1,12 @@
 package erc20
 
 import (
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
+	"github.com/ChainSafe/chainbridge-core/util"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -16,9 +18,19 @@ var getAllowanceCmd = &cobra.Command{
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return util.CallPersistentPreRun(cmd, args)
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return GetAllowanceCmd(cmd, args, txFabric)
+		c, err := initialize.InitializeClient(url, senderKeyPair)
+		if err != nil {
+			return err
+		}
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		if err != nil {
+			return err
+		}
+		return GetAllowanceCmd(cmd, args, erc20.NewERC20Contract(c, erc20Addr, t))
 	},
 }
 
@@ -33,7 +45,7 @@ func init() {
 	BindGetAllowanceCmdFlags(getAllowanceCmd)
 }
 
-func GetAllowanceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
+func GetAllowanceCmd(cmd *cobra.Command, args []string, contract *erc20.ERC20Contract) error {
 	log.Debug().Msgf(`
 Determing allowance
 ERC20 address: %s

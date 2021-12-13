@@ -2,15 +2,14 @@ package erc721
 
 import (
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc721"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
+	"github.com/ChainSafe/chainbridge-core/util"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -23,9 +22,19 @@ var ownerCmd = &cobra.Command{
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return util.CallPersistentPreRun(cmd, args)
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return OwnerCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+		c, err := initialize.InitializeClient(url, senderKeyPair)
+		if err != nil {
+			return err
+		}
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		if err != nil {
+			return err
+		}
+		return OwnerCmd(cmd, args, erc721.NewErc721Contract(c, erc721Addr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateOwnerFlags(cmd, args)
@@ -66,18 +75,8 @@ func ProcessOwnerFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func OwnerCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
-	ethClient, err := evmclient.NewEVMClientFromParams(
-		url, senderKeyPair.PrivateKey())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
-		return err
-	}
-
-	gasPricer.SetClient(ethClient)
-	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-
-	owner, err := calls.ERC721Owner(ethClient, tokenId, erc721Addr)
+func OwnerCmd(cmd *cobra.Command, args []string, erc721Contract *erc721.ERC721Contract) error {
+	owner, err := erc721Contract.Owner(tokenId)
 	if err != nil {
 		return err
 	}

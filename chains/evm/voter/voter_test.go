@@ -1,10 +1,10 @@
 package voter_test
 
 import (
-	"encoding/hex"
 	"errors"
-	mock_calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
+	"testing"
+	"time"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 	mock_voter "github.com/ChainSafe/chainbridge-core/chains/evm/voter/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
@@ -12,17 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
-	"math/big"
-	"testing"
-	"time"
-)
-
-var (
-	proposalVotedResponse, _    = hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000001")
-	threshold, _                = hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000003")
-	proposalNotVotedResponse, _ = hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000000")
-	executedProposalStatus, _   = hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000001c0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000001f")
-	inactiveProposalStatus, _   = hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
 )
 
 type VoterTestSuite struct {
@@ -30,7 +19,7 @@ type VoterTestSuite struct {
 	voter              *voter.EVMVoter
 	mockMessageHandler *mock_voter.MockMessageHandler
 	mockClient         *mock_voter.MockChainClient
-	mockgasPricer      *mock_calls.MockGasPricer
+	mockBridgeContract *mock_voter.MockBridgeContract
 }
 
 func TestRunVoterTestSuite(t *testing.T) {
@@ -43,12 +32,11 @@ func (s *VoterTestSuite) SetupTest() {
 	gomockController := gomock.NewController(s.T())
 	s.mockMessageHandler = mock_voter.NewMockMessageHandler(gomockController)
 	s.mockClient = mock_voter.NewMockChainClient(gomockController)
-	s.mockgasPricer = mock_calls.NewMockGasPricer(gomockController)
+	s.mockBridgeContract = mock_voter.NewMockBridgeContract(gomockController)
 	s.voter = voter.NewVoter(
 		s.mockMessageHandler,
 		s.mockClient,
-		evmtransaction.NewTransaction,
-		s.mockgasPricer,
+		s.mockBridgeContract,
 	)
 	voter.Sleep = func(d time.Duration) {}
 }
@@ -68,15 +56,11 @@ func (s *VoterTestSuite) TestVoteProposal_SimulateVoteProposalError() {
 		DepositNonce: 0,
 	}, nil)
 	s.mockClient.EXPECT().RelayerAddress().Return(common.Address{})
-	//calls.IsProposalVotedBy
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(proposalNotVotedResponse, nil)
-	//calls.ProposalStatus
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(inactiveProposalStatus, nil)
-	//calls.GetThreshold
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(threshold, nil)
 
-	//calls.repetitiveSimulateVote called 6 times
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Times(6).Return(nil, errors.New("error"))
+	s.mockBridgeContract.EXPECT().IsProposalVotedBy(gomock.Any(), gomock.Any()).Return(false, nil)
+	s.mockBridgeContract.EXPECT().ProposalStatus(gomock.Any()).Return(message.ProposalStatus{Status: message.ProposalStatusActive}, nil)
+	s.mockBridgeContract.EXPECT().GetThreshold().Return(uint8(1), nil)
+	s.mockBridgeContract.EXPECT().SimulateVoteProposal(gomock.Any()).Times(6).Return(errors.New("error"))
 
 	err := s.voter.VoteProposal(&message.Message{})
 
@@ -89,35 +73,25 @@ func (s *VoterTestSuite) TestVoteProposal_SimulateVoteProposal() {
 		DepositNonce: 0,
 	}, nil)
 	s.mockClient.EXPECT().RelayerAddress().Return(common.Address{})
-	s.mockClient.EXPECT().LockNonce().Times(1)
-	s.mockClient.EXPECT().UnlockNonce().Times(1)
-	s.mockClient.EXPECT().UnsafeNonce().Return(big.NewInt(1), nil)
-	s.mockgasPricer.EXPECT().GasPrice().Return([]*big.Int{big.NewInt(10)}, nil)
-	s.mockClient.EXPECT().SignAndSendTransaction(gomock.Any(), gomock.Any()).Times(1).Return(common.Hash{}, nil)
-	s.mockClient.EXPECT().From().Return(common.Address{})
-	s.mockClient.EXPECT().WaitAndReturnTxReceipt(gomock.Any()).Times(1).Return(nil, nil)
-	s.mockClient.EXPECT().UnsafeIncreaseNonce().Times(1)
 
-	//calls.IsProposalVotedBy
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(proposalNotVotedResponse, nil)
-	//calls.ProposalStatus
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(inactiveProposalStatus, nil)
-	//calls.GetThreshold
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(threshold, nil)
-	//calls.repetitiveSimulateVote
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(proposalVotedResponse, nil)
+	s.mockBridgeContract.EXPECT().IsProposalVotedBy(gomock.Any(), gomock.Any()).Return(false, nil)
+	s.mockBridgeContract.EXPECT().ProposalStatus(gomock.Any()).Return(message.ProposalStatus{Status: message.ProposalStatusActive}, nil)
+	s.mockBridgeContract.EXPECT().GetThreshold().Return(uint8(1), nil)
+	s.mockBridgeContract.EXPECT().SimulateVoteProposal(gomock.Any()).Times(1).Return(nil)
+	s.mockBridgeContract.EXPECT().VoteProposal(gomock.Any(), gomock.Any()).Return(&common.Hash{}, nil)
 
 	err := s.voter.VoteProposal(&message.Message{})
 
 	s.Nil(err)
 }
+
 func (s *VoterTestSuite) TestVoteProposal_IsProposalVotedByError() {
 	s.mockMessageHandler.EXPECT().HandleMessage(gomock.Any()).Return(&proposal.Proposal{
 		Source:       0,
 		DepositNonce: 0,
 	}, nil)
 	s.mockClient.EXPECT().RelayerAddress().Return(common.Address{})
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return([]byte{}, errors.New("error"))
+	s.mockBridgeContract.EXPECT().IsProposalVotedBy(gomock.Any(), gomock.Any()).Return(false, errors.New("error"))
 
 	err := s.voter.VoteProposal(&message.Message{})
 
@@ -130,7 +104,7 @@ func (s *VoterTestSuite) TestVoteProposal_ProposalAlreadyVoted() {
 		DepositNonce: 0,
 	}, nil)
 	s.mockClient.EXPECT().RelayerAddress().Return(common.Address{})
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(proposalVotedResponse, nil)
+	s.mockBridgeContract.EXPECT().IsProposalVotedBy(gomock.Any(), gomock.Any()).Return(true, nil)
 
 	err := s.voter.VoteProposal(&message.Message{})
 
@@ -143,8 +117,8 @@ func (s *VoterTestSuite) TestVoteProposal_ProposalStatusFail() {
 		DepositNonce: 0,
 	}, nil)
 	s.mockClient.EXPECT().RelayerAddress().Return(common.Address{})
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(proposalNotVotedResponse, nil)
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return([]byte{}, errors.New("error"))
+	s.mockBridgeContract.EXPECT().IsProposalVotedBy(gomock.Any(), gomock.Any()).Return(false, nil)
+	s.mockBridgeContract.EXPECT().ProposalStatus(gomock.Any()).Return(message.ProposalStatus{}, errors.New("error"))
 
 	err := s.voter.VoteProposal(&message.Message{})
 
@@ -157,8 +131,8 @@ func (s *VoterTestSuite) TestVoteProposal_ExecutedProposal() {
 		DepositNonce: 0,
 	}, nil)
 	s.mockClient.EXPECT().RelayerAddress().Return(common.Address{})
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(proposalNotVotedResponse, nil)
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(executedProposalStatus, nil)
+	s.mockBridgeContract.EXPECT().IsProposalVotedBy(gomock.Any(), gomock.Any()).Return(false, nil)
+	s.mockBridgeContract.EXPECT().ProposalStatus(gomock.Any()).Return(message.ProposalStatus{Status: message.ProposalStatusExecuted}, nil)
 
 	err := s.voter.VoteProposal(&message.Message{})
 
@@ -171,9 +145,9 @@ func (s *VoterTestSuite) TestVoteProposal_GetThresholdFail() {
 		DepositNonce: 0,
 	}, nil)
 	s.mockClient.EXPECT().RelayerAddress().Return(common.Address{})
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(proposalNotVotedResponse, nil)
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(inactiveProposalStatus, nil)
-	s.mockClient.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return([]byte{}, errors.New("error"))
+	s.mockBridgeContract.EXPECT().IsProposalVotedBy(gomock.Any(), gomock.Any()).Return(false, nil)
+	s.mockBridgeContract.EXPECT().ProposalStatus(gomock.Any()).Return(message.ProposalStatus{Status: message.ProposalStatusActive}, nil)
+	s.mockBridgeContract.EXPECT().GetThreshold().Return(uint8(0), errors.New("error"))
 
 	err := s.voter.VoteProposal(&message.Message{})
 

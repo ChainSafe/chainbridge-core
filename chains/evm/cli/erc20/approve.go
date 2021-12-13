@@ -2,17 +2,16 @@ package erc20
 
 import (
 	"errors"
-	"fmt"
+	callsUtil "github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
+	"github.com/ChainSafe/chainbridge-core/util"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -25,9 +24,19 @@ var approveCmd = &cobra.Command{
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return util.CallPersistentPreRun(cmd, args)
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return ApproveCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+		c, err := initialize.InitializeClient(url, senderKeyPair)
+		if err != nil {
+			return err
+		}
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		if err != nil {
+			return err
+		}
+		return ApproveCmd(cmd, args, erc20.NewERC20Contract(c, erc20Addr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateApproveFlags(cmd, args)
@@ -68,7 +77,7 @@ func ProcessApproveFlags(cmd *cobra.Command, args []string) error {
 	decimals := big.NewInt(int64(Decimals))
 	erc20Addr = common.HexToAddress(Erc20Address)
 	recipientAddress = common.HexToAddress(Recipient)
-	realAmount, err = calls.UserAmountToWei(Amount, decimals)
+	realAmount, err = callsUtil.UserAmountToWei(Amount, decimals)
 	if err != nil {
 		return err
 	}
@@ -76,7 +85,7 @@ func ProcessApproveFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func ApproveCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
+func ApproveCmd(cmd *cobra.Command, args []string, contract *erc20.ERC20Contract) error {
 	log.Debug().Msgf(`
 Approving ERC20
 ERC20 address: %s
@@ -85,29 +94,14 @@ Amount: %s
 Decimals: %v`,
 		Erc20Address, Recipient, Amount, Decimals)
 
-	// fetch global flag values
-	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
-	if err != nil {
-		return fmt.Errorf("could not get global flags: %v", err)
-	}
-
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
-		return err
-	}
-	gasPricer.SetClient(ethClient)
-	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-	i, err := calls.PrepareErc20ApproveInput(recipientAddress, realAmount)
+	_, err := contract.ApproveTokens(recipientAddress, realAmount, transactor.TransactOptions{GasLimit: gasLimit})
 	if err != nil {
 		log.Fatal().Err(err)
 		return err
 	}
-	_, err = calls.Transact(ethClient, txFabric, gasPricer, &erc20Addr, i, gasLimit, big.NewInt(0))
-	if err != nil {
-		log.Fatal().Err(err)
-		return err
-	}
-	log.Info().Msgf("%s account granted allowance on %v tokens of %s", recipientAddress.String(), Amount, recipientAddress.String())
+	log.Info().Msgf(
+		"%s account granted allowance on %v tokens of %s",
+		recipientAddress.String(), Amount, recipientAddress.String(),
+	)
 	return nil
 }

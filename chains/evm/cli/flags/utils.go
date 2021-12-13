@@ -3,9 +3,9 @@ package flags
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 
 	"github.com/ChainSafe/chainbridge-core/keystore"
