@@ -1,9 +1,12 @@
 package admin
 
 import (
+	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/util"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +21,14 @@ var addAdminCmd = &cobra.Command{
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return util.CallPersistentPreRun(cmd, args)
 	},
-	Run: addAdmin,
+	RunE: addAdmin,
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := ValidateAddAdminFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+		return nil
+	},
 }
 
 func BindAddAdminFlags(cmd *cobra.Command) {
@@ -30,12 +40,22 @@ func BindAddAdminFlags(cmd *cobra.Command) {
 func init() {
 	BindAddAdminFlags(addAdminCmd)
 }
+func ValidateAddAdminFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Admin) {
+		return fmt.Errorf("invalid admin address %s", Admin)
+	}
+	if !common.IsHexAddress(Bridge) {
+		return fmt.Errorf("invalid bridge address %s", Bridge)
+	}
+	return nil
+}
 
-func addAdmin(cmd *cobra.Command, args []string) {
+func addAdmin(cmd *cobra.Command, args []string) error {
 	log.Debug().Msgf(`
 Adding admin
 Admin address: %s
 Bridge address: %s`, Admin, Bridge)
+	return nil
 }
 
 /*

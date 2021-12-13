@@ -3,13 +3,14 @@ package admin
 import (
 	"errors"
 	"fmt"
+	"math/big"
+
 	callsUtil "github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/util"
-	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
@@ -40,12 +41,12 @@ var withdrawCmd = &cobra.Command{
 		return WithdrawCmd(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := ValidateWithdrawCmdFlags(cmd, args)
+		err := ValidateWithdrawFlags(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		err = ProcessWithdrawCmdFlags(cmd, args)
+		err = ProcessWithdrawFlags(cmd, args)
 		if err != nil {
 			return err
 		}
@@ -61,14 +62,14 @@ func BindWithdrawCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Token, "token-contract", "", "ERC20 or ERC721 token contract address")
 	cmd.Flags().StringVar(&Recipient, "recipient", "", "Address to withdraw to")
 	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
-	flags.MarkFlagsAsRequired(withdrawCmd, "amount", "token", "bridge", "handler", "token-contract", "recipient", "decimals")
+	flags.MarkFlagsAsRequired(withdrawCmd, "amount", "bridge", "handler", "token-contract", "recipient", "decimals")
 }
 
 func init() {
 	BindWithdrawCmdFlags(withdrawCmd)
 }
 
-func ValidateWithdrawCmdFlags(cmd *cobra.Command, args []string) error {
+func ValidateWithdrawFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Bridge) {
 		return fmt.Errorf("invalid bridge address: %s", Bridge)
 	}
@@ -76,21 +77,21 @@ func ValidateWithdrawCmdFlags(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid handler address: %s", Handler)
 	}
 	if !common.IsHexAddress(Token) {
-		return fmt.Errorf("invalid token address: %s", Token)
+		return fmt.Errorf("invalid token-contract address: %s", Token)
 	}
 	if !common.IsHexAddress(Recipient) {
 		return fmt.Errorf("invalid recipient address: %s", Recipient)
 	}
 	if TokenID != "" && Amount != "" {
-		return errors.New("only token-id or amount should be set")
+		return errors.New("only token or amount should be set")
 	}
 	if TokenID == "" && Amount == "" {
-		return errors.New("token-id or amount flag should be set")
+		return errors.New("token or amount flag should be set")
 	}
 	return nil
 }
 
-func ProcessWithdrawCmdFlags(cmd *cobra.Command, args []string) error {
+func ProcessWithdrawFlags(cmd *cobra.Command, args []string) error {
 	var err error
 
 	bridgeAddr = common.HexToAddress(Bridge)

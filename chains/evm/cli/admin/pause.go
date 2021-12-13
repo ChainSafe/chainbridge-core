@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
@@ -37,34 +38,34 @@ var pauseCmd = &cobra.Command{
 		return PauseCmd(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := ValidatePauseCmdFlags(cmd, args)
+		err := ValidatePauseFlags(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		ProcessPauseCmdFlags(cmd, args)
+		ProcessPauseFlags(cmd, args)
 
 		return nil
 	},
 }
 
-func BindPauseCmdFlags(cmd *cobra.Command) {
+func BindPauseFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	flags.MarkFlagsAsRequired(cmd, "bridge")
 }
 
 func init() {
-	BindPauseCmdFlags(pauseCmd)
+	BindPauseFlags(pauseCmd)
 }
 
-func ValidatePauseCmdFlags(cmd *cobra.Command, args []string) error {
+func ValidatePauseFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Bridge) {
 		return fmt.Errorf("invalid bridge address: %s", Bridge)
 	}
 	return nil
 }
 
-func ProcessPauseCmdFlags(cmd *cobra.Command, args []string) {
+func ProcessPauseFlags(cmd *cobra.Command, args []string) {
 	bridgeAddr = common.HexToAddress(Bridge)
 }
 
