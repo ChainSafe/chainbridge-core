@@ -50,7 +50,7 @@ var voteProposalCmd = &cobra.Command{
 
 func BindVoteProposalCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	cmd.Flags().StringVar(&DataHash, "data", "", "hex proposal metadata")
+	cmd.Flags().StringVar(&Data, "data", "", "hex proposal metadata")
 	cmd.Flags().Uint64Var(&DomainID, "domain", 0, "origin domain ID of proposal")
 	cmd.Flags().Uint64Var(&DepositNonce, "deposit-nonce", 0, "deposit nonce of proposal to vote on")
 	cmd.Flags().StringVar(&ResourceID, "resource", "", "resource id of asset")
@@ -63,7 +63,7 @@ func init() {
 
 func ValidateVoteProposalFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Bridge) {
-		return fmt.Errorf("invalid bridge address %s", Bridge)
+		return fmt.Errorf("invalid bridge address: %s", Bridge)
 	}
 	return nil
 }
@@ -71,13 +71,18 @@ func ValidateVoteProposalFlags(cmd *cobra.Command, args []string) error {
 func ProcessVoteProposalFlags(cmd *cobra.Command, args []string) error {
 	var err error
 	bridgeAddr = common.HexToAddress(Bridge)
-	dataBytes = common.Hex2Bytes(DataHash)
+	dataBytes = common.Hex2Bytes(Data)
 
 	resourceIdBytesArr, err = flags.ProcessResourceID(ResourceID)
 	return err
 }
 
-func VoteProposalCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
+type Voter interface {
+	SimulateVoteProposal(proposal *proposal.Proposal) error
+	VoteProposal(proposal *proposal.Proposal, opts transactor.TransactOptions) (*common.Hash, error)
+}
+
+func VoteProposalCmd(cmd *cobra.Command, args []string, voter Voter) error {
 	prop := &proposal.Proposal{
 		Source:       uint8(DomainID),
 		DepositNonce: DepositNonce,
@@ -85,12 +90,12 @@ func VoteProposalCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeC
 		ResourceId:   resourceIdBytesArr,
 	}
 
-	err := contract.SimulateVoteProposal(prop)
+	err := voter.SimulateVoteProposal(prop)
 	if err != nil {
 		return err
 	}
 
-	h, err := contract.VoteProposal(prop, transactor.TransactOptions{})
+	h, err := voter.VoteProposal(prop, transactor.TransactOptions{})
 	if err != nil {
 		return err
 	}
