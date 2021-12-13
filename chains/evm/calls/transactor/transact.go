@@ -18,7 +18,7 @@ type TransactOptions struct {
 }
 
 func MergeTransactionOptions(primary *TransactOptions, additional *TransactOptions) error {
-	if err := mergo.Merge(&primary, additional); err != nil {
+	if err := mergo.Merge(primary, additional); err != nil {
 		return err
 	}
 

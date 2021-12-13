@@ -29,7 +29,7 @@ type ForwardRequest struct {
 	From       common.Address
 	To         common.Address
 	Value      *big.Int
-	Gas        uint64
+	Gas        *big.Int
 	Nonce      *big.Int
 	Data       []byte
 	ValidUntil *big.Int
@@ -127,7 +127,7 @@ func (c *GsnForwarder) ForwarderData(to common.Address, data []byte, opts transa
 		From:       common.HexToAddress(from),
 		To:         to,
 		Value:      opts.Value,
-		Gas:        opts.GasLimit,
+		Gas:        big.NewInt(int64(opts.GasLimit)),
 		Nonce:      nonce,
 		Data:       data,
 		ValidUntil: big.NewInt(0),

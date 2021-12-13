@@ -100,7 +100,7 @@ func (itx *ITXTransactor) signRelayTx(tx *RelayTx) (*SignedRelayTx, error) {
 	packed, err := arguments.Pack(
 		tx.to,
 		tx.data,
-		tx.opts.GasLimit,
+		big.NewInt(int64(tx.opts.GasLimit)),
 		tx.opts.ChainID,
 		tx.opts.Priority,
 	)
