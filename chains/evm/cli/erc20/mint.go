@@ -57,16 +57,16 @@ func BindMintCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Erc20Address, "contract", "", "ERC20 contract address")
 	cmd.Flags().StringVar(&Amount, "amount", "", "Deposit amount")
 	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
-	cmd.Flags().StringVar(&DstAddress, "destination", "", "Where tokens should be minted. Defaults to TX sender")
-	flags.MarkFlagsAsRequired(cmd, "contract", "amount", "decimals", "destination")
+	cmd.Flags().StringVar(&DstAddress, "recipient", "", "Recipient address")
+	flags.MarkFlagsAsRequired(cmd, "contract", "amount", "decimals", "recipient")
 }
 
 func ValidateMintFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Erc20Address) {
-		return fmt.Errorf("invalid erc20address %s", Erc20Address)
+		return fmt.Errorf("invalid ERC20 address %s", Erc20Address)
 	}
 	if !common.IsHexAddress(DstAddress) {
-		return fmt.Errorf("invalid destination address %s", DstAddress)
+		return fmt.Errorf("invalid recipient address %s", DstAddress)
 	}
 	return nil
 }

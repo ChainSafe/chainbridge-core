@@ -563,7 +563,7 @@ Flags:
       --amount string        Deposit amount
       --contract string      ERC20 contract address
       --decimals uint        ERC20 token decimals
-      --destination string   Where tokens should be minted. Defaults to TX sender
+      --recipient string     Recipient address
   -h, --help                 help for mint
 ```
 
