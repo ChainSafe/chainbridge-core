@@ -28,9 +28,10 @@ func (s *ImportPrivKeyTestSuite) TearDownTest() {}
 func (s *ImportPrivKeyTestSuite) TestValidateImportPrivKeyFlags() {
 	cmd := importPrivKeyCmd
 
-	cmd.Flag("private-key").Value.Set(validPrivateKey)
+	err := cmd.Flag("private-key").Value.Set(validPrivateKey)
+	s.Nil(err)
 
-	err := ValidateImportPrivKeyFlags(
+	err = ValidateImportPrivKeyFlags(
 		cmd,
 		[]string{},
 	)
@@ -40,9 +41,10 @@ func (s *ImportPrivKeyTestSuite) TestValidateImportPrivKeyFlags() {
 func (s *ImportPrivKeyTestSuite) TestValidateImportPrivKeyFlagsInvalidPrivKey() {
 	cmd := importPrivKeyCmd
 
-	cmd.Flag("private-key").Value.Set(invalidPrivateKey)
+	err := cmd.Flag("private-key").Value.Set(invalidPrivateKey)
+	s.Nil(err)
 
-	err := ValidateImportPrivKeyFlags(
+	err = ValidateImportPrivKeyFlags(
 		cmd,
 		[]string{},
 	)

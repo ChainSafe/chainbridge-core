@@ -28,9 +28,10 @@ func (s *TransferTestSuite) TearDownTest() {}
 func (s *TransferTestSuite) TestValidateTransferBaseCurrencyFlags() {
 	cmd := transferBaseCurrencyCmd
 
-	cmd.Flag("recipient").Value.Set(validAddr)
+	err := cmd.Flag("recipient").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateTransferBaseCurrencyFlags(
+	err = ValidateTransferBaseCurrencyFlags(
 		cmd,
 		[]string{},
 	)
@@ -40,9 +41,10 @@ func (s *TransferTestSuite) TestValidateTransferBaseCurrencyFlags() {
 func (s *TransferTestSuite) TestValidateTransferBaseCurrencyFlagsInvalidAddress() {
 	cmd := transferBaseCurrencyCmd
 
-	cmd.Flag("recipient").Value.Set(invalidAddr)
+	err := cmd.Flag("recipient").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateTransferBaseCurrencyFlags(
+	err = ValidateTransferBaseCurrencyFlags(
 		cmd,
 		[]string{},
 	)

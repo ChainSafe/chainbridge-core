@@ -28,10 +28,12 @@ func (s *AdminTestSuite) TearDownTest() {}
 func (s *AdminTestSuite) TestValidateAddAdminFlags() {
 	cmd := addAdminCmd
 
-	cmd.Flag("admin").Value.Set(validAddr)
-	cmd.Flag("bridge").Value.Set(validAddr)
+	err := cmd.Flag("admin").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateAddAdminFlags(
+	err = ValidateAddAdminFlags(
 		cmd,
 		[]string{},
 	)
@@ -41,11 +43,12 @@ func (s *AdminTestSuite) TestValidateAddAdminFlags() {
 func (s *AdminTestSuite) TestValidateAddAdminFlagsInvalidAddresses() {
 	cmd := addAdminCmd
 
-	// invalid addresses
-	cmd.Flag("admin").Value.Set(invalidAddr)
-	cmd.Flag("bridge").Value.Set(invalidAddr)
+	err := cmd.Flag("admin").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateAddAdminFlags(
+	err = ValidateAddAdminFlags(
 		cmd,
 		[]string{},
 	)
@@ -55,10 +58,12 @@ func (s *AdminTestSuite) TestValidateAddAdminFlagsInvalidAddresses() {
 func (s *AdminTestSuite) TestValidateAddRelayerFlags() {
 	cmd := addRelayerCmd
 
-	cmd.Flag("relayer").Value.Set(validAddr)
-	cmd.Flag("bridge").Value.Set(validAddr)
+	err := cmd.Flag("relayer").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateAddRelayerFlags(
+	err = ValidateAddRelayerFlags(
 		cmd,
 		[]string{},
 	)
@@ -68,11 +73,12 @@ func (s *AdminTestSuite) TestValidateAddRelayerFlags() {
 func (s *AdminTestSuite) TestValidateAddRelayerFlagsInvalidAddresses() {
 	cmd := addRelayerCmd
 
-	// invalid addresses
-	cmd.Flag("relayer").Value.Set(invalidAddr)
-	cmd.Flag("bridge").Value.Set(invalidAddr)
+	err := cmd.Flag("relayer").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateAddRelayerFlags(
+	err = ValidateAddRelayerFlags(
 		cmd,
 		[]string{},
 	)
@@ -82,9 +88,10 @@ func (s *AdminTestSuite) TestValidateAddRelayerFlagsInvalidAddresses() {
 func (s *AdminTestSuite) TestValidateGetThresholdFlags() {
 	cmd := getThresholdCmd
 
-	cmd.Flag("bridge").Value.Set(validAddr)
+	err := cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateGetThresholdFlags(
+	err = ValidateGetThresholdFlags(
 		cmd,
 		[]string{},
 	)
@@ -94,9 +101,10 @@ func (s *AdminTestSuite) TestValidateGetThresholdFlags() {
 func (s *AdminTestSuite) TestValidateGetThresholdFlagsInvalidAddress() {
 	cmd := getThresholdCmd
 
-	cmd.Flag("bridge").Value.Set(invalidAddr)
+	err := cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateGetThresholdFlags(
+	err = ValidateGetThresholdFlags(
 		cmd,
 		[]string{},
 	)
@@ -106,10 +114,12 @@ func (s *AdminTestSuite) TestValidateGetThresholdFlagsInvalidAddress() {
 func (s *AdminTestSuite) TestValidateIsRelayerFlags() {
 	cmd := isRelayerCmd
 
-	cmd.Flag("bridge").Value.Set(validAddr)
-	cmd.Flag("relayer").Value.Set(validAddr)
+	err := cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("relayer").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateIsRelayerFlags(
+	err = ValidateIsRelayerFlags(
 		cmd,
 		[]string{},
 	)
@@ -119,10 +129,12 @@ func (s *AdminTestSuite) TestValidateIsRelayerFlags() {
 func (s *AdminTestSuite) TestValidateIsRelayerInvalidAddresses() {
 	cmd := isRelayerCmd
 
-	cmd.Flag("bridge").Value.Set(invalidAddr)
-	cmd.Flag("relayer").Value.Set(invalidAddr)
+	err := cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("relayer").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateIsRelayerFlags(
+	err = ValidateIsRelayerFlags(
 		cmd,
 		[]string{},
 	)
@@ -132,9 +144,10 @@ func (s *AdminTestSuite) TestValidateIsRelayerInvalidAddresses() {
 func (s *AdminTestSuite) TestValidatePauseFlags() {
 	cmd := pauseCmd
 
-	cmd.Flag("bridge").Value.Set(validAddr)
+	err := cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidatePauseFlags(
+	err = ValidatePauseFlags(
 		cmd,
 		[]string{},
 	)
@@ -144,9 +157,10 @@ func (s *AdminTestSuite) TestValidatePauseFlags() {
 func (s *AdminTestSuite) TestValidatePauseInvalidAddress() {
 	cmd := pauseCmd
 
-	cmd.Flag("bridge").Value.Set(invalidAddr)
+	err := cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidatePauseFlags(
+	err = ValidatePauseFlags(
 		cmd,
 		[]string{},
 	)
@@ -156,10 +170,12 @@ func (s *AdminTestSuite) TestValidatePauseInvalidAddress() {
 func (s *AdminTestSuite) TestValidateRemoveAdminFlags() {
 	cmd := removeAdminCmd
 
-	cmd.Flag("bridge").Value.Set(validAddr)
-	cmd.Flag("admin").Value.Set(validAddr)
+	err := cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("admin").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateRemoveAdminFlags(
+	err = ValidateRemoveAdminFlags(
 		cmd,
 		[]string{},
 	)
@@ -169,10 +185,12 @@ func (s *AdminTestSuite) TestValidateRemoveAdminFlags() {
 func (s *AdminTestSuite) TestValidateRemoveAdminInvalidAddresses() {
 	cmd := removeAdminCmd
 
-	cmd.Flag("bridge").Value.Set(invalidAddr)
-	cmd.Flag("admin").Value.Set(invalidAddr)
+	err := cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("admin").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateRemoveAdminFlags(
+	err = ValidateRemoveAdminFlags(
 		cmd,
 		[]string{},
 	)
@@ -182,10 +200,12 @@ func (s *AdminTestSuite) TestValidateRemoveAdminInvalidAddresses() {
 func (s *AdminTestSuite) TestValidateRemoveRelayerFlags() {
 	cmd := removeRelayerCmd
 
-	cmd.Flag("bridge").Value.Set(validAddr)
-	cmd.Flag("relayer").Value.Set(validAddr)
+	err := cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("relayer").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateRemoveRelayerFlags(
+	err = ValidateRemoveRelayerFlags(
 		cmd,
 		[]string{},
 	)
@@ -195,10 +215,12 @@ func (s *AdminTestSuite) TestValidateRemoveRelayerFlags() {
 func (s *AdminTestSuite) TestValidateRemoveRelayerInvalidAddresses() {
 	cmd := removeRelayerCmd
 
-	cmd.Flag("bridge").Value.Set(invalidAddr)
-	cmd.Flag("relayer").Value.Set(invalidAddr)
+	err := cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("relayer").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateRemoveRelayerFlags(
+	err = ValidateRemoveRelayerFlags(
 		cmd,
 		[]string{},
 	)
@@ -208,9 +230,10 @@ func (s *AdminTestSuite) TestValidateRemoveRelayerInvalidAddresses() {
 func (s *AdminTestSuite) TestValidateSetDepositNonceFlags() {
 	cmd := setDepositNonceCmd
 
-	cmd.Flag("bridge").Value.Set(validAddr)
+	err := cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateSetDepositNonceFlags(
+	err = ValidateSetDepositNonceFlags(
 		cmd,
 		[]string{},
 	)
@@ -220,9 +243,10 @@ func (s *AdminTestSuite) TestValidateSetDepositNonceFlags() {
 func (s *AdminTestSuite) TestValidateSetDepositNonceInvalidAddress() {
 	cmd := setDepositNonceCmd
 
-	cmd.Flag("bridge").Value.Set(invalidAddr)
+	err := cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateSetDepositNonceFlags(
+	err = ValidateSetDepositNonceFlags(
 		cmd,
 		[]string{},
 	)
@@ -232,9 +256,10 @@ func (s *AdminTestSuite) TestValidateSetDepositNonceInvalidAddress() {
 func (s *AdminTestSuite) TestValidateSetFeeFlags() {
 	cmd := setFeeCmd
 
-	cmd.Flag("bridge").Value.Set(validAddr)
+	err := cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateSetFeeFlags(
+	err = ValidateSetFeeFlags(
 		cmd,
 		[]string{},
 	)
@@ -244,9 +269,10 @@ func (s *AdminTestSuite) TestValidateSetFeeFlags() {
 func (s *AdminTestSuite) TestValidateSetFeeInvalidAddress() {
 	cmd := setFeeCmd
 
-	cmd.Flag("bridge").Value.Set(invalidAddr)
+	err := cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateSetFeeFlags(
+	err = ValidateSetFeeFlags(
 		cmd,
 		[]string{},
 	)
@@ -256,9 +282,10 @@ func (s *AdminTestSuite) TestValidateSetFeeInvalidAddress() {
 func (s *AdminTestSuite) TestValidateSetThresholdFlags() {
 	cmd := setThresholdCmd
 
-	cmd.Flag("bridge").Value.Set(validAddr)
+	err := cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateSetThresholdFlags(
+	err = ValidateSetThresholdFlags(
 		cmd,
 		[]string{},
 	)
@@ -268,9 +295,10 @@ func (s *AdminTestSuite) TestValidateSetThresholdFlags() {
 func (s *AdminTestSuite) TestValidateSetThresholdInvalidAddress() {
 	cmd := setThresholdCmd
 
-	cmd.Flag("bridge").Value.Set(invalidAddr)
+	err := cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateSetThresholdFlags(
+	err = ValidateSetThresholdFlags(
 		cmd,
 		[]string{},
 	)
@@ -280,9 +308,10 @@ func (s *AdminTestSuite) TestValidateSetThresholdInvalidAddress() {
 func (s *AdminTestSuite) TestValidateUnpauseFlags() {
 	cmd := unpauseCmd
 
-	cmd.Flag("bridge").Value.Set(validAddr)
+	err := cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateUnpauseFlags(
+	err = ValidateUnpauseFlags(
 		cmd,
 		[]string{},
 	)
@@ -292,9 +321,10 @@ func (s *AdminTestSuite) TestValidateUnpauseFlags() {
 func (s *AdminTestSuite) TestValidateUnpauseInvalidAddress() {
 	cmd := unpauseCmd
 
-	cmd.Flag("bridge").Value.Set(invalidAddr)
+	err := cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateUnpauseFlags(
+	err = ValidateUnpauseFlags(
 		cmd,
 		[]string{},
 	)
@@ -304,13 +334,18 @@ func (s *AdminTestSuite) TestValidateUnpauseInvalidAddress() {
 func (s *AdminTestSuite) TestValidateWithdrawFlags() {
 	cmd := withdrawCmd
 
-	cmd.Flag("bridge").Value.Set(validAddr)
-	cmd.Flag("handler").Value.Set(validAddr)
-	cmd.Flag("token-contract").Value.Set(validAddr)
-	cmd.Flag("recipient").Value.Set(validAddr)
-	cmd.Flag("amount").Value.Set("1")
+	err := cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("handler").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("token-contract").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("recipient").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("amount").Value.Set("1")
+	s.Nil(err)
 
-	err := ValidateWithdrawFlags(
+	err = ValidateWithdrawFlags(
 		cmd,
 		[]string{},
 	)
@@ -320,13 +355,18 @@ func (s *AdminTestSuite) TestValidateWithdrawFlags() {
 func (s *AdminTestSuite) TestValidateWithdrawInvalidAddresses() {
 	cmd := withdrawCmd
 
-	cmd.Flag("bridge").Value.Set(invalidAddr)
-	cmd.Flag("handler").Value.Set(invalidAddr)
-	cmd.Flag("token-contract").Value.Set(invalidAddr)
-	cmd.Flag("recipient").Value.Set(invalidAddr)
-	cmd.Flag("amount").Value.Set("1")
+	err := cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("handler").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("token-contract").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("recipient").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("amount").Value.Set("1")
+	s.Nil(err)
 
-	err := ValidateWithdrawFlags(
+	err = ValidateWithdrawFlags(
 		cmd,
 		[]string{},
 	)
@@ -336,14 +376,20 @@ func (s *AdminTestSuite) TestValidateWithdrawInvalidAddresses() {
 func (s *AdminTestSuite) TestValidateWithdrawAmountTokenConflict() {
 	cmd := withdrawCmd
 
-	cmd.Flag("bridge").Value.Set(validAddr)
-	cmd.Flag("handler").Value.Set(validAddr)
-	cmd.Flag("token-contract").Value.Set(validAddr)
-	cmd.Flag("recipient").Value.Set(validAddr)
-	cmd.Flag("amount").Value.Set("1")
-	cmd.Flag("token").Value.Set("1")
+	err := cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("handler").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("token-contract").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("recipient").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("amount").Value.Set("1")
+	s.Nil(err)
+	err = cmd.Flag("token").Value.Set("1")
+	s.Nil(err)
 
-	err := ValidateWithdrawFlags(
+	err = ValidateWithdrawFlags(
 		cmd,
 		[]string{},
 	)
