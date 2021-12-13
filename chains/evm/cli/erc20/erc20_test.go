@@ -161,7 +161,7 @@ func (s *ERC20TestSuite) TestValidateMintFlags() {
 	cmd := mintCmd
 
 	cmd.Flag("contract").Value.Set(validAddr)
-	cmd.Flag("destination").Value.Set(validAddr)
+	cmd.Flag("recipient").Value.Set(validAddr)
 
 	err := ValidateMintFlags(
 		cmd,
@@ -174,7 +174,7 @@ func (s *ERC20TestSuite) TestValidateMintInvalidAddress() {
 	cmd := mintCmd
 
 	cmd.Flag("contract").Value.Set(invalidAddr)
-	cmd.Flag("destination").Value.Set(invalidAddr)
+	cmd.Flag("recipient").Value.Set(invalidAddr)
 
 	err := ValidateMintFlags(
 		cmd,
