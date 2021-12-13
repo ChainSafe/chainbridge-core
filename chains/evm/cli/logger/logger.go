@@ -2,10 +2,10 @@ package logger
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"time"
 
+	"github.com/ChainSafe/chainbridge-core/logger"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/pflag"
@@ -40,10 +40,8 @@ func LoggerMetadata(cmdName string, flagSet *pflag.FlagSet) {
 		log.Error().Err(fmt.Errorf("failed to write to log file: %v", err))
 	}
 
-	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	// PartsExclude - omit log level and execution time from final log
 	logConsoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, PartsExclude: []string{"level", "time"}}
 	logFileWriter := zerolog.ConsoleWriter{Out: file, PartsExclude: []string{"level", "time"}}
-	mw := io.MultiWriter(logConsoleWriter, logFileWriter)
-	log.Logger = zerolog.New(mw).With().Timestamp().Logger()
+	logger.ConfigureLogger(zerolog.DebugLevel, logConsoleWriter, logFileWriter)
 }

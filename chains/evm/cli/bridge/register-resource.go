@@ -2,16 +2,13 @@ package bridge
 
 import (
 	"fmt"
-	"math/big"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmtransaction"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
+	"github.com/ChainSafe/chainbridge-core/util"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -20,13 +17,23 @@ import (
 var registerResourceCmd = &cobra.Command{
 	Use:   "register-resource",
 	Short: "Register a resource ID",
-	Long:  "Register a resource ID with a contract address for a handler",
+	Long:  "The register-resource subcommand registers a resource ID with a contract address for a handler",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return util.CallPersistentPreRun(cmd, args)
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		txFabric := evmtransaction.NewTransaction
-		return RegisterResourceCmd(cmd, args, txFabric, &evmgaspricer.LondonGasPriceDeterminant{})
+		c, err := initialize.InitializeClient(url, senderKeyPair)
+		if err != nil {
+			return err
+		}
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		if err != nil {
+			return err
+		}
+		return RegisterResourceCmd(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateRegisterResourceFlags(cmd, args)
@@ -40,11 +47,11 @@ var registerResourceCmd = &cobra.Command{
 }
 
 func BindRegisterResourceCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Handler, "handler", "", "handler contract address")
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	cmd.Flags().StringVar(&Target, "target", "", "contract address to be registered")
-	cmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID to be registered")
-	flags.MarkFlagsAsRequired(cmd, "handler", "bridge", "target", "resourceId")
+	cmd.Flags().StringVar(&Handler, "handler", "", "Handler contract address")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
+	cmd.Flags().StringVar(&Target, "target", "", "Contract address to be registered")
+	cmd.Flags().StringVar(&ResourceID, "resource", "", "Resource ID to be registered")
+	flags.MarkFlagsAsRequired(cmd, "handler", "bridge", "target", "resource")
 }
 
 func init() {
@@ -74,7 +81,7 @@ func ProcessRegisterResourceFlags(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func RegisterResourceCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
+func RegisterResourceCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
 	log.Debug().Msgf(`
 Registering resource
 Handler address: %s
@@ -83,34 +90,14 @@ Target address: %s
 Bridge address: %s
 `, Handler, ResourceID, Target, Bridge)
 
-	// fetch global flag values
-	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
-	if err != nil {
-		return fmt.Errorf("could not get global flags: %v", err)
-	}
-
-	fmt.Printf("Registering contract %s with resource ID %s on handler %s", Target, ResourceID, handlerAddr)
-
-	ethClient, err := evmclient.NewEVMClientFromParams(url, senderKeyPair.PrivateKey())
-	if err != nil {
-		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
-		return err
-	}
-	gasPricer.SetClient(ethClient)
-	gasPricer.SetOpts(&evmgaspricer.GasPricerOpts{UpperLimitFeePerGas: gasPrice})
-
-	registerResourceInput, err := calls.PrepareAdminSetResourceInput(handlerAddr, resourceIdBytesArr, targetContractAddr)
+	h, err := contract.AdminSetResource(
+		handlerAddr, resourceIdBytesArr, targetContractAddr, transactor.TransactOptions{GasLimit: gasLimit},
+	)
 	if err != nil {
 		log.Error().Err(err)
 		return err
 	}
 
-	_, err = calls.Transact(ethClient, txFabric, gasPricer, &bridgeAddr, registerResourceInput, gasLimit, big.NewInt(0))
-	if err != nil {
-		log.Error().Err(err)
-		return err
-	}
-
-	fmt.Println("Resource registered")
+	log.Info().Msgf("Resource registered with hash: %s", h.Hex())
 	return nil
 }

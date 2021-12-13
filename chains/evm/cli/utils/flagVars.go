@@ -7,6 +7,7 @@ import (
 //flag vars
 var (
 	BlockNumber string
+	Blocks      string
 	TxHash      string
 	FromAddress string
 )

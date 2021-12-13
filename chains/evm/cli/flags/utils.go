@@ -3,9 +3,9 @@ package flags
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 
 	"github.com/ChainSafe/chainbridge-core/keystore"
@@ -23,13 +23,13 @@ func GlobalFlagValues(cmd *cobra.Command) (string, uint64, *big.Int, *secp256k1.
 		return "", consts.DefaultGasLimit, nil, nil, err
 	}
 
-	gasLimitInt, err := cmd.Flags().GetUint64("gasLimit")
+	gasLimitInt, err := cmd.Flags().GetUint64("gas-limit")
 	if err != nil {
 		log.Error().Err(fmt.Errorf("gas limit error: %v", err))
 		return "", consts.DefaultGasLimit, nil, nil, err
 	}
 
-	gasPriceInt, err := cmd.Flags().GetUint64("gasPrice")
+	gasPriceInt, err := cmd.Flags().GetUint64("gas-price")
 	if err != nil {
 		log.Error().Err(fmt.Errorf("gas price error: %v", err))
 		return "", consts.DefaultGasLimit, nil, nil, err
@@ -48,7 +48,7 @@ func GlobalFlagValues(cmd *cobra.Command) (string, uint64, *big.Int, *secp256k1.
 }
 
 func defineSender(cmd *cobra.Command) (*secp256k1.Keypair, error) {
-	privateKey, err := cmd.Flags().GetString("privateKey")
+	privateKey, err := cmd.Flags().GetString("private-key")
 	if err != nil {
 		return nil, err
 	}

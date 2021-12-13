@@ -8,8 +8,12 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmgaspricer"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 	"github.com/ChainSafe/chainbridge-core/config/chain"
@@ -47,17 +51,22 @@ func SetupDefaultEVMChain(rawConfig map[string]interface{}, txFabric calls.TxFab
 		return nil, err
 	}
 
-	eventHandler := listener.NewETHEventHandler(common.HexToAddress(config.Bridge), client)
+	gasPricer := evmgaspricer.NewLondonGasPriceClient(client, nil)
+	t := transactor.NewSignAndSendTransactor(txFabric, gasPricer, client)
+	bridgeContract := bridge.NewBridgeContract(client, common.HexToAddress(config.Bridge), t)
+
+	eventHandler := listener.NewETHEventHandler(*bridgeContract)
 	eventHandler.RegisterEventHandler(config.Erc20Handler, listener.Erc20EventHandler)
 	eventHandler.RegisterEventHandler(config.Erc721Handler, listener.Erc721EventHandler)
 	eventHandler.RegisterEventHandler(config.GenericHandler, listener.GenericEventHandler)
 	evmListener := listener.NewEVMListener(client, eventHandler, common.HexToAddress(config.Bridge))
 
-	mh := voter.NewEVMMessageHandler(client, common.HexToAddress(config.Bridge))
+	mh := voter.NewEVMMessageHandler(*bridgeContract)
 	mh.RegisterMessageHandler(config.Erc20Handler, voter.ERC20MessageHandler)
 	mh.RegisterMessageHandler(config.Erc721Handler, voter.ERC721MessageHandler)
 	mh.RegisterMessageHandler(config.GenericHandler, voter.GenericMessageHandler)
-	evmVoter, err := voter.NewVoterWithSubscription(mh, client, txFabric, evmgaspricer.NewLondonGasPriceClient(client, nil))
+
+	evmVoter, err := voter.NewVoterWithSubscription(mh, client, bridgeContract)
 	if err != nil {
 		return nil, err
 	}

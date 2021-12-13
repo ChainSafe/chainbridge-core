@@ -8,7 +8,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/store"
 	"github.com/ChainSafe/chainbridge-core/types"
@@ -74,14 +74,14 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, domainID uint8, blocks
 					continue
 				}
 				for _, eventLog := range logs {
+					log.Debug().Msgf("Deposit log found from sender: %s in block: %s with  destinationDomainId: %v, resourceID: %s, depositNonce: %v", eventLog.SenderAddress, startBlock.String(), eventLog.DestinationDomainID, eventLog.ResourceID, eventLog.DepositNonce)
 					m, err := l.eventHandler.HandleEvent(domainID, eventLog.DestinationDomainID, eventLog.DepositNonce, eventLog.ResourceID, eventLog.Data, eventLog.HandlerResponse)
 					if err != nil {
-						errChn <- err
-						log.Error().Err(err)
-						return
+						log.Error().Str("block", startBlock.String()).Uint8("domainID", domainID).Msgf("%v", err)
+					} else {
+						log.Debug().Msgf("Resolved message %+v in block %s", m, startBlock.String())
+						ch <- m
 					}
-					log.Debug().Msgf("Resolved message %+v in block %s", m, startBlock.String())
-					ch <- m
 				}
 				if startBlock.Int64()%20 == 0 {
 					// Logging process every 20 bocks to exclude spam

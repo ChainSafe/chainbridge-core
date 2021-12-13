@@ -2,16 +2,16 @@ package erc721
 
 import (
 	"fmt"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/spf13/cobra"
 )
 
 var ERC721Cmd = &cobra.Command{
 	Use:   "erc721",
-	Short: "ERC721-related instructions",
-	Long:  "ERC721-related instructions",
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	Short: "Set of commands for interacting with an ERC721 contract",
+	Long:  "Set of commands for interacting with an ERC721 contract",
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		var err error
 		// fetch global flag values
 		url, gasLimit, gasPrice, senderKeyPair, err = flags.GlobalFlagValues(cmd)
 		if err != nil {

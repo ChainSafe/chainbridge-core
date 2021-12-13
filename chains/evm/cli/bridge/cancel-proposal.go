@@ -3,6 +3,7 @@ package bridge
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
+	"github.com/ChainSafe/chainbridge-core/util"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -10,19 +11,22 @@ import (
 var cancelProposalCmd = &cobra.Command{
 	Use:   "cancel-proposal",
 	Short: "Cancel an expired proposal",
-	Long:  "Cancel an expired proposal",
+	Long:  "The cancel-proposal subcommand cancels an expired proposal",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return util.CallPersistentPreRun(cmd, args)
 	},
 	Run: cancelProposal,
 }
 
 func BindCancelProposalFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
-	cmd.Flags().StringVar(&DataHash, "dataHash", "", "hash of proposal metadata")
-	cmd.Flags().Uint64Var(&DomainID, "domainId", 0, "domain ID of proposal to cancel")
-	cmd.Flags().Uint64Var(&DepositNonce, "depositNonce", 0, "deposit nonce of proposal to cancel")
-	flags.MarkFlagsAsRequired(cmd, "bridge", "dataHash", "domainId", "depositNonce")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
+	cmd.Flags().StringVar(&DataHash, "data-hash", "", "Hash of proposal metadata")
+	cmd.Flags().Uint8Var(&DomainID, "domain", 0, "Domain ID of proposal to cancel")
+	cmd.Flags().Uint64Var(&DepositNonce, "deposit-nonce", 0, "Deposit nonce of proposal to cancel")
+	flags.MarkFlagsAsRequired(cmd, "bridge", "data-hash", "domain", "deposit-nonce")
 }
 
 func init() {

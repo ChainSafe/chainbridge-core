@@ -6,10 +6,10 @@ package mock_listener
 
 import (
 	context "context"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	big "math/big"
 	reflect "reflect"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/evmclient"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	types "github.com/ChainSafe/chainbridge-core/types"
 	common "github.com/ethereum/go-ethereum/common"

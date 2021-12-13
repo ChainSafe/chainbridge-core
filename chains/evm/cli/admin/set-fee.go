@@ -3,6 +3,7 @@ package admin
 import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
+	"github.com/ChainSafe/chainbridge-core/util"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -10,18 +11,22 @@ import (
 var setFeeCmd = &cobra.Command{
 	Use:   "set-fee",
 	Short: "Set a new fee for deposits",
-	Long:  "Set a new fee for deposits",
+	Long:  "The set-fee subcommand sets a new fee for deposits",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
+	},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return util.CallPersistentPreRun(cmd, args)
 	},
 	Run: setFee,
 }
 
 func BindSetFeeFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Fee, "fee", "", "New fee (in ether)")
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "bridge contract address")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	flags.MarkFlagsAsRequired(cmd, "fee", "bridge")
 }
+
 func init() {
 	BindSetFeeFlags(setFeeCmd)
 }

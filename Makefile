@@ -27,10 +27,11 @@ install-subkey:
 	cargo install --force --git https://github.com/paritytech/substrate subkey
 
 genmocks:
-	mockgen -destination=./chains/evm/evmgaspricer/mock/gas-pricer.go -source=./chains/evm/evmgaspricer/gas-pricer.go
+	mockgen -destination=./chains/evm/calls/evmgaspricer/mock/gas-pricer.go -source=./chains/evm/calls/evmgaspricer/gas-pricer.go
 	mockgen -destination=./relayer/mock/relayer.go -source=./relayer/relayer.go
-	mockgen -source=chains/evm/calls/utils.go -destination=chains/evm/calls/mock/utils.go
-	mockgen -destination=chains/evm/voter/mock/voter.go github.com/ChainSafe/chainbridge-core/chains/evm/voter ChainClient,MessageHandler
+	mockgen -source=chains/evm/calls/calls.go -destination=chains/evm/calls/mock/calls.go
+	mockgen -source=chains/evm/calls/transactor/transact.go -destination=chains/evm/calls/transactor/mock/transact.go
+	mockgen -destination=chains/evm/voter/mock/voter.go github.com/ChainSafe/chainbridge-core/chains/evm/voter ChainClient,MessageHandler,BridgeContract
 	mockgen -destination=./chains/evm/transactor/itx/mock/itx.go -source=./chains/evm/transactor/itx/itx.go
 	mockgen -destination=./chains/evm/transactor/itx/forwarders/mock/gsn.go -source=./chains/evm/transactor/itx/forwarders/gsn.go
 
