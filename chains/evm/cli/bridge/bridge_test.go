@@ -28,9 +28,10 @@ func (s *BridgeTestSuite) TearDownTest() {}
 func (s *BridgeTestSuite) TestValidateCancelProposalFlags() {
 	cmd := cancelProposalCmd
 
-	cmd.Flag("bridge").Value.Set(validAddr)
+	err := cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateCancelProposalFlags(
+	err = ValidateCancelProposalFlags(
 		cmd,
 		[]string{},
 	)
@@ -40,10 +41,10 @@ func (s *BridgeTestSuite) TestValidateCancelProposalFlags() {
 func (s *BridgeTestSuite) TestValidateCancelProposalInvalidAddress() {
 	cmd := cancelProposalCmd
 
-	// invalid addresses
-	cmd.Flag("bridge").Value.Set(invalidAddr)
+	err := cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateCancelProposalFlags(
+	err = ValidateCancelProposalFlags(
 		cmd,
 		[]string{},
 	)
@@ -53,9 +54,10 @@ func (s *BridgeTestSuite) TestValidateCancelProposalInvalidAddress() {
 func (s *BridgeTestSuite) TestValidateQueryProposalFlags() {
 	cmd := queryProposalCmd
 
-	cmd.Flag("bridge").Value.Set(validAddr)
+	err := cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateQueryProposalFlags(
+	err = ValidateQueryProposalFlags(
 		cmd,
 		[]string{},
 	)
@@ -65,10 +67,10 @@ func (s *BridgeTestSuite) TestValidateQueryProposalFlags() {
 func (s *BridgeTestSuite) TestValidateQueryProposalInvalidAddress() {
 	cmd := queryProposalCmd
 
-	// invalid addresses
-	cmd.Flag("bridge").Value.Set(invalidAddr)
+	err := cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateQueryProposalFlags(
+	err = ValidateQueryProposalFlags(
 		cmd,
 		[]string{},
 	)
@@ -78,9 +80,10 @@ func (s *BridgeTestSuite) TestValidateQueryProposalInvalidAddress() {
 func (s *BridgeTestSuite) TestValidateQueryResourceFlags() {
 	cmd := queryResourceCmd
 
-	cmd.Flag("handler").Value.Set(validAddr)
+	err := cmd.Flag("handler").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateQueryResourceFlags(
+	err = ValidateQueryResourceFlags(
 		cmd,
 		[]string{},
 	)
@@ -90,10 +93,10 @@ func (s *BridgeTestSuite) TestValidateQueryResourceFlags() {
 func (s *BridgeTestSuite) TestValidateQueryResourceInvalidAddress() {
 	cmd := queryResourceCmd
 
-	// invalid addresses
-	cmd.Flag("handler").Value.Set(invalidAddr)
+	err := cmd.Flag("handler").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateQueryResourceFlags(
+	err = ValidateQueryResourceFlags(
 		cmd,
 		[]string{},
 	)
@@ -103,11 +106,14 @@ func (s *BridgeTestSuite) TestValidateQueryResourceInvalidAddress() {
 func (s *BridgeTestSuite) TestValidateRegisterGenericResourceFlags() {
 	cmd := registerGenericResourceCmd
 
-	cmd.Flag("handler").Value.Set(validAddr)
-	cmd.Flag("target").Value.Set(validAddr)
-	cmd.Flag("bridge").Value.Set(validAddr)
+	err := cmd.Flag("handler").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("target").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateRegisterGenericResourceFlags(
+	err = ValidateRegisterGenericResourceFlags(
 		cmd,
 		[]string{},
 	)
@@ -117,12 +123,14 @@ func (s *BridgeTestSuite) TestValidateRegisterGenericResourceFlags() {
 func (s *BridgeTestSuite) TestValidateRegisterGenericResourceInvalidAddresses() {
 	cmd := registerGenericResourceCmd
 
-	// invalid addresses
-	cmd.Flag("handler").Value.Set(invalidAddr)
-	cmd.Flag("target").Value.Set(invalidAddr)
-	cmd.Flag("bridge").Value.Set(invalidAddr)
+	err := cmd.Flag("handler").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("target").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateRegisterGenericResourceFlags(
+	err = ValidateRegisterGenericResourceFlags(
 		cmd,
 		[]string{},
 	)
@@ -132,11 +140,14 @@ func (s *BridgeTestSuite) TestValidateRegisterGenericResourceInvalidAddresses() 
 func (s *BridgeTestSuite) TestValidateRegisterResourceFlags() {
 	cmd := registerResourceCmd
 
-	cmd.Flag("handler").Value.Set(validAddr)
-	cmd.Flag("target").Value.Set(validAddr)
-	cmd.Flag("bridge").Value.Set(validAddr)
+	err := cmd.Flag("handler").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("target").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateRegisterResourceFlags(
+	err = ValidateRegisterResourceFlags(
 		cmd,
 		[]string{},
 	)
@@ -146,12 +157,14 @@ func (s *BridgeTestSuite) TestValidateRegisterResourceFlags() {
 func (s *BridgeTestSuite) TestValidateRegisterResourceInvalidAddresses() {
 	cmd := registerResourceCmd
 
-	// invalid addresses
-	cmd.Flag("handler").Value.Set(invalidAddr)
-	cmd.Flag("target").Value.Set(invalidAddr)
-	cmd.Flag("bridge").Value.Set(invalidAddr)
+	err := cmd.Flag("handler").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("target").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateRegisterResourceFlags(
+	err = ValidateRegisterResourceFlags(
 		cmd,
 		[]string{},
 	)
@@ -161,11 +174,14 @@ func (s *BridgeTestSuite) TestValidateRegisterResourceInvalidAddresses() {
 func (s *BridgeTestSuite) TestValidateSetBurnFlags() {
 	cmd := setBurnCmd
 
-	cmd.Flag("handler").Value.Set(validAddr)
-	cmd.Flag("bridge").Value.Set(validAddr)
-	cmd.Flag("token-contract").Value.Set(validAddr)
+	err := cmd.Flag("handler").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("token-contract").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateSetBurnFlags(
+	err = ValidateSetBurnFlags(
 		cmd,
 		[]string{},
 	)
@@ -175,12 +191,14 @@ func (s *BridgeTestSuite) TestValidateSetBurnFlags() {
 func (s *BridgeTestSuite) TestValidateSetBurnInvalidAddresses() {
 	cmd := setBurnCmd
 
-	// invalid addresses
-	cmd.Flag("handler").Value.Set(invalidAddr)
-	cmd.Flag("bridge").Value.Set(invalidAddr)
-	cmd.Flag("token-contract").Value.Set(invalidAddr)
+	err := cmd.Flag("handler").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("token-contract").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateSetBurnFlags(
+	err = ValidateSetBurnFlags(
 		cmd,
 		[]string{},
 	)

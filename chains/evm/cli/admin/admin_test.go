@@ -3,6 +3,7 @@ package admin
 import (
 	"testing"
 
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -26,7 +27,8 @@ func (s *AdminTestSuite) TearDownSuite() {}
 func (s *AdminTestSuite) TearDownTest() {}
 
 func (s *AdminTestSuite) TestValidateAddAdminFlags() {
-	cmd := addAdminCmd
+	cmd := new(cobra.Command)
+	BindAddAdminFlags(cmd)
 
 	err := cmd.Flag("admin").Value.Set(validAddr)
 	s.Nil(err)
@@ -41,7 +43,8 @@ func (s *AdminTestSuite) TestValidateAddAdminFlags() {
 }
 
 func (s *AdminTestSuite) TestValidateAddAdminFlagsInvalidAddresses() {
-	cmd := addAdminCmd
+	cmd := new(cobra.Command)
+	BindAddAdminFlags(cmd)
 
 	err := cmd.Flag("admin").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -56,7 +59,8 @@ func (s *AdminTestSuite) TestValidateAddAdminFlagsInvalidAddresses() {
 }
 
 func (s *AdminTestSuite) TestValidateAddRelayerFlags() {
-	cmd := addRelayerCmd
+	cmd := new(cobra.Command)
+	BindAddRelayerFlags(cmd)
 
 	err := cmd.Flag("relayer").Value.Set(validAddr)
 	s.Nil(err)
@@ -71,7 +75,8 @@ func (s *AdminTestSuite) TestValidateAddRelayerFlags() {
 }
 
 func (s *AdminTestSuite) TestValidateAddRelayerFlagsInvalidAddresses() {
-	cmd := addRelayerCmd
+	cmd := new(cobra.Command)
+	BindAddRelayerFlags(cmd)
 
 	err := cmd.Flag("relayer").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -86,7 +91,8 @@ func (s *AdminTestSuite) TestValidateAddRelayerFlagsInvalidAddresses() {
 }
 
 func (s *AdminTestSuite) TestValidateGetThresholdFlags() {
-	cmd := getThresholdCmd
+	cmd := new(cobra.Command)
+	BindGetThresholdFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(validAddr)
 	s.Nil(err)
@@ -99,7 +105,8 @@ func (s *AdminTestSuite) TestValidateGetThresholdFlags() {
 }
 
 func (s *AdminTestSuite) TestValidateGetThresholdFlagsInvalidAddress() {
-	cmd := getThresholdCmd
+	cmd := new(cobra.Command)
+	BindGetThresholdFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -112,7 +119,8 @@ func (s *AdminTestSuite) TestValidateGetThresholdFlagsInvalidAddress() {
 }
 
 func (s *AdminTestSuite) TestValidateIsRelayerFlags() {
-	cmd := isRelayerCmd
+	cmd := new(cobra.Command)
+	BindIsRelayerFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(validAddr)
 	s.Nil(err)
@@ -127,7 +135,8 @@ func (s *AdminTestSuite) TestValidateIsRelayerFlags() {
 }
 
 func (s *AdminTestSuite) TestValidateIsRelayerInvalidAddresses() {
-	cmd := isRelayerCmd
+	cmd := new(cobra.Command)
+	BindIsRelayerFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -142,7 +151,8 @@ func (s *AdminTestSuite) TestValidateIsRelayerInvalidAddresses() {
 }
 
 func (s *AdminTestSuite) TestValidatePauseFlags() {
-	cmd := pauseCmd
+	cmd := new(cobra.Command)
+	BindPauseFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(validAddr)
 	s.Nil(err)
@@ -155,7 +165,8 @@ func (s *AdminTestSuite) TestValidatePauseFlags() {
 }
 
 func (s *AdminTestSuite) TestValidatePauseInvalidAddress() {
-	cmd := pauseCmd
+	cmd := new(cobra.Command)
+	BindPauseFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -168,7 +179,8 @@ func (s *AdminTestSuite) TestValidatePauseInvalidAddress() {
 }
 
 func (s *AdminTestSuite) TestValidateRemoveAdminFlags() {
-	cmd := removeAdminCmd
+	cmd := new(cobra.Command)
+	BindRemoveAdminFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(validAddr)
 	s.Nil(err)
@@ -183,7 +195,8 @@ func (s *AdminTestSuite) TestValidateRemoveAdminFlags() {
 }
 
 func (s *AdminTestSuite) TestValidateRemoveAdminInvalidAddresses() {
-	cmd := removeAdminCmd
+	cmd := new(cobra.Command)
+	BindRemoveAdminFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -198,7 +211,8 @@ func (s *AdminTestSuite) TestValidateRemoveAdminInvalidAddresses() {
 }
 
 func (s *AdminTestSuite) TestValidateRemoveRelayerFlags() {
-	cmd := removeRelayerCmd
+	cmd := new(cobra.Command)
+	BindRemoveRelayerFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(validAddr)
 	s.Nil(err)
@@ -213,7 +227,8 @@ func (s *AdminTestSuite) TestValidateRemoveRelayerFlags() {
 }
 
 func (s *AdminTestSuite) TestValidateRemoveRelayerInvalidAddresses() {
-	cmd := removeRelayerCmd
+	cmd := new(cobra.Command)
+	BindRemoveRelayerFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -228,7 +243,8 @@ func (s *AdminTestSuite) TestValidateRemoveRelayerInvalidAddresses() {
 }
 
 func (s *AdminTestSuite) TestValidateSetDepositNonceFlags() {
-	cmd := setDepositNonceCmd
+	cmd := new(cobra.Command)
+	BindSetDepositNonceFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(validAddr)
 	s.Nil(err)
@@ -241,7 +257,8 @@ func (s *AdminTestSuite) TestValidateSetDepositNonceFlags() {
 }
 
 func (s *AdminTestSuite) TestValidateSetDepositNonceInvalidAddress() {
-	cmd := setDepositNonceCmd
+	cmd := new(cobra.Command)
+	BindSetDepositNonceFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -254,7 +271,8 @@ func (s *AdminTestSuite) TestValidateSetDepositNonceInvalidAddress() {
 }
 
 func (s *AdminTestSuite) TestValidateSetFeeFlags() {
-	cmd := setFeeCmd
+	cmd := new(cobra.Command)
+	BindSetFeeFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(validAddr)
 	s.Nil(err)
@@ -267,7 +285,8 @@ func (s *AdminTestSuite) TestValidateSetFeeFlags() {
 }
 
 func (s *AdminTestSuite) TestValidateSetFeeInvalidAddress() {
-	cmd := setFeeCmd
+	cmd := new(cobra.Command)
+	BindSetFeeFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -280,7 +299,8 @@ func (s *AdminTestSuite) TestValidateSetFeeInvalidAddress() {
 }
 
 func (s *AdminTestSuite) TestValidateSetThresholdFlags() {
-	cmd := setThresholdCmd
+	cmd := new(cobra.Command)
+	BindSetThresholdFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(validAddr)
 	s.Nil(err)
@@ -293,7 +313,8 @@ func (s *AdminTestSuite) TestValidateSetThresholdFlags() {
 }
 
 func (s *AdminTestSuite) TestValidateSetThresholdInvalidAddress() {
-	cmd := setThresholdCmd
+	cmd := new(cobra.Command)
+	BindSetThresholdFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -306,7 +327,8 @@ func (s *AdminTestSuite) TestValidateSetThresholdInvalidAddress() {
 }
 
 func (s *AdminTestSuite) TestValidateUnpauseFlags() {
-	cmd := unpauseCmd
+	cmd := new(cobra.Command)
+	BindUnpauseFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(validAddr)
 	s.Nil(err)
@@ -319,7 +341,8 @@ func (s *AdminTestSuite) TestValidateUnpauseFlags() {
 }
 
 func (s *AdminTestSuite) TestValidateUnpauseInvalidAddress() {
-	cmd := unpauseCmd
+	cmd := new(cobra.Command)
+	BindUnpauseFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -332,7 +355,8 @@ func (s *AdminTestSuite) TestValidateUnpauseInvalidAddress() {
 }
 
 func (s *AdminTestSuite) TestValidateWithdrawFlags() {
-	cmd := withdrawCmd
+	cmd := new(cobra.Command)
+	BindWithdrawFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(validAddr)
 	s.Nil(err)
@@ -353,7 +377,8 @@ func (s *AdminTestSuite) TestValidateWithdrawFlags() {
 }
 
 func (s *AdminTestSuite) TestValidateWithdrawInvalidAddresses() {
-	cmd := withdrawCmd
+	cmd := new(cobra.Command)
+	BindWithdrawFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -374,7 +399,8 @@ func (s *AdminTestSuite) TestValidateWithdrawInvalidAddresses() {
 }
 
 func (s *AdminTestSuite) TestValidateWithdrawAmountTokenConflict() {
-	cmd := withdrawCmd
+	cmd := new(cobra.Command)
+	BindWithdrawFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(validAddr)
 	s.Nil(err)

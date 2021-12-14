@@ -28,10 +28,12 @@ func (s *ERC20TestSuite) TearDownTest() {}
 func (s *ERC20TestSuite) TestValidateAddMinterFlags() {
 	cmd := addMinterCmd
 
-	cmd.Flag("contract").Value.Set(validAddr)
-	cmd.Flag("minter").Value.Set(validAddr)
+	err := cmd.Flag("contract").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("minter").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateAddMinterFlags(
+	err = ValidateAddMinterFlags(
 		cmd,
 		[]string{},
 	)
@@ -41,10 +43,12 @@ func (s *ERC20TestSuite) TestValidateAddMinterFlags() {
 func (s *ERC20TestSuite) TestValidateAddMinterInvalidAddress() {
 	cmd := addMinterCmd
 
-	cmd.Flag("contract").Value.Set(invalidAddr)
-	cmd.Flag("minter").Value.Set(invalidAddr)
+	err := cmd.Flag("contract").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("minter").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateAddMinterFlags(
+	err = ValidateAddMinterFlags(
 		cmd,
 		[]string{},
 	)
@@ -54,10 +58,12 @@ func (s *ERC20TestSuite) TestValidateAddMinterInvalidAddress() {
 func (s *ERC20TestSuite) TestValidateApproveFlags() {
 	cmd := approveCmd
 
-	cmd.Flag("contract").Value.Set(validAddr)
-	cmd.Flag("recipient").Value.Set(validAddr)
+	err := cmd.Flag("contract").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("recipient").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateApproveFlags(
+	err = ValidateApproveFlags(
 		cmd,
 		[]string{},
 	)
@@ -67,10 +73,12 @@ func (s *ERC20TestSuite) TestValidateApproveFlags() {
 func (s *ERC20TestSuite) TestValidateApproveInvalidAddress() {
 	cmd := approveCmd
 
-	cmd.Flag("contract").Value.Set(invalidAddr)
-	cmd.Flag("recipient").Value.Set(invalidAddr)
+	err := cmd.Flag("contract").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("recipient").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateApproveFlags(
+	err = ValidateApproveFlags(
 		cmd,
 		[]string{},
 	)
@@ -80,10 +88,12 @@ func (s *ERC20TestSuite) TestValidateApproveInvalidAddress() {
 func (s *ERC20TestSuite) TestValidateBalanceFlags() {
 	cmd := balanceCmd
 
-	cmd.Flag("contract").Value.Set(validAddr)
-	cmd.Flag("address").Value.Set(validAddr)
+	err := cmd.Flag("contract").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("address").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateBalanceFlags(
+	err = ValidateBalanceFlags(
 		cmd,
 		[]string{},
 	)
@@ -93,10 +103,12 @@ func (s *ERC20TestSuite) TestValidateBalanceFlags() {
 func (s *ERC20TestSuite) TestValidateBalanceInvalidAddress() {
 	cmd := balanceCmd
 
-	cmd.Flag("contract").Value.Set(invalidAddr)
-	cmd.Flag("address").Value.Set(invalidAddr)
+	err := cmd.Flag("contract").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("address").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateBalanceFlags(
+	err = ValidateBalanceFlags(
 		cmd,
 		[]string{},
 	)
@@ -106,10 +118,12 @@ func (s *ERC20TestSuite) TestValidateBalanceInvalidAddress() {
 func (s *ERC20TestSuite) TestValidateDepositFlags() {
 	cmd := depositCmd
 
-	cmd.Flag("recipient").Value.Set(validAddr)
-	cmd.Flag("bridge").Value.Set(validAddr)
+	err := cmd.Flag("recipient").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateDepositFlags(
+	err = ValidateDepositFlags(
 		cmd,
 		[]string{},
 	)
@@ -119,10 +133,12 @@ func (s *ERC20TestSuite) TestValidateDepositFlags() {
 func (s *ERC20TestSuite) TestValidateDepositInvalidAddress() {
 	cmd := depositCmd
 
-	cmd.Flag("recipient").Value.Set(invalidAddr)
-	cmd.Flag("bridge").Value.Set(invalidAddr)
+	err := cmd.Flag("recipient").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateDepositFlags(
+	err = ValidateDepositFlags(
 		cmd,
 		[]string{},
 	)
@@ -132,11 +148,14 @@ func (s *ERC20TestSuite) TestValidateDepositInvalidAddress() {
 func (s *ERC20TestSuite) TestValidateGetAllowanceFlags() {
 	cmd := getAllowanceCmd
 
-	cmd.Flag("contract").Value.Set(validAddr)
-	cmd.Flag("owner").Value.Set(validAddr)
-	cmd.Flag("spender").Value.Set(validAddr)
+	err := cmd.Flag("contract").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("owner").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("spender").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateGetAllowanceFlags(
+	err = ValidateGetAllowanceFlags(
 		cmd,
 		[]string{},
 	)
@@ -146,11 +165,14 @@ func (s *ERC20TestSuite) TestValidateGetAllowanceFlags() {
 func (s *ERC20TestSuite) TestValidateGetAllowanceInvalidAddress() {
 	cmd := getAllowanceCmd
 
-	cmd.Flag("contract").Value.Set(invalidAddr)
-	cmd.Flag("owner").Value.Set(invalidAddr)
-	cmd.Flag("spender").Value.Set(invalidAddr)
+	err := cmd.Flag("contract").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("owner").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("spender").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateGetAllowanceFlags(
+	err = ValidateGetAllowanceFlags(
 		cmd,
 		[]string{},
 	)
@@ -160,10 +182,12 @@ func (s *ERC20TestSuite) TestValidateGetAllowanceInvalidAddress() {
 func (s *ERC20TestSuite) TestValidateMintFlags() {
 	cmd := mintCmd
 
-	cmd.Flag("contract").Value.Set(validAddr)
-	cmd.Flag("recipient").Value.Set(validAddr)
+	err := cmd.Flag("contract").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("recipient").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateMintFlags(
+	err = ValidateMintFlags(
 		cmd,
 		[]string{},
 	)
@@ -173,10 +197,12 @@ func (s *ERC20TestSuite) TestValidateMintFlags() {
 func (s *ERC20TestSuite) TestValidateMintInvalidAddress() {
 	cmd := mintCmd
 
-	cmd.Flag("contract").Value.Set(invalidAddr)
-	cmd.Flag("recipient").Value.Set(invalidAddr)
+	err := cmd.Flag("contract").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("recipient").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateMintFlags(
+	err = ValidateMintFlags(
 		cmd,
 		[]string{},
 	)

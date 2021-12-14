@@ -28,9 +28,10 @@ func (s *CentrifugeTestSuite) TearDownTest() {}
 func (s *CentrifugeTestSuite) TestValidateGetHashFlags() {
 	cmd := getHashCmd
 
-	cmd.Flag("address").Value.Set(validAddr)
+	err := cmd.Flag("address").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateGetHashFlags(
+	err = ValidateGetHashFlags(
 		cmd,
 		[]string{},
 	)
@@ -40,9 +41,10 @@ func (s *CentrifugeTestSuite) TestValidateGetHashFlags() {
 func (s *CentrifugeTestSuite) TestValidateGetHashInvalidAddress() {
 	cmd := getHashCmd
 
-	cmd.Flag("address").Value.Set(invalidAddr)
+	err := cmd.Flag("address").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateGetHashFlags(
+	err = ValidateGetHashFlags(
 		cmd,
 		[]string{},
 	)

@@ -3,6 +3,7 @@ package erc721
 import (
 	"testing"
 
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -26,7 +27,8 @@ func (s *ERC721TestSuite) TearDownSuite() {}
 func (s *ERC721TestSuite) TearDownTest() {}
 
 func (s *ERC721TestSuite) TestValidateAddMinterFlags() {
-	cmd := addMinterCmd
+	cmd := &cobra.Command{}
+	BindAddMinterCmdFlags(cmd)
 
 	cmd.Flag("contract").Value.Set(validAddr)
 	cmd.Flag("minter").Value.Set(validAddr)
