@@ -19,7 +19,7 @@ import (
 var voteProposalCmd = &cobra.Command{
 	Use:   "vote-proposal",
 	Short: "Vote on proposal",
-	Long:  "Votes on an on-chain proposal. Valid relayer private key required for transaction to be successful.",
+	Long:  "The vote-proposal subcommand votes on an on-chain proposal. Valid relayer private key required for transaction to be successful.",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
