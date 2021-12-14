@@ -3,6 +3,7 @@ package bridge
 import (
 	"testing"
 
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -26,7 +27,8 @@ func (s *BridgeTestSuite) TearDownSuite() {}
 func (s *BridgeTestSuite) TearDownTest() {}
 
 func (s *BridgeTestSuite) TestValidateCancelProposalFlags() {
-	cmd := cancelProposalCmd
+	cmd := new(cobra.Command)
+	BindCancelProposalFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(validAddr)
 	s.Nil(err)
@@ -39,7 +41,8 @@ func (s *BridgeTestSuite) TestValidateCancelProposalFlags() {
 }
 
 func (s *BridgeTestSuite) TestValidateCancelProposalInvalidAddress() {
-	cmd := cancelProposalCmd
+	cmd := new(cobra.Command)
+	BindCancelProposalFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -52,7 +55,8 @@ func (s *BridgeTestSuite) TestValidateCancelProposalInvalidAddress() {
 }
 
 func (s *BridgeTestSuite) TestValidateQueryProposalFlags() {
-	cmd := queryProposalCmd
+	cmd := new(cobra.Command)
+	BindQueryProposalFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(validAddr)
 	s.Nil(err)
@@ -65,7 +69,8 @@ func (s *BridgeTestSuite) TestValidateQueryProposalFlags() {
 }
 
 func (s *BridgeTestSuite) TestValidateQueryProposalInvalidAddress() {
-	cmd := queryProposalCmd
+	cmd := new(cobra.Command)
+	BindQueryProposalFlags(cmd)
 
 	err := cmd.Flag("bridge").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -78,7 +83,8 @@ func (s *BridgeTestSuite) TestValidateQueryProposalInvalidAddress() {
 }
 
 func (s *BridgeTestSuite) TestValidateQueryResourceFlags() {
-	cmd := queryResourceCmd
+	cmd := new(cobra.Command)
+	BindQueryResourceFlags(cmd)
 
 	err := cmd.Flag("handler").Value.Set(validAddr)
 	s.Nil(err)
@@ -91,7 +97,8 @@ func (s *BridgeTestSuite) TestValidateQueryResourceFlags() {
 }
 
 func (s *BridgeTestSuite) TestValidateQueryResourceInvalidAddress() {
-	cmd := queryResourceCmd
+	cmd := new(cobra.Command)
+	BindQueryResourceFlags(cmd)
 
 	err := cmd.Flag("handler").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -104,7 +111,8 @@ func (s *BridgeTestSuite) TestValidateQueryResourceInvalidAddress() {
 }
 
 func (s *BridgeTestSuite) TestValidateRegisterGenericResourceFlags() {
-	cmd := registerGenericResourceCmd
+	cmd := new(cobra.Command)
+	BindRegisterGenericResourceFlags(cmd)
 
 	err := cmd.Flag("handler").Value.Set(validAddr)
 	s.Nil(err)
@@ -121,7 +129,8 @@ func (s *BridgeTestSuite) TestValidateRegisterGenericResourceFlags() {
 }
 
 func (s *BridgeTestSuite) TestValidateRegisterGenericResourceInvalidAddresses() {
-	cmd := registerGenericResourceCmd
+	cmd := new(cobra.Command)
+	BindRegisterGenericResourceFlags(cmd)
 
 	err := cmd.Flag("handler").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -138,7 +147,8 @@ func (s *BridgeTestSuite) TestValidateRegisterGenericResourceInvalidAddresses() 
 }
 
 func (s *BridgeTestSuite) TestValidateRegisterResourceFlags() {
-	cmd := registerResourceCmd
+	cmd := new(cobra.Command)
+	BindRegisterResourceFlags(cmd)
 
 	err := cmd.Flag("handler").Value.Set(validAddr)
 	s.Nil(err)
@@ -155,7 +165,8 @@ func (s *BridgeTestSuite) TestValidateRegisterResourceFlags() {
 }
 
 func (s *BridgeTestSuite) TestValidateRegisterResourceInvalidAddresses() {
-	cmd := registerResourceCmd
+	cmd := new(cobra.Command)
+	BindRegisterResourceFlags(cmd)
 
 	err := cmd.Flag("handler").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -172,7 +183,8 @@ func (s *BridgeTestSuite) TestValidateRegisterResourceInvalidAddresses() {
 }
 
 func (s *BridgeTestSuite) TestValidateSetBurnFlags() {
-	cmd := setBurnCmd
+	cmd := new(cobra.Command)
+	BindSetBurnFlags(cmd)
 
 	err := cmd.Flag("handler").Value.Set(validAddr)
 	s.Nil(err)
@@ -189,7 +201,8 @@ func (s *BridgeTestSuite) TestValidateSetBurnFlags() {
 }
 
 func (s *BridgeTestSuite) TestValidateSetBurnInvalidAddresses() {
-	cmd := setBurnCmd
+	cmd := new(cobra.Command)
+	BindSetBurnFlags(cmd)
 
 	err := cmd.Flag("handler").Value.Set(invalidAddr)
 	s.Nil(err)

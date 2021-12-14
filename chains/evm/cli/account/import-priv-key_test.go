@@ -3,6 +3,7 @@ package account
 import (
 	"testing"
 
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -26,7 +27,8 @@ func (s *ImportPrivKeyTestSuite) TearDownSuite() {}
 func (s *ImportPrivKeyTestSuite) TearDownTest() {}
 
 func (s *ImportPrivKeyTestSuite) TestValidateImportPrivKeyFlags() {
-	cmd := importPrivKeyCmd
+	cmd := new(cobra.Command)
+	BindImportPrivKeyFlags(cmd)
 
 	err := cmd.Flag("private-key").Value.Set(validPrivateKey)
 	s.Nil(err)
@@ -39,7 +41,8 @@ func (s *ImportPrivKeyTestSuite) TestValidateImportPrivKeyFlags() {
 }
 
 func (s *ImportPrivKeyTestSuite) TestValidateImportPrivKeyFlagsInvalidPrivKey() {
-	cmd := importPrivKeyCmd
+	cmd := new(cobra.Command)
+	BindImportPrivKeyFlags(cmd)
 
 	err := cmd.Flag("private-key").Value.Set(invalidPrivateKey)
 	s.Nil(err)
