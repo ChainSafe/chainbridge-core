@@ -51,9 +51,9 @@ var mintCmd = &cobra.Command{
 }
 
 func init() {
-	BindMintCmdFlags(mintCmd)
+	BindMintFlags(mintCmd)
 }
-func BindMintCmdFlags(cmd *cobra.Command) {
+func BindMintFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Erc20Address, "contract", "", "ERC20 contract address")
 	cmd.Flags().StringVar(&Amount, "amount", "", "Deposit amount")
 	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")

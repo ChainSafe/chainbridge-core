@@ -44,7 +44,7 @@ var getAllowanceCmd = &cobra.Command{
 	},
 }
 
-func BindGetAllowanceCmdFlags(cmd *cobra.Command) {
+func BindGetAllowanceFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Erc20Address, "contract", "", "ERC20 contract address")
 	cmd.Flags().StringVar(&OwnerAddress, "owner", "", "Address of token owner")
 	cmd.Flags().StringVar(&SpenderAddress, "spender", "", "Address of spender")
@@ -52,7 +52,7 @@ func BindGetAllowanceCmdFlags(cmd *cobra.Command) {
 }
 
 func init() {
-	BindGetAllowanceCmdFlags(getAllowanceCmd)
+	BindGetAllowanceFlags(getAllowanceCmd)
 }
 func ValidateGetAllowanceFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Erc20Address) {

@@ -3,6 +3,7 @@ package erc20
 import (
 	"testing"
 
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -26,7 +27,8 @@ func (s *ERC20TestSuite) TearDownSuite() {}
 func (s *ERC20TestSuite) TearDownTest() {}
 
 func (s *ERC20TestSuite) TestValidateAddMinterFlags() {
-	cmd := addMinterCmd
+	cmd := new(cobra.Command)
+	BindAddMinterFlags(cmd)
 
 	err := cmd.Flag("contract").Value.Set(validAddr)
 	s.Nil(err)
@@ -41,7 +43,8 @@ func (s *ERC20TestSuite) TestValidateAddMinterFlags() {
 }
 
 func (s *ERC20TestSuite) TestValidateAddMinterInvalidAddress() {
-	cmd := addMinterCmd
+	cmd := new(cobra.Command)
+	BindAddMinterFlags(cmd)
 
 	err := cmd.Flag("contract").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -56,7 +59,8 @@ func (s *ERC20TestSuite) TestValidateAddMinterInvalidAddress() {
 }
 
 func (s *ERC20TestSuite) TestValidateApproveFlags() {
-	cmd := approveCmd
+	cmd := new(cobra.Command)
+	BindApproveFlags(cmd)
 
 	err := cmd.Flag("contract").Value.Set(validAddr)
 	s.Nil(err)
@@ -71,7 +75,8 @@ func (s *ERC20TestSuite) TestValidateApproveFlags() {
 }
 
 func (s *ERC20TestSuite) TestValidateApproveInvalidAddress() {
-	cmd := approveCmd
+	cmd := new(cobra.Command)
+	BindApproveFlags(cmd)
 
 	err := cmd.Flag("contract").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -86,7 +91,8 @@ func (s *ERC20TestSuite) TestValidateApproveInvalidAddress() {
 }
 
 func (s *ERC20TestSuite) TestValidateBalanceFlags() {
-	cmd := balanceCmd
+	cmd := new(cobra.Command)
+	BindBalanceFlags(cmd)
 
 	err := cmd.Flag("contract").Value.Set(validAddr)
 	s.Nil(err)
@@ -101,7 +107,8 @@ func (s *ERC20TestSuite) TestValidateBalanceFlags() {
 }
 
 func (s *ERC20TestSuite) TestValidateBalanceInvalidAddress() {
-	cmd := balanceCmd
+	cmd := new(cobra.Command)
+	BindBalanceFlags(cmd)
 
 	err := cmd.Flag("contract").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -116,7 +123,8 @@ func (s *ERC20TestSuite) TestValidateBalanceInvalidAddress() {
 }
 
 func (s *ERC20TestSuite) TestValidateDepositFlags() {
-	cmd := depositCmd
+	cmd := new(cobra.Command)
+	BindDepositFlags(cmd)
 
 	err := cmd.Flag("recipient").Value.Set(validAddr)
 	s.Nil(err)
@@ -131,7 +139,8 @@ func (s *ERC20TestSuite) TestValidateDepositFlags() {
 }
 
 func (s *ERC20TestSuite) TestValidateDepositInvalidAddress() {
-	cmd := depositCmd
+	cmd := new(cobra.Command)
+	BindDepositFlags(cmd)
 
 	err := cmd.Flag("recipient").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -146,7 +155,8 @@ func (s *ERC20TestSuite) TestValidateDepositInvalidAddress() {
 }
 
 func (s *ERC20TestSuite) TestValidateGetAllowanceFlags() {
-	cmd := getAllowanceCmd
+	cmd := new(cobra.Command)
+	BindGetAllowanceFlags(cmd)
 
 	err := cmd.Flag("contract").Value.Set(validAddr)
 	s.Nil(err)
@@ -163,7 +173,8 @@ func (s *ERC20TestSuite) TestValidateGetAllowanceFlags() {
 }
 
 func (s *ERC20TestSuite) TestValidateGetAllowanceInvalidAddress() {
-	cmd := getAllowanceCmd
+	cmd := new(cobra.Command)
+	BindGetAllowanceFlags(cmd)
 
 	err := cmd.Flag("contract").Value.Set(invalidAddr)
 	s.Nil(err)
@@ -180,7 +191,8 @@ func (s *ERC20TestSuite) TestValidateGetAllowanceInvalidAddress() {
 }
 
 func (s *ERC20TestSuite) TestValidateMintFlags() {
-	cmd := mintCmd
+	cmd := new(cobra.Command)
+	BindMintFlags(cmd)
 
 	err := cmd.Flag("contract").Value.Set(validAddr)
 	s.Nil(err)
@@ -195,7 +207,8 @@ func (s *ERC20TestSuite) TestValidateMintFlags() {
 }
 
 func (s *ERC20TestSuite) TestValidateMintInvalidAddress() {
-	cmd := mintCmd
+	cmd := new(cobra.Command)
+	BindMintFlags(cmd)
 
 	err := cmd.Flag("contract").Value.Set(invalidAddr)
 	s.Nil(err)
