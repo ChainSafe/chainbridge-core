@@ -36,7 +36,7 @@ var simulateCmd = &cobra.Command{
 	},
 }
 
-func BindSimulateCmdFlags(cmd *cobra.Command) {
+func BindSimulateFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&TxHash, "tx-hash", "", "Transaction hash")
 	cmd.Flags().StringVar(&BlockNumber, "block-number", "", "Block number")
 	cmd.Flags().StringVar(&FromAddress, "from", "", "Address of sender")
@@ -44,7 +44,7 @@ func BindSimulateCmdFlags(cmd *cobra.Command) {
 }
 
 func init() {
-	BindSimulateCmdFlags(simulateCmd)
+	BindSimulateFlags(simulateCmd)
 }
 
 func ValidateSimulateFlags(cmd *cobra.Command, args []string) error {

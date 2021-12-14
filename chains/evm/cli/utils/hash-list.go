@@ -26,14 +26,14 @@ var hashListCmd = &cobra.Command{
 	},
 }
 
-func BindHashListCmdFlags(cmd *cobra.Command) {
+func BindHashListFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&BlockNumber, "block-number", "", "Block number to start at")
 	cmd.Flags().StringVar(&Blocks, "blocks", "", "Number of blocks past the provided block-number to review")
 	flags.MarkFlagsAsRequired(cmd, "block-number", "blocks")
 }
 
 func init() {
-	BindHashListCmdFlags(hashListCmd)
+	BindHashListFlags(hashListCmd)
 }
 
 func HashListCmd(cmd *cobra.Command, args []string) error {

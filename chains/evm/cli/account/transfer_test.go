@@ -3,6 +3,7 @@ package account
 import (
 	"testing"
 
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -26,7 +27,8 @@ func (s *TransferTestSuite) TearDownSuite() {}
 func (s *TransferTestSuite) TearDownTest() {}
 
 func (s *TransferTestSuite) TestValidateTransferBaseCurrencyFlags() {
-	cmd := transferBaseCurrencyCmd
+	cmd := new(cobra.Command)
+	BindTransferBaseCurrencyFlags(cmd)
 
 	err := cmd.Flag("recipient").Value.Set(validAddr)
 	s.Nil(err)
@@ -39,7 +41,8 @@ func (s *TransferTestSuite) TestValidateTransferBaseCurrencyFlags() {
 }
 
 func (s *TransferTestSuite) TestValidateTransferBaseCurrencyFlagsInvalidAddress() {
-	cmd := transferBaseCurrencyCmd
+	cmd := new(cobra.Command)
+	BindTransferBaseCurrencyFlags(cmd)
 
 	err := cmd.Flag("recipient").Value.Set(invalidAddr)
 	s.Nil(err)

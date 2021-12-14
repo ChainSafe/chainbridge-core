@@ -3,6 +3,7 @@ package utils
 import (
 	"testing"
 
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -28,7 +29,8 @@ func (s *UtilsTestSuite) TearDownSuite() {}
 func (s *UtilsTestSuite) TearDownTest() {}
 
 func (s *UtilsTestSuite) TestValidateSimulateFlags() {
-	cmd := simulateCmd
+	cmd := new(cobra.Command)
+	BindSimulateFlags(cmd)
 
 	cmd.Flag("from").Value.Set(validAddr)
 	cmd.Flag("tx-hash").Value.Set(validTxHash)
@@ -41,7 +43,8 @@ func (s *UtilsTestSuite) TestValidateSimulateFlags() {
 }
 
 func (s *UtilsTestSuite) TestValidateSimulateInvalidAddress() {
-	cmd := simulateCmd
+	cmd := new(cobra.Command)
+	BindSimulateFlags(cmd)
 
 	cmd.Flag("from").Value.Set(invalidAddr)
 	cmd.Flag("tx-hash").Value.Set(validTxHash)
@@ -54,7 +57,8 @@ func (s *UtilsTestSuite) TestValidateSimulateInvalidAddress() {
 }
 
 func (s *UtilsTestSuite) TestValidateSimulateInvalidTxHash() {
-	cmd := simulateCmd
+	cmd := new(cobra.Command)
+	BindSimulateFlags(cmd)
 
 	cmd.Flag("from").Value.Set(validAddr)
 	cmd.Flag("tx-hash").Value.Set(invalidTxHash)
