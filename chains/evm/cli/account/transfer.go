@@ -52,7 +52,7 @@ var transferBaseCurrencyCmd = &cobra.Command{
 	},
 }
 
-func BindTransferCmdFlags(cmd *cobra.Command) {
+func BindTransferBaseCurrencyFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Recipient, "recipient", "", "Recipient address")
 	cmd.Flags().StringVar(&Amount, "amount", "", "Transfer amount")
 	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "Base token decimals")
@@ -60,7 +60,7 @@ func BindTransferCmdFlags(cmd *cobra.Command) {
 }
 
 func init() {
-	BindTransferCmdFlags(transferBaseCurrencyCmd)
+	BindTransferBaseCurrencyFlags(transferBaseCurrencyCmd)
 }
 func ValidateTransferBaseCurrencyFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Recipient) {
