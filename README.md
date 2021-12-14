@@ -17,7 +17,8 @@ Chainbridge-core is the project that was born from the existing version of [Chai
 4. [EVM-CLI](#evm-cli)
 5. [Celo-CLI](#celo-cli)
 6. [Substrate](#substrate)
-7. [Local Setup](#local-setup)
+7. [Contributing](#contributing)
+8. [Local Setup](#local-setup)
 
 ## `Installation`
 Refer to [installation](https://github.com/ChainSafe/chainbridge-docs/blob/develop/docs/installation.md) guide for assistance in installing.
@@ -752,6 +753,43 @@ Currently there is no CLI for this, though more information can be found about t
 [Substrate Module Repository](https://github.com/ChainSafe/chainbridge-substrate-module)
 
 &nbsp;
+
+## `Contributing`
+
+Chainbridge-core is a open project and welcomes contributions of all kinds: code, docs, and more. If you wish to submit more complex changes,
+please check up with the core devs first on our [Discord Server](https://discord.gg/ykXsJKfhgq) (look for CHAINBRIDGE category) or submit an issue on the repo to ensure those changes are in line with the general
+philoshophy of the project or get some early feedback.
+
+When implementing a change:
+
+1. Adhere to the standard Go formatting guidelines, e.g. [Effective Go](https://golang.org/doc/effective_go.html). Run `go fmt`.
+2. Stick to the idioms and patterns used in the codebase. Familiar-looking code has a higher chance of being accepted than eerie code. Pay attention to commonly used variable and parameter names, avoidance of naked returns, error handling patterns, etc.
+3. Comments: follow the advice on the [Commentary](https://golang.org/doc/effective_go.html#commentary) section of Effective Go.
+4. Minimize code churn. Modify only what is strictly necessary. Well-encapsulated changesets will get a quicker response from maintainers.
+5. Lint your code with [`golangci-lint`](https://golangci-lint.run) (CI will reject your PR if unlinted).
+6. Add tests.
+7. Title the PR in a meaningful way and describe the rationale and the thought process in the PR description.
+8. Write clean, thoughtful, and detailed [commit messages](https://chris.beams.io/posts/git-commit/).
+
+If change entails an update that needs to be documented, please submit a PR to [chainbridge-docs](https://github.com/ChainSafe/chainbridge-docs/tree/develop/docs) repo.
+
+
+### Submiting a PR
+
+Fork the repository, make changes and open a PR to the `main` branch of the repo. Pull requests must be cleanly rebased on top of `main` and changes require at least 2 PR approvals for them to be merged.
+
+### Reporting an issue
+
+A great way to contribute to the project is to send a detailed report when you encounter an issue. We always appreciate a well-written, thorough bug report, and will thank you for it!
+
+When reporting issues, always include:
+ - chainbridge-core version
+ - modules used
+ - logs (don't forget to remove sensitive data)
+ - tx hashes related to issue (if applicable)
+ - steps required to reproduce the problem
+
+ Putting large logs into a [gist](https://gist.github.com) will be appreciated.
 
 ## `Local Setup`
 
