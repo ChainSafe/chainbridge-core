@@ -48,14 +48,14 @@ var ownerCmd = &cobra.Command{
 	},
 }
 
-func BindOwnerCmdFlags(cmd *cobra.Command) {
+func BindOwnerFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Erc721Address, "contract", "", "ERC721 contract address")
 	cmd.Flags().StringVar(&TokenId, "token", "", "ERC721 token ID")
 	flags.MarkFlagsAsRequired(cmd, "contract", "token")
 }
 
 func init() {
-	BindOwnerCmdFlags(ownerCmd)
+	BindOwnerFlags(ownerCmd)
 }
 
 func ValidateOwnerFlags(cmd *cobra.Command, args []string) error {

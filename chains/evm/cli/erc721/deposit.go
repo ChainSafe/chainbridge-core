@@ -50,7 +50,7 @@ var depositCmd = &cobra.Command{
 	},
 }
 
-func BindDepositCmdFlags(cmd *cobra.Command) {
+func BindDepositFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Recipient, "recipient", "", "Recipient address")
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	cmd.Flags().StringVar(&DestionationID, "destination", "", "Destination domain ID")
@@ -61,7 +61,7 @@ func BindDepositCmdFlags(cmd *cobra.Command) {
 }
 
 func init() {
-	BindDepositCmdFlags(depositCmd)
+	BindDepositFlags(depositCmd)
 }
 
 func ValidateDepositFlags(cmd *cobra.Command, args []string) error {

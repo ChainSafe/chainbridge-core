@@ -27,13 +27,15 @@ func (s *ERC721TestSuite) TearDownSuite() {}
 func (s *ERC721TestSuite) TearDownTest() {}
 
 func (s *ERC721TestSuite) TestValidateAddMinterFlags() {
-	cmd := &cobra.Command{}
-	BindAddMinterCmdFlags(cmd)
+	cmd := new(cobra.Command)
+	BindAddMinterFlags(cmd)
 
-	cmd.Flag("contract").Value.Set(validAddr)
-	cmd.Flag("minter").Value.Set(validAddr)
+	err := cmd.Flag("contract").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("minter").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateAddMinterFlags(
+	err = ValidateAddMinterFlags(
 		cmd,
 		[]string{},
 	)
@@ -41,12 +43,15 @@ func (s *ERC721TestSuite) TestValidateAddMinterFlags() {
 }
 
 func (s *ERC721TestSuite) TestValidateAddMinterInvalidAddress() {
-	cmd := addMinterCmd
+	cmd := new(cobra.Command)
+	BindAddMinterFlags(cmd)
 
-	cmd.Flag("contract").Value.Set(invalidAddr)
-	cmd.Flag("minter").Value.Set(invalidAddr)
+	err := cmd.Flag("contract").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("minter").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateAddMinterFlags(
+	err = ValidateAddMinterFlags(
 		cmd,
 		[]string{},
 	)
@@ -54,12 +59,15 @@ func (s *ERC721TestSuite) TestValidateAddMinterInvalidAddress() {
 }
 
 func (s *ERC721TestSuite) TestValidateApproveFlags() {
-	cmd := approveCmd
+	cmd := new(cobra.Command)
+	BindApproveFlags(cmd)
 
-	cmd.Flag("contract").Value.Set(validAddr)
-	cmd.Flag("recipient").Value.Set(validAddr)
+	err := cmd.Flag("contract").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("recipient").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateApproveFlags(
+	err = ValidateApproveFlags(
 		cmd,
 		[]string{},
 	)
@@ -67,12 +75,15 @@ func (s *ERC721TestSuite) TestValidateApproveFlags() {
 }
 
 func (s *ERC721TestSuite) TestValidateApproveInvalidAddress() {
-	cmd := approveCmd
+	cmd := new(cobra.Command)
+	BindApproveFlags(cmd)
 
-	cmd.Flag("contract").Value.Set(invalidAddr)
-	cmd.Flag("recipient").Value.Set(invalidAddr)
+	err := cmd.Flag("contract").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("recipient").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateApproveFlags(
+	err = ValidateApproveFlags(
 		cmd,
 		[]string{},
 	)
@@ -80,12 +91,15 @@ func (s *ERC721TestSuite) TestValidateApproveInvalidAddress() {
 }
 
 func (s *ERC721TestSuite) TestValidateDepositFlags() {
-	cmd := depositCmd
+	cmd := new(cobra.Command)
+	BindDepositFlags(cmd)
 
-	cmd.Flag("recipient").Value.Set(validAddr)
-	cmd.Flag("bridge").Value.Set(validAddr)
+	err := cmd.Flag("recipient").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("bridge").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateDepositFlags(
+	err = ValidateDepositFlags(
 		cmd,
 		[]string{},
 	)
@@ -93,12 +107,15 @@ func (s *ERC721TestSuite) TestValidateDepositFlags() {
 }
 
 func (s *ERC721TestSuite) TestValidateDepositInvalidAddress() {
-	cmd := depositCmd
+	cmd := new(cobra.Command)
+	BindDepositFlags(cmd)
 
-	cmd.Flag("recipient").Value.Set(invalidAddr)
-	cmd.Flag("bridge").Value.Set(invalidAddr)
+	err := cmd.Flag("recipient").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("bridge").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateDepositFlags(
+	err = ValidateDepositFlags(
 		cmd,
 		[]string{},
 	)
@@ -106,12 +123,15 @@ func (s *ERC721TestSuite) TestValidateDepositInvalidAddress() {
 }
 
 func (s *ERC721TestSuite) TestValidateMintFlags() {
-	cmd := mintCmd
+	cmd := new(cobra.Command)
+	BindMintFlags(cmd)
 
-	cmd.Flag("contract").Value.Set(validAddr)
-	cmd.Flag("recipient").Value.Set(validAddr)
+	err := cmd.Flag("contract").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("recipient").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateMintFlags(
+	err = ValidateMintFlags(
 		cmd,
 		[]string{},
 	)
@@ -119,12 +139,15 @@ func (s *ERC721TestSuite) TestValidateMintFlags() {
 }
 
 func (s *ERC721TestSuite) TestValidateMintInvalidAddress() {
-	cmd := mintCmd
+	cmd := new(cobra.Command)
+	BindMintFlags(cmd)
 
-	cmd.Flag("contract").Value.Set(invalidAddr)
-	cmd.Flag("recipient").Value.Set(invalidAddr)
+	err := cmd.Flag("contract").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("recipient").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateMintFlags(
+	err = ValidateMintFlags(
 		cmd,
 		[]string{},
 	)
@@ -132,11 +155,13 @@ func (s *ERC721TestSuite) TestValidateMintInvalidAddress() {
 }
 
 func (s *ERC721TestSuite) TestValidateOwnerFlags() {
-	cmd := ownerCmd
+	cmd := new(cobra.Command)
+	BindOwnerFlags(cmd)
 
-	cmd.Flag("contract").Value.Set(validAddr)
+	err := cmd.Flag("contract").Value.Set(validAddr)
+	s.Nil(err)
 
-	err := ValidateOwnerFlags(
+	err = ValidateOwnerFlags(
 		cmd,
 		[]string{},
 	)
@@ -144,11 +169,13 @@ func (s *ERC721TestSuite) TestValidateOwnerFlags() {
 }
 
 func (s *ERC721TestSuite) TestValidateOwnerInvalidAddress() {
-	cmd := ownerCmd
+	cmd := new(cobra.Command)
+	BindOwnerFlags(cmd)
 
-	cmd.Flag("contract").Value.Set(invalidAddr)
+	err := cmd.Flag("contract").Value.Set(invalidAddr)
+	s.Nil(err)
 
-	err := ValidateOwnerFlags(
+	err = ValidateOwnerFlags(
 		cmd,
 		[]string{},
 	)
