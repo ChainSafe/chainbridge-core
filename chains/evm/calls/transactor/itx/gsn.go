@@ -5,9 +5,9 @@ import (
 	"math/big"
 	"sync"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/forwarder"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -17,23 +17,13 @@ import (
 
 type ForwarderContract interface {
 	GetNonce(from common.Address) (*big.Int, error)
-	Address() common.Address
-	ABI() *abi.ABI
+	ExecuteData(forwardReq forwarder.ForwardRequest, domainSeparator *[32]byte, typeHash *[32]byte, suffixData []byte, sig []byte) ([]byte, error)
+	ContractAddress() *common.Address
 }
 
 type NonceStorer interface {
 	StoreNonce(chainID *big.Int, nonce *big.Int) error
 	GetNonce(chainID *big.Int) (*big.Int, error)
-}
-
-type ForwardRequest struct {
-	From       common.Address
-	To         common.Address
-	Value      *big.Int
-	Gas        *big.Int
-	Nonce      *big.Int
-	Data       []byte
-	ValidUntil *big.Int
 }
 
 type GsnForwarder struct {
@@ -77,7 +67,7 @@ func (c *GsnForwarder) UnlockNonce() {
 // If nonce is not set, looks for nonce in storage and on contract and returns the
 // higher one. Nonce in storage can be higher if there are pending transactions after
 // relayer has been manually shutdown.
-func (c *GsnForwarder) UnsafeNonce(from common.Address) (*big.Int, error) {
+func (c *GsnForwarder) UnsafeNonce() (*big.Int, error) {
 	if c.nonce == nil {
 		storedNonce, err := c.nonceStore.GetNonce(c.chainID)
 		if err != nil {
@@ -111,7 +101,7 @@ func (c *GsnForwarder) UnsafeIncreaseNonce() {
 }
 
 func (c *GsnForwarder) ForwarderAddress() common.Address {
-	return c.forwarderContract.Address()
+	return *c.forwarderContract.ContractAddress()
 }
 
 func (c *GsnForwarder) ChainId() *big.Int {
@@ -127,7 +117,7 @@ func (c *GsnForwarder) ForwarderData(to common.Address, data []byte, opts transa
 		data,
 		math.NewHexOrDecimal256(opts.Value.Int64()),
 		math.NewHexOrDecimal256(int64(opts.GasLimit)),
-		c.nonce,
+		opts.Nonce,
 		c.ForwarderAddress().Hex(),
 	)
 	if err != nil {
@@ -140,17 +130,17 @@ func (c *GsnForwarder) ForwarderData(to common.Address, data []byte, opts transa
 	}
 	sig[64] += 27 // Transform V from 0/1 to 27/28
 
-	forwardReq := ForwardRequest{
+	forwardReq := forwarder.ForwardRequest{
 		From:       common.HexToAddress(from),
 		To:         to,
 		Value:      opts.Value,
 		Gas:        big.NewInt(int64(opts.GasLimit)),
-		Nonce:      c.nonce,
+		Nonce:      opts.Nonce,
 		Data:       data,
 		ValidUntil: big.NewInt(0),
 	}
 	suffixData := common.Hex2Bytes("0x")
-	return c.forwarderContract.ABI().Pack("execute", forwardReq, domainSeperator, typeHash, suffixData, sig)
+	return c.forwarderContract.ExecuteData(forwardReq, domainSeperator, typeHash, suffixData, sig)
 }
 
 func (c *GsnForwarder) typedHash(

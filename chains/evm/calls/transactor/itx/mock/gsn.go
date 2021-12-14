@@ -8,7 +8,7 @@ import (
 	big "math/big"
 	reflect "reflect"
 
-	abi "github.com/ethereum/go-ethereum/accounts/abi"
+	forwarder "github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/forwarder"
 	common "github.com/ethereum/go-ethereum/common"
 	gomock "github.com/golang/mock/gomock"
 )
@@ -36,32 +36,33 @@ func (m *MockForwarderContract) EXPECT() *MockForwarderContractMockRecorder {
 	return m.recorder
 }
 
-// ABI mocks base method.
-func (m *MockForwarderContract) ABI() *abi.ABI {
+// ContractAddress mocks base method.
+func (m *MockForwarderContract) ContractAddress() *common.Address {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ABI")
-	ret0, _ := ret[0].(*abi.ABI)
+	ret := m.ctrl.Call(m, "ContractAddress")
+	ret0, _ := ret[0].(*common.Address)
 	return ret0
 }
 
-// ABI indicates an expected call of ABI.
-func (mr *MockForwarderContractMockRecorder) ABI() *gomock.Call {
+// ContractAddress indicates an expected call of ContractAddress.
+func (mr *MockForwarderContractMockRecorder) ContractAddress() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ABI", reflect.TypeOf((*MockForwarderContract)(nil).ABI))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ContractAddress", reflect.TypeOf((*MockForwarderContract)(nil).ContractAddress))
 }
 
-// Address mocks base method.
-func (m *MockForwarderContract) Address() common.Address {
+// ExecuteData mocks base method.
+func (m *MockForwarderContract) ExecuteData(forwardReq forwarder.ForwardRequest, domainSeparator, typeHash *[32]byte, suffixData, sig []byte) ([]byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Address")
-	ret0, _ := ret[0].(common.Address)
-	return ret0
+	ret := m.ctrl.Call(m, "ExecuteData", forwardReq, domainSeparator, typeHash, suffixData, sig)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// Address indicates an expected call of Address.
-func (mr *MockForwarderContractMockRecorder) Address() *gomock.Call {
+// ExecuteData indicates an expected call of ExecuteData.
+func (mr *MockForwarderContractMockRecorder) ExecuteData(forwardReq, domainSeparator, typeHash, suffixData, sig interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Address", reflect.TypeOf((*MockForwarderContract)(nil).Address))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteData", reflect.TypeOf((*MockForwarderContract)(nil).ExecuteData), forwardReq, domainSeparator, typeHash, suffixData, sig)
 }
 
 // GetNonce mocks base method.

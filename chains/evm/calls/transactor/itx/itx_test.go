@@ -40,7 +40,23 @@ func (s *TransactTestSuite) SetupTest() {
 }
 func (s *TransactTestSuite) TearDownTest() {}
 
+func (s *TransactTestSuite) TestTransact_FailedFetchingNonce() {
+	s.forwarder.EXPECT().LockNonce()
+	s.forwarder.EXPECT().UnlockNonce()
+	s.forwarder.EXPECT().UnsafeNonce().Return(nil, errors.New("error"))
+
+	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
+	data := []byte{}
+	opts := transactor.TransactOptions{}
+	_, err := s.transactor.Transact(to, data, opts)
+
+	s.NotNil(err)
+}
+
 func (s *TransactTestSuite) TestTransact_FailedFetchingForwarderData() {
+	s.forwarder.EXPECT().LockNonce()
+	s.forwarder.EXPECT().UnlockNonce()
+	s.forwarder.EXPECT().UnsafeNonce().Return(big.NewInt(1), nil)
 	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	data := []byte{}
 	opts := transactor.TransactOptions{
@@ -49,6 +65,7 @@ func (s *TransactTestSuite) TestTransact_FailedFetchingForwarderData() {
 		Priority: "slow",
 		Value:    big.NewInt(0),
 		ChainID:  big.NewInt(5),
+		Nonce:    big.NewInt(1),
 	}
 	s.forwarder.EXPECT().ForwarderData(to, data, opts).Return(nil, errors.New("error"))
 
@@ -57,7 +74,10 @@ func (s *TransactTestSuite) TestTransact_FailedFetchingForwarderData() {
 	s.NotNil(err)
 }
 
-func (s *TransactTestSuite) TestTransact_FailedSendTransaction() {
+func (s *TransactTestSuite) TestTransact_FailedSendingTransaction() {
+	s.forwarder.EXPECT().LockNonce()
+	s.forwarder.EXPECT().UnlockNonce()
+	s.forwarder.EXPECT().UnsafeNonce().Return(big.NewInt(1), nil)
 	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	data := []byte{}
 	opts := transactor.TransactOptions{
@@ -66,6 +86,7 @@ func (s *TransactTestSuite) TestTransact_FailedSendTransaction() {
 		Priority: "slow",
 		Value:    big.NewInt(0),
 		ChainID:  big.NewInt(5),
+		Nonce:    big.NewInt(1),
 	}
 	s.forwarder.EXPECT().ForwarderData(to, data, opts).Return([]byte{}, nil)
 	s.forwarder.EXPECT().ForwarderAddress().Return(to)
@@ -83,6 +104,10 @@ func (s *TransactTestSuite) TestTransact_FailedSendTransaction() {
 }
 
 func (s *TransactTestSuite) TestTransact_SuccessfulSend() {
+	s.forwarder.EXPECT().LockNonce()
+	s.forwarder.EXPECT().UnlockNonce()
+	s.forwarder.EXPECT().UnsafeNonce().Return(big.NewInt(1), nil)
+	s.forwarder.EXPECT().UnsafeIncreaseNonce()
 	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	data := []byte{}
 	opts := transactor.TransactOptions{
@@ -91,6 +116,7 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSend() {
 		Priority: "slow",
 		Value:    big.NewInt(0),
 		ChainID:  big.NewInt(5),
+		Nonce:    big.NewInt(1),
 	}
 	expectedSig := "0x68ad089b7daeabcdd76520377822cc32eba0b41ea702358bc8f7249bc296d408781eb60366a3bb6ad9fc62dca08bdf440a7c4f02e3680aa0b477a2dd5423d5af01"
 
@@ -111,6 +137,10 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSend() {
 }
 
 func (s *TransactTestSuite) TestTransact_SuccessfulSendWithDefaultOpts() {
+	s.forwarder.EXPECT().LockNonce()
+	s.forwarder.EXPECT().UnlockNonce()
+	s.forwarder.EXPECT().UnsafeNonce().Return(big.NewInt(1), nil)
+	s.forwarder.EXPECT().UnsafeIncreaseNonce()
 	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	data := []byte{}
 	expectedOpts := transactor.TransactOptions{
@@ -119,6 +149,7 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSendWithDefaultOpts() {
 		Priority: "slow",
 		Value:    big.NewInt(0),
 		ChainID:  big.NewInt(5),
+		Nonce:    big.NewInt(1),
 	}
 	expectedSig := "0x62ffe54c569cf70e7f62c410eff8f200dd46f0209bfa134484655c0621cc87c46c300cebc8e401b52acb04a5e00fa697be410458175d600c2471d5d7f986dd8501"
 

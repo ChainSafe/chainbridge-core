@@ -3,13 +3,16 @@ package itx_test
 import (
 	"errors"
 	"math/big"
+	"strings"
 	"testing"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/forwarder"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/itx"
 	mock_forwarder "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/itx/mock"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
@@ -44,23 +47,20 @@ func (s *GsnForwarderTestSuite) TestChainID() {
 	s.Equal(big.NewInt(5), chainID)
 }
 
-func (s *GsnForwarderTestSuite) TestForwarderData_FailedFetchingNonce() {
-	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
-	s.nonceStore.EXPECT().GetNonce(big.NewInt(5)).Return(nil, errors.New("error"))
-
-	_, err := s.gsnForwarder.ForwarderData(to, []byte{}, transactor.TransactOptions{})
-
-	s.NotNil(err)
-}
-
 func (s *GsnForwarderTestSuite) TestForwarderData_ValidData() {
 	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	forwarderAddress := common.HexToAddress("0x5eDF97800a15E23F386785a2D486bA3E43545210")
-	s.forwarderContract.EXPECT().Address().Return(forwarderAddress)
-	s.forwarderContract.EXPECT().ABI().Return(&forwarder.GsnForwarderABI)
-	s.nonceStore.EXPECT().GetNonce(big.NewInt(5)).Return(big.NewInt(1), nil)
-	s.nonceStore.EXPECT().StoreNonce(big.NewInt(5), big.NewInt(1)).Return(nil)
-	s.forwarderContract.EXPECT().GetNonce(common.HexToAddress(s.kp.Address())).Return(big.NewInt(1), nil)
+	s.forwarderContract.EXPECT().ContractAddress().Return(&forwarderAddress)
+	s.forwarderContract.EXPECT().ExecuteData(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(
+		forwardReq forwarder.ForwardRequest,
+		domainSeparator *[32]byte,
+		typeHash *[32]byte,
+		suffixData []byte,
+		sig []byte,
+	) ([]byte, error) {
+		a, _ := abi.JSON(strings.NewReader(consts.GsnForwarderABI))
+		return a.Pack("execute", forwardReq, domainSeparator, typeHash, suffixData, sig)
+	})
 
 	data, err := s.gsnForwarder.ForwarderData(to, []byte{}, transactor.TransactOptions{
 		Value:    big.NewInt(0),
@@ -73,89 +73,72 @@ func (s *GsnForwarderTestSuite) TestForwarderData_ValidData() {
 	s.Equal(common.Bytes2Hex(data), expectedForwarderData)
 }
 
-func (s *GsnForwarderTestSuite) TestNextNonce_ErrorFetchingFromStore() {
-	from := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
+func (s *GsnForwarderTestSuite) TestUnsafeNonce_ErrorFetchingFromStore() {
 	s.nonceStore.EXPECT().GetNonce(big.NewInt(5)).Return(nil, errors.New("error"))
 
-	_, err := s.gsnForwarder.NextNonce(from)
+	_, err := s.gsnForwarder.UnsafeNonce()
 
 	s.NotNil(err)
 }
 
 func (s *GsnForwarderTestSuite) TestNextNonce_ErrorFetchingFromContract() {
-	from := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	s.nonceStore.EXPECT().GetNonce(big.NewInt(5)).Return(big.NewInt(1), nil)
-	s.forwarderContract.EXPECT().GetNonce(from).Return(nil, errors.New("error"))
+	s.forwarderContract.EXPECT().GetNonce(common.HexToAddress(s.kp.Address())).Return(nil, errors.New("error"))
 
-	_, err := s.gsnForwarder.NextNonce(from)
-
-	s.NotNil(err)
-}
-
-func (s *GsnForwarderTestSuite) TestNextNonce_ErrorStoringNonce() {
-	from := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
-	s.nonceStore.EXPECT().GetNonce(big.NewInt(5)).Return(big.NewInt(1), nil)
-	s.nonceStore.EXPECT().StoreNonce(big.NewInt(5), big.NewInt(2)).Return(errors.New("error"))
-	s.forwarderContract.EXPECT().GetNonce(from).Return(big.NewInt(2), nil)
-
-	_, err := s.gsnForwarder.NextNonce(from)
+	_, err := s.gsnForwarder.UnsafeNonce()
 
 	s.NotNil(err)
 }
 
 func (s *GsnForwarderTestSuite) TestNextNonce_ContractNonceHigher() {
-	from := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	s.nonceStore.EXPECT().GetNonce(big.NewInt(5)).Return(big.NewInt(1), nil)
-	s.nonceStore.EXPECT().StoreNonce(big.NewInt(5), big.NewInt(2)).Return(nil)
-	s.forwarderContract.EXPECT().GetNonce(from).Return(big.NewInt(2), nil)
+	s.forwarderContract.EXPECT().GetNonce(common.HexToAddress(s.kp.Address())).Return(big.NewInt(2), nil)
 
-	nonce, err := s.gsnForwarder.NextNonce(from)
+	nonce, err := s.gsnForwarder.UnsafeNonce()
 
 	s.Nil(err)
 	s.Equal(nonce, big.NewInt(2))
 }
 
-func (s *GsnForwarderTestSuite) TestNextNonce_StoreNonceHigher() {
-	from := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
+func (s *GsnForwarderTestSuite) TestNextNonce_StoredNonceHigher() {
 	s.nonceStore.EXPECT().GetNonce(big.NewInt(5)).Return(big.NewInt(3), nil)
-	s.nonceStore.EXPECT().StoreNonce(big.NewInt(5), big.NewInt(3)).Return(nil)
-	s.forwarderContract.EXPECT().GetNonce(from).Return(big.NewInt(2), nil)
+	s.forwarderContract.EXPECT().GetNonce(common.HexToAddress(s.kp.Address())).Return(big.NewInt(2), nil)
 
-	nonce, err := s.gsnForwarder.NextNonce(from)
+	nonce, err := s.gsnForwarder.UnsafeNonce()
 
 	s.Nil(err)
 	s.Equal(nonce, big.NewInt(3))
 }
 
-func (s *GsnForwarderTestSuite) TestNextNonce_NonceUnlockedAfterError() {
-	from := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
-	s.nonceStore.EXPECT().GetNonce(big.NewInt(5)).Return(nil, errors.New("error"))
+func (s *GsnForwarderTestSuite) TestUnsafeIncreaseNonce_NonceIcremented() {
 	s.nonceStore.EXPECT().GetNonce(big.NewInt(5)).Return(big.NewInt(3), nil)
-	s.nonceStore.EXPECT().StoreNonce(big.NewInt(5), big.NewInt(3)).Return(nil)
-	s.forwarderContract.EXPECT().GetNonce(from).Return(big.NewInt(2), nil)
-
-	_, err := s.gsnForwarder.NextNonce(from)
-	s.NotNil(err)
-
-	nonce, err := s.gsnForwarder.NextNonce(from)
-
-	s.Nil(err)
-	s.Equal(nonce, big.NewInt(3))
-}
-
-func (s *GsnForwarderTestSuite) TestNextNonce_NonceIncremented() {
-	from := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
-	s.nonceStore.EXPECT().GetNonce(big.NewInt(5)).Return(big.NewInt(3), nil)
-	s.nonceStore.EXPECT().StoreNonce(big.NewInt(5), big.NewInt(3)).Return(nil)
-	s.nonceStore.EXPECT().StoreNonce(big.NewInt(5), big.NewInt(4)).Return(nil)
-	s.forwarderContract.EXPECT().GetNonce(from).Return(big.NewInt(2), nil)
-
-	nonce1, err := s.gsnForwarder.NextNonce(from)
+	s.forwarderContract.EXPECT().GetNonce(common.HexToAddress(s.kp.Address())).Return(big.NewInt(2), nil)
+	nonce1, err := s.gsnForwarder.UnsafeNonce()
 	s.Nil(err)
 	s.Equal(nonce1, big.NewInt(3))
 
-	nonce2, err := s.gsnForwarder.NextNonce(from)
+	s.gsnForwarder.UnsafeIncreaseNonce()
+	nonce2, err := s.gsnForwarder.UnsafeNonce()
 
 	s.Nil(err)
 	s.Equal(nonce2, big.NewInt(4))
+}
+
+func (s *GsnForwarderTestSuite) TestUnlockNonce_FailedStore_NonceUnlocked() {
+	s.nonceStore.EXPECT().GetNonce(big.NewInt(5)).Return(big.NewInt(3), nil)
+	s.forwarderContract.EXPECT().GetNonce(common.HexToAddress(s.kp.Address())).Return(big.NewInt(2), nil)
+	oldNonce, err := s.gsnForwarder.UnsafeNonce()
+	s.Nil(err)
+	s.Equal(oldNonce, big.NewInt(3))
+
+	s.gsnForwarder.LockNonce()
+
+	s.nonceStore.EXPECT().StoreNonce(big.NewInt(5), big.NewInt(3)).Return(errors.New("error"))
+	s.gsnForwarder.UnlockNonce()
+
+	s.gsnForwarder.UnsafeIncreaseNonce()
+	nonce, err := s.gsnForwarder.UnsafeNonce()
+
+	s.Nil(err)
+	s.Equal(nonce, big.NewInt(4))
 }
