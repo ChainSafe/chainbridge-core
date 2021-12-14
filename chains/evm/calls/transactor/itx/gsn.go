@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 	signer "github.com/ethereum/go-ethereum/signer/core"
+	"github.com/rs/zerolog/log"
 )
 
 type ForwarderContract interface {
@@ -44,6 +45,7 @@ type GsnForwarder struct {
 	nonceStore        NonceStorer
 }
 
+// NewGsnForwarder creates an instance of GsnForwarder
 func NewGsnForwarder(chainID *big.Int, kp *secp256k1.Keypair, forwarderContract ForwarderContract, nonceStore NonceStorer) *GsnForwarder {
 	return &GsnForwarder{
 		chainID:           chainID,
@@ -53,16 +55,36 @@ func NewGsnForwarder(chainID *big.Int, kp *secp256k1.Keypair, forwarderContract 
 	}
 }
 
-func (c *GsnForwarder) NextNonce(from common.Address) (*big.Int, error) {
+// LockNonce locks mutex for nonce to prevent nonce duplication
+func (c *GsnForwarder) LockNonce() {
 	c.nonceLock.Lock()
-	defer c.nonceLock.Unlock()
+}
 
+// UnlockNonce unlocks mutext for nonce and stores nonce into storage.
+//
+// Nonce is stored on unlock, because current nonce should always be the correct one when unlocking.
+func (c *GsnForwarder) UnlockNonce() {
+	err := c.nonceStore.StoreNonce(c.chainID, c.nonce)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("failed storing nonce: %v", err))
+	}
+
+	c.nonceLock.Unlock()
+}
+
+// UnsafeNonce returns current valid nonce for a forwarded transaction.
+//
+// If nonce is not set, looks for nonce in storage and on contract and returns the
+// higher one. Nonce in storage can be higher if there are pending transactions after
+// relayer has been manually shutdown.
+func (c *GsnForwarder) UnsafeNonce(from common.Address) (*big.Int, error) {
 	if c.nonce == nil {
 		storedNonce, err := c.nonceStore.GetNonce(c.chainID)
 		if err != nil {
 			return nil, err
 		}
 
+		from := common.HexToAddress(c.kp.Address())
 		contractNonce, err := c.forwarderContract.GetNonce(from)
 		if err != nil {
 			return nil, err
@@ -79,14 +101,13 @@ func (c *GsnForwarder) NextNonce(from common.Address) (*big.Int, error) {
 	}
 
 	nonce := big.NewInt(c.nonce.Int64())
-	c.nonce.Add(c.nonce, big.NewInt(1))
-
-	err := c.nonceStore.StoreNonce(c.chainID, nonce)
-	if err != nil {
-		return nonce, err
-	}
-
 	return nonce, nil
+}
+
+// UnsafeIncreaseNonce increases nonce value by 1. Should be used
+// while nonce is locked.
+func (c *GsnForwarder) UnsafeIncreaseNonce() {
+	c.nonce.Add(c.nonce, big.NewInt(1))
 }
 
 func (c *GsnForwarder) ForwarderAddress() common.Address {
@@ -97,20 +118,16 @@ func (c *GsnForwarder) ChainId() *big.Int {
 	return c.chainID
 }
 
+// ForwarderData returns ABI packed and signed byte data for a forwarded transaction
 func (c *GsnForwarder) ForwarderData(to common.Address, data []byte, opts transactor.TransactOptions) ([]byte, error) {
 	from := c.kp.Address()
-	nonce, err := c.NextNonce(common.HexToAddress(from))
-	if err != nil {
-		return nil, err
-	}
-
 	forwarderHash, domainSeperator, typeHash, err := c.typedHash(
 		from,
 		to.String(),
 		data,
 		math.NewHexOrDecimal256(opts.Value.Int64()),
 		math.NewHexOrDecimal256(int64(opts.GasLimit)),
-		nonce,
+		c.nonce,
 		c.ForwarderAddress().Hex(),
 	)
 	if err != nil {
@@ -128,7 +145,7 @@ func (c *GsnForwarder) ForwarderData(to common.Address, data []byte, opts transa
 		To:         to,
 		Value:      opts.Value,
 		Gas:        big.NewInt(int64(opts.GasLimit)),
-		Nonce:      nonce,
+		Nonce:      c.nonce,
 		Data:       data,
 		ValidUntil: big.NewInt(0),
 	}

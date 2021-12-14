@@ -42,6 +42,10 @@ type RelayCaller interface {
 type Forwarder interface {
 	ForwarderAddress() common.Address
 	ChainId() *big.Int
+	UnsafeNonce() (*big.Int, error)
+	UnsafeIncreaseNonce()
+	LockNonce()
+	UnlockNonce()
 	ForwarderData(to common.Address, data []byte, opts transactor.TransactOptions) ([]byte, error)
 }
 
@@ -59,12 +63,22 @@ func NewITXTransactor(relayCaller RelayCaller, forwarder Forwarder, kp *secp256k
 	}
 }
 
+// Transact packs tx into a forwarded transaction, signs it and sends the relayed transaction to Infura ITX
 func (itx *ITXTransactor) Transact(to common.Address, data []byte, opts transactor.TransactOptions) (common.Hash, error) {
 	err := transactor.MergeTransactionOptions(&opts, &DefaultTransactionOptions)
 	if err != nil {
 		return common.Hash{}, err
 	}
 	opts.ChainID = itx.forwarder.ChainId()
+
+	defer itx.forwarder.UnlockNonce()
+	itx.forwarder.LockNonce()
+
+	nonce, err := itx.forwarder.UnsafeNonce()
+	if err != nil {
+		return common.Hash{}, err
+	}
+	opts.Nonce = nonce
 
 	forwarderData, err := itx.forwarder.ForwarderData(to, data, opts)
 	if err != nil {
@@ -82,7 +96,13 @@ func (itx *ITXTransactor) Transact(to common.Address, data []byte, opts transact
 		return common.Hash{}, err
 	}
 
-	return itx.sendTransaction(context.Background(), signedTx)
+	h, err := itx.sendTransaction(context.Background(), signedTx)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	itx.forwarder.UnsafeIncreaseNonce()
+	return h, nil
 }
 
 func (itx *ITXTransactor) signRelayTx(tx *RelayTx) (*SignedRelayTx, error) {

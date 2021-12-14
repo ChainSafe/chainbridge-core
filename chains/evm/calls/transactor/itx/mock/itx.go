@@ -121,3 +121,54 @@ func (mr *MockForwarderMockRecorder) ForwarderData(to, data, opts interface{}) *
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ForwarderData", reflect.TypeOf((*MockForwarder)(nil).ForwarderData), to, data, opts)
 }
+
+// LockNonce mocks base method.
+func (m *MockForwarder) LockNonce() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "LockNonce")
+}
+
+// LockNonce indicates an expected call of LockNonce.
+func (mr *MockForwarderMockRecorder) LockNonce() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LockNonce", reflect.TypeOf((*MockForwarder)(nil).LockNonce))
+}
+
+// UnlockNonce mocks base method.
+func (m *MockForwarder) UnlockNonce() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "UnlockNonce")
+}
+
+// UnlockNonce indicates an expected call of UnlockNonce.
+func (mr *MockForwarderMockRecorder) UnlockNonce() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnlockNonce", reflect.TypeOf((*MockForwarder)(nil).UnlockNonce))
+}
+
+// UnsafeIncreaseNonce mocks base method.
+func (m *MockForwarder) UnsafeIncreaseNonce() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "UnsafeIncreaseNonce")
+}
+
+// UnsafeIncreaseNonce indicates an expected call of UnsafeIncreaseNonce.
+func (mr *MockForwarderMockRecorder) UnsafeIncreaseNonce() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnsafeIncreaseNonce", reflect.TypeOf((*MockForwarder)(nil).UnsafeIncreaseNonce))
+}
+
+// UnsafeNonce mocks base method.
+func (m *MockForwarder) UnsafeNonce() (*big.Int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UnsafeNonce")
+	ret0, _ := ret[0].(*big.Int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UnsafeNonce indicates an expected call of UnsafeNonce.
+func (mr *MockForwarderMockRecorder) UnsafeNonce() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnsafeNonce", reflect.TypeOf((*MockForwarder)(nil).UnsafeNonce))
+}
