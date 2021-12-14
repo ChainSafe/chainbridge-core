@@ -54,7 +54,7 @@ var withdrawCmd = &cobra.Command{
 	},
 }
 
-func BindWithdrawCmdFlags(cmd *cobra.Command) {
+func BindWithdrawFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Amount, "amount", "", "Token amount to withdraw, use only if ERC20 token is withdrawn. If both amount and token are set an error will occur")
 	cmd.Flags().StringVar(&TokenID, "token", "", "Token ID to withdraw, use only if ERC721 token is withdrawn. If both amount and token are set an error will occur")
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
@@ -66,7 +66,7 @@ func BindWithdrawCmdFlags(cmd *cobra.Command) {
 }
 
 func init() {
-	BindWithdrawCmdFlags(withdrawCmd)
+	BindWithdrawFlags(withdrawCmd)
 }
 
 func ValidateWithdrawFlags(cmd *cobra.Command, args []string) error {
