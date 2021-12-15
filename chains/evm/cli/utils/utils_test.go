@@ -32,10 +32,12 @@ func (s *UtilsTestSuite) TestValidateSimulateFlags() {
 	cmd := new(cobra.Command)
 	BindSimulateFlags(cmd)
 
-	cmd.Flag("from").Value.Set(validAddr)
-	cmd.Flag("tx-hash").Value.Set(validTxHash)
+	err := cmd.Flag("from").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("tx-hash").Value.Set(validTxHash)
+	s.Nil(err)
 
-	err := ValidateSimulateFlags(
+	err = ValidateSimulateFlags(
 		cmd,
 		[]string{},
 	)
@@ -46,10 +48,12 @@ func (s *UtilsTestSuite) TestValidateSimulateInvalidAddress() {
 	cmd := new(cobra.Command)
 	BindSimulateFlags(cmd)
 
-	cmd.Flag("from").Value.Set(invalidAddr)
-	cmd.Flag("tx-hash").Value.Set(validTxHash)
+	err := cmd.Flag("from").Value.Set(invalidAddr)
+	s.Nil(err)
+	err = cmd.Flag("tx-hash").Value.Set(validTxHash)
+	s.Nil(err)
 
-	err := ValidateSimulateFlags(
+	err = ValidateSimulateFlags(
 		cmd,
 		[]string{},
 	)
@@ -60,10 +64,12 @@ func (s *UtilsTestSuite) TestValidateSimulateInvalidTxHash() {
 	cmd := new(cobra.Command)
 	BindSimulateFlags(cmd)
 
-	cmd.Flag("from").Value.Set(validAddr)
-	cmd.Flag("tx-hash").Value.Set(invalidTxHash)
+	err := cmd.Flag("from").Value.Set(validAddr)
+	s.Nil(err)
+	err = cmd.Flag("tx-hash").Value.Set(invalidTxHash)
+	s.Nil(err)
 
-	err := ValidateSimulateFlags(
+	err = ValidateSimulateFlags(
 		cmd,
 		[]string{},
 	)
