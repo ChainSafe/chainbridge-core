@@ -2,16 +2,14 @@ package utils
 
 import (
 	"errors"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
 	gomath "math"
 	"math/big"
 	"strings"
 
-	"github.com/spf13/cobra"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/spf13/cobra"
 )
 
 var UtilsCmd = &cobra.Command{
@@ -24,25 +22,6 @@ func init() {
 	UtilsCmd.AddCommand(simulateCmd)
 	UtilsCmd.AddCommand(hashListCmd)
 }
-
-type EventSig string
-
-func (es EventSig) GetTopic() common.Hash {
-	return crypto.Keccak256Hash([]byte(es))
-}
-
-//
-//func IsActive(status uint8) bool {
-//	return ProposalStatus(status) == Active
-//}
-//
-//func IsPassed(status uint8) bool {
-//	return ProposalStatus(status) == Passed
-//}
-//
-//func IsExecuted(status uint8) bool {
-//	return ProposalStatus(status) == Executed
-//}
 
 // UserAmountToWei converts decimal user friendly representation of token amount to 'Wei' representation with provided amount of decimal places
 // eg UserAmountToWei(1, 5) => 100000
