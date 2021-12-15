@@ -3,9 +3,9 @@ package flags
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"math/big"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 
 	"github.com/ChainSafe/chainbridge-core/keystore"
@@ -69,7 +69,7 @@ func ProcessResourceID(resourceID string) (types.ResourceID, error) {
 	}
 	resourceIdBytes, err := hex.DecodeString(resourceID)
 	if err != nil {
-		return [32]byte{}, err
+		return [32]byte{}, fmt.Errorf("failed decoding resourceID hex string: %s", err)
 	}
 	return calls.SliceTo32Bytes(resourceIdBytes), nil
 }
