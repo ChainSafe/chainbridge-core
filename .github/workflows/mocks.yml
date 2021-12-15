@@ -1,0 +1,21 @@
+on: [pull_request]
+name: Mocks check
+env:
+  GO111MODULE: on
+
+jobs:
+  mocks-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-go@v2
+        with:
+          go-version: "^1.17"
+
+      - run: go install github.com/golang/mock/mockgen@v1.6.0
+
+      - run: make genmocks
+
+      - name: mocks updated check
+        run: git diff --exit-code
