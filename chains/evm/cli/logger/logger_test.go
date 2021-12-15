@@ -8,7 +8,6 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
 )
@@ -50,7 +49,5 @@ func (s *LoggerTestSuite) TestWriteCliDataToFile() {
 	s.True(regexp.Match("[0-9]{2}-[0-9]{2}|[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{3}", []byte(logParts[0])))
 
 	err := os.Remove(logger.CliLogsFilename)
-	if err != nil {
-		log.Fatal().Err(err)
-	}
+	s.Nil(err)
 }

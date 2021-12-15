@@ -2,6 +2,7 @@ package bridge
 
 import (
 	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/spf13/cobra"
 )
@@ -28,4 +29,5 @@ func init() {
 	BridgeCmd.AddCommand(registerGenericResourceCmd)
 	BridgeCmd.AddCommand(registerResourceCmd)
 	BridgeCmd.AddCommand(setBurnCmd)
+	BridgeCmd.AddCommand(voteProposalCmd)
 }
