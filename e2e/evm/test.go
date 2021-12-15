@@ -2,32 +2,42 @@ package evm
 
 import (
 	"context"
+	"math/big"
+	"strings"
+	"time"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/util"
+	substrateTypes "github.com/centrifuge/go-substrate-rpc-client/types"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/centrifuge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc721"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
-	substrateTypes "github.com/centrifuge/go-substrate-rpc-client/types"
-	"math/big"
-	"time"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/local"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
+	"github.com/ethereum/go-ethereum"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
 )
 
+var TestTimeout = time.Second * 600
+
 type TestClient interface {
 	local.E2EClient
 	LatestBlock() (*big.Int, error)
 	FetchEventLogs(ctx context.Context, contractAddress common.Address, event string, startBlock *big.Int, endBlock *big.Int) ([]types.Log, error)
+	SubscribeFilterLogs(ctx context.Context, q ethereum.FilterQuery, ch chan<- types.Log) (ethereum.Subscription, error)
 }
 
 func SetupEVM2EVMTestSuite(fabric1, fabric2 calls.TxFabric, endpoint1, endpoint2 string, adminKey *secp256k1.Keypair) *IntegrationTestSuite {
@@ -46,6 +56,7 @@ type IntegrationTestSuite struct {
 	client2            TestClient
 	gasPricer          calls.GasPricer
 	bridgeAddr         common.Address
+	bridgeAddr2        common.Address
 	erc20HandlerAddr   common.Address
 	erc20ContractAddr  common.Address
 	erc721HandlerAddr  common.Address
@@ -97,11 +108,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.gasPricer = evmgaspricer.NewStaticGasPriceDeterminant(s.client, nil)
 
-	_, err = local.PrepareLocalEVME2EEnv(ethClient2, s.fabric2, 2, big.NewInt(2), s.adminKey.CommonAddress())
+	cfg2, err := local.PrepareLocalEVME2EEnv(ethClient2, s.fabric2, 2, big.NewInt(2), s.adminKey.CommonAddress())
 	if err != nil {
 		panic(err)
 	}
 
+	s.bridgeAddr2 = cfg2.BridgeAddr
 	s.erc20RID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.Erc20Addr.Bytes(), 31), uint8(0)))
 	s.genericRID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.GenericHandlerAddr.Bytes(), 31), uint8(1)))
 	s.erc721RID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.Erc721Addr.Bytes(), 31), uint8(2)))
@@ -132,8 +144,7 @@ func (s *IntegrationTestSuite) TestErc20Deposit() {
 	}
 	s.Nil(err)
 
-	//Wait 120 seconds for relayer vote
-	time.Sleep(120 * time.Second)
+	WaitForProposalExecuted(s, s.bridgeAddr2)
 
 	senderBalAfter, err := erc20Contract1.GetBalance(s.adminKey.CommonAddress())
 	s.Nil(err)
@@ -185,9 +196,7 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 	)
 	s.Nil(err)
 
-	//Wait 120 seconds for relayer vote
-	time.Sleep(120 * time.Second)
-
+	WaitForProposalExecuted(s, s.bridgeAddr2)
 	// Check on evm1 that token is burned
 	_, err = erc721Contract1.Owner(tokenId)
 	s.Error(err)
@@ -213,10 +222,57 @@ func (s *IntegrationTestSuite) TestGenericDeposit() {
 	}
 	s.Nil(err)
 
-	time.Sleep(120 * time.Second)
-
+	WaitForProposalExecuted(s, s.bridgeAddr2)
 	// Asset hash sent is stored in centrifuge asset store contract
 	exists, err := assetStoreContract2.IsCentrifugeAssetStored(hash)
 	s.Nil(err)
 	s.Equal(true, exists)
+}
+
+func WaitForProposalExecuted(s *IntegrationTestSuite, bridge common.Address) {
+	startBlock, _ := s.client2.LatestBlock()
+
+	query := ethereum.FilterQuery{
+		FromBlock: startBlock,
+		Addresses: []common.Address{bridge},
+		Topics: [][]common.Hash{
+			{util.ProposalEvent.GetTopic()},
+		},
+	}
+	ch := make(chan types.Log)
+
+	sub, err := s.client2.SubscribeFilterLogs(context.Background(), query, ch)
+	if err != nil {
+		panic(err)
+	}
+	defer sub.Unsubscribe()
+
+	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	if err != nil {
+		panic(err)
+	}
+	timeout := time.After(TestTimeout)
+	for {
+		select {
+		case evt := <-ch:
+			out, err := a.Unpack("ProposalEvent", evt.Data)
+			if err != nil {
+				panic(err)
+			}
+			status := abi.ConvertType(out[2], new(uint8)).(*uint8)
+			// Check status
+			if util.IsExecuted(*status) {
+				log.Info().Msgf("Got Proposal executed event status, continuing..., status: %v", *status)
+				return
+			} else {
+				log.Info().Msgf("Got Proposal event status: %v", *status)
+			}
+		case err := <-sub.Err():
+			if err != nil {
+				panic(err)
+			}
+		case <-timeout:
+			panic("Test timed out waiting for ProposalCreated event")
+		}
+	}
 }
