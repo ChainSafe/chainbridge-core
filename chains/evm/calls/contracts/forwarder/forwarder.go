@@ -12,9 +12,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// ForwarderContract matches an instance of https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/metatx/MinimalForwarder.sol
 type ForwarderContract struct {
 	contracts.Contract
 }
+
 type ForwardRequest struct {
 	From  common.Address
 	To    common.Address
