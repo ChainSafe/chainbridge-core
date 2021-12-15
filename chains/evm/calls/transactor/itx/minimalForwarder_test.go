@@ -18,51 +18,51 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type GsnForwarderTestSuite struct {
+type MinimalForwarderTestSuite struct {
 	suite.Suite
-	gsnForwarder      *itx.GsnForwarder
+	minimalForwarder  *itx.MinimalForwarder
 	forwarderContract *mock_forwarder.MockForwarderContract
 	nonceStore        *mock_forwarder.MockNonceStorer
 	kp                *secp256k1.Keypair
 }
 
-func TestRunGsnForwarderTestSuite(t *testing.T) {
-	suite.Run(t, new(GsnForwarderTestSuite))
+func TestRunMinimalForwarderTestSuite(t *testing.T) {
+	suite.Run(t, new(MinimalForwarderTestSuite))
 }
 
-func (s *GsnForwarderTestSuite) SetupSuite()    {}
-func (s *GsnForwarderTestSuite) TearDownSuite() {}
-func (s *GsnForwarderTestSuite) SetupTest() {
+func (s *MinimalForwarderTestSuite) SetupSuite()    {}
+func (s *MinimalForwarderTestSuite) TearDownSuite() {}
+func (s *MinimalForwarderTestSuite) SetupTest() {
 	gomockController := gomock.NewController(s.T())
 	s.kp, _ = secp256k1.NewKeypairFromPrivateKey(common.Hex2Bytes("e8e0f5427111dee651e63a6f1029da6929ebf7d2d61cefaf166cebefdf2c012e"))
 	s.forwarderContract = mock_forwarder.NewMockForwarderContract(gomockController)
 	s.nonceStore = mock_forwarder.NewMockNonceStorer(gomockController)
-	s.gsnForwarder = itx.NewGsnForwarder(big.NewInt(5), s.kp, s.forwarderContract, s.nonceStore)
+	s.minimalForwarder = itx.NewMinimalForwarder(big.NewInt(5), s.kp, s.forwarderContract, s.nonceStore)
 }
-func (s *GsnForwarderTestSuite) TearDownTest() {}
+func (s *MinimalForwarderTestSuite) TearDownTest() {}
 
-func (s *GsnForwarderTestSuite) TestChainID() {
-	chainID := s.gsnForwarder.ChainId()
+func (s *MinimalForwarderTestSuite) TestChainID() {
+	chainID := s.minimalForwarder.ChainId()
 
 	s.Equal(big.NewInt(5), chainID)
 }
 
-func (s *GsnForwarderTestSuite) TestForwarderData_ValidData() {
+func (s *MinimalForwarderTestSuite) TestForwarderData_ValidData() {
 	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	forwarderAddress := common.HexToAddress("0x5eDF97800a15E23F386785a2D486bA3E43545210")
 	s.forwarderContract.EXPECT().ContractAddress().Return(&forwarderAddress)
-	s.forwarderContract.EXPECT().ExecuteData(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(
+	s.forwarderContract.EXPECT().ExecuteData(gomock.Any(), gomock.Any()).DoAndReturn(func(
 		forwardReq forwarder.ForwardRequest,
 		domainSeparator *[32]byte,
 		typeHash *[32]byte,
 		suffixData []byte,
 		sig []byte,
 	) ([]byte, error) {
-		a, _ := abi.JSON(strings.NewReader(consts.GsnForwarderABI))
+		a, _ := abi.JSON(strings.NewReader(consts.MinimalForwarderABI))
 		return a.Pack("execute", forwardReq, domainSeparator, typeHash, suffixData, sig)
 	})
 
-	data, err := s.gsnForwarder.ForwarderData(to, []byte{}, transactor.TransactOptions{
+	data, err := s.minimalForwarder.ForwarderData(to, []byte{}, transactor.TransactOptions{
 		Value:    big.NewInt(0),
 		GasLimit: 200000,
 		Nonce:    big.NewInt(1),
@@ -73,71 +73,71 @@ func (s *GsnForwarderTestSuite) TestForwarderData_ValidData() {
 	s.Equal(common.Bytes2Hex(data), expectedForwarderData)
 }
 
-func (s *GsnForwarderTestSuite) TestUnsafeNonce_ErrorFetchingFromStore() {
+func (s *MinimalForwarderTestSuite) TestUnsafeNonce_ErrorFetchingFromStore() {
 	s.nonceStore.EXPECT().GetNonce(big.NewInt(5)).Return(nil, errors.New("error"))
 
-	_, err := s.gsnForwarder.UnsafeNonce()
+	_, err := s.minimalForwarder.UnsafeNonce()
 
 	s.NotNil(err)
 }
 
-func (s *GsnForwarderTestSuite) TestNextNonce_ErrorFetchingFromContract() {
+func (s *MinimalForwarderTestSuite) TestNextNonce_ErrorFetchingFromContract() {
 	s.nonceStore.EXPECT().GetNonce(big.NewInt(5)).Return(big.NewInt(1), nil)
 	s.forwarderContract.EXPECT().GetNonce(common.HexToAddress(s.kp.Address())).Return(nil, errors.New("error"))
 
-	_, err := s.gsnForwarder.UnsafeNonce()
+	_, err := s.minimalForwarder.UnsafeNonce()
 
 	s.NotNil(err)
 }
 
-func (s *GsnForwarderTestSuite) TestNextNonce_ContractNonceHigher() {
+func (s *MinimalForwarderTestSuite) TestNextNonce_ContractNonceHigher() {
 	s.nonceStore.EXPECT().GetNonce(big.NewInt(5)).Return(big.NewInt(1), nil)
 	s.forwarderContract.EXPECT().GetNonce(common.HexToAddress(s.kp.Address())).Return(big.NewInt(2), nil)
 
-	nonce, err := s.gsnForwarder.UnsafeNonce()
+	nonce, err := s.minimalForwarder.UnsafeNonce()
 
 	s.Nil(err)
 	s.Equal(nonce, big.NewInt(2))
 }
 
-func (s *GsnForwarderTestSuite) TestNextNonce_StoredNonceHigher() {
+func (s *MinimalForwarderTestSuite) TestNextNonce_StoredNonceHigher() {
 	s.nonceStore.EXPECT().GetNonce(big.NewInt(5)).Return(big.NewInt(3), nil)
 	s.forwarderContract.EXPECT().GetNonce(common.HexToAddress(s.kp.Address())).Return(big.NewInt(2), nil)
 
-	nonce, err := s.gsnForwarder.UnsafeNonce()
+	nonce, err := s.minimalForwarder.UnsafeNonce()
 
 	s.Nil(err)
 	s.Equal(nonce, big.NewInt(3))
 }
 
-func (s *GsnForwarderTestSuite) TestUnsafeIncreaseNonce_NonceIcremented() {
+func (s *MinimalForwarderTestSuite) TestUnsafeIncreaseNonce_NonceIcremented() {
 	s.nonceStore.EXPECT().GetNonce(big.NewInt(5)).Return(big.NewInt(3), nil)
 	s.forwarderContract.EXPECT().GetNonce(common.HexToAddress(s.kp.Address())).Return(big.NewInt(2), nil)
-	nonce1, err := s.gsnForwarder.UnsafeNonce()
+	nonce1, err := s.minimalForwarder.UnsafeNonce()
 	s.Nil(err)
 	s.Equal(nonce1, big.NewInt(3))
 
-	s.gsnForwarder.UnsafeIncreaseNonce()
-	nonce2, err := s.gsnForwarder.UnsafeNonce()
+	s.minimalForwarder.UnsafeIncreaseNonce()
+	nonce2, err := s.minimalForwarder.UnsafeNonce()
 
 	s.Nil(err)
 	s.Equal(nonce2, big.NewInt(4))
 }
 
-func (s *GsnForwarderTestSuite) TestUnlockNonce_FailedStore_NonceUnlocked() {
+func (s *MinimalForwarderTestSuite) TestUnlockNonce_FailedStore_NonceUnlocked() {
 	s.nonceStore.EXPECT().GetNonce(big.NewInt(5)).Return(big.NewInt(3), nil)
 	s.forwarderContract.EXPECT().GetNonce(common.HexToAddress(s.kp.Address())).Return(big.NewInt(2), nil)
-	oldNonce, err := s.gsnForwarder.UnsafeNonce()
+	oldNonce, err := s.minimalForwarder.UnsafeNonce()
 	s.Nil(err)
 	s.Equal(oldNonce, big.NewInt(3))
 
-	s.gsnForwarder.LockNonce()
+	s.minimalForwarder.LockNonce()
 
 	s.nonceStore.EXPECT().StoreNonce(big.NewInt(5), big.NewInt(3)).Return(errors.New("error"))
-	s.gsnForwarder.UnlockNonce()
+	s.minimalForwarder.UnlockNonce()
 
-	s.gsnForwarder.UnsafeIncreaseNonce()
-	nonce, err := s.gsnForwarder.UnsafeNonce()
+	s.minimalForwarder.UnsafeIncreaseNonce()
+	nonce, err := s.minimalForwarder.UnsafeNonce()
 
 	s.Nil(err)
 	s.Equal(nonce, big.NewInt(4))

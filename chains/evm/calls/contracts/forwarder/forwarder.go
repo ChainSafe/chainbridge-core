@@ -16,13 +16,12 @@ type ForwarderContract struct {
 	contracts.Contract
 }
 type ForwardRequest struct {
-	From       common.Address
-	To         common.Address
-	Value      *big.Int
-	Gas        *big.Int
-	Nonce      *big.Int
-	Data       []byte
-	ValidUntil *big.Int
+	From  common.Address
+	To    common.Address
+	Value *big.Int
+	Gas   *big.Int
+	Nonce *big.Int
+	Data  []byte
 }
 
 func NewForwarderContract(
@@ -30,8 +29,8 @@ func NewForwarderContract(
 	contractAddress common.Address,
 	transactor transactor.Transactor,
 ) *ForwarderContract {
-	a, _ := abi.JSON(strings.NewReader(consts.GsnForwarderABI))
-	b := common.FromHex(consts.GsnForwarderBin)
+	a, _ := abi.JSON(strings.NewReader(consts.MinimalForwarderABI))
+	b := common.FromHex(consts.MinimalForwarderBin)
 	return &ForwarderContract{
 		contracts.NewContract(contractAddress, a, b, client, transactor),
 	}
@@ -49,10 +48,7 @@ func (c *ForwarderContract) GetNonce(from common.Address) (*big.Int, error) {
 
 func (c *ForwarderContract) ExecuteData(
 	forwardReq ForwardRequest,
-	domainSeparator *[32]byte,
-	typeHash *[32]byte,
-	suffixData []byte,
 	sig []byte,
 ) ([]byte, error) {
-	return c.ABI.Pack("execute", forwardReq, domainSeparator, typeHash, suffixData, sig)
+	return c.ABI.Pack("execute", forwardReq, sig)
 }

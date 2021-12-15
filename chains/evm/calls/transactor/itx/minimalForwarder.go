@@ -17,7 +17,7 @@ import (
 
 type ForwarderContract interface {
 	GetNonce(from common.Address) (*big.Int, error)
-	ExecuteData(forwardReq forwarder.ForwardRequest, domainSeparator *[32]byte, typeHash *[32]byte, suffixData []byte, sig []byte) ([]byte, error)
+	ExecuteData(forwardReq forwarder.ForwardRequest, sig []byte) ([]byte, error)
 	ContractAddress() *common.Address
 }
 
@@ -26,7 +26,7 @@ type NonceStorer interface {
 	GetNonce(chainID *big.Int) (*big.Int, error)
 }
 
-type GsnForwarder struct {
+type MinimalForwarder struct {
 	kp                *secp256k1.Keypair
 	nonce             *big.Int
 	nonceLock         sync.Mutex
@@ -35,9 +35,9 @@ type GsnForwarder struct {
 	nonceStore        NonceStorer
 }
 
-// NewGsnForwarder creates an instance of GsnForwarder
-func NewGsnForwarder(chainID *big.Int, kp *secp256k1.Keypair, forwarderContract ForwarderContract, nonceStore NonceStorer) *GsnForwarder {
-	return &GsnForwarder{
+// NewMinimalForwarder creates an instance of MinimalForwarder
+func NewMinimalForwarder(chainID *big.Int, kp *secp256k1.Keypair, forwarderContract ForwarderContract, nonceStore NonceStorer) *MinimalForwarder {
+	return &MinimalForwarder{
 		chainID:           chainID,
 		kp:                kp,
 		forwarderContract: forwarderContract,
@@ -46,14 +46,14 @@ func NewGsnForwarder(chainID *big.Int, kp *secp256k1.Keypair, forwarderContract 
 }
 
 // LockNonce locks mutex for nonce to prevent nonce duplication
-func (c *GsnForwarder) LockNonce() {
+func (c *MinimalForwarder) LockNonce() {
 	c.nonceLock.Lock()
 }
 
 // UnlockNonce unlocks mutext for nonce and stores nonce into storage.
 //
 // Nonce is stored on unlock, because current nonce should always be the correct one when unlocking.
-func (c *GsnForwarder) UnlockNonce() {
+func (c *MinimalForwarder) UnlockNonce() {
 	err := c.nonceStore.StoreNonce(c.chainID, c.nonce)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("failed storing nonce: %v", err))
@@ -67,7 +67,7 @@ func (c *GsnForwarder) UnlockNonce() {
 // If nonce is not set, looks for nonce in storage and on contract and returns the
 // higher one. Nonce in storage can be higher if there are pending transactions after
 // relayer has been manually shutdown.
-func (c *GsnForwarder) UnsafeNonce() (*big.Int, error) {
+func (c *MinimalForwarder) UnsafeNonce() (*big.Int, error) {
 	if c.nonce == nil {
 		storedNonce, err := c.nonceStore.GetNonce(c.chainID)
 		if err != nil {
@@ -96,22 +96,22 @@ func (c *GsnForwarder) UnsafeNonce() (*big.Int, error) {
 
 // UnsafeIncreaseNonce increases nonce value by 1. Should be used
 // while nonce is locked.
-func (c *GsnForwarder) UnsafeIncreaseNonce() {
+func (c *MinimalForwarder) UnsafeIncreaseNonce() {
 	c.nonce.Add(c.nonce, big.NewInt(1))
 }
 
-func (c *GsnForwarder) ForwarderAddress() common.Address {
+func (c *MinimalForwarder) ForwarderAddress() common.Address {
 	return *c.forwarderContract.ContractAddress()
 }
 
-func (c *GsnForwarder) ChainId() *big.Int {
+func (c *MinimalForwarder) ChainId() *big.Int {
 	return c.chainID
 }
 
 // ForwarderData returns ABI packed and signed byte data for a forwarded transaction
-func (c *GsnForwarder) ForwarderData(to common.Address, data []byte, opts transactor.TransactOptions) ([]byte, error) {
+func (c *MinimalForwarder) ForwarderData(to common.Address, data []byte, opts transactor.TransactOptions) ([]byte, error) {
 	from := c.kp.Address()
-	forwarderHash, domainSeperator, typeHash, err := c.typedHash(
+	forwarderHash, err := c.typedHash(
 		from,
 		to.String(),
 		data,
@@ -131,25 +131,23 @@ func (c *GsnForwarder) ForwarderData(to common.Address, data []byte, opts transa
 	sig[64] += 27 // Transform V from 0/1 to 27/28
 
 	forwardReq := forwarder.ForwardRequest{
-		From:       common.HexToAddress(from),
-		To:         to,
-		Value:      opts.Value,
-		Gas:        big.NewInt(int64(opts.GasLimit)),
-		Nonce:      opts.Nonce,
-		Data:       data,
-		ValidUntil: big.NewInt(0),
+		From:  common.HexToAddress(from),
+		To:    to,
+		Value: opts.Value,
+		Gas:   big.NewInt(int64(opts.GasLimit)),
+		Nonce: opts.Nonce,
+		Data:  data,
 	}
-	suffixData := common.Hex2Bytes("0x")
-	return c.forwarderContract.ExecuteData(forwardReq, domainSeperator, typeHash, suffixData, sig)
+	return c.forwarderContract.ExecuteData(forwardReq, sig)
 }
 
-func (c *GsnForwarder) typedHash(
+func (c *MinimalForwarder) typedHash(
 	from, to string,
 	data []byte,
 	value, gas *math.HexOrDecimal256,
 	nonce *big.Int,
 	verifyingContract string,
-) ([]byte, *[32]byte, *[32]byte, error) {
+) ([]byte, error) {
 	chainId := math.NewHexOrDecimal256(c.chainID.Int64())
 	typedData := signer.TypedData{
 		Types: signer.Types{
@@ -166,41 +164,29 @@ func (c *GsnForwarder) typedHash(
 				{Name: "gas", Type: "uint256"},
 				{Name: "nonce", Type: "uint256"},
 				{Name: "data", Type: "bytes"},
-				{Name: "validUntil", Type: "uint256"},
 			},
 		},
 		PrimaryType: "ForwardRequest",
 		Domain: signer.TypedDataDomain{
-			Name:              "GSN Relayed Transaction",
+			Name:              "MinimalForwarder",
 			ChainId:           chainId,
-			Version:           "2",
+			Version:           "0.0.1",
 			VerifyingContract: verifyingContract,
 		},
 		Message: signer.TypedDataMessage{
-			"from":       from,
-			"to":         to,
-			"value":      value,
-			"gas":        gas,
-			"data":       data,
-			"nonce":      math.NewHexOrDecimal256(nonce.Int64()),
-			"validUntil": math.NewHexOrDecimal256(0),
+			"from":  from,
+			"to":    to,
+			"value": value,
+			"gas":   gas,
+			"data":  data,
+			"nonce": math.NewHexOrDecimal256(nonce.Int64()),
 		},
 	}
-	domainSeparator, err := typedData.HashStruct("EIP712Domain", typedData.Domain.Map())
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	var fixedSizeDomainSeperator [32]byte
-	copy(fixedSizeDomainSeperator[:], domainSeparator)
 
 	typedDataHash, err := typedData.HashStruct(typedData.PrimaryType, typedData.Message)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, err
 	}
-	var fixedSizeTypeHash [32]byte
-	copy(fixedSizeTypeHash[:], typedData.TypeHash(typedData.PrimaryType))
 
-	rawData := []byte(fmt.Sprintf("\x19\x01%s%s", string(domainSeparator), string(typedDataHash)))
-	return crypto.Keccak256(rawData), &fixedSizeDomainSeperator, &fixedSizeTypeHash, nil
+	return crypto.Keccak256([]byte(string(typedDataHash))), nil
 }
