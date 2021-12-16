@@ -7,7 +7,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -29,12 +28,11 @@ type ForwardRequest struct {
 func NewForwarderContract(
 	client calls.ContractCallerDispatcher,
 	contractAddress common.Address,
-	transactor transactor.Transactor,
 ) *ForwarderContract {
 	a, _ := abi.JSON(strings.NewReader(consts.MinimalForwarderABI))
 	b := common.FromHex(consts.MinimalForwarderBin)
 	return &ForwarderContract{
-		contracts.NewContract(contractAddress, a, b, client, transactor),
+		contracts.NewContract(contractAddress, a, b, client, nil),
 	}
 }
 

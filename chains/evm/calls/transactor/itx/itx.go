@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -16,7 +15,7 @@ import (
 
 var (
 	DefaultTransactionOptions = transactor.TransactOptions{
-		GasLimit: consts.DefaultGasLimit,
+		GasLimit: 400000,
 		GasPrice: big.NewInt(1),
 		Priority: "slow",
 		Value:    big.NewInt(0),

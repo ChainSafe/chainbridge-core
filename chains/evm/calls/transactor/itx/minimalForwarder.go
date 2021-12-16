@@ -183,10 +183,16 @@ func (c *MinimalForwarder) typedHash(
 		},
 	}
 
+	domainSeparator, err := typedData.HashStruct("EIP712Domain", typedData.Domain.Map())
+	if err != nil {
+		return nil, err
+	}
+
 	typedDataHash, err := typedData.HashStruct(typedData.PrimaryType, typedData.Message)
 	if err != nil {
 		return nil, err
 	}
 
-	return crypto.Keccak256([]byte(string(typedDataHash))), nil
+	rawData := []byte(fmt.Sprintf("\x19\x01%s%s", string(domainSeparator), string(typedDataHash)))
+	return crypto.Keccak256(rawData), nil
 }
