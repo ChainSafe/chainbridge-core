@@ -1,9 +1,12 @@
 package admin
 
 import (
+	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/util"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +21,14 @@ var removeAdminCmd = &cobra.Command{
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return util.CallPersistentPreRun(cmd, args)
 	},
-	Run: removeAdmin,
+	RunE: removeAdmin,
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := ValidateRemoveAdminFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+		return nil
+	},
 }
 
 func BindRemoveAdminFlags(cmd *cobra.Command) {
@@ -30,13 +40,23 @@ func BindRemoveAdminFlags(cmd *cobra.Command) {
 func init() {
 	BindRemoveAdminFlags(removeAdminCmd)
 }
+func ValidateRemoveAdminFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Admin) {
+		return fmt.Errorf("invalid admin address %s", Admin)
+	}
+	if !common.IsHexAddress(Bridge) {
+		return fmt.Errorf("invalid bridge address %s", Bridge)
+	}
+	return nil
+}
 
-func removeAdmin(cmd *cobra.Command, args []string) {
+func removeAdmin(cmd *cobra.Command, args []string) error {
 
 	log.Debug().Msgf(`
 Removing admin
 Admin address: %s
 Bridge address: %s`, Admin, Bridge)
+	return nil
 }
 
 /*

@@ -1,9 +1,12 @@
 package bridge
 
 import (
+	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/util"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +21,14 @@ var queryResourceCmd = &cobra.Command{
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return util.CallPersistentPreRun(cmd, args)
 	},
-	Run: queryResource,
+	RunE: queryResource,
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := ValidateQueryResourceFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+		return nil
+	},
 }
 
 func BindQueryResourceFlags(cmd *cobra.Command) {
@@ -31,11 +41,19 @@ func init() {
 	BindQueryResourceFlags(queryResourceCmd)
 }
 
-func queryResource(cmd *cobra.Command, args []string) {
+func ValidateQueryResourceFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Handler) {
+		return fmt.Errorf("invalid handler address: %s", Handler)
+	}
+	return nil
+}
+
+func queryResource(cmd *cobra.Command, args []string) error {
 	log.Debug().Msgf(`
 Querying resource
 Handler address: %s
 Resource ID: %s`, Handler, ResourceID)
+	return nil
 }
 
 /*

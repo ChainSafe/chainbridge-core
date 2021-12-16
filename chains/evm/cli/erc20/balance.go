@@ -2,6 +2,7 @@ package erc20
 
 import (
 	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
@@ -46,14 +47,14 @@ var balanceCmd = &cobra.Command{
 	},
 }
 
-func BindBalanceCmdFlags(cmd *cobra.Command) {
+func BindBalanceFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Erc20Address, "contract", "", "ERC20 contract address")
 	cmd.Flags().StringVar(&AccountAddress, "address", "", "Address to receive balance of")
 	flags.MarkFlagsAsRequired(cmd, "contract", "address")
 }
 
 func init() {
-	BindBalanceCmdFlags(balanceCmd)
+	BindBalanceFlags(balanceCmd)
 }
 
 var accountAddr common.Address

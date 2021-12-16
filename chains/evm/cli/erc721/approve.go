@@ -2,11 +2,12 @@ package erc721
 
 import (
 	"fmt"
+	"math/big"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc721"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/util"
-	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
@@ -48,7 +49,7 @@ var approveCmd = &cobra.Command{
 	},
 }
 
-func BindApproveCmdFlags(cmd *cobra.Command) {
+func BindApproveFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Erc721Address, "contract", "", "ERC721 contract address")
 	cmd.Flags().StringVar(&Recipient, "recipient", "", "Recipient address")
 	cmd.Flags().StringVar(&TokenId, "token", "", "ERC721 token ID")
@@ -56,7 +57,7 @@ func BindApproveCmdFlags(cmd *cobra.Command) {
 }
 
 func init() {
-	BindApproveCmdFlags(approveCmd)
+	BindApproveFlags(approveCmd)
 }
 
 func ValidateApproveFlags(cmd *cobra.Command, args []string) error {
