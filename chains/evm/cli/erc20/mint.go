@@ -2,16 +2,17 @@ package erc20
 
 import (
 	"fmt"
+	"math/big"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/util"
-	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -78,7 +79,7 @@ func ProcessMintFlags(cmd *cobra.Command, args []string) error {
 		dstAddress = common.HexToAddress(DstAddress)
 	}
 
-	realAmount, err = utils.UserAmountToWei(Amount, decimals)
+	realAmount, err = calls.UserAmountToWei(Amount, decimals)
 	if err != nil {
 		log.Error().Err(err)
 		return err
