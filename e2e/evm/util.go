@@ -37,7 +37,6 @@ func WaitForProposalExecuted(client TestClient, bridge common.Address) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("dosassss\nnn")
 	timeout := time.After(TestTimeout)
 	for {
 		select {
