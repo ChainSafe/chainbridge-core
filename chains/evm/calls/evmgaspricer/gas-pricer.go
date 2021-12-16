@@ -3,8 +3,6 @@ package evmgaspricer
 import (
 	"context"
 	"math/big"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 )
 
 type LondonGasClient interface {
@@ -22,12 +20,6 @@ type GasPricerOpts struct {
 	UpperLimitFeePerGas *big.Int      // UpperLimitFeePerGas in Static and London gasPricer limits the maximum gas price that could be used. In London gasPricer if BaseFee > UpperLimitFeePerGas, then maxFeeCap will be BaseFee + 2.5 Gwei for MaxTipCap. If nil - not applied
 	GasPriceFactor      *big.Float    // GasPriceFactor In static gasPricer multiplies final gasPrice. Could be for example 0.75 or 5.
 	Args                []interface{} // Args is the array of dynamic typed args that could be used for other custom GasPricer implementations
-}
-
-type GasPricerWithPostConfig interface {
-	calls.GasPricer
-	SetClient(client LondonGasClient)
-	SetOpts(opts *GasPricerOpts)
 }
 
 func multiplyGasPrice(gasEstimate *big.Int, gasMultiplier *big.Float) *big.Int {

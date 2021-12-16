@@ -9,7 +9,6 @@ import (
 	big "math/big"
 	reflect "reflect"
 
-	evmgaspricer "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -117,66 +116,4 @@ func (m *MockGasPriceClient) SuggestGasPrice(ctx context.Context) (*big.Int, err
 func (mr *MockGasPriceClientMockRecorder) SuggestGasPrice(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SuggestGasPrice", reflect.TypeOf((*MockGasPriceClient)(nil).SuggestGasPrice), ctx)
-}
-
-// MockGasPricerWithPostConfig is a mock of GasPricerWithPostConfig interface.
-type MockGasPricerWithPostConfig struct {
-	ctrl     *gomock.Controller
-	recorder *MockGasPricerWithPostConfigMockRecorder
-}
-
-// MockGasPricerWithPostConfigMockRecorder is the mock recorder for MockGasPricerWithPostConfig.
-type MockGasPricerWithPostConfigMockRecorder struct {
-	mock *MockGasPricerWithPostConfig
-}
-
-// NewMockGasPricerWithPostConfig creates a new mock instance.
-func NewMockGasPricerWithPostConfig(ctrl *gomock.Controller) *MockGasPricerWithPostConfig {
-	mock := &MockGasPricerWithPostConfig{ctrl: ctrl}
-	mock.recorder = &MockGasPricerWithPostConfigMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockGasPricerWithPostConfig) EXPECT() *MockGasPricerWithPostConfigMockRecorder {
-	return m.recorder
-}
-
-// GasPrice mocks base method.
-func (m *MockGasPricerWithPostConfig) GasPrice() ([]*big.Int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GasPrice")
-	ret0, _ := ret[0].([]*big.Int)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GasPrice indicates an expected call of GasPrice.
-func (mr *MockGasPricerWithPostConfigMockRecorder) GasPrice() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GasPrice", reflect.TypeOf((*MockGasPricerWithPostConfig)(nil).GasPrice))
-}
-
-// SetClient mocks base method.
-func (m *MockGasPricerWithPostConfig) SetClient(client evmgaspricer.LondonGasClient) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetClient", client)
-}
-
-// SetClient indicates an expected call of SetClient.
-func (mr *MockGasPricerWithPostConfigMockRecorder) SetClient(client interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetClient", reflect.TypeOf((*MockGasPricerWithPostConfig)(nil).SetClient), client)
-}
-
-// SetOpts mocks base method.
-func (m *MockGasPricerWithPostConfig) SetOpts(opts *evmgaspricer.GasPricerOpts) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetOpts", opts)
-}
-
-// SetOpts indicates an expected call of SetOpts.
-func (mr *MockGasPricerWithPostConfigMockRecorder) SetOpts(opts interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetOpts", reflect.TypeOf((*MockGasPricerWithPostConfig)(nil).SetOpts), opts)
 }
