@@ -4,6 +4,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math/big"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
@@ -13,7 +15,6 @@ import (
 	evmgaspricer "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
@@ -92,11 +93,11 @@ func init() {
 func ValidateDeployFlags(cmd *cobra.Command, args []string) error {
 	deployments = make([]string, 0)
 	if DeployAll {
-		flags.MarkFlagsAsRequired(cmd, "relayer-threshold", "domain-id", "fee", "erc20-symbol", "erc20-name")
+		flags.MarkFlagsAsRequired(cmd, "relayer-threshold", "domain", "fee", "erc20-symbol", "erc20-name")
 		deployments = append(deployments, []string{"bridge", "erc20-handler", "erc721-handler", "generic-handler", "erc20", "erc721"}...)
 	} else {
 		if Bridge {
-			flags.MarkFlagsAsRequired(cmd, "relayer-threshold", "domain-id", "fee")
+			flags.MarkFlagsAsRequired(cmd, "relayer-threshold", "domain", "fee")
 			deployments = append(deployments, "bridge")
 		}
 		if Erc20Handler {
