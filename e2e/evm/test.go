@@ -3,7 +3,6 @@ package evm
 import (
 	"context"
 	"math/big"
-	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
@@ -26,8 +25,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
 )
-
-var TestTimeout = time.Second * 600
 
 type TestClient interface {
 	local.E2EClient

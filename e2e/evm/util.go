@@ -2,7 +2,6 @@ package evm
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -14,6 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/rs/zerolog/log"
 )
+
+var TestTimeout = time.Second * 600
 
 func WaitForProposalExecuted(client TestClient, bridge common.Address) {
 	startBlock, _ := client.LatestBlock()
@@ -41,7 +42,6 @@ func WaitForProposalExecuted(client TestClient, bridge common.Address) {
 	for {
 		select {
 		case evt := <-ch:
-			fmt.Println("nesjedosloooooo\nnn")
 			out, err := a.Unpack("ProposalEvent", evt.Data)
 			if err != nil {
 				panic(err)
