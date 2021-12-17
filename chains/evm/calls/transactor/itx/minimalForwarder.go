@@ -109,7 +109,7 @@ func (c *MinimalForwarder) ChainId() *big.Int {
 }
 
 // ForwarderData returns ABI packed and signed byte data for a forwarded transaction
-func (c *MinimalForwarder) ForwarderData(to common.Address, data []byte, opts transactor.TransactOptions) ([]byte, error) {
+func (c *MinimalForwarder) ForwarderData(to *common.Address, data []byte, opts transactor.TransactOptions) ([]byte, error) {
 	from := c.kp.Address()
 	forwarderHash, err := c.typedHash(
 		from,
@@ -132,7 +132,7 @@ func (c *MinimalForwarder) ForwarderData(to common.Address, data []byte, opts tr
 
 	forwardReq := forwarder.ForwardRequest{
 		From:  common.HexToAddress(from),
-		To:    to,
+		To:    *to,
 		Value: opts.Value,
 		Gas:   big.NewInt(int64(opts.GasLimit)),
 		Nonce: opts.Nonce,

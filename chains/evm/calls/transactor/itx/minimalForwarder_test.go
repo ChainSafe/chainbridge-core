@@ -59,7 +59,7 @@ func (s *MinimalForwarderTestSuite) TestForwarderData_ValidData() {
 		return a.Pack("execute", forwardReq, sig)
 	})
 
-	data, err := s.minimalForwarder.ForwarderData(to, []byte{}, transactor.TransactOptions{
+	data, err := s.minimalForwarder.ForwarderData(&to, []byte{}, transactor.TransactOptions{
 		Value:    big.NewInt(0),
 		GasLimit: 200000,
 		Nonce:    big.NewInt(1),

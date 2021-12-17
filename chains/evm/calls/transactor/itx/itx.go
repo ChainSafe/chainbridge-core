@@ -45,7 +45,7 @@ type Forwarder interface {
 	UnsafeIncreaseNonce()
 	LockNonce()
 	UnlockNonce()
-	ForwarderData(to common.Address, data []byte, opts transactor.TransactOptions) ([]byte, error)
+	ForwarderData(to *common.Address, data []byte, opts transactor.TransactOptions) ([]byte, error)
 }
 
 type ITXTransactor struct {
@@ -63,10 +63,10 @@ func NewITXTransactor(relayCaller RelayCaller, forwarder Forwarder, kp *secp256k
 }
 
 // Transact packs tx into a forwarded transaction, signs it and sends the relayed transaction to Infura ITX
-func (itx *ITXTransactor) Transact(to common.Address, data []byte, opts transactor.TransactOptions) (common.Hash, error) {
+func (itx *ITXTransactor) Transact(to *common.Address, data []byte, opts transactor.TransactOptions) (*common.Hash, error) {
 	err := transactor.MergeTransactionOptions(&opts, &DefaultTransactionOptions)
 	if err != nil {
-		return common.Hash{}, err
+		return nil, err
 	}
 	opts.ChainID = itx.forwarder.ChainId()
 
@@ -75,13 +75,13 @@ func (itx *ITXTransactor) Transact(to common.Address, data []byte, opts transact
 
 	nonce, err := itx.forwarder.UnsafeNonce()
 	if err != nil {
-		return common.Hash{}, err
+		return nil, err
 	}
 	opts.Nonce = nonce
 
 	forwarderData, err := itx.forwarder.ForwarderData(to, data, opts)
 	if err != nil {
-		return common.Hash{}, err
+		return nil, err
 	}
 
 	// increase gas limit because of forwarder overhead
@@ -92,16 +92,16 @@ func (itx *ITXTransactor) Transact(to common.Address, data []byte, opts transact
 		opts: opts,
 	})
 	if err != nil {
-		return common.Hash{}, err
+		return nil, err
 	}
 
 	h, err := itx.sendTransaction(context.Background(), signedTx)
 	if err != nil {
-		return common.Hash{}, err
+		return nil, err
 	}
 
 	itx.forwarder.UnsafeIncreaseNonce()
-	return h, nil
+	return &h, nil
 }
 
 func (itx *ITXTransactor) signRelayTx(tx *RelayTx) (*SignedRelayTx, error) {

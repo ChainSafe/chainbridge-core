@@ -108,7 +108,7 @@ func (mr *MockForwarderMockRecorder) ForwarderAddress() *gomock.Call {
 }
 
 // ForwarderData mocks base method.
-func (m *MockForwarder) ForwarderData(to common.Address, data []byte, opts transactor.TransactOptions) ([]byte, error) {
+func (m *MockForwarder) ForwarderData(to *common.Address, data []byte, opts transactor.TransactOptions) ([]byte, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ForwarderData", to, data, opts)
 	ret0, _ := ret[0].([]byte)

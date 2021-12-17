@@ -48,7 +48,7 @@ func (s *TransactTestSuite) TestTransact_FailedFetchingNonce() {
 	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	data := []byte{}
 	opts := transactor.TransactOptions{}
-	_, err := s.transactor.Transact(to, data, opts)
+	_, err := s.transactor.Transact(&to, data, opts)
 
 	s.NotNil(err)
 }
@@ -69,7 +69,7 @@ func (s *TransactTestSuite) TestTransact_FailedFetchingForwarderData() {
 	}
 	s.forwarder.EXPECT().ForwarderData(to, data, opts).Return(nil, errors.New("error"))
 
-	_, err := s.transactor.Transact(to, data, opts)
+	_, err := s.transactor.Transact(&to, data, opts)
 
 	s.NotNil(err)
 }
@@ -98,7 +98,7 @@ func (s *TransactTestSuite) TestTransact_FailedSendingTransaction() {
 		gomock.Any(),
 	).Return(errors.New("error"))
 
-	_, err := s.transactor.Transact(to, data, opts)
+	_, err := s.transactor.Transact(&to, data, opts)
 
 	s.NotNil(err)
 }
@@ -130,7 +130,7 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSend() {
 		expectedSig,
 	).Return(nil)
 
-	hash, err := s.transactor.Transact(to, data, opts)
+	hash, err := s.transactor.Transact(&to, data, opts)
 
 	s.Nil(err)
 	s.NotNil(hash)
@@ -163,7 +163,7 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSendWithDefaultOpts() {
 		expectedSig,
 	).Return(nil)
 
-	hash, err := s.transactor.Transact(to, data, transactor.TransactOptions{})
+	hash, err := s.transactor.Transact(&to, data, transactor.TransactOptions{})
 
 	s.Nil(err)
 	s.NotNil(hash)
