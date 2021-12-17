@@ -1,9 +1,12 @@
 package admin
 
 import (
+	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/util"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +21,14 @@ var removeRelayerCmd = &cobra.Command{
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return util.CallPersistentPreRun(cmd, args)
 	},
-	Run: removeRelayer,
+	RunE: removeRelayer,
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := ValidateRemoveRelayerFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+		return nil
+	},
 }
 
 func BindRemoveRelayerFlags(cmd *cobra.Command) {
@@ -29,12 +39,22 @@ func BindRemoveRelayerFlags(cmd *cobra.Command) {
 func init() {
 	BindRemoveRelayerFlags(removeRelayerCmd)
 }
+func ValidateRemoveRelayerFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Relayer) {
+		return fmt.Errorf("invalid relayer address %s", Relayer)
+	}
+	if !common.IsHexAddress(Bridge) {
+		return fmt.Errorf("invalid bridge address %s", Bridge)
+	}
+	return nil
+}
 
-func removeRelayer(cmd *cobra.Command, args []string) {
+func removeRelayer(cmd *cobra.Command, args []string) error {
 	log.Debug().Msgf(`
 Removing relayer
 Relayer address: %s
 Bridge address: %s`, Relayer, Bridge)
+	return nil
 }
 
 /*

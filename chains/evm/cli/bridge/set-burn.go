@@ -2,6 +2,7 @@ package bridge
 
 import (
 	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
@@ -46,7 +47,7 @@ var setBurnCmd = &cobra.Command{
 	},
 }
 
-func BindSetBurnCmdFlags(cmd *cobra.Command) {
+func BindSetBurnFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Handler, "handler", "", "ERC20 handler contract address")
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	cmd.Flags().StringVar(&TokenContract, "token-contract", "", "Token contract to be registered")
@@ -54,7 +55,7 @@ func BindSetBurnCmdFlags(cmd *cobra.Command) {
 }
 
 func init() {
-	BindSetBurnCmdFlags(setBurnCmd)
+	BindSetBurnFlags(setBurnCmd)
 }
 func ValidateSetBurnFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Handler) {

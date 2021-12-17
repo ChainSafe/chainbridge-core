@@ -3,13 +3,14 @@ package bridge
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
+
 	callsUtil "github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/util"
-	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
@@ -40,12 +41,12 @@ var registerGenericResourceCmd = &cobra.Command{
 		return RegisterGenericResource(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := ValidateGenericResourceFlags(cmd, args)
+		err := ValidateRegisterGenericResourceFlags(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		err = ProcessGenericResourceFlags(cmd, args)
+		err = ProcessRegisterGenericResourceFlags(cmd, args)
 		if err != nil {
 			return err
 		}
@@ -69,7 +70,7 @@ func init() {
 	BindRegisterGenericResourceFlags(registerGenericResourceCmd)
 }
 
-func ValidateGenericResourceFlags(cmd *cobra.Command, args []string) error {
+func ValidateRegisterGenericResourceFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Handler) {
 		return fmt.Errorf("invalid handler address %s", Handler)
 	}
@@ -85,7 +86,7 @@ func ValidateGenericResourceFlags(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func ProcessGenericResourceFlags(cmd *cobra.Command, args []string) error {
+func ProcessRegisterGenericResourceFlags(cmd *cobra.Command, args []string) error {
 	handlerAddr = common.HexToAddress(Handler)
 	targetContractAddr = common.HexToAddress(Target)
 	bridgeAddr = common.HexToAddress(Bridge)

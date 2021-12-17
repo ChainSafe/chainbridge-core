@@ -1,9 +1,12 @@
 package bridge
 
 import (
+	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/util"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +21,14 @@ var cancelProposalCmd = &cobra.Command{
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return util.CallPersistentPreRun(cmd, args)
 	},
-	Run: cancelProposal,
+	RunE: cancelProposal,
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := ValidateCancelProposalFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+		return nil
+	},
 }
 
 func BindCancelProposalFlags(cmd *cobra.Command) {
@@ -33,7 +43,14 @@ func init() {
 	BindCancelProposalFlags(cancelProposalCmd)
 }
 
-func cancelProposal(cmd *cobra.Command, args []string) {
+func ValidateCancelProposalFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Bridge) {
+		return fmt.Errorf("invalid bridge address: %s", Bridge)
+	}
+	return nil
+}
+
+func cancelProposal(cmd *cobra.Command, args []string) error {
 
 	log.Debug().Msgf(`
 Cancel propsal
@@ -42,6 +59,7 @@ Chain ID: %d
 Deposit nonce: %d
 DataHash: %s
 `, Bridge, DomainID, DepositNonce, DataHash)
+	return nil
 }
 
 /*

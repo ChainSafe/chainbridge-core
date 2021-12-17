@@ -2,13 +2,14 @@ package erc721
 
 import (
 	"fmt"
+	"math/big"
+	"strconv"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/util"
-	"math/big"
-	"strconv"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
@@ -49,7 +50,7 @@ var depositCmd = &cobra.Command{
 	},
 }
 
-func BindDepositCmdFlags(cmd *cobra.Command) {
+func BindDepositFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Recipient, "recipient", "", "Recipient address")
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	cmd.Flags().StringVar(&DestionationID, "destination", "", "Destination domain ID")
@@ -60,7 +61,7 @@ func BindDepositCmdFlags(cmd *cobra.Command) {
 }
 
 func init() {
-	BindDepositCmdFlags(depositCmd)
+	BindDepositFlags(depositCmd)
 }
 
 func ValidateDepositFlags(cmd *cobra.Command, args []string) error {

@@ -2,6 +2,7 @@ package bridge
 
 import (
 	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
@@ -46,7 +47,7 @@ var registerResourceCmd = &cobra.Command{
 	},
 }
 
-func BindRegisterResourceCmdFlags(cmd *cobra.Command) {
+func BindRegisterResourceFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Handler, "handler", "", "Handler contract address")
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	cmd.Flags().StringVar(&Target, "target", "", "Contract address to be registered")
@@ -55,7 +56,7 @@ func BindRegisterResourceCmdFlags(cmd *cobra.Command) {
 }
 
 func init() {
-	BindRegisterResourceCmdFlags(registerResourceCmd)
+	BindRegisterResourceFlags(registerResourceCmd)
 }
 
 func ValidateRegisterResourceFlags(cmd *cobra.Command, args []string) error {

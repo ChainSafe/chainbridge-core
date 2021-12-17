@@ -1,9 +1,12 @@
 package bridge
 
 import (
+	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/util"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +21,14 @@ var queryProposalCmd = &cobra.Command{
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return util.CallPersistentPreRun(cmd, args)
 	},
-	Run: queryProposal,
+	RunE: queryProposal,
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := ValidateQueryProposalFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+		return nil
+	},
 }
 
 func BindQueryProposalFlags(cmd *cobra.Command) {
@@ -33,13 +43,21 @@ func init() {
 	BindQueryProposalFlags(queryProposalCmd)
 }
 
-func queryProposal(cmd *cobra.Command, args []string) {
+func ValidateQueryProposalFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Bridge) {
+		return fmt.Errorf("invalid bridge address: %s", Bridge)
+	}
+	return nil
+}
+
+func queryProposal(cmd *cobra.Command, args []string) error {
 	log.Debug().Msgf(`
 Querying proposal
 Chain ID: %d
 Deposit nonce: %d
 Data hash: %s
 Bridge address: %s`, DomainID, DepositNonce, DataHash, Bridge)
+	return nil
 }
 
 /*
