@@ -202,7 +202,7 @@ func (c *BridgeContract) ExecuteProposal(
 	return c.ExecuteTransaction(
 		"executeProposal",
 		opts,
-		proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data, true,
+		proposal.Source, proposal.DepositNonce, proposal.Data, proposal.ResourceId, true,
 	)
 }
 
