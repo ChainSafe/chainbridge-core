@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/itx"
 	mock_itx "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/itx/mock"
@@ -67,7 +66,7 @@ func (s *TransactTestSuite) TestTransact_FailedFetchingForwarderData() {
 		ChainID:  big.NewInt(5),
 		Nonce:    big.NewInt(1),
 	}
-	s.forwarder.EXPECT().ForwarderData(to, data, opts).Return(nil, errors.New("error"))
+	s.forwarder.EXPECT().ForwarderData(&to, data, opts).Return(nil, errors.New("error"))
 
 	_, err := s.transactor.Transact(&to, data, opts)
 
@@ -88,7 +87,7 @@ func (s *TransactTestSuite) TestTransact_FailedSendingTransaction() {
 		ChainID:  big.NewInt(5),
 		Nonce:    big.NewInt(1),
 	}
-	s.forwarder.EXPECT().ForwarderData(to, data, opts).Return([]byte{}, nil)
+	s.forwarder.EXPECT().ForwarderData(&to, data, opts).Return([]byte{}, nil)
 	s.forwarder.EXPECT().ForwarderAddress().Return(to)
 	s.relayCaller.EXPECT().CallContext(
 		context.Background(),
@@ -120,7 +119,7 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSend() {
 	}
 	expectedSig := "0x68ad089b7daeabcdd76520377822cc32eba0b41ea702358bc8f7249bc296d408781eb60366a3bb6ad9fc62dca08bdf440a7c4f02e3680aa0b477a2dd5423d5af01"
 
-	s.forwarder.EXPECT().ForwarderData(to, data, opts).Return([]byte{}, nil)
+	s.forwarder.EXPECT().ForwarderData(&to, data, opts).Return([]byte{}, nil)
 	s.forwarder.EXPECT().ForwarderAddress().Return(to)
 	s.relayCaller.EXPECT().CallContext(
 		context.Background(),
@@ -144,16 +143,16 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSendWithDefaultOpts() {
 	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	data := []byte{}
 	expectedOpts := transactor.TransactOptions{
-		GasLimit: consts.DefaultGasLimit,
+		GasLimit: 400000,
 		GasPrice: big.NewInt(1),
 		Priority: "slow",
 		Value:    big.NewInt(0),
 		ChainID:  big.NewInt(5),
 		Nonce:    big.NewInt(1),
 	}
-	expectedSig := "0x62ffe54c569cf70e7f62c410eff8f200dd46f0209bfa134484655c0621cc87c46c300cebc8e401b52acb04a5e00fa697be410458175d600c2471d5d7f986dd8501"
+	expectedSig := "0x97e8845b060718b04c710e2e4bd786d80bc5d5843f41b0b461d756f5c5a5865f32fe1d82f838de6ac212d7caaf7e7f469510a75d3803173f5b5c21fec62a989900"
 
-	s.forwarder.EXPECT().ForwarderData(to, data, expectedOpts).Return([]byte{}, nil)
+	s.forwarder.EXPECT().ForwarderData(&to, data, expectedOpts).Return([]byte{}, nil)
 	s.forwarder.EXPECT().ForwarderAddress().Return(to)
 	s.relayCaller.EXPECT().CallContext(
 		context.Background(),
