@@ -1,9 +1,12 @@
 package admin
 
 import (
+	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/util"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +21,14 @@ var setFeeCmd = &cobra.Command{
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return util.CallPersistentPreRun(cmd, args)
 	},
-	Run: setFee,
+	RunE: setFee,
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := ValidateSetFeeFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+		return nil
+	},
 }
 
 func BindSetFeeFlags(cmd *cobra.Command) {
@@ -30,12 +40,19 @@ func BindSetFeeFlags(cmd *cobra.Command) {
 func init() {
 	BindSetFeeFlags(setFeeCmd)
 }
+func ValidateSetFeeFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Bridge) {
+		return fmt.Errorf("invalid bridge address %s", Bridge)
+	}
+	return nil
+}
 
-func setFee(cmd *cobra.Command, args []string) {
+func setFee(cmd *cobra.Command, args []string) error {
 	log.Debug().Msgf(`
 Setting new fee
 Fee amount: %s
 Bridge address: %s`, Fee, Bridge)
+	return nil
 }
 
 /*

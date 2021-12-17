@@ -2,6 +2,7 @@ package erc20
 
 import (
 	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
@@ -45,14 +46,14 @@ var addMinterCmd = &cobra.Command{
 	},
 }
 
-func BindAddMinterCmdFlags(cmd *cobra.Command) {
+func BindAddMinterFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Erc20Address, "contract", "", "ERC20 contract address")
 	cmd.Flags().StringVar(&Minter, "minter", "", "Minter address")
 	flags.MarkFlagsAsRequired(cmd, "contract", "minter")
 }
 
 func init() {
-	BindAddMinterCmdFlags(addMinterCmd)
+	BindAddMinterFlags(addMinterCmd)
 }
 
 func ValidateAddMinterFlags(cmd *cobra.Command, args []string) error {

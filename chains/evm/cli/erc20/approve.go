@@ -2,13 +2,14 @@ package erc20
 
 import (
 	"errors"
+	"math/big"
+
 	callsUtil "github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/util"
-	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
@@ -49,7 +50,7 @@ var approveCmd = &cobra.Command{
 	},
 }
 
-func BindApproveCmdFlags(cmd *cobra.Command) {
+func BindApproveFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Erc20Address, "contract", "", "ERC20 contract address")
 	cmd.Flags().StringVar(&Amount, "amount", "", "Amount to grant allowance")
 	cmd.Flags().StringVar(&Recipient, "recipient", "", "Recipient address")
@@ -58,7 +59,7 @@ func BindApproveCmdFlags(cmd *cobra.Command) {
 }
 
 func init() {
-	BindApproveCmdFlags(approveCmd)
+	BindApproveFlags(approveCmd)
 }
 
 func ValidateApproveFlags(cmd *cobra.Command, args []string) error {

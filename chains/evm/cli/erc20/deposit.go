@@ -2,13 +2,14 @@ package erc20
 
 import (
 	"fmt"
+	"math/big"
+
 	callsUtil "github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/util"
-	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
@@ -53,10 +54,10 @@ var depositCmd = &cobra.Command{
 }
 
 func init() {
-	BindDepositCmdFlags(depositCmd)
+	BindDepositFlags(depositCmd)
 }
 
-func BindDepositCmdFlags(cmd *cobra.Command) {
+func BindDepositFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Recipient, "recipient", "", "Address of recipient")
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "Address of bridge contract")
 	cmd.Flags().StringVar(&Amount, "amount", "", "Amount to deposit")

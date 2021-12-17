@@ -2,6 +2,7 @@ package account
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	accountutils "github.com/ChainSafe/chainbridge-core/keystore/account"
@@ -14,6 +15,13 @@ var importPrivKeyCmd = &cobra.Command{
 	Short: "Import a bridge keystore",
 	Long:  "The import subcommand is used to import a keystore for the bridge",
 	RunE:  importPrivKey,
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := ValidateImportPrivKeyFlags(cmd, args)
+		if err != nil {
+			return err
+		}
+		return nil
+	},
 }
 
 func BindImportPrivKeyFlags(cmd *cobra.Command) {
@@ -24,6 +32,12 @@ func BindImportPrivKeyFlags(cmd *cobra.Command) {
 
 func init() {
 	BindImportPrivKeyFlags(importPrivKeyCmd)
+}
+func ValidateImportPrivKeyFlags(cmd *cobra.Command, args []string) error {
+	if len(PrivateKey) != 64 {
+		return fmt.Errorf("invalid private key: length")
+	}
+	return nil
 }
 
 func importPrivKey(cmd *cobra.Command, args []string) error {

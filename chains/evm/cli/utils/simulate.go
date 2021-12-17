@@ -2,9 +2,10 @@ package utils
 
 import (
 	"fmt"
+	"math/big"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
-	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
@@ -35,7 +36,7 @@ var simulateCmd = &cobra.Command{
 	},
 }
 
-func BindSimulateCmdFlags(cmd *cobra.Command) {
+func BindSimulateFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&TxHash, "tx-hash", "", "Transaction hash")
 	cmd.Flags().StringVar(&BlockNumber, "block-number", "", "Block number")
 	cmd.Flags().StringVar(&FromAddress, "from", "", "Address of sender")
@@ -43,7 +44,7 @@ func BindSimulateCmdFlags(cmd *cobra.Command) {
 }
 
 func init() {
-	BindSimulateCmdFlags(simulateCmd)
+	BindSimulateFlags(simulateCmd)
 }
 
 func ValidateSimulateFlags(cmd *cobra.Command, args []string) error {

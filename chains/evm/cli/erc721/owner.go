@@ -2,11 +2,12 @@ package erc721
 
 import (
 	"fmt"
+	"math/big"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc721"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/util"
-	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
@@ -47,14 +48,14 @@ var ownerCmd = &cobra.Command{
 	},
 }
 
-func BindOwnerCmdFlags(cmd *cobra.Command) {
+func BindOwnerFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Erc721Address, "contract", "", "ERC721 contract address")
 	cmd.Flags().StringVar(&TokenId, "token", "", "ERC721 token ID")
 	flags.MarkFlagsAsRequired(cmd, "contract", "token")
 }
 
 func init() {
-	BindOwnerCmdFlags(ownerCmd)
+	BindOwnerFlags(ownerCmd)
 }
 
 func ValidateOwnerFlags(cmd *cobra.Command, args []string) error {

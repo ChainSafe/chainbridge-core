@@ -3,6 +3,7 @@ package centrifuge
 import (
 	"errors"
 	"fmt"
+
 	callsUtil "github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/centrifuge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
@@ -53,10 +54,10 @@ var getHashCmd = &cobra.Command{
 }
 
 func init() {
-	BindGetHashCmdFlags(getHashCmd)
+	BindGetHashFlags(getHashCmd)
 }
 
-func BindGetHashCmdFlags(cmd *cobra.Command) {
+func BindGetHashFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Hash, "hash", "", "A hash to lookup")
 	cmd.Flags().StringVar(&Address, "address", "", "Centrifuge asset store contract address")
 	flags.MarkFlagsAsRequired(cmd, "hash", "address")
