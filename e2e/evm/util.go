@@ -2,6 +2,7 @@ package evm
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 
@@ -16,7 +17,7 @@ import (
 
 var TestTimeout = time.Second * 600
 
-func WaitForProposalExecuted(client TestClient, bridge common.Address) {
+func WaitForProposalExecuted(client TestClient, bridge common.Address) error {
 	startBlock, _ := client.LatestBlock()
 
 	query := ethereum.FilterQuery{
@@ -30,13 +31,13 @@ func WaitForProposalExecuted(client TestClient, bridge common.Address) {
 
 	sub, err := client.SubscribeFilterLogs(context.Background(), query, ch)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer sub.Unsubscribe()
 
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
-		panic(err)
+		return err
 	}
 	timeout := time.After(TestTimeout)
 	for {
@@ -44,22 +45,22 @@ func WaitForProposalExecuted(client TestClient, bridge common.Address) {
 		case evt := <-ch:
 			out, err := a.Unpack("ProposalEvent", evt.Data)
 			if err != nil {
-				panic(err)
+				return err
 			}
 			status := abi.ConvertType(out[2], new(uint8)).(*uint8)
 			// Check status
 			if util.IsExecuted(*status) {
 				log.Info().Msgf("Got Proposal executed event status, continuing..., status: %v", *status)
-				return
+				return nil
 			} else {
 				log.Info().Msgf("Got Proposal event status: %v", *status)
 			}
 		case err := <-sub.Err():
 			if err != nil {
-				panic(err)
+				return err
 			}
 		case <-timeout:
-			panic("Test timed out waiting for ProposalCreated event")
+			return errors.New("test timed out waiting for ProposalCreated event")
 		}
 	}
 }

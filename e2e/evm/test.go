@@ -137,7 +137,8 @@ func (s *IntegrationTestSuite) TestErc20Deposit() {
 	}
 	s.Nil(err)
 
-	WaitForProposalExecuted(s.client2, s.bridgeAddr2)
+	err = WaitForProposalExecuted(s.client2, s.bridgeAddr2)
+	s.Nil(err)
 
 	senderBalAfter, err := erc20Contract1.GetBalance(s.adminKey.CommonAddress())
 	s.Nil(err)
@@ -189,7 +190,8 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 	)
 	s.Nil(err)
 
-	WaitForProposalExecuted(s.client2, s.bridgeAddr2)
+	err = WaitForProposalExecuted(s.client2, s.bridgeAddr2)
+	s.Nil(err)
 	// Check on evm1 that token is burned
 	_, err = erc721Contract1.Owner(tokenId)
 	s.Error(err)
@@ -215,7 +217,8 @@ func (s *IntegrationTestSuite) TestGenericDeposit() {
 	}
 	s.Nil(err)
 
-	WaitForProposalExecuted(s.client2, s.bridgeAddr2)
+	err = WaitForProposalExecuted(s.client2, s.bridgeAddr2)
+	s.Nil(err)
 	// Asset hash sent is stored in centrifuge asset store contract
 	exists, err := assetStoreContract2.IsCentrifugeAssetStored(hash)
 	s.Nil(err)
