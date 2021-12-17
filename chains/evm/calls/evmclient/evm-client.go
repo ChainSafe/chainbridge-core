@@ -15,6 +15,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/config/chain"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
+	"github.com/ChainSafe/chainbridge-core/util"
 
 	bridgeTypes "github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum"
@@ -161,20 +162,8 @@ func (c *EVMClient) GetTransactionByHash(h common.Hash) (tx *types.Transaction, 
 	return c.Client.TransactionByHash(context.Background(), h)
 }
 
-const (
-	// DepositSignature is a signature of the contract deposit event
-	// destinationDomainID
-	// resourceID
-	// depositNonce
-	// msg.sender
-	// calldata
-	// handlerResponse
-	// https://github.com/ChainSafe/chainbridge-solidity/blob/develop/contracts/Bridge.sol#L343
-	DepositSignature string = "Deposit(uint8,bytes32,uint64,address,bytes,bytes)"
-)
-
 func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common.Address, startBlock *big.Int, endBlock *big.Int) ([]*DepositLogs, error) {
-	logs, err := c.FilterLogs(ctx, buildQuery(contractAddress, DepositSignature, startBlock, endBlock))
+	logs, err := c.FilterLogs(ctx, buildQuery(contractAddress, string(util.Deposit), startBlock, endBlock))
 	if err != nil {
 		return nil, err
 	}

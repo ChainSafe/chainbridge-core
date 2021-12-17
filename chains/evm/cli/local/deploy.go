@@ -4,6 +4,8 @@
 package local
 
 import (
+	"math/big"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/centrifuge"
@@ -15,7 +17,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
-	"math/big"
 )
 
 var AliceKp = keystore.TestKeyRing.EthereumKeys[keystore.AliceKey]

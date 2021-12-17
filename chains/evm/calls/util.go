@@ -2,12 +2,14 @@ package calls
 
 import (
 	"errors"
+	"math"
+	gomath "math"
+	"math/big"
+	"strings"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
-	"math"
-	"math/big"
-	"strings"
 )
 
 func GetSolidityFunctionSig(in []byte) [4]byte {
@@ -61,4 +63,12 @@ func UserAmountToWei(amount string, decimal *big.Int) (*big.Int, error) {
 	}
 
 	return i, nil
+}
+
+func WeiAmountToUser(amount *big.Int, decimals *big.Int) (*big.Float, error) {
+	amountFloat, ok := big.NewFloat(0).SetString(amount.String())
+	if !ok {
+		return nil, errors.New("wrong amount format")
+	}
+	return new(big.Float).Quo(amountFloat, big.NewFloat(gomath.Pow10(int(decimals.Int64())))), nil
 }

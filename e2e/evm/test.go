@@ -2,23 +2,25 @@ package evm
 
 import (
 	"context"
+	"math/big"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	substrateTypes "github.com/centrifuge/go-substrate-rpc-client/types"
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/centrifuge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc721"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
-	substrateTypes "github.com/centrifuge/go-substrate-rpc-client/types"
-	"math/big"
-	"time"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/local"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
+	"github.com/ethereum/go-ethereum"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
@@ -28,6 +30,7 @@ type TestClient interface {
 	local.E2EClient
 	LatestBlock() (*big.Int, error)
 	FetchEventLogs(ctx context.Context, contractAddress common.Address, event string, startBlock *big.Int, endBlock *big.Int) ([]types.Log, error)
+	SubscribeFilterLogs(ctx context.Context, q ethereum.FilterQuery, ch chan<- types.Log) (ethereum.Subscription, error)
 }
 
 func SetupEVM2EVMTestSuite(fabric1, fabric2 calls.TxFabric, endpoint1, endpoint2 string, adminKey *secp256k1.Keypair) *IntegrationTestSuite {
@@ -46,6 +49,7 @@ type IntegrationTestSuite struct {
 	client2            TestClient
 	gasPricer          calls.GasPricer
 	bridgeAddr         common.Address
+	bridgeAddr2        common.Address
 	erc20HandlerAddr   common.Address
 	erc20ContractAddr  common.Address
 	erc721HandlerAddr  common.Address
@@ -97,11 +101,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.gasPricer = evmgaspricer.NewStaticGasPriceDeterminant(s.client, nil)
 
-	_, err = local.PrepareLocalEVME2EEnv(ethClient2, s.fabric2, 2, big.NewInt(2), s.adminKey.CommonAddress())
+	cfg2, err := local.PrepareLocalEVME2EEnv(ethClient2, s.fabric2, 2, big.NewInt(2), s.adminKey.CommonAddress())
 	if err != nil {
 		panic(err)
 	}
 
+	s.bridgeAddr2 = cfg2.BridgeAddr
 	s.erc20RID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.Erc20Addr.Bytes(), 31), uint8(0)))
 	s.genericRID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.GenericHandlerAddr.Bytes(), 31), uint8(1)))
 	s.erc721RID = calls.SliceTo32Bytes(append(common.LeftPadBytes(config.Erc721Addr.Bytes(), 31), uint8(2)))
@@ -132,8 +137,8 @@ func (s *IntegrationTestSuite) TestErc20Deposit() {
 	}
 	s.Nil(err)
 
-	//Wait 120 seconds for relayer vote
-	time.Sleep(120 * time.Second)
+	err = WaitForProposalExecuted(s.client2, s.bridgeAddr2)
+	s.Nil(err)
 
 	senderBalAfter, err := erc20Contract1.GetBalance(s.adminKey.CommonAddress())
 	s.Nil(err)
@@ -185,9 +190,8 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 	)
 	s.Nil(err)
 
-	//Wait 120 seconds for relayer vote
-	time.Sleep(120 * time.Second)
-
+	err = WaitForProposalExecuted(s.client2, s.bridgeAddr2)
+	s.Nil(err)
 	// Check on evm1 that token is burned
 	_, err = erc721Contract1.Owner(tokenId)
 	s.Error(err)
@@ -213,8 +217,8 @@ func (s *IntegrationTestSuite) TestGenericDeposit() {
 	}
 	s.Nil(err)
 
-	time.Sleep(120 * time.Second)
-
+	err = WaitForProposalExecuted(s.client2, s.bridgeAddr2)
+	s.Nil(err)
 	// Asset hash sent is stored in centrifuge asset store contract
 	exists, err := assetStoreContract2.IsCentrifugeAssetStored(hash)
 	s.Nil(err)
