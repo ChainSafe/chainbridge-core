@@ -20,10 +20,10 @@ Chainbridge-core is the project that was born from the existing version of [Chai
 7. [Contributing](#contributing)
 8. [Local Setup](#local-setup)
 
-## `Installation`
+## Installation
 Refer to [installation](https://github.com/ChainSafe/chainbridge-docs/blob/develop/docs/installation.md) guide for assistance in installing.
 
-## `Modules`
+## Modules
 
 The chainbridge-core-example currently supports two modules:
 1. [EVM-CLI](#evm-cli)
@@ -37,12 +37,12 @@ You can find some examples [here](https://github.com/ChainSafe/chainbridge-core-
 
 &nbsp;
 
-## `Metrics`
+## Metrics
 
 Metrics, in `chainbridge-core` are handled via injecting metrics provider compatible with [Metrics](./relayer/relayer.go) interface into `Relayer` instance. It currently needs only one method, `TrackDepositMessage(m *message.Message)`
 which is called inside relayer router when a `Deposit` event appears and should contain all necessary metrics data for extraction in custom implementations.
 
-### `OpenTelementry`
+### OpenTelementry
 
 `chainbridge-core` provides already implemented metrics [provider](./opentelemetry/opentelemetry.go) via [OpenTelemetry](https://opentelemetry.io/) that is vendor-agnostic. It sends metrics to a separate [collector](https://opentelemetry.io/docs/collector/) that then sends metrics via configured [exporters](https://opentelemetry.io/docs/collector/configuration/#exporters) to one or many metrics back-ends.
 
@@ -745,7 +745,7 @@ More information can be found about this module within its repository, listed be
 
 &nbsp;
 
-## `Substrate`
+## Substrate
 This module provides instruction for communicating with Substrate-compatible chains.
 
 Currently there is no CLI for this, though more information can be found about this module within its repository, listed below.
@@ -754,7 +754,7 @@ Currently there is no CLI for this, though more information can be found about t
 
 &nbsp;
 
-## `Contributing`
+## Contributing
 
 Chainbridge-core is a open project and welcomes contributions of all kinds: code, docs, and more. If you wish to submit more complex changes,
 please check up with the core devs first on our [Discord Server](https://discord.gg/ykXsJKfhgq) (look for CHAINBRIDGE category) or submit an issue on the repo to ensure those changes are in line with the general
@@ -791,11 +791,11 @@ When reporting issues, always include:
 
  Putting large logs into a [gist](https://gist.github.com) will be appreciated.
 
-## `Local Setup`
+## Local Setup
 
 This section allows developers with a way to quickly and with minimal effort stand-up a local development environment in order to fully test out functionality of the chainbridge.
 
-### `local`
+### `local-setup`
 The local-setup command deploys a bridge, ERC20, ERC721 and generic handler contracts with preconfigured accounts and appropriate handlers.
 
 ```bash
