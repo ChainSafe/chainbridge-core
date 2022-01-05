@@ -66,7 +66,7 @@ func ValidateMintFlags(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid ERC721 contract address %s", Erc721Address)
 	}
 	if !common.IsHexAddress(Dst) {
-		return fmt.Errorf("invalid recipient address %s", DstAddress)
+		return fmt.Errorf("invalid recipient address %s", Dst)
 	}
 	return nil
 }
