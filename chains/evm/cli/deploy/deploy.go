@@ -123,7 +123,7 @@ func ValidateDeployFlags(cmd *cobra.Command, args []string) error {
 			deployments = append(deployments, "erc20")
 		}
 		if Erc721 {
-			flags.MarkFlagsAsRequired(cmd, "erc721Name", "erc721Symbol", "erc721BaseURI")
+			flags.MarkFlagsAsRequired(cmd, "erc721-name", "erc721-symbol", "erc721-base-uri")
 			deployments = append(deployments, "erc721")
 		}
 	}
@@ -202,7 +202,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPr
 		case "erc20":
 			log.Debug().Msgf("deploying ERC20..")
 			erc20Contract := erc20.NewERC20Contract(ethClient, common.Address{}, t)
-			erc20Addr, err := erc20Contract.DeployContract(bridgeAddr)
+			erc20Addr, err := erc20Contract.DeployContract(Erc20Name, Erc20Symbol)
 			if err != nil {
 				log.Error().Err(fmt.Errorf("erc 20 deploy failed: %w", err))
 				return err
@@ -220,7 +220,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPr
 		case "erc721":
 			log.Debug().Msgf("deploying ERC721..")
 			erc721Contract := erc721.NewErc721Contract(ethClient, common.Address{}, t)
-			erc721Addr, err := erc721Contract.DeployContract(bridgeAddr)
+			erc721Addr, err := erc721Contract.DeployContract(Erc721Name, Erc721Symbol, Erc721BaseURI)
 			if err != nil {
 				log.Error().Err(fmt.Errorf("ERC721 deploy failed: %w", err))
 				return err
