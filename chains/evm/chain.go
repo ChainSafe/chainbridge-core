@@ -68,7 +68,7 @@ func SetupDefaultEVMChain(rawConfig map[string]interface{}, txFabric calls.TxFab
 	var evmVoter *voter.EVMVoter
 	evmVoter, err = voter.NewVoterWithSubscription(mh, client, bridgeContract)
 	if err != nil {
-		log.Error().Msgf("Failed creating voter with subscription: %s. Falling back to deafult voter.", err.Error())
+		log.Error().Msgf("failed creating voter with subscription: %s. Falling back to default voter.", err.Error())
 		evmVoter = voter.NewVoter(mh, client, bridgeContract)
 	}
 
