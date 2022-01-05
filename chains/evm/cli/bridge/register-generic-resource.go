@@ -38,7 +38,7 @@ var registerGenericResourceCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return RegisterGenericResource(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
+		return RegisterGenericResource(cmd, args, bridge.NewBridgeContract(c, BridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateRegisterGenericResourceFlags(cmd, args)
@@ -87,9 +87,9 @@ func ValidateRegisterGenericResourceFlags(cmd *cobra.Command, args []string) err
 }
 
 func ProcessRegisterGenericResourceFlags(cmd *cobra.Command, args []string) error {
-	handlerAddr = common.HexToAddress(Handler)
-	targetContractAddr = common.HexToAddress(Target)
-	bridgeAddr = common.HexToAddress(Bridge)
+	HandlerAddr = common.HexToAddress(Handler)
+	TargetContractAddr = common.HexToAddress(Target)
+	BridgeAddr = common.HexToAddress(Bridge)
 
 	if ResourceID[0:2] == "0x" {
 		ResourceID = ResourceID[2:]
@@ -100,29 +100,29 @@ func ProcessRegisterGenericResourceFlags(cmd *cobra.Command, args []string) erro
 		return err
 	}
 
-	resourceIdBytesArr = callsUtil.SliceTo32Bytes(resourceIdBytes)
+	ResourceIdBytesArr = callsUtil.SliceTo32Bytes(resourceIdBytes)
 
 	if Hash {
-		depositSigBytes = callsUtil.GetSolidityFunctionSig([]byte(Deposit))
-		executeSigBytes = callsUtil.GetSolidityFunctionSig([]byte(Execute))
+		DepositSigBytes = callsUtil.GetSolidityFunctionSig([]byte(Deposit))
+		ExecuteSigBytes = callsUtil.GetSolidityFunctionSig([]byte(Execute))
 	} else {
-		copy(depositSigBytes[:], []byte(Deposit)[:])
-		copy(executeSigBytes[:], []byte(Execute)[:])
+		copy(DepositSigBytes[:], []byte(Deposit)[:])
+		copy(ExecuteSigBytes[:], []byte(Execute)[:])
 	}
 
 	return nil
 }
 
 func RegisterGenericResource(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
-	log.Info().Msgf("Registering contract %s with resource ID %s on handler %s", targetContractAddr, ResourceID, handlerAddr)
+	log.Info().Msgf("Registering contract %s with resource ID %s on handler %s", TargetContractAddr, ResourceID, HandlerAddr)
 
 	h, err := contract.AdminSetGenericResource(
-		handlerAddr,
-		resourceIdBytesArr,
-		targetContractAddr,
-		depositSigBytes,
+		HandlerAddr,
+		ResourceIdBytesArr,
+		TargetContractAddr,
+		DepositSigBytes,
 		big.NewInt(int64(DepositerOffset)),
-		executeSigBytes,
+		ExecuteSigBytes,
 		transactor.TransactOptions{GasLimit: gasLimit},
 	)
 	if err != nil {
