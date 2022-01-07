@@ -44,19 +44,7 @@ func (c *RawEVMConfig) Validate() error {
 	return nil
 }
 
-// NewEVMConfig decodes and validates an instance of an EVMConfig from
-// raw chain config
-func NewEVMConfig(chainConfig map[string]interface{}) (*EVMConfig, error) {
-	var c RawEVMConfig
-	err := mapstructure.Decode(chainConfig, &c)
-	if err != nil {
-		return nil, err
-	}
-
-	err = c.Validate()
-	if err != nil {
-		return nil, err
-	}
+func (c *RawEVMConfig) ParseConfig() (*EVMConfig, error) {
 
 	c.GeneralChainConfig.ParseFlags()
 	config := &EVMConfig{
@@ -89,4 +77,26 @@ func NewEVMConfig(chainConfig map[string]interface{}) (*EVMConfig, error) {
 	}
 
 	return config, nil
+}
+
+// NewEVMConfig decodes and validates an instance of an EVMConfig from
+// raw chain config
+func NewEVMConfig(chainConfig map[string]interface{}) (*EVMConfig, error) {
+	var c RawEVMConfig
+	err := mapstructure.Decode(chainConfig, &c)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	newCfg, err := c.ParseConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	return newCfg, nil
 }

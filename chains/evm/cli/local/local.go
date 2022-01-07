@@ -2,9 +2,10 @@ package local
 
 import (
 	"fmt"
+	"math/big"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
-	"math/big"
 
 	"github.com/spf13/cobra"
 )
@@ -39,14 +40,14 @@ func localSetup(cmd *cobra.Command, args []string) error {
 
 	// chain 1
 	// domainsId: 0
-	config, err := PrepareLocalEVME2EEnv(ethClient, fabric1, 1, big.NewInt(1), EveKp.CommonAddress())
+	config, err := PrepareLocalEVME2EEnv(ethClient, fabric1, 1, big.NewInt(1), EveKp.CommonAddress(), nil)
 	if err != nil {
 		return err
 	}
 
 	// chain 2
 	// domainId: 1
-	config2, err := PrepareLocalEVME2EEnv(ethClient2, fabric2, 2, big.NewInt(1), EveKp.CommonAddress())
+	config2, err := PrepareLocalEVME2EEnv(ethClient2, fabric2, 2, big.NewInt(1), EveKp.CommonAddress(), nil)
 	if err != nil {
 		return err
 	}

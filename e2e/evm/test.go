@@ -86,7 +86,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	log.Debug().Msgf("Latest block %s", b.String())
 
-	config, err := local.PrepareLocalEVME2EEnv(ethClient, s.fabric1, 1, big.NewInt(2), s.adminKey.CommonAddress())
+	config, err := local.PrepareLocalEVME2EEnv(ethClient, s.fabric1, 1, big.NewInt(2), s.adminKey.CommonAddress(), nil)
 	if err != nil {
 		panic(err)
 	}
@@ -101,7 +101,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.gasPricer = evmgaspricer.NewStaticGasPriceDeterminant(s.client, nil)
 
-	cfg2, err := local.PrepareLocalEVME2EEnv(ethClient2, s.fabric2, 2, big.NewInt(2), s.adminKey.CommonAddress())
+	cfg2, err := local.PrepareLocalEVME2EEnv(ethClient2, s.fabric2, 2, big.NewInt(2), s.adminKey.CommonAddress(), nil)
 	if err != nil {
 		panic(err)
 	}
