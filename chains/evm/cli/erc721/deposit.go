@@ -37,7 +37,7 @@ var depositCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return DepositCmd(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
+		return DepositCmd(cmd, args, bridge.NewBridgeContract(c, BridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateDepositFlags(cmd, args)
@@ -55,7 +55,7 @@ func BindDepositFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	cmd.Flags().StringVar(&DestionationID, "destination", "", "Destination domain ID")
 	cmd.Flags().StringVar(&ResourceID, "resource", "", "Resource ID for transfer")
-	cmd.Flags().StringVar(&TokenId, "token", "", "ERC721 token ID")
+	cmd.Flags().StringVar(&Token, "token", "", "ERC721 token ID")
 	cmd.Flags().StringVar(&Metadata, "metadata", "", "ERC721 token metadata")
 	flags.MarkFlagsAsRequired(cmd, "recipient", "bridge", "destination", "resource", "token")
 }
@@ -75,28 +75,28 @@ func ValidateDepositFlags(cmd *cobra.Command, args []string) error {
 }
 
 func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
-	recipientAddr = common.HexToAddress(Recipient)
-	bridgeAddr = common.HexToAddress(Bridge)
+	RecipientAddr = common.HexToAddress(Recipient)
+	BridgeAddr = common.HexToAddress(Bridge)
 
-	destinationID, err = strconv.Atoi(DestionationID)
+	DestinationID, err = strconv.Atoi(DestionationID)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("destination ID conversion error: %v", err))
 		return err
 	}
 
 	var ok bool
-	tokenId, ok = big.NewInt(0).SetString(TokenId, 10)
+	TokenId, ok = big.NewInt(0).SetString(Token, 10)
 	if !ok {
 		return fmt.Errorf("invalid token id value")
 	}
 
-	resourceId, err = flags.ProcessResourceID(ResourceID)
+	ResourceId, err = flags.ProcessResourceID(ResourceID)
 	return err
 }
 
 func DepositCmd(cmd *cobra.Command, args []string, bridgeContract *bridge.BridgeContract) error {
 	txHash, err := bridgeContract.Erc721Deposit(
-		tokenId, Metadata, recipientAddr, resourceId, uint8(destinationID), transactor.TransactOptions{GasLimit: gasLimit},
+		TokenId, Metadata, RecipientAddr, ResourceId, uint8(DestinationID), transactor.TransactOptions{GasLimit: gasLimit},
 	)
 	if err != nil {
 		return err
@@ -106,8 +106,8 @@ func DepositCmd(cmd *cobra.Command, args []string, bridgeContract *bridge.Bridge
 		`erc721 deposit hash: %s
 		%s token were transferred to %s from %s`,
 		txHash.Hex(),
-		tokenId.String(),
-		recipientAddr.Hex(),
+		TokenId.String(),
+		RecipientAddr.Hex(),
 		senderKeyPair.CommonAddress().String(),
 	)
 	return nil

@@ -37,7 +37,7 @@ var mintCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return MintCmd(cmd, args, erc20.NewERC20Contract(c, erc20Addr, t))
+		return MintCmd(cmd, args, erc20.NewERC20Contract(c, Erc20Addr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateMintFlags(cmd, args)
@@ -74,7 +74,7 @@ func ValidateMintFlags(cmd *cobra.Command, args []string) error {
 func ProcessMintFlags(cmd *cobra.Command, args []string) error {
 	var err error
 	decimals := big.NewInt(int64(Decimals))
-	erc20Addr = common.HexToAddress(Erc20Address)
+	Erc20Addr = common.HexToAddress(Erc20Address)
 
 	if !common.IsHexAddress(DstAddress) {
 		dstAddress = senderKeyPair.CommonAddress()
@@ -82,7 +82,7 @@ func ProcessMintFlags(cmd *cobra.Command, args []string) error {
 		dstAddress = common.HexToAddress(DstAddress)
 	}
 
-	realAmount, err = calls.UserAmountToWei(Amount, decimals)
+	RealAmount, err = calls.UserAmountToWei(Amount, decimals)
 	if err != nil {
 		log.Error().Err(err)
 		return err
@@ -93,7 +93,7 @@ func ProcessMintFlags(cmd *cobra.Command, args []string) error {
 
 func MintCmd(cmd *cobra.Command, args []string, contract *erc20.ERC20Contract) error {
 	_, err := contract.MintTokens(
-		dstAddress, realAmount, transactor.TransactOptions{GasLimit: gasLimit},
+		dstAddress, RealAmount, transactor.TransactOptions{GasLimit: gasLimit},
 	)
 	if err != nil {
 		log.Error().Err(err)

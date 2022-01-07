@@ -36,7 +36,7 @@ var approveCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return ApproveCmd(cmd, args, erc721.NewErc721Contract(c, erc721Addr, t))
+		return ApproveCmd(cmd, args, erc721.NewErc721Contract(c, Erc721Addr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateApproveFlags(cmd, args)
@@ -52,7 +52,7 @@ var approveCmd = &cobra.Command{
 func BindApproveFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Erc721Address, "contract", "", "ERC721 contract address")
 	cmd.Flags().StringVar(&Recipient, "recipient", "", "Recipient address")
-	cmd.Flags().StringVar(&TokenId, "token", "", "ERC721 token ID")
+	cmd.Flags().StringVar(&Token, "token", "", "ERC721 token ID")
 	flags.MarkFlagsAsRequired(cmd, "contract", "recipient", "token")
 }
 
@@ -71,11 +71,11 @@ func ValidateApproveFlags(cmd *cobra.Command, args []string) error {
 }
 
 func ProcessApproveFlags(cmd *cobra.Command, args []string) error {
-	recipientAddr = common.HexToAddress(Recipient)
-	erc721Addr = common.HexToAddress(Erc721Address)
+	RecipientAddr = common.HexToAddress(Recipient)
+	Erc721Addr = common.HexToAddress(Erc721Address)
 
 	var ok bool
-	if tokenId, ok = big.NewInt(0).SetString(TokenId, 10); !ok {
+	if TokenId, ok = big.NewInt(0).SetString(Token, 10); !ok {
 		return fmt.Errorf("invalid token id value")
 	}
 	return nil
@@ -83,12 +83,12 @@ func ProcessApproveFlags(cmd *cobra.Command, args []string) error {
 
 func ApproveCmd(cmd *cobra.Command, args []string, erc721Contract *erc721.ERC721Contract) error {
 	_, err = erc721Contract.Approve(
-		tokenId, recipientAddr, transactor.TransactOptions{GasLimit: gasLimit},
+		TokenId, RecipientAddr, transactor.TransactOptions{GasLimit: gasLimit},
 	)
 	if err != nil {
 		return err
 	}
 
-	log.Info().Msgf("%v token approved", tokenId)
+	log.Info().Msgf("%v token approved", TokenId)
 	return err
 }

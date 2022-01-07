@@ -1,8 +1,9 @@
 package admin
 
 import (
-	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"math/big"
+
+	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -26,12 +27,12 @@ var (
 
 //processed flag vars
 var (
-	bridgeAddr    common.Address
-	handlerAddr   common.Address
-	relayerAddr   common.Address
-	recipientAddr common.Address
-	tokenAddr     common.Address
-	realAmount    *big.Int
+	BridgeAddr    common.Address
+	HandlerAddr   common.Address
+	RelayerAddr   common.Address
+	RecipientAddr common.Address
+	TokenAddr     common.Address
+	RealAmount    *big.Int
 )
 
 // global flags

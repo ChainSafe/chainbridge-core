@@ -36,7 +36,7 @@ var getHashCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return GetHashCmd(cmd, args, centrifuge.NewAssetStoreContract(c, storeAddr, t))
+		return GetHashCmd(cmd, args, centrifuge.NewAssetStoreContract(c, StoreAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateGetHashFlags(cmd, args)
@@ -72,14 +72,14 @@ func ValidateGetHashFlags(cmd *cobra.Command, args []string) error {
 }
 
 func ProcessGetHashFlags(cmd *cobra.Command, args []string) error {
-	storeAddr = common.HexToAddress(Address)
-	byteHash = callsUtil.SliceTo32Bytes([]byte(Hash))
+	StoreAddr = common.HexToAddress(Address)
+	ByteHash = callsUtil.SliceTo32Bytes([]byte(Hash))
 
 	return nil
 }
 
 func GetHashCmd(cmd *cobra.Command, args []string, contract *centrifuge.AssetStoreContract) error {
-	isAssetStored, err := contract.IsCentrifugeAssetStored(byteHash)
+	isAssetStored, err := contract.IsCentrifugeAssetStored(ByteHash)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("checking if asset stored failed: %w", err))
 		return err
