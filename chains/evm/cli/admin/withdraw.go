@@ -38,7 +38,7 @@ var withdrawCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return WithdrawCmd(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
+		return WithdrawCmd(cmd, args, bridge.NewBridgeContract(c, BridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateWithdrawFlags(cmd, args)
@@ -94,12 +94,12 @@ func ValidateWithdrawFlags(cmd *cobra.Command, args []string) error {
 func ProcessWithdrawFlags(cmd *cobra.Command, args []string) error {
 	var err error
 
-	bridgeAddr = common.HexToAddress(Bridge)
-	handlerAddr = common.HexToAddress(Handler)
-	tokenAddr = common.HexToAddress(Token)
-	recipientAddr = common.HexToAddress(Recipient)
+	BridgeAddr = common.HexToAddress(Bridge)
+	HandlerAddr = common.HexToAddress(Handler)
+	TokenAddr = common.HexToAddress(Token)
+	RecipientAddr = common.HexToAddress(Recipient)
 	decimals := big.NewInt(int64(Decimals))
-	realAmount, err = callsUtil.UserAmountToWei(Amount, decimals)
+	RealAmount, err = callsUtil.UserAmountToWei(Amount, decimals)
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func ProcessWithdrawFlags(cmd *cobra.Command, args []string) error {
 
 func WithdrawCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
 	h, err := contract.Withdraw(
-		handlerAddr, tokenAddr, recipientAddr, realAmount, transactor.TransactOptions{GasLimit: gasLimit},
+		HandlerAddr, TokenAddr, RecipientAddr, RealAmount, transactor.TransactOptions{GasLimit: gasLimit},
 	)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("admin withdrawal error: %v", err))

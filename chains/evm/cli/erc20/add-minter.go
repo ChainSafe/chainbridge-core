@@ -34,7 +34,7 @@ var addMinterCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return AddMinterCmd(cmd, args, erc20.NewERC20Contract(c, erc20Addr, t))
+		return AddMinterCmd(cmd, args, erc20.NewERC20Contract(c, Erc20Addr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateAddMinterFlags(cmd, args)
@@ -67,17 +67,17 @@ func ValidateAddMinterFlags(cmd *cobra.Command, args []string) error {
 }
 
 func ProcessAddMinterFlags(cmd *cobra.Command, args []string) {
-	erc20Addr = common.HexToAddress(Erc20Address)
-	minterAddr = common.HexToAddress(Minter)
+	Erc20Addr = common.HexToAddress(Erc20Address)
+	MinterAddr = common.HexToAddress(Minter)
 }
 
 func AddMinterCmd(cmd *cobra.Command, args []string, contract *erc20.ERC20Contract) error {
-	_, err := contract.AddMinter(minterAddr, transactor.TransactOptions{GasLimit: gasLimit})
+	_, err := contract.AddMinter(MinterAddr, transactor.TransactOptions{GasLimit: gasLimit})
 	if err != nil {
 		log.Error().Err(err)
 		return err
 	}
 
-	log.Info().Msgf("%s account granted minter roles", minterAddr.String())
+	log.Info().Msgf("%s account granted minter roles", MinterAddr.String())
 	return nil
 }

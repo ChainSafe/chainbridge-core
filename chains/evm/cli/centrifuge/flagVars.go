@@ -1,9 +1,10 @@
 package centrifuge
 
 import (
+	"math/big"
+
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/common"
-	"math/big"
 )
 
 //flag vars
@@ -14,8 +15,8 @@ var (
 
 //processed flag vars
 var (
-	storeAddr common.Address
-	byteHash  [32]byte
+	StoreAddr common.Address
+	ByteHash  [32]byte
 )
 
 // global flags

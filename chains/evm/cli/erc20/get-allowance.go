@@ -33,7 +33,7 @@ var getAllowanceCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return GetAllowanceCmd(cmd, args, erc20.NewERC20Contract(c, erc20Addr, t))
+		return GetAllowanceCmd(cmd, args, erc20.NewERC20Contract(c, Erc20Addr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateDepositFlags(cmd, args)

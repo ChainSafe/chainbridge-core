@@ -36,7 +36,7 @@ var mintCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return MintCmd(cmd, args, erc721.NewErc721Contract(c, erc721Addr, t))
+		return MintCmd(cmd, args, erc721.NewErc721Contract(c, Erc721Addr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateMintFlags(cmd, args)
@@ -55,8 +55,8 @@ func init() {
 
 func BindMintFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Erc721Address, "contract", "", "ERC721 contract address")
-	cmd.Flags().StringVar(&DstAddress, "recipient", "", "Recipient address")
-	cmd.Flags().StringVar(&TokenId, "token", "", "ERC721 token ID")
+	cmd.Flags().StringVar(&Dst, "recipient", "", "Recipient address")
+	cmd.Flags().StringVar(&Token, "token", "", "ERC721 token ID")
 	cmd.Flags().StringVar(&Metadata, "metadata", "", "ERC721 token metadata")
 	flags.MarkFlagsAsRequired(cmd, "contract", "recipient", "token", "metadata")
 }
@@ -65,23 +65,23 @@ func ValidateMintFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Erc721Address) {
 		return fmt.Errorf("invalid ERC721 contract address %s", Erc721Address)
 	}
-	if !common.IsHexAddress(DstAddress) {
-		return fmt.Errorf("invalid recipient address %s", DstAddress)
+	if !common.IsHexAddress(Dst) {
+		return fmt.Errorf("invalid recipient address %s", Dst)
 	}
 	return nil
 }
 
 func ProcessMintFlags(cmd *cobra.Command, args []string) error {
-	erc721Addr = common.HexToAddress(Erc721Address)
+	Erc721Addr = common.HexToAddress(Erc721Address)
 
-	if !common.IsHexAddress(DstAddress) {
-		dstAddress = senderKeyPair.CommonAddress()
+	if !common.IsHexAddress(Dst) {
+		DstAddress = senderKeyPair.CommonAddress()
 	} else {
-		dstAddress = common.HexToAddress(DstAddress)
+		DstAddress = common.HexToAddress(Dst)
 	}
 
 	var ok bool
-	if tokenId, ok = big.NewInt(0).SetString(TokenId, 10); !ok {
+	if TokenId, ok = big.NewInt(0).SetString(Token, 10); !ok {
 		return fmt.Errorf("invalid token id value")
 	}
 
@@ -90,12 +90,12 @@ func ProcessMintFlags(cmd *cobra.Command, args []string) error {
 
 func MintCmd(cmd *cobra.Command, args []string, erc721Contract *erc721.ERC721Contract) error {
 	_, err = erc721Contract.Mint(
-		tokenId, Metadata, dstAddress, transactor.TransactOptions{GasLimit: gasLimit},
+		TokenId, Metadata, DstAddress, transactor.TransactOptions{GasLimit: gasLimit},
 	)
 	if err != nil {
 		return err
 	}
 
-	log.Info().Msgf("%v token minted", tokenId)
+	log.Info().Msgf("%v token minted", TokenId)
 	return err
 }

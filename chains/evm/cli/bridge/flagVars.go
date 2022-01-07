@@ -27,14 +27,14 @@ var (
 
 //processed flag vars
 var (
-	bridgeAddr         common.Address
-	resourceIdBytesArr types.ResourceID
-	handlerAddr        common.Address
-	targetContractAddr common.Address
-	tokenContractAddr  common.Address
-	depositSigBytes    [4]byte
-	executeSigBytes    [4]byte
-	dataBytes          []byte
+	BridgeAddr         common.Address
+	ResourceIdBytesArr types.ResourceID
+	HandlerAddr        common.Address
+	TargetContractAddr common.Address
+	TokenContractAddr  common.Address
+	DepositSigBytes    [4]byte
+	ExecuteSigBytes    [4]byte
+	DataBytes          []byte
 )
 
 // global flags
