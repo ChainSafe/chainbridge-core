@@ -60,7 +60,10 @@ func NewOptimismClientFromParams(url string, privateKey *ecdsa.PrivateKey, verif
 
 	c.verifyRollup = verifyRollup
 	if c.verifyRollup {
-		c.configureVerifier(verifierEndpoint)
+		err := c.configureVerifier(verifierEndpoint)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return c, nil
@@ -78,7 +81,10 @@ func NewOptimismClient(cfg *chain.OptimismConfig) (*OptimismClient, error) {
 
 	c.verifyRollup = cfg.VerifyRollup
 	if c.verifyRollup {
-		c.configureVerifier(cfg.VerifierEndpoint)
+		err := c.configureVerifier(cfg.VerifierEndpoint)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return c, nil
