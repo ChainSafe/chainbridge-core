@@ -3,6 +3,7 @@ package chain
 import (
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/mitchellh/mapstructure"
@@ -18,7 +19,8 @@ type EVMConfig struct {
 	GasMultiplier      *big.Float
 	GasLimit           *big.Int
 	StartBlock         *big.Int
-	BlockConfirmations uint8
+	BlockConfirmations *big.Int
+	BlockRetryInterval time.Duration
 }
 
 type RawEVMConfig struct {
@@ -31,7 +33,8 @@ type RawEVMConfig struct {
 	GasMultiplier      float64 `mapstructure:"gasMultiplier"`
 	GasLimit           int64   `mapstructure:"gasLimit"`
 	StartBlock         int64   `mapstructure:"startBlock"`
-	BlockConfirmations uint8   `mapstructure:"blockConfirmations"`
+	BlockConfirmations int64   `mapstructure:"blockConfirmations"`
+	BlockRetryInterval uint64  `mapstructure:"blockRetryInterval"`
 }
 
 func (c *RawEVMConfig) Validate() error {
@@ -40,6 +43,9 @@ func (c *RawEVMConfig) Validate() error {
 	}
 	if c.Bridge == "" {
 		return fmt.Errorf("required field chain.Bridge empty for chain %v", *c.Id)
+	}
+	if c.BlockConfirmations != 0 && c.BlockConfirmations < 1 {
+		return fmt.Errorf("blockConfirmations has to be >=1")
 	}
 	return nil
 }
@@ -65,11 +71,12 @@ func NewEVMConfig(chainConfig map[string]interface{}) (*EVMConfig, error) {
 		Erc721Handler:      c.Erc721Handler,
 		GenericHandler:     c.GenericHandler,
 		Bridge:             c.Bridge,
+		BlockRetryInterval: consts.DefaultBlockRetryInterval,
 		GasLimit:           big.NewInt(consts.DefaultGasLimit),
 		MaxGasPrice:        big.NewInt(consts.DefaultGasPrice),
 		GasMultiplier:      big.NewFloat(consts.DefaultGasMultiplier),
 		StartBlock:         big.NewInt(c.StartBlock),
-		BlockConfirmations: consts.DefaultBlockConfirmations,
+		BlockConfirmations: big.NewInt(consts.DefaultBlockConfirmations),
 	}
 
 	if c.GasLimit != 0 {
@@ -85,7 +92,11 @@ func NewEVMConfig(chainConfig map[string]interface{}) (*EVMConfig, error) {
 	}
 
 	if c.BlockConfirmations != 0 {
-		config.BlockConfirmations = c.BlockConfirmations
+		config.BlockConfirmations = big.NewInt(c.BlockConfirmations)
+	}
+
+	if c.BlockRetryInterval != 0 {
+		config.BlockRetryInterval = time.Duration(c.BlockRetryInterval) * time.Second
 	}
 
 	return config, nil

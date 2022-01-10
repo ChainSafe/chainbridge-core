@@ -5,9 +5,10 @@ package listener
 
 import (
 	"context"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"math/big"
 	"time"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 
 	"github.com/ChainSafe/chainbridge-core/blockstore"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
@@ -16,9 +17,6 @@ import (
 
 	"github.com/rs/zerolog/log"
 )
-
-var BlockRetryInterval = time.Second * 5
-var BlockDelay = big.NewInt(10) //TODO: move to config
 
 type EventHandler interface {
 	HandleEvent(sourceID, destID uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error)
@@ -41,7 +39,14 @@ func NewEVMListener(chainReader ChainClient, handler EventHandler, bridgeAddress
 	return &EVMListener{chainReader: chainReader, eventHandler: handler, bridgeAddress: bridgeAddress}
 }
 
-func (l *EVMListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *message.Message {
+func (l *EVMListener) ListenToEvents(
+	startBlock, blockDelay *big.Int,
+	blockRetryInterval time.Duration,
+	domainID uint8,
+	kvrw blockstore.KeyValueWriter,
+	stopChn <-chan struct{},
+	errChn chan<- error,
+) <-chan *message.Message {
 	ch := make(chan *message.Message)
 	go func() {
 		for {
@@ -52,7 +57,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw b
 				head, err := l.chainReader.LatestBlock()
 				if err != nil {
 					log.Error().Err(err).Msg("Unable to get latest block")
-					time.Sleep(BlockRetryInterval)
+					time.Sleep(blockRetryInterval)
 					continue
 				}
 
@@ -60,9 +65,9 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw b
 					startBlock = head
 				}
 
-				// Sleep if the difference is less than BlockDelay; (latest - current) < BlockDelay
-				if big.NewInt(0).Sub(head, startBlock).Cmp(BlockDelay) == -1 {
-					time.Sleep(BlockRetryInterval)
+				// Sleep if the difference is less than blockDelay; (latest - current) < BlockDelay
+				if big.NewInt(0).Sub(head, startBlock).Cmp(blockDelay) == -1 {
+					time.Sleep(blockRetryInterval)
 					continue
 				}
 
