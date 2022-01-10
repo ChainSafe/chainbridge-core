@@ -7,4 +7,4 @@ const DefaultDeployGasLimit = 6000000
 const DefaultGasPrice = 20000000000
 const DefaultGasMultiplier = 1
 const DefaultBlockConfirmations = 10
-const DefaultBlockRetryInterval = time.Duration(5) * time.Second
+const DefaultBlockRetryInterval = 5 * time.Second
