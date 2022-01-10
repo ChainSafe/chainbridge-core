@@ -66,9 +66,11 @@ func SetupDefaultEVMChain(rawConfig map[string]interface{}, txFabric calls.TxFab
 	mh.RegisterMessageHandler(config.Erc721Handler, voter.ERC721MessageHandler)
 	mh.RegisterMessageHandler(config.GenericHandler, voter.GenericMessageHandler)
 
-	evmVoter, err := voter.NewVoterWithSubscription(mh, client, bridgeContract)
+	var evmVoter *voter.EVMVoter
+	evmVoter, err = voter.NewVoterWithSubscription(mh, client, bridgeContract)
 	if err != nil {
-		return nil, err
+		log.Error().Msgf("failed creating voter with subscription: %s. Falling back to default voter.", err.Error())
+		evmVoter = voter.NewVoter(mh, client, bridgeContract)
 	}
 
 	return NewEVMChain(evmListener, evmVoter, db, config), nil

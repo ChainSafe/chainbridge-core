@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
@@ -33,7 +34,7 @@ var isRelayerCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return IsRelayer(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
+		return IsRelayer(cmd, args, bridge.NewBridgeContract(c, BridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateIsRelayerFlags(cmd, args)
@@ -67,8 +68,8 @@ func ValidateIsRelayerFlags(cmd *cobra.Command, args []string) error {
 }
 
 func ProcessIsRelayerFlags(cmd *cobra.Command, args []string) {
-	relayerAddr = common.HexToAddress(Relayer)
-	bridgeAddr = common.HexToAddress(Bridge)
+	RelayerAddr = common.HexToAddress(Relayer)
+	BridgeAddr = common.HexToAddress(Bridge)
 }
 
 func IsRelayer(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
@@ -77,15 +78,15 @@ func IsRelayer(cmd *cobra.Command, args []string, contract *bridge.BridgeContrac
 	Relayer address: %s
 	Bridge address: %s`, Relayer, Bridge)
 
-	isRelayer, err := contract.IsRelayer(relayerAddr)
+	isRelayer, err := contract.IsRelayer(RelayerAddr)
 	if err != nil {
 		return err
 	}
 
 	if !isRelayer {
-		log.Info().Msgf("Address %s is NOT relayer", relayerAddr.String())
+		log.Info().Msgf("Address %s is NOT relayer", RelayerAddr.String())
 	} else {
-		log.Info().Msgf("Address %s is relayer", relayerAddr.String())
+		log.Info().Msgf("Address %s is relayer", RelayerAddr.String())
 	}
 	return nil
 }

@@ -34,7 +34,7 @@ var balanceCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return BalanceCmd(cmd, args, erc20.NewERC20Contract(c, erc20Addr, t))
+		return BalanceCmd(cmd, args, erc20.NewERC20Contract(c, Erc20Addr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateBalanceFlags(cmd, args)
@@ -70,7 +70,7 @@ func ValidateBalanceFlags(cmd *cobra.Command, args []string) error {
 }
 
 func ProcessBalanceFlags(cmd *cobra.Command, args []string) {
-	erc20Addr = common.HexToAddress(Erc20Address)
+	Erc20Addr = common.HexToAddress(Erc20Address)
 	accountAddr = common.HexToAddress(AccountAddress)
 }
 
