@@ -6,7 +6,7 @@
       "from": "0x8e0a907331554AF72563Bd8D43051C2E64Be5d35",
       "name": "evm1",
       "type": "evm",
-      "endpoint": "ws://evm1-1:8546",
+      "endpoint": "ws://evm1:8546",
       "bridge": "0xd606A00c1A39dA53EA7Bb3Ab570BBE40b156EB66",
       "erc20Handler": "0xb83065680e6AEc805774d8545516dF4e936F0dC0",
       "erc721Handler": "0x05C5AFACf64A6082D4933752FfB447AED63581b1",

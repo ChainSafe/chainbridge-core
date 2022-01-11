@@ -7,7 +7,7 @@ services:
     build:
       context: ../geth-build
       dockerfile: Dockerfile
-    container_name: evm1
+    container_name: evm-chain-1
     networks:
       - evm1
     ports:
