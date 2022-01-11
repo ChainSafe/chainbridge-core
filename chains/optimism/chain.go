@@ -4,7 +4,6 @@ package optimism
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
@@ -12,6 +11,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 
 	"github.com/ChainSafe/chainbridge-core/blockstore"
+	"github.com/ChainSafe/chainbridge-core/chains/evm"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 	"github.com/ChainSafe/chainbridge-core/chains/optimism/optimismclient"
@@ -21,18 +21,10 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type EventListener interface {
-	ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *message.Message
-}
-
-type ProposalVoter interface {
-	VoteProposal(message *message.Message) error
-}
-
 // OptimismChain is struct that aggregates all data required for
 type OptimismChain struct {
-	listener EventListener
-	writer   ProposalVoter
+	listener evm.EventListener
+	writer   evm.ProposalVoter
 	kvdb     blockstore.KeyValueReaderWriter
 	config   *chain.OptimismConfig
 }
@@ -72,7 +64,7 @@ func SetupDefaultOptimismChain(rawConfig map[string]interface{}, txFabric calls.
 	return NewOptimismChain(evmListener, evmVoter, db, config), nil
 }
 
-func NewOptimismChain(listener EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, config *chain.OptimismConfig) *OptimismChain {
+func NewOptimismChain(listener evm.EventListener, writer evm.ProposalVoter, kvdb blockstore.KeyValueReaderWriter, config *chain.OptimismConfig) *OptimismChain {
 	return &OptimismChain{listener: listener, writer: writer, kvdb: kvdb, config: config}
 }
 
@@ -93,7 +85,15 @@ func (c *OptimismChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, ev
 		return
 	}
 
-	ech := c.listener.ListenToEvents(startBlock, *c.config.EVMConfig.GeneralChainConfig.Id, c.kvdb, stop, sysErr)
+	ech := c.listener.ListenToEvents(
+		startBlock,
+		c.config.EVMConfig.BlockConfirmations,
+		c.config.EVMConfig.BlockRetryInterval,
+		*c.config.EVMConfig.GeneralChainConfig.Id,
+		c.kvdb,
+		stop,
+		sysErr,
+	)
 	for {
 		select {
 		case <-stop:
