@@ -23,7 +23,7 @@ services:
 
   # ALL KEYS USED IN THE KEYSTORE BELOW ARE PUBLIC INFO, DO NOT SEND FUNDS TO THEM ON MAINNET
   relayer1:
-    container_name: relayer1
+    container_name: relayer1-evm-optimism
     build:
       context: ../../.
       dockerfile: Dockerfile.evm-optimism
@@ -41,7 +41,7 @@ services:
       - KEYSTORE_PASSWORD=passwordpassword
 
   relayer2:
-    container_name: relayer2
+    container_name: relayer2-evm-optimism
     build:
       context: ../../.
       dockerfile: Dockerfile.evm-optimism
@@ -59,7 +59,7 @@ services:
         - KEYSTORE_PASSWORD=passwordpassword
 
   relayer3:
-    container_name: relayer3
+    container_name: relayer3-evm-optimism
     build:
       context: ../../.
       dockerfile: Dockerfile.evm-optimism
