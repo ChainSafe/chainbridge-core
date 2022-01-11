@@ -35,7 +35,7 @@ var pauseCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return PauseCmd(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
+		return PauseCmd(cmd, args, bridge.NewBridgeContract(c, BridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidatePauseFlags(cmd, args)
@@ -66,7 +66,7 @@ func ValidatePauseFlags(cmd *cobra.Command, args []string) error {
 }
 
 func ProcessPauseFlags(cmd *cobra.Command, args []string) {
-	bridgeAddr = common.HexToAddress(Bridge)
+	BridgeAddr = common.HexToAddress(Bridge)
 }
 
 func PauseCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
