@@ -36,23 +36,22 @@ services:
   #     - MINE=true
   #   entrypoint: "/root/entrypoint.sh"
 
-  # ALL KEYS USED BELOW ARE PUBLIC INFO, DO NOT SEND FUNDS TO THEM ON MAINNET
+  # ALL KEYS USED IN THE KEYSTORE BELOW ARE PUBLIC INFO, DO NOT SEND FUNDS TO THEM ON MAINNET
   relayer1:
     container_name: relayer1
     build:
       context: ../../.
       dockerfile: Dockerfile.evm-optimism
-    command: run --config /cfg/config_evm-optimism.json --keystore "./keys" --fresh
+    command: run --config /cfg/config_evm-optimism.json --keystore /keys --fresh
     depends_on:
       - evm1-1
       # - l2geth
       # - verifier
     networks:
       - evm1
-      # - ops_default
     volumes:
       - ./example/cfg/relayer1:/cfg
-      - ./example/keys:/keys
+      - ./example/testkeys:/keys
     environment:
       - KEYSTORE_PASSWORD=passwordpassword
 
@@ -61,17 +60,16 @@ services:
     build:
       context: ../../.
       dockerfile: Dockerfile.evm-optimism
-    command: run --config /cfg/config_evm-optimism.json --keystore "./keys" --fresh
+    command: run --config /cfg/config_evm-optimism.json --keystore /keys --fresh
     depends_on:
       - evm1-1
       # - l2geth
       # - verifier
     networks:
       - evm1
-      # - ops_default
     volumes:
       - ./example/cfg/relayer2:/cfg
-      - ./example/keys:/keys
+      - ./example/testkeys:/keys
     environment:
         - KEYSTORE_PASSWORD=passwordpassword
 
@@ -87,10 +85,9 @@ services:
       # - verifier
     networks:
       - evm1
-      # - ops_default
     volumes:
       - ./example/cfg/relayer3:/cfg
-      - ./example/keys:/keys
+      - ./example/testkeys:/keys
     environment:
         - KEYSTORE_PASSWORD=passwordpassword
 

@@ -14,7 +14,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/blockstore"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
-	optimismListener "github.com/ChainSafe/chainbridge-core/chains/optimism/listener"
 	"github.com/ChainSafe/chainbridge-core/chains/optimism/optimismclient"
 	"github.com/ChainSafe/chainbridge-core/config/chain"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
@@ -58,7 +57,7 @@ func SetupDefaultOptimismChain(rawConfig map[string]interface{}, txFabric calls.
 	eventHandler.RegisterEventHandler(config.EVMConfig.Erc20Handler, listener.Erc20EventHandler)
 	eventHandler.RegisterEventHandler(config.EVMConfig.Erc721Handler, listener.Erc721EventHandler)
 	eventHandler.RegisterEventHandler(config.EVMConfig.GenericHandler, listener.GenericEventHandler)
-	evmListener := optimismListener.NewEVMListener(client, eventHandler, common.HexToAddress(config.EVMConfig.Bridge))
+	evmListener := listener.NewEVMListener(client, eventHandler, common.HexToAddress(config.EVMConfig.Bridge))
 
 	mh := voter.NewEVMMessageHandler(*bridgeContract)
 	mh.RegisterMessageHandler(config.EVMConfig.Erc20Handler, voter.ERC20MessageHandler)

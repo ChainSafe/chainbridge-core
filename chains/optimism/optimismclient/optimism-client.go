@@ -3,6 +3,7 @@ package optimismclient
 import (
 	"context"
 	"crypto/ecdsa"
+	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"github.com/ChainSafe/chainbridge-core/config/chain"
@@ -103,7 +104,19 @@ func (c *OptimismClient) configureVerifier(url string) error {
 	return nil
 }
 
-func (c *OptimismClient) RollupInfo() (*rollupInfo, error) {
+// The OptimismClient treats only the last verified index or before as a valid chain
+func (c *OptimismClient) LatestBlock() (*big.Int, error) {
+	info, err := c.rollupInfo()
+	if err != nil {
+		return nil, err
+	}
+	log.Debug().Msgf("Rollup info: %v", info)
+	verifiedIndex := new(big.Int).SetUint64(info.RollupContext.VerifiedIndex)
+
+	return verifiedIndex, nil
+}
+
+func (c *OptimismClient) rollupInfo() (*rollupInfo, error) {
 	var info *rollupInfo
 
 	err := c.verifierRpClient.CallContext(context.TODO(), &info, "rollup_getInfo")
@@ -113,23 +126,41 @@ func (c *OptimismClient) RollupInfo() (*rollupInfo, error) {
 	return info, err
 }
 
-func (c *OptimismClient) IsRollupVerified(blockNumber uint64) (bool, error) {
-	log.Debug().Msg("Just got inside method IsRollupVerified")
+// NOTE: Left only for reference for reviewers. Separate strategy for checking Optimism chain verification over treating latest block as latest verified index
+// TO BE DELETED OR TO REPLACE STRATEGY OF `LatestBlock` above
+// func (c *OptimismClient) isRollupVerified(blockNumber uint64) (bool, error) {
+// 	//log.Debug().Msg("Just got inside method IsRollupVerified")
 
-	if !c.verifyRollup {
-		return true, nil
-	}
+// 	if !c.verifyRollup {
+// 		return true, nil
+// 	}
 
-	info, err := c.RollupInfo()
-	if err != nil {
-		return false, err
-	}
+// 	info, err := c.RollupInfo()
+// 	if err != nil {
+// 		return false, err
+// 	}
 
-	log.Debug().Msgf("Block number to check against index: %v", blockNumber)
-	log.Debug().Msgf("Rollup info: %v", info)
-	if blockNumber <= info.RollupContext.VerifiedIndex {
-		return true, nil
-	} else {
-		return false, nil
-	}
-}
+// 	log.Debug().Msgf("Block number to check against index: %v", blockNumber)
+// 	log.Debug().Msgf("Rollup info: %v", info)
+// 	if blockNumber <= info.RollupContext.VerifiedIndex {
+// 		return true, nil
+// 	} else {
+// 		return false, nil
+// 	}
+// }
+
+// func (c *OptimismClient) FetchDepositLogs(ctx context.Context, address common.Address, startBlock *big.Int, endBlock *big.Int) ([]*evmclient.DepositLogs, error) {
+
+// 	if verified, err := c.isRollupVerified(endBlock.Uint64()); err != nil {
+// 		log.Error().Msgf("Error while checking whether chain is verified, Block Number: %v", endBlock)
+// 		time.Sleep(listener.BlockRetryInterval)
+// 		return nil, err
+// 	} else if !verified {
+// 		time.Sleep(listener.BlockRetryInterval)
+// 		return nil, fmt.Errorf("chain is not verified at current index, Block Number: %v", endBlock)
+// 	}
+
+// 	logs, err := c.EVMClient.FetchDepositLogs(ctx, address, startBlock, endBlock)
+
+// 	return logs, err
+// }
