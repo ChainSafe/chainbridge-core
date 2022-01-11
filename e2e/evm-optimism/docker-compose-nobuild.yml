@@ -77,8 +77,8 @@ services:
         ETH1_CTC_DEPLOYMENT_HEIGHT: 8
         RETRIES: 60
     ports:
-      - ${L2GETH_HTTP_PORT:-8545}:8545
-      - ${L2GETH_WS_PORT:-8546}:8546
+      - ${L2GETH_HTTP_PORT:-8549}:8545
+      - ${L2GETH_WS_PORT:-8550}:8546
 
   batch_submitter:
     depends_on:
@@ -116,8 +116,8 @@ services:
         ETH1_CTC_DEPLOYMENT_HEIGHT: 8
         RETRIES: 60
     ports:
-      - ${VERIFIER_HTTP_PORT:-8547}:8545
-      - ${VERIFIER_WS_PORT:-8548}:8546
+      - ${VERIFIER_HTTP_PORT:-8551}:8545
+      - ${VERIFIER_WS_PORT:-8552}:8546
 
   replica:
     depends_on:
@@ -137,8 +137,8 @@ services:
         ETH1_CTC_DEPLOYMENT_HEIGHT: 8
         RETRIES: 60
     ports:
-      - ${L2GETH_HTTP_PORT:-8549}:8545
-      - ${L2GETH_WS_PORT:-8550}:8546
+      - ${L2GETH_HTTP_PORT:-8553}:8545
+      - ${L2GETH_WS_PORT:-8554}:8546
 
   gas_oracle:
     image: ethereumoptimism/gas-oracle:${DOCKER_TAG:-prerelease-0.5.0-rc-7-ee217ce}
