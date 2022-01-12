@@ -27,54 +27,64 @@ services:
     build:
       context: ../../.
       dockerfile: Dockerfile.evm-optimism
-    command: run --config /cfg/config_evm-optimism.json --keystore /keys --fresh
+    entrypoint: "sh ./relayer.sh"
+    # command: run --config /cfg/config_evm-optimism.json --keystore /keys --fresh
     depends_on:
       - evm1
-      # - l2geth
-      # - verifier
+      - l2geth
+      - verifier
     networks:
       - evm1
+      - optimism1
     volumes:
       - ./example/cfg/relayer1:/cfg
       - ./example/testkeys:/keys
     environment:
-      - KEYSTORE_PASSWORD=passwordpassword
+      KEYSTORE_PASSWORD: passwordpassword
+      L2_NODE_WEB3_URL: http://l2geth:8545
 
   relayer2:
     container_name: relayer2-evm-optimism
     build:
       context: ../../.
       dockerfile: Dockerfile.evm-optimism
-    command: run --config /cfg/config_evm-optimism.json --keystore /keys --fresh
+    entrypoint: "sh ./relayer.sh"
+    # command: run --config /cfg/config_evm-optimism.json --keystore /keys --fresh
     depends_on:
       - evm1
-      # - l2geth
-      # - verifier
+      - l2geth
+      - verifier
     networks:
       - evm1
+      - optimism1
     volumes:
       - ./example/cfg/relayer2:/cfg
       - ./example/testkeys:/keys
     environment:
-        - KEYSTORE_PASSWORD=passwordpassword
+        KEYSTORE_PASSWORD: passwordpassword
+        L2_NODE_WEB3_URL: http://l2geth:8545
 
   relayer3:
     container_name: relayer3-evm-optimism
     build:
       context: ../../.
       dockerfile: Dockerfile.evm-optimism
-    command: run --config /cfg/config_evm-optimism.json --keystore /keys --fresh
+    entrypoint: "sh ./relayer.sh"
+    # command: run --config /cfg/config_evm-optimism.json --keystore /keys --fresh
     depends_on:
       - evm1
-      # - l2geth
-      # - verifier
+      - l2geth
+      - verifier
     networks:
       - evm1
+      - optimism1
     volumes:
       - ./example/cfg/relayer3:/cfg
       - ./example/testkeys:/keys
     environment:
-        - KEYSTORE_PASSWORD=passwordpassword
+        KEYSTORE_PASSWORD: passwordpassword
+        L2_NODE_WEB3_URL: http://l2geth:8545
 
 networks:
   evm1:
+  optimism1:

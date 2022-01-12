@@ -20,16 +20,16 @@
       "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
       "name": "optimism1",
       "type": "optimism",
-      "endpoint": "ws://host.docker.internal:8550",
+      "endpoint": "ws://l2geth:8546",
       "bridge": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
       "erc20Handler": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
       "erc721Handler": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
       "genericHandler": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
       "gasLimit": 1000000,
-      "maxGasPrice": 0,
+      "maxGasPrice": 1,
       "blockConfirmations": 1,
       "verifyRollup": true,
-      "verifierEndpoint": "ws://host.docker.internal:8552"
+      "verifierEndpoint": "ws://verifier:8546"
     }
   ]
 }
