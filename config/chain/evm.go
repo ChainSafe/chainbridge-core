@@ -50,19 +50,7 @@ func (c *RawEVMConfig) Validate() error {
 	return nil
 }
 
-// NewEVMConfig decodes and validates an instance of an EVMConfig from
-// raw chain config
-func NewEVMConfig(chainConfig map[string]interface{}) (*EVMConfig, error) {
-	var c RawEVMConfig
-	err := mapstructure.Decode(chainConfig, &c)
-	if err != nil {
-		return nil, err
-	}
-
-	err = c.Validate()
-	if err != nil {
-		return nil, err
-	}
+func (c *RawEVMConfig) ParseConfig() (*EVMConfig, error) {
 
 	c.GeneralChainConfig.ParseFlags()
 	config := &EVMConfig{
@@ -78,26 +66,43 @@ func NewEVMConfig(chainConfig map[string]interface{}) (*EVMConfig, error) {
 		StartBlock:         big.NewInt(c.StartBlock),
 		BlockConfirmations: big.NewInt(consts.DefaultBlockConfirmations),
 	}
-
 	if c.GasLimit != 0 {
 		config.GasLimit = big.NewInt(c.GasLimit)
 	}
-
 	if c.MaxGasPrice != 0 {
 		config.MaxGasPrice = big.NewInt(c.MaxGasPrice)
 	}
-
 	if c.GasMultiplier != 0 {
 		config.GasMultiplier = big.NewFloat(c.GasMultiplier)
 	}
-
 	if c.BlockConfirmations != 0 {
 		config.BlockConfirmations = big.NewInt(c.BlockConfirmations)
 	}
-
 	if c.BlockRetryInterval != 0 {
 		config.BlockRetryInterval = time.Duration(c.BlockRetryInterval) * time.Second
 	}
 
 	return config, nil
+}
+
+// NewEVMConfig decodes and validates an instance of an EVMConfig from
+// raw chain config
+func NewEVMConfig(chainConfig map[string]interface{}) (*EVMConfig, error) {
+	var c RawEVMConfig
+	err := mapstructure.Decode(chainConfig, &c)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	newCfg, err := c.ParseConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	return newCfg, nil
 }
