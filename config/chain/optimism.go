@@ -2,7 +2,6 @@ package chain
 
 import (
 	"github.com/mitchellh/mapstructure"
-	"github.com/rs/zerolog/log"
 )
 
 const DefaultGasLimit = 6721975
@@ -32,13 +31,12 @@ func (c *RawOptimismConfig) Validate() error {
 // NewOptimismConfig decodes and validates an instance of an OptimismConfig from
 // raw chain config
 func NewOptimismConfig(chainConfig map[string]interface{}) (*OptimismConfig, error) {
-	log.Debug().Msg("got into optimism config")
 	var c RawOptimismConfig
 	err := mapstructure.Decode(chainConfig, &c)
 	if err != nil {
 		return nil, err
 	}
-	log.Debug().Msg("successfully decoded")
+
 	err = c.Validate()
 	if err != nil {
 		return nil, err
