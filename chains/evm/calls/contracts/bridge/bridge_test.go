@@ -59,7 +59,7 @@ func (s *ProposalStatusTestSuite) SetupTest() {
 }
 func (s *ProposalStatusTestSuite) TearDownTest() {}
 
-func (s *ProposalStatusTestSuite) TestProposalStatusFailed_ContractCall() {
+func (s *ProposalStatusTestSuite) TestProposalContractCall_StatusFailed() {
 	s.mockContractCaller.EXPECT().CallContract(gomock.Any(), gomock.Any(), nil).Return(nil, errors.New("error"))
 	s.mockContractCaller.EXPECT().From().Times(1).Return(common.Address{})
 	bc := bridge.NewBridgeContract(s.mockContractCaller, common.Address{}, s.mockTransactor)
@@ -90,7 +90,7 @@ func (s *ProposalStatusTestSuite) TestProposalStatus_SuccessfulCall() {
 	s.Equal(status.Status, message.ProposalStatusExecuted)
 }
 
-func (s *ProposalStatusTestSuite) TestPrepare_WithdrawInput() {
+func (s *ProposalStatusTestSuite) TestPrepare_WithdrawInput_Success() {
 	handlerAddress := common.HexToAddress("0x3167776db165D8eA0f51790CA2bbf44Db5105ADF")
 	tokenAddress := common.HexToAddress("0x3f709398808af36ADBA86ACC617FeB7F5B7B193E")
 	recipientAddress := common.HexToAddress("0x8e5F72B158BEDf0ab50EDa78c70dFC118158C272")
@@ -108,7 +108,7 @@ func (s *ProposalStatusTestSuite) TestPrepare_WithdrawInput() {
 	s.Nil(err)
 }
 
-func (s *ProposalStatusTestSuite) TestDeployContract() {
+func (s *ProposalStatusTestSuite) TestDeployContract_Success() {
 	bc := bridge.NewBridgeContract(s.mockContractCaller, s.bridgeAddress, s.mockTransactor)
 	a := common.HexToAddress("0x12847465a15b58D4351AfB47F0CBbeebE93B06e3")
 	address, err := bc.PackMethod("",
