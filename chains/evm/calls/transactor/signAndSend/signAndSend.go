@@ -35,12 +35,12 @@ func (t *signAndSendTransactor) Transact(to *common.Address, data []byte, opts t
 	t.client.LockNonce()
 	n, err := t.client.UnsafeNonce()
 	if err != nil {
-		return &common.Hash{}, nil
+		return &common.Hash{}, err
 	}
 
 	err = transactor.MergeTransactionOptions(&opts, &DefaultTransactionOptions)
 	if err != nil {
-		return &common.Hash{}, nil
+		return &common.Hash{}, err
 	}
 
 	gp := []*big.Int{opts.GasPrice}
@@ -58,7 +58,7 @@ func (t *signAndSendTransactor) Transact(to *common.Address, data []byte, opts t
 
 	h, err := t.client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
-		log.Error().Err(err).Msg("SIGN_AND_SEND")
+		log.Error().Err(err)
 		return &common.Hash{}, err
 	}
 

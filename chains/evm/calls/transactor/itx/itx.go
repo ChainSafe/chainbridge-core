@@ -132,7 +132,7 @@ func (itx *ITXTransactor) signRelayTx(tx *RelayTx) (*SignedRelayTx, error) {
 	hash := crypto.Keccak256Hash([]byte(msg))
 	sig, err := crypto.Sign(hash.Bytes(), itx.kp.PrivateKey())
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	return &SignedRelayTx{
