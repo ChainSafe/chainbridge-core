@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
@@ -33,7 +34,7 @@ var getThresholdCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return GetThresholdCMD(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
+		return GetThresholdCMD(cmd, args, bridge.NewBridgeContract(c, BridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateGetThresholdFlags(cmd, args)
@@ -62,7 +63,7 @@ func ValidateGetThresholdFlags(cmd *cobra.Command, args []string) error {
 }
 
 func ProcessGetThresholdFlags(cmd *cobra.Command, args []string) {
-	bridgeAddr = common.HexToAddress(Bridge)
+	BridgeAddr = common.HexToAddress(Bridge)
 }
 
 func GetThresholdCMD(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {

@@ -6,6 +6,7 @@ package evm
 import (
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
@@ -23,7 +24,7 @@ import (
 )
 
 type EventListener interface {
-	ListenToEvents(startBlock *big.Int, domainID uint8, blockstore *store.BlockStore, stopChn <-chan struct{}, errChn chan<- error) <-chan *message.Message
+	ListenToEvents(startBlock, blockConfirmations *big.Int, blockRetryInterval time.Duration, domainID uint8, blockstore *store.BlockStore, stopChn <-chan struct{}, errChn chan<- error) <-chan *message.Message
 }
 
 type ProposalVoter interface {
@@ -65,9 +66,11 @@ func SetupDefaultEVMChain(rawConfig map[string]interface{}, txFabric calls.TxFab
 	mh.RegisterMessageHandler(config.Erc721Handler, voter.ERC721MessageHandler)
 	mh.RegisterMessageHandler(config.GenericHandler, voter.GenericMessageHandler)
 
-	evmVoter, err := voter.NewVoterWithSubscription(mh, client, bridgeContract)
+	var evmVoter *voter.EVMVoter
+	evmVoter, err = voter.NewVoterWithSubscription(mh, client, bridgeContract)
 	if err != nil {
-		return nil, err
+		log.Error().Msgf("failed creating voter with subscription: %s. Falling back to default voter.", err.Error())
+		evmVoter = voter.NewVoter(mh, client, bridgeContract)
 	}
 
 	return NewEVMChain(evmListener, evmVoter, blockstore, config), nil
@@ -93,7 +96,7 @@ func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsC
 		return
 	}
 
-	ech := c.listener.ListenToEvents(startBlock, *c.config.GeneralChainConfig.Id, c.blockstore, stop, sysErr)
+	ech := c.listener.ListenToEvents(startBlock, c.config.BlockConfirmations, c.config.BlockRetryInterval, *c.config.GeneralChainConfig.Id, c.blockstore, stop, sysErr)
 	for {
 		select {
 		case <-stop:

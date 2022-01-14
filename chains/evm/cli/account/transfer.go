@@ -71,14 +71,14 @@ func ValidateTransferBaseCurrencyFlags(cmd *cobra.Command, args []string) error 
 
 func ProcessTransferBaseCurrencyFlags(cmd *cobra.Command, args []string) error {
 	var err error
-	recipientAddress = common.HexToAddress(Recipient)
+	RecipientAddress = common.HexToAddress(Recipient)
 	decimals := big.NewInt(int64(Decimals))
-	weiAmount, err = callsUtil.UserAmountToWei(Amount, decimals)
+	WeiAmount, err = callsUtil.UserAmountToWei(Amount, decimals)
 	return err
 }
 func TransferBaseCurrency(cmd *cobra.Command, args []string, t transactor.Transactor) error {
 	hash, err := t.Transact(
-		&recipientAddress, nil, transactor.TransactOptions{Value: weiAmount, GasLimit: gasLimit},
+		&RecipientAddress, nil, transactor.TransactOptions{Value: WeiAmount, GasLimit: gasLimit},
 	)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("base currency deposit error: %v", err))
@@ -86,7 +86,7 @@ func TransferBaseCurrency(cmd *cobra.Command, args []string, t transactor.Transa
 	}
 	log.Debug().Msgf("base currency transaction hash: %s", hash.Hex())
 
-	log.Info().Msgf("%s tokens were transferred to %s from %s", Amount, recipientAddress.Hex(), senderKeyPair.CommonAddress().String())
+	log.Info().Msgf("%s tokens were transferred to %s from %s", Amount, RecipientAddress.Hex(), senderKeyPair.CommonAddress().String())
 	return nil
 }
 
