@@ -10,8 +10,8 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 
-	"github.com/ChainSafe/chainbridge-core/blockstore"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
+	"github.com/ChainSafe/chainbridge-core/store"
 	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"
 
@@ -43,7 +43,7 @@ func (l *EVMListener) ListenToEvents(
 	startBlock, blockDelay *big.Int,
 	blockRetryInterval time.Duration,
 	domainID uint8,
-	kvrw blockstore.KeyValueWriter,
+	blockstore *store.BlockStore,
 	stopChn <-chan struct{},
 	errChn chan<- error,
 ) <-chan *message.Message {
@@ -94,7 +94,7 @@ func (l *EVMListener) ListenToEvents(
 				}
 				// TODO: We can store blocks to DB inside listener or make listener send something to channel each block to save it.
 				//Write to block store. Not a critical operation, no need to retry
-				err = blockstore.StoreBlock(kvrw, startBlock, domainID)
+				err = blockstore.StoreBlock(startBlock, domainID)
 				if err != nil {
 					log.Error().Str("block", startBlock.String()).Err(err).Msg("Failed to write latest block to blockstore")
 				}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/signAndSend"
 	substrateTypes "github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/ethereum/go-ethereum/common"
 
@@ -118,11 +119,11 @@ func (s *IntegrationTestSuite) TearDownTest()  {}
 func (s *IntegrationTestSuite) TestErc20Deposit() {
 	dstAddr := keystore.TestKeyRing.EthereumKeys[keystore.BobKey].CommonAddress()
 
-	transactor1 := transactor.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client)
+	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client)
 	erc20Contract1 := erc20.NewERC20Contract(s.client, s.erc20ContractAddr, transactor1)
 	bridgeContract1 := bridge.NewBridgeContract(s.client, s.bridgeAddr, transactor1)
 
-	transactor2 := transactor.NewSignAndSendTransactor(s.fabric2, s.gasPricer, s.client2)
+	transactor2 := signAndSend.NewSignAndSendTransactor(s.fabric2, s.gasPricer, s.client2)
 	erc20Contract2 := erc20.NewERC20Contract(s.client2, s.erc20ContractAddr, transactor2)
 
 	senderBalBefore, err := erc20Contract1.GetBalance(local.EveKp.CommonAddress())
@@ -161,12 +162,12 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 	txOptions := transactor.TransactOptions{}
 
 	// erc721 contract for evm1
-	transactor1 := transactor.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client)
+	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client)
 	erc721Contract1 := erc721.NewErc721Contract(s.client, s.erc721ContractAddr, transactor1)
 	bridgeContract1 := bridge.NewBridgeContract(s.client, s.bridgeAddr, transactor1)
 
 	// erc721 contract for evm2
-	transactor2 := transactor.NewSignAndSendTransactor(s.fabric2, s.gasPricer, s.client2)
+	transactor2 := signAndSend.NewSignAndSendTransactor(s.fabric2, s.gasPricer, s.client2)
 	erc721Contract2 := erc721.NewErc721Contract(s.client2, s.erc721ContractAddr, transactor2)
 
 	// Mint token and give approval
@@ -203,8 +204,8 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 }
 
 func (s *IntegrationTestSuite) TestGenericDeposit() {
-	transactor1 := transactor.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client)
-	transactor2 := transactor.NewSignAndSendTransactor(s.fabric2, s.gasPricer, s.client2)
+	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client)
+	transactor2 := signAndSend.NewSignAndSendTransactor(s.fabric2, s.gasPricer, s.client2)
 
 	bridgeContract1 := bridge.NewBridgeContract(s.client, s.bridgeAddr, transactor1)
 	assetStoreContract2 := centrifuge.NewAssetStoreContract(s.client2, s.assetStoreAddr, transactor2)

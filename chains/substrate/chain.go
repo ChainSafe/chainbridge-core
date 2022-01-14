@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/blockstore"
 	"github.com/ChainSafe/chainbridge-core/config/chain"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
+	"github.com/ChainSafe/chainbridge-core/store"
 	"github.com/rs/zerolog/log"
 )
 
@@ -15,33 +15,32 @@ type ProposalVoter interface {
 }
 
 type EventListener interface {
-	ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *message.Message
+	ListenToEvents(startBlock *big.Int, domainID uint8, blockstore *store.BlockStore, stopChn <-chan struct{}, errChn chan<- error) <-chan *message.Message
 }
 
 type SubstrateChain struct {
-	domainID uint8
-	stop     chan<- struct{}
-	listener EventListener
-	writer   ProposalVoter
-	kvdb     blockstore.KeyValueReaderWriter
-	config   *chain.SubstrateConfig
+	domainID   uint8
+	stop       chan<- struct{}
+	listener   EventListener
+	writer     ProposalVoter
+	blockstore *store.BlockStore
+	config     *chain.SubstrateConfig
 }
 
-func NewSubstrateChain(listener EventListener, writer ProposalVoter, kvdb blockstore.KeyValueReaderWriter, domainID uint8, config *chain.SubstrateConfig) *SubstrateChain {
+func NewSubstrateChain(listener EventListener, writer ProposalVoter, blockstore *store.BlockStore, domainID uint8, config *chain.SubstrateConfig) *SubstrateChain {
 	return &SubstrateChain{
-		listener: listener,
-		writer:   writer,
-		kvdb:     kvdb,
-		domainID: domainID,
-		config:   config,
+		listener:   listener,
+		writer:     writer,
+		blockstore: blockstore,
+		domainID:   domainID,
+		config:     config,
 	}
 }
 
 func (c *SubstrateChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *message.Message) {
 	log.Info().Msg("Polling Blocks...")
 
-	startingBlock, err := blockstore.GetStartBlock(
-		c.kvdb,
+	startingBlock, err := c.blockstore.GetStartBlock(
 		*c.config.GeneralChainConfig.Id,
 		c.config.StartBlock,
 		c.config.GeneralChainConfig.LatestBlock,
@@ -52,7 +51,7 @@ func (c *SubstrateChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, e
 		return
 	}
 
-	ech := c.listener.ListenToEvents(startingBlock, c.domainID, c.kvdb, stop, sysErr)
+	ech := c.listener.ListenToEvents(startingBlock, c.domainID, c.blockstore, stop, sysErr)
 	for {
 		select {
 		case <-stop:

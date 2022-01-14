@@ -218,7 +218,7 @@ func (c *EVMClient) CallContract(ctx context.Context, callArgs map[string]interf
 }
 
 func (c *EVMClient) CallContext(ctx context.Context, target interface{}, rpcMethod string, args ...interface{}) error {
-	err := c.rpClient.CallContext(ctx, target, rpcMethod, args)
+	err := c.rpClient.CallContext(ctx, target, rpcMethod, args...)
 	if err != nil {
 		return err
 	}
