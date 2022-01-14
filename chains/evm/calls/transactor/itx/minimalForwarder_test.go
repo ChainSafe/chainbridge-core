@@ -51,7 +51,7 @@ func (s *MinimalForwarderTestSuite) TestForwarderData_ValidData() {
 	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
 	forwarderAddress := common.HexToAddress("0x5eDF97800a15E23F386785a2D486bA3E43545210")
 	s.forwarderContract.EXPECT().ContractAddress().Return(&forwarderAddress)
-	s.forwarderContract.EXPECT().ExecuteData(gomock.Any(), gomock.Any()).DoAndReturn(func(
+	s.forwarderContract.EXPECT().PrepareExecute(gomock.Any(), gomock.Any()).DoAndReturn(func(
 		forwardReq forwarder.ForwardRequest,
 		sig []byte,
 	) ([]byte, error) {

@@ -50,21 +50,6 @@ func (mr *MockForwarderContractMockRecorder) ContractAddress() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ContractAddress", reflect.TypeOf((*MockForwarderContract)(nil).ContractAddress))
 }
 
-// ExecuteData mocks base method.
-func (m *MockForwarderContract) ExecuteData(forwardReq forwarder.ForwardRequest, sig []byte) ([]byte, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExecuteData", forwardReq, sig)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ExecuteData indicates an expected call of ExecuteData.
-func (mr *MockForwarderContractMockRecorder) ExecuteData(forwardReq, sig interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteData", reflect.TypeOf((*MockForwarderContract)(nil).ExecuteData), forwardReq, sig)
-}
-
 // GetNonce mocks base method.
 func (m *MockForwarderContract) GetNonce(from common.Address) (*big.Int, error) {
 	m.ctrl.T.Helper()
@@ -78,6 +63,21 @@ func (m *MockForwarderContract) GetNonce(from common.Address) (*big.Int, error) 
 func (mr *MockForwarderContractMockRecorder) GetNonce(from interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNonce", reflect.TypeOf((*MockForwarderContract)(nil).GetNonce), from)
+}
+
+// PrepareExecute mocks base method.
+func (m *MockForwarderContract) PrepareExecute(forwardReq forwarder.ForwardRequest, sig []byte) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PrepareExecute", forwardReq, sig)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PrepareExecute indicates an expected call of PrepareExecute.
+func (mr *MockForwarderContractMockRecorder) PrepareExecute(forwardReq, sig interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PrepareExecute", reflect.TypeOf((*MockForwarderContract)(nil).PrepareExecute), forwardReq, sig)
 }
 
 // MockNonceStorer is a mock of NonceStorer interface.

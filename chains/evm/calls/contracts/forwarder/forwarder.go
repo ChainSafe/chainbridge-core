@@ -46,7 +46,7 @@ func (c *ForwarderContract) GetNonce(from common.Address) (*big.Int, error) {
 	return nonce, nil
 }
 
-func (c *ForwarderContract) ExecuteData(
+func (c *ForwarderContract) PrepareExecute(
 	forwardReq ForwardRequest,
 	sig []byte,
 ) ([]byte, error) {

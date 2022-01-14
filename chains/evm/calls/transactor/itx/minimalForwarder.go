@@ -17,7 +17,7 @@ import (
 
 type ForwarderContract interface {
 	GetNonce(from common.Address) (*big.Int, error)
-	ExecuteData(forwardReq forwarder.ForwardRequest, sig []byte) ([]byte, error)
+	PrepareExecute(forwardReq forwarder.ForwardRequest, sig []byte) ([]byte, error)
 	ContractAddress() *common.Address
 }
 
@@ -138,7 +138,7 @@ func (c *MinimalForwarder) ForwarderData(to *common.Address, data []byte, opts t
 		Nonce: opts.Nonce,
 		Data:  data,
 	}
-	return c.forwarderContract.ExecuteData(forwardReq, sig)
+	return c.forwarderContract.PrepareExecute(forwardReq, sig)
 }
 
 func (c *MinimalForwarder) typedHash(
