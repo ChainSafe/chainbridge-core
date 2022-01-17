@@ -154,7 +154,7 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 	// Check on evm1 if initial owner is admin
 	initialOwner, err := erc721Contract1.Owner(tokenId)
 	s.Nil(err)
-	s.Equal(initialOwner.String(), s.client1.From())
+	s.Equal(initialOwner.String(), s.client1.From().String())
 
 	// Check on evm2 token doesn't exist
 	_, err = erc721Contract2.Owner(tokenId)
