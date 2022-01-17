@@ -138,7 +138,7 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 	// This is done here so token only exists on evm1
 	_, err := erc721Contract1.Mint(tokenId, metadata, s.client1.From(), txOptions)
 	s.Nil(err, "Mint failed")
-	_, err = erc721Contract1.Approve(tokenId, s.config2.Erc721HandlerAddr, txOptions)
+	_, err = erc721Contract1.Approve(tokenId, s.config1.Erc721HandlerAddr, txOptions)
 	s.Nil(err, "Approve failed")
 
 	// Check on evm1 if initial owner is admin
