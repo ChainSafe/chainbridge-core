@@ -44,7 +44,8 @@ type IntegrationTestSuite struct {
 	suite.Suite
 	client1    TestClient
 	client2    TestClient
-	gasPricer  calls.GasPricer
+	gasPricer1 calls.GasPricer
+	gasPricer2 calls.GasPricer
 	fabric1    calls.TxFabric
 	fabric2    calls.TxFabric
 	erc20RID   [32]byte
@@ -70,7 +71,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.erc20RID = calls.SliceTo32Bytes(common.LeftPadBytes([]byte{0}, 31))
 	s.genericRID = calls.SliceTo32Bytes(common.LeftPadBytes([]byte{1}, 31))
 	s.erc721RID = calls.SliceTo32Bytes(common.LeftPadBytes([]byte{2}, 31))
-	s.gasPricer = evmgaspricer.NewStaticGasPriceDeterminant(s.client2, nil)
+	s.gasPricer1 = evmgaspricer.NewStaticGasPriceDeterminant(s.client1, nil)
+	s.gasPricer2 = evmgaspricer.NewStaticGasPriceDeterminant(s.client2, nil)
 }
 func (s *IntegrationTestSuite) TearDownSuite() {}
 func (s *IntegrationTestSuite) SetupTest()     {}
@@ -79,11 +81,11 @@ func (s *IntegrationTestSuite) TearDownTest()  {}
 func (s *IntegrationTestSuite) TestErc20Deposit() {
 	dstAddr := keystore.TestKeyRing.EthereumKeys[keystore.BobKey].CommonAddress()
 
-	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client1)
+	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer1, s.client1)
 	erc20Contract1 := erc20.NewERC20Contract(s.client1, s.config1.Erc20Addr, transactor1)
 	bridgeContract1 := bridge.NewBridgeContract(s.client1, s.config1.BridgeAddr, transactor1)
 
-	transactor2 := signAndSend.NewSignAndSendTransactor(s.fabric2, s.gasPricer, s.client2)
+	transactor2 := signAndSend.NewSignAndSendTransactor(s.fabric2, s.gasPricer2, s.client2)
 	erc20Contract2 := erc20.NewERC20Contract(s.client2, s.config2.Erc20Addr, transactor2)
 
 	senderBalBefore, err := erc20Contract1.GetBalance(local.EveKp.CommonAddress())
@@ -120,12 +122,12 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 	txOptions := transactor.TransactOptions{}
 
 	// erc721 contract for evm1
-	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client1)
+	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer1, s.client1)
 	erc721Contract1 := erc721.NewErc721Contract(s.client1, s.config1.Erc721Addr, transactor1)
 	bridgeContract1 := bridge.NewBridgeContract(s.client1, s.config1.BridgeAddr, transactor1)
 
 	// erc721 contract for evm2
-	transactor2 := signAndSend.NewSignAndSendTransactor(s.fabric2, s.gasPricer, s.client2)
+	transactor2 := signAndSend.NewSignAndSendTransactor(s.fabric2, s.gasPricer2, s.client2)
 	erc721Contract2 := erc721.NewErc721Contract(s.client2, s.config2.Erc721Addr, transactor2)
 
 	// Mint token and give approval
@@ -162,8 +164,8 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 }
 
 func (s *IntegrationTestSuite) TestGenericDeposit() {
-	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client1)
-	transactor2 := signAndSend.NewSignAndSendTransactor(s.fabric2, s.gasPricer, s.client2)
+	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer1, s.client1)
+	transactor2 := signAndSend.NewSignAndSendTransactor(s.fabric2, s.gasPricer2, s.client2)
 
 	bridgeContract1 := bridge.NewBridgeContract(s.client1, s.config1.BridgeAddr, transactor1)
 	assetStoreContract2 := centrifuge.NewAssetStoreContract(s.client2, s.config2.AssetStoreAddr, transactor2)
