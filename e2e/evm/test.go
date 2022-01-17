@@ -15,15 +15,12 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc721"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/local"
-	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum"
 
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -34,19 +31,18 @@ type TestClient interface {
 	SubscribeFilterLogs(ctx context.Context, q ethereum.FilterQuery, ch chan<- types.Log) (ethereum.Subscription, error)
 }
 
-func SetupEVM2EVMTestSuite(fabric1, fabric2 calls.TxFabric, endpoint1, endpoint2 string, adminKey *secp256k1.Keypair) *IntegrationTestSuite {
+func SetupEVM2EVMTestSuite(fabric1, fabric2 calls.TxFabric, client1, client2 TestClient) *IntegrationTestSuite {
 	return &IntegrationTestSuite{
-		fabric1:   fabric1,
-		fabric2:   fabric2,
-		endpoint1: endpoint1,
-		endpoint2: endpoint2,
-		adminKey:  adminKey,
+		fabric1: fabric1,
+		fabric2: fabric2,
+		client1: client1,
+		client2: client2,
 	}
 }
 
 type IntegrationTestSuite struct {
 	suite.Suite
-	client             TestClient
+	client1            TestClient
 	client2            TestClient
 	gasPricer          calls.GasPricer
 	bridgeAddr         common.Address
@@ -59,35 +55,13 @@ type IntegrationTestSuite struct {
 	assetStoreAddr     common.Address
 	fabric1            calls.TxFabric
 	fabric2            calls.TxFabric
-	endpoint1          string
-	endpoint2          string
-	adminKey           *secp256k1.Keypair
 	erc20RID           [32]byte
 	erc721RID          [32]byte
 	genericRID         [32]byte
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
-	ethClient, err := evmclient.NewEVMClientFromParams(s.endpoint1, s.adminKey.PrivateKey())
-	if err != nil {
-		panic(err)
-	}
-	s.client = ethClient
-
-	ethClient2, err := evmclient.NewEVMClientFromParams(s.endpoint2, s.adminKey.PrivateKey())
-	if err != nil {
-		panic(err)
-	}
-	s.client2 = ethClient2
-
-	b, err := ethClient.LatestBlock()
-	if err != nil {
-		panic(err)
-	}
-
-	log.Debug().Msgf("Latest block %s", b.String())
-
-	config, err := local.PrepareLocalEVME2EEnv(ethClient, s.fabric1, 1, big.NewInt(2), s.adminKey.CommonAddress())
+	config, err := local.PrepareLocalEVME2EEnv(s.client1, s.fabric1, 1, big.NewInt(2), s.client1.From())
 	if err != nil {
 		panic(err)
 	}
@@ -100,9 +74,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.genericHandlerAddr = config.GenericHandlerAddr
 	s.assetStoreAddr = config.AssetStoreAddr
 
-	s.gasPricer = evmgaspricer.NewStaticGasPriceDeterminant(s.client, nil)
+	s.gasPricer = evmgaspricer.NewStaticGasPriceDeterminant(s.client2, nil)
 
-	cfg2, err := local.PrepareLocalEVME2EEnv(ethClient2, s.fabric2, 2, big.NewInt(2), s.adminKey.CommonAddress())
+	cfg2, err := local.PrepareLocalEVME2EEnv(s.client2, s.fabric2, 2, big.NewInt(2), s.client2.From())
 	if err != nil {
 		panic(err)
 	}
@@ -119,9 +93,9 @@ func (s *IntegrationTestSuite) TearDownTest()  {}
 func (s *IntegrationTestSuite) TestErc20Deposit() {
 	dstAddr := keystore.TestKeyRing.EthereumKeys[keystore.BobKey].CommonAddress()
 
-	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client)
-	erc20Contract1 := erc20.NewERC20Contract(s.client, s.erc20ContractAddr, transactor1)
-	bridgeContract1 := bridge.NewBridgeContract(s.client, s.bridgeAddr, transactor1)
+	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client1)
+	erc20Contract1 := erc20.NewERC20Contract(s.client1, s.erc20ContractAddr, transactor1)
+	bridgeContract1 := bridge.NewBridgeContract(s.client1, s.bridgeAddr, transactor1)
 
 	transactor2 := signAndSend.NewSignAndSendTransactor(s.fabric2, s.gasPricer, s.client2)
 	erc20Contract2 := erc20.NewERC20Contract(s.client2, s.erc20ContractAddr, transactor2)
@@ -141,7 +115,7 @@ func (s *IntegrationTestSuite) TestErc20Deposit() {
 	err = WaitForProposalExecuted(s.client2, s.bridgeAddr2)
 	s.Nil(err)
 
-	senderBalAfter, err := erc20Contract1.GetBalance(s.adminKey.CommonAddress())
+	senderBalAfter, err := erc20Contract1.GetBalance(s.client1.From())
 	s.Nil(err)
 	s.Equal(-1, senderBalAfter.Cmp(senderBalBefore))
 
@@ -162,9 +136,9 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 	txOptions := transactor.TransactOptions{}
 
 	// erc721 contract for evm1
-	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client)
-	erc721Contract1 := erc721.NewErc721Contract(s.client, s.erc721ContractAddr, transactor1)
-	bridgeContract1 := bridge.NewBridgeContract(s.client, s.bridgeAddr, transactor1)
+	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client1)
+	erc721Contract1 := erc721.NewErc721Contract(s.client1, s.erc721ContractAddr, transactor1)
+	bridgeContract1 := bridge.NewBridgeContract(s.client1, s.bridgeAddr, transactor1)
 
 	// erc721 contract for evm2
 	transactor2 := signAndSend.NewSignAndSendTransactor(s.fabric2, s.gasPricer, s.client2)
@@ -172,7 +146,7 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 
 	// Mint token and give approval
 	// This is done here so token only exists on evm1
-	_, err := erc721Contract1.Mint(tokenId, metadata, s.adminKey.CommonAddress(), txOptions)
+	_, err := erc721Contract1.Mint(tokenId, metadata, s.client1.From(), txOptions)
 	s.Nil(err, "Mint failed")
 	_, err = erc721Contract1.Approve(tokenId, s.erc721HandlerAddr, txOptions)
 	s.Nil(err, "Approve failed")
@@ -180,7 +154,7 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 	// Check on evm1 if initial owner is admin
 	initialOwner, err := erc721Contract1.Owner(tokenId)
 	s.Nil(err)
-	s.Equal(initialOwner.String(), s.adminKey.CommonAddress().String())
+	s.Equal(initialOwner.String(), s.client1.From())
 
 	// Check on evm2 token doesn't exist
 	_, err = erc721Contract2.Owner(tokenId)
@@ -204,10 +178,10 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 }
 
 func (s *IntegrationTestSuite) TestGenericDeposit() {
-	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client)
+	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client1)
 	transactor2 := signAndSend.NewSignAndSendTransactor(s.fabric2, s.gasPricer, s.client2)
 
-	bridgeContract1 := bridge.NewBridgeContract(s.client, s.bridgeAddr, transactor1)
+	bridgeContract1 := bridge.NewBridgeContract(s.client1, s.bridgeAddr, transactor1)
 	assetStoreContract2 := centrifuge.NewAssetStoreContract(s.client2, s.assetStoreAddr, transactor2)
 
 	hash, _ := substrateTypes.GetHash(substrateTypes.NewI64(int64(1)))

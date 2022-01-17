@@ -183,7 +183,7 @@ func PrepareErc20EVME2EEnv(
 	bridgeContract *bridge.BridgeContract, erc20Contract *erc20.ERC20Contract, mintTo common.Address, conf EVME2EConfig,
 ) error {
 	// Setting resource
-	resourceID := calls.SliceTo32Bytes(append(common.LeftPadBytes(conf.Erc20Addr.Bytes(), 31), 0))
+	resourceID := calls.SliceTo32Bytes(common.LeftPadBytes([]byte{0}, 31))
 	_, err := bridgeContract.AdminSetResource(
 		conf.Erc20HandlerAddr, resourceID, conf.Erc20Addr, transactor.TransactOptions{GasLimit: 2000000},
 	)
@@ -215,7 +215,7 @@ func PrepareErc20EVME2EEnv(
 }
 
 func PrepareGenericEVME2EEnv(bridgeContract *bridge.BridgeContract, conf EVME2EConfig) error {
-	resourceID := calls.SliceTo32Bytes(append(common.LeftPadBytes(conf.GenericHandlerAddr.Bytes(), 31), 1))
+	resourceID := calls.SliceTo32Bytes(common.LeftPadBytes([]byte{1}, 31))
 	_, err := bridgeContract.AdminSetGenericResource(
 		conf.GenericHandlerAddr,
 		resourceID,
@@ -233,7 +233,7 @@ func PrepareGenericEVME2EEnv(bridgeContract *bridge.BridgeContract, conf EVME2EC
 
 func PrepareErc721EVME2EEnv(bridgeContract *bridge.BridgeContract, erc721Contract *erc721.ERC721Contract, conf EVME2EConfig) error {
 	// Registering resource
-	resourceID := calls.SliceTo32Bytes(append(common.LeftPadBytes(conf.Erc721Addr.Bytes(), 31), uint8(2)))
+	resourceID := calls.SliceTo32Bytes(common.LeftPadBytes([]byte{2}, 31))
 	_, err := bridgeContract.AdminSetResource(conf.Erc721HandlerAddr, resourceID, conf.Erc721Addr, transactor.TransactOptions{GasLimit: 2000000})
 	if err != nil {
 		return err
