@@ -42,49 +42,35 @@ func SetupEVM2EVMTestSuite(fabric1, fabric2 calls.TxFabric, client1, client2 Tes
 
 type IntegrationTestSuite struct {
 	suite.Suite
-	client1            TestClient
-	client2            TestClient
-	gasPricer          calls.GasPricer
-	bridgeAddr         common.Address
-	bridgeAddr2        common.Address
-	erc20HandlerAddr   common.Address
-	erc20ContractAddr  common.Address
-	erc721HandlerAddr  common.Address
-	erc721ContractAddr common.Address
-	genericHandlerAddr common.Address
-	assetStoreAddr     common.Address
-	fabric1            calls.TxFabric
-	fabric2            calls.TxFabric
-	erc20RID           [32]byte
-	erc721RID          [32]byte
-	genericRID         [32]byte
+	client1    TestClient
+	client2    TestClient
+	gasPricer  calls.GasPricer
+	fabric1    calls.TxFabric
+	fabric2    calls.TxFabric
+	erc20RID   [32]byte
+	erc721RID  [32]byte
+	genericRID [32]byte
+	config1    local.EVME2EConfig
+	config2    local.EVME2EConfig
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
-	config, err := local.PrepareLocalEVME2EEnv(s.client1, s.fabric1, 1, big.NewInt(2), s.client1.From())
+	config1, err := local.PrepareLocalEVME2EEnv(s.client1, s.fabric1, 1, big.NewInt(2), s.client1.From())
 	if err != nil {
 		panic(err)
 	}
+	s.config1 = config1
 
-	s.bridgeAddr = config.BridgeAddr
-	s.erc20ContractAddr = config.Erc20Addr
-	s.erc20HandlerAddr = config.Erc20HandlerAddr
-	s.erc721ContractAddr = config.Erc721Addr
-	s.erc721HandlerAddr = config.Erc721HandlerAddr
-	s.genericHandlerAddr = config.GenericHandlerAddr
-	s.assetStoreAddr = config.AssetStoreAddr
-
-	s.gasPricer = evmgaspricer.NewStaticGasPriceDeterminant(s.client2, nil)
-
-	cfg2, err := local.PrepareLocalEVME2EEnv(s.client2, s.fabric2, 2, big.NewInt(2), s.client2.From())
+	config2, err := local.PrepareLocalEVME2EEnv(s.client2, s.fabric2, 2, big.NewInt(2), s.client2.From())
 	if err != nil {
 		panic(err)
 	}
+	s.config2 = config2
 
-	s.bridgeAddr2 = cfg2.BridgeAddr
 	s.erc20RID = calls.SliceTo32Bytes(common.LeftPadBytes([]byte{0}, 31))
 	s.genericRID = calls.SliceTo32Bytes(common.LeftPadBytes([]byte{1}, 31))
 	s.erc721RID = calls.SliceTo32Bytes(common.LeftPadBytes([]byte{2}, 31))
+	s.gasPricer = evmgaspricer.NewStaticGasPriceDeterminant(s.client2, nil)
 }
 func (s *IntegrationTestSuite) TearDownSuite() {}
 func (s *IntegrationTestSuite) SetupTest()     {}
@@ -94,11 +80,11 @@ func (s *IntegrationTestSuite) TestErc20Deposit() {
 	dstAddr := keystore.TestKeyRing.EthereumKeys[keystore.BobKey].CommonAddress()
 
 	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client1)
-	erc20Contract1 := erc20.NewERC20Contract(s.client1, s.erc20ContractAddr, transactor1)
-	bridgeContract1 := bridge.NewBridgeContract(s.client1, s.bridgeAddr, transactor1)
+	erc20Contract1 := erc20.NewERC20Contract(s.client1, s.config1.Erc20Addr, transactor1)
+	bridgeContract1 := bridge.NewBridgeContract(s.client1, s.config1.BridgeAddr, transactor1)
 
 	transactor2 := signAndSend.NewSignAndSendTransactor(s.fabric2, s.gasPricer, s.client2)
-	erc20Contract2 := erc20.NewERC20Contract(s.client2, s.erc20ContractAddr, transactor2)
+	erc20Contract2 := erc20.NewERC20Contract(s.client2, s.config2.Erc20Addr, transactor2)
 
 	senderBalBefore, err := erc20Contract1.GetBalance(local.EveKp.CommonAddress())
 	s.Nil(err)
@@ -112,7 +98,7 @@ func (s *IntegrationTestSuite) TestErc20Deposit() {
 	}
 	s.Nil(err)
 
-	err = WaitForProposalExecuted(s.client2, s.bridgeAddr2)
+	err = WaitForProposalExecuted(s.client2, s.config2.BridgeAddr)
 	s.Nil(err)
 
 	senderBalAfter, err := erc20Contract1.GetBalance(s.client1.From())
@@ -126,8 +112,6 @@ func (s *IntegrationTestSuite) TestErc20Deposit() {
 }
 
 func (s *IntegrationTestSuite) TestErc721Deposit() {
-	s.NotEmpty(s.erc721ContractAddr)
-	s.NotEmpty(s.erc721HandlerAddr)
 	tokenId := big.NewInt(1)
 	metadata := "metadata.url"
 
@@ -137,18 +121,18 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 
 	// erc721 contract for evm1
 	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client1)
-	erc721Contract1 := erc721.NewErc721Contract(s.client1, s.erc721ContractAddr, transactor1)
-	bridgeContract1 := bridge.NewBridgeContract(s.client1, s.bridgeAddr, transactor1)
+	erc721Contract1 := erc721.NewErc721Contract(s.client1, s.config1.Erc721Addr, transactor1)
+	bridgeContract1 := bridge.NewBridgeContract(s.client1, s.config1.BridgeAddr, transactor1)
 
 	// erc721 contract for evm2
 	transactor2 := signAndSend.NewSignAndSendTransactor(s.fabric2, s.gasPricer, s.client2)
-	erc721Contract2 := erc721.NewErc721Contract(s.client2, s.erc721ContractAddr, transactor2)
+	erc721Contract2 := erc721.NewErc721Contract(s.client2, s.config2.Erc721Addr, transactor2)
 
 	// Mint token and give approval
 	// This is done here so token only exists on evm1
 	_, err := erc721Contract1.Mint(tokenId, metadata, s.client1.From(), txOptions)
 	s.Nil(err, "Mint failed")
-	_, err = erc721Contract1.Approve(tokenId, s.erc721HandlerAddr, txOptions)
+	_, err = erc721Contract1.Approve(tokenId, s.config2.Erc721HandlerAddr, txOptions)
 	s.Nil(err, "Approve failed")
 
 	// Check on evm1 if initial owner is admin
@@ -165,7 +149,7 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 	)
 	s.Nil(err)
 
-	err = WaitForProposalExecuted(s.client2, s.bridgeAddr2)
+	err = WaitForProposalExecuted(s.client2, s.config2.BridgeAddr)
 	s.Nil(err)
 	// Check on evm1 that token is burned
 	_, err = erc721Contract1.Owner(tokenId)
@@ -181,8 +165,8 @@ func (s *IntegrationTestSuite) TestGenericDeposit() {
 	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer, s.client1)
 	transactor2 := signAndSend.NewSignAndSendTransactor(s.fabric2, s.gasPricer, s.client2)
 
-	bridgeContract1 := bridge.NewBridgeContract(s.client1, s.bridgeAddr, transactor1)
-	assetStoreContract2 := centrifuge.NewAssetStoreContract(s.client2, s.assetStoreAddr, transactor2)
+	bridgeContract1 := bridge.NewBridgeContract(s.client1, s.config1.BridgeAddr, transactor1)
+	assetStoreContract2 := centrifuge.NewAssetStoreContract(s.client2, s.config2.AssetStoreAddr, transactor2)
 
 	hash, _ := substrateTypes.GetHash(substrateTypes.NewI64(int64(1)))
 
@@ -192,7 +176,7 @@ func (s *IntegrationTestSuite) TestGenericDeposit() {
 	}
 	s.Nil(err)
 
-	err = WaitForProposalExecuted(s.client2, s.bridgeAddr2)
+	err = WaitForProposalExecuted(s.client2, s.config2.BridgeAddr)
 	s.Nil(err)
 	// Asset hash sent is stored in centrifuge asset store contract
 	exists, err := assetStoreContract2.IsCentrifugeAssetStored(hash)
