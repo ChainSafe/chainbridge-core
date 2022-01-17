@@ -24,4 +24,5 @@ var (
 	url           string
 	gasPrice      *big.Int
 	senderKeyPair *secp256k1.Keypair
+	prepare       bool
 )

@@ -65,7 +65,7 @@ func ProcessSimulateFlags(cmd *cobra.Command, args []string) {
 
 func SimulateCmd(cmd *cobra.Command) error {
 	// fetch global flag values
-	url, _, _, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	url, _, _, senderKeyPair, _, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}

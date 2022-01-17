@@ -29,4 +29,5 @@ var (
 	gasLimit      uint64
 	gasPrice      *big.Int
 	senderKeyPair *secp256k1.Keypair
+	prepare       bool
 )

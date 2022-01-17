@@ -160,7 +160,7 @@ func CallDeployCLI(cmd *cobra.Command, args []string) error {
 
 func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPricer utils.GasPricerWithPostConfig) error {
 	// fetch global flag values
-	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
+	url, gasLimit, gasPrice, senderKeyPair, _, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
 		return err
 	}

@@ -32,7 +32,7 @@ var approveCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c, prepare)
 		if err != nil {
 			return err
 		}

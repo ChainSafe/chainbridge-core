@@ -39,6 +39,7 @@ var (
 	PrivateKeyFlagName         = "private-key"
 	JsonWalletFlagName         = "json-wallet"
 	JsonWalletPasswordFlagName = "json-wallet-password"
+	Prepare                    = "prepare"
 )
 
 func BindEVMCLIFlags(evmRootCLI *cobra.Command) {
@@ -49,6 +50,7 @@ func BindEVMCLIFlags(evmRootCLI *cobra.Command) {
 	evmRootCLI.PersistentFlags().String(PrivateKeyFlagName, "", "Private key to use")
 	evmRootCLI.PersistentFlags().String(JsonWalletFlagName, "", "Encrypted JSON wallet")
 	evmRootCLI.PersistentFlags().String(JsonWalletPasswordFlagName, "", "Password for encrypted JSON wallet")
+	evmRootCLI.PersistentFlags().Bool(Prepare, false, "Generate calldata for command")
 
 	_ = viper.BindPFlag(UrlFlagName, evmRootCLI.PersistentFlags().Lookup(UrlFlagName))
 	_ = viper.BindPFlag(GasLimitFlagName, evmRootCLI.PersistentFlags().Lookup(GasLimitFlagName))
@@ -57,6 +59,7 @@ func BindEVMCLIFlags(evmRootCLI *cobra.Command) {
 	_ = viper.BindPFlag(PrivateKeyFlagName, evmRootCLI.PersistentFlags().Lookup(PrivateKeyFlagName))
 	_ = viper.BindPFlag(JsonWalletFlagName, evmRootCLI.PersistentFlags().Lookup(JsonWalletFlagName))
 	_ = viper.BindPFlag(JsonWalletPasswordFlagName, evmRootCLI.PersistentFlags().Lookup(JsonWalletPasswordFlagName))
+	_ = viper.BindPFlag(Prepare, evmRootCLI.PersistentFlags().Lookup(Prepare))
 }
 
 func init() {

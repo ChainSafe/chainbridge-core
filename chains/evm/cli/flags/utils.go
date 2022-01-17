@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 
 	"github.com/ChainSafe/chainbridge-core/keystore"
@@ -16,23 +17,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func GlobalFlagValues(cmd *cobra.Command) (string, uint64, *big.Int, *secp256k1.Keypair, error) {
+func GlobalFlagValues(cmd *cobra.Command) (string, uint64, *big.Int, *secp256k1.Keypair, bool, error) {
 	url, err := cmd.Flags().GetString("url")
 	if err != nil {
 		log.Error().Err(fmt.Errorf("url error: %v", err))
-		return "", consts.DefaultGasLimit, nil, nil, err
+		return "", consts.DefaultGasLimit, nil, nil, false, err
 	}
 
 	gasLimitInt, err := cmd.Flags().GetUint64("gas-limit")
 	if err != nil {
 		log.Error().Err(fmt.Errorf("gas limit error: %v", err))
-		return "", consts.DefaultGasLimit, nil, nil, err
+		return "", consts.DefaultGasLimit, nil, nil, false, err
 	}
 
 	gasPriceInt, err := cmd.Flags().GetUint64("gas-price")
 	if err != nil {
 		log.Error().Err(fmt.Errorf("gas price error: %v", err))
-		return "", consts.DefaultGasLimit, nil, nil, err
+		return "", consts.DefaultGasLimit, nil, nil, false, err
 	}
 	var gasPrice *big.Int = nil
 	if gasPriceInt != 0 {
@@ -42,9 +43,15 @@ func GlobalFlagValues(cmd *cobra.Command) (string, uint64, *big.Int, *secp256k1.
 	senderKeyPair, err := defineSender(cmd)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("define sender error: %v", err))
-		return "", consts.DefaultGasLimit, nil, nil, err
+		return "", consts.DefaultGasLimit, nil, nil, false, err
 	}
-	return url, gasLimitInt, gasPrice, senderKeyPair, nil
+
+	prepare, err := cmd.Flags().GetBool("prepare")
+	if err != nil {
+		log.Error().Err(fmt.Errorf("generate calldata error: %v", err))
+		return "", consts.DefaultGasLimit, nil, nil, false, err
+	}
+	return url, gasLimitInt, gasPrice, senderKeyPair, prepare, nil
 }
 
 func defineSender(cmd *cobra.Command) (*secp256k1.Keypair, error) {
