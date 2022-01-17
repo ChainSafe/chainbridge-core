@@ -26,5 +26,15 @@ func TestRunE2ETests(t *testing.T) {
 		panic(err)
 	}
 
-	suite.Run(t, evm.SetupEVM2EVMTestSuite(evmtransaction.NewTransaction, evmtransaction.NewTransaction, ethClient1, ethClient2))
+	suite.Run(
+		t,
+		evm.SetupEVM2EVMTestSuite(
+			evmtransaction.NewTransaction,
+			evmtransaction.NewTransaction,
+			ethClient1,
+			ethClient2,
+			local.DefaultRelayerAddresses,
+			local.DefaultRelayerAddresses,
+		),
+	)
 }

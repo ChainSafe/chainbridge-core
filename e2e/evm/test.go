@@ -31,38 +31,42 @@ type TestClient interface {
 	SubscribeFilterLogs(ctx context.Context, q ethereum.FilterQuery, ch chan<- types.Log) (ethereum.Subscription, error)
 }
 
-func SetupEVM2EVMTestSuite(fabric1, fabric2 calls.TxFabric, client1, client2 TestClient) *IntegrationTestSuite {
+func SetupEVM2EVMTestSuite(fabric1, fabric2 calls.TxFabric, client1, client2 TestClient, relayerAddresses1, relayerAddresses2 []common.Address) *IntegrationTestSuite {
 	return &IntegrationTestSuite{
-		fabric1: fabric1,
-		fabric2: fabric2,
-		client1: client1,
-		client2: client2,
+		fabric1:           fabric1,
+		fabric2:           fabric2,
+		client1:           client1,
+		client2:           client2,
+		relayerAddresses1: relayerAddresses1,
+		relayerAddresses2: relayerAddresses2,
 	}
 }
 
 type IntegrationTestSuite struct {
 	suite.Suite
-	client1    TestClient
-	client2    TestClient
-	gasPricer1 calls.GasPricer
-	gasPricer2 calls.GasPricer
-	fabric1    calls.TxFabric
-	fabric2    calls.TxFabric
-	erc20RID   [32]byte
-	erc721RID  [32]byte
-	genericRID [32]byte
-	config1    local.EVME2EConfig
-	config2    local.EVME2EConfig
+	relayerAddresses1 []common.Address
+	relayerAddresses2 []common.Address
+	client1           TestClient
+	client2           TestClient
+	gasPricer1        calls.GasPricer
+	gasPricer2        calls.GasPricer
+	fabric1           calls.TxFabric
+	fabric2           calls.TxFabric
+	erc20RID          [32]byte
+	erc721RID         [32]byte
+	genericRID        [32]byte
+	config1           local.EVME2EConfig
+	config2           local.EVME2EConfig
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
-	config1, err := local.PrepareLocalEVME2EEnv(s.client1, s.fabric1, 1, big.NewInt(2), s.client1.From())
+	config1, err := local.PrepareLocalEVME2EEnv(s.client1, s.fabric1, 1, big.NewInt(2), s.client1.From(), s.relayerAddresses1)
 	if err != nil {
 		panic(err)
 	}
 	s.config1 = config1
 
-	config2, err := local.PrepareLocalEVME2EEnv(s.client2, s.fabric2, 2, big.NewInt(2), s.client2.From())
+	config2, err := local.PrepareLocalEVME2EEnv(s.client2, s.fabric2, 2, big.NewInt(2), s.client2.From(), s.relayerAddresses2)
 	if err != nil {
 		panic(err)
 	}

@@ -55,13 +55,14 @@ func PrepareLocalEVME2EEnv(
 	domainID uint8,
 	threshold *big.Int,
 	mintTo common.Address,
+	relayerAddresses []common.Address,
 ) (EVME2EConfig, error) {
 	staticGasPricer := evmgaspricer.NewStaticGasPriceDeterminant(ethClient, nil)
 	t := signAndSend.NewSignAndSendTransactor(fabric, staticGasPricer, ethClient)
 
 	bridgeContract := bridge.NewBridgeContract(ethClient, common.Address{}, t)
 	bridgeContractAddress, err := bridgeContract.DeployContract(
-		domainID, DefaultRelayerAddresses, threshold, big.NewInt(0), big.NewInt(100),
+		domainID, relayerAddresses, threshold, big.NewInt(0), big.NewInt(100),
 	)
 	if err != nil {
 		return EVME2EConfig{}, err
