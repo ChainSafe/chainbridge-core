@@ -31,7 +31,7 @@ The chainbridge-core-example currently supports two modules:
 3. [Substrate](#substrate)
 
 ## Usage
-Since chainbridge-core is the modular framework it will require writing some code to get it running. 
+Since chainbridge-core is the modular framework it will require writing some code to get it running.
 
 You can find some examples [here](https://github.com/ChainSafe/chainbridge-core-example).
 
@@ -74,6 +74,7 @@ Flags:
       --network uint                ID of the Network
       --private-key string          Private key to use
       --url string                  URL of the node to receive RPC calls (default "ws://localhost:8545")
+      --prepare                     Generate calldata for contract calls (doesn't require private key and doesn't send a transaction)
 ```
 
 &nbsp;
