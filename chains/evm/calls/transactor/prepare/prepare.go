@@ -1,8 +1,9 @@
 package prepare
 
 import (
+	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"github.com/rs/zerolog/log"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -20,10 +21,14 @@ func NewPrepareTransactor() Transactor {
 
 // Outputs calldata to stdout (called when --prepare flag value is set as true from CLI)
 func (t *prepareTransactor) Transact(to *common.Address, data []byte, opts transactor.TransactOptions) (*common.Hash, error) {
-	log.Info().Msgf(`
+	fmt.Printf(`
+===============================================
 To:
 %s
+
 Calldata:
-%+v`, to, common.Bytes2Hex(data))
+%+v
+===============================================
+`, to, common.Bytes2Hex(data))
 	return &common.Hash{}, nil
 }

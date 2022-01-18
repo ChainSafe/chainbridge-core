@@ -22,6 +22,6 @@ func generateKeyPair(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	log.Debug().Msgf("Addr: %s,  PrivKey %x", kp.CommonAddress().String(), kp.Encode())
+	log.Debug().Msgf("Address: %s,  Private key: %x", kp.CommonAddress().String(), kp.Encode())
 	return nil
 }
