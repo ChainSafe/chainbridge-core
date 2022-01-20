@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"math/big"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
-	"math/big"
 )
 
 type MessageHandlerFunc func(m *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error)
@@ -81,11 +82,19 @@ func ERC20MessageHandler(m *message.Message, handlerAddr, bridgeAddress common.A
 	if !ok {
 		return nil, errors.New("wrong payloads recipient format")
 	}
+	priority, ok := m.Payload[2].([]byte)
+	if !ok {
+		return nil, errors.New("wrong payloads priority format")
+	}
 	var data []byte
 	data = append(data, common.LeftPadBytes(amount, 32)...) // amount (uint256)
 	recipientLen := big.NewInt(int64(len(recipient))).Bytes()
 	data = append(data, common.LeftPadBytes(recipientLen, 32)...) // length of recipient (uint256)
 	data = append(data, recipient...)                             // recipient ([]byte)
+
+	priorityLen := big.NewInt(int64(len(priority))).Bytes()
+	data = append(data, common.LeftPadBytes(priorityLen, 1)...) // length of priority (uint8)
+	data = append(data, priority...)                            // priority ([]byte)
 	return proposal.NewProposal(m.Source, m.DepositNonce, m.ResourceId, data, handlerAddr, bridgeAddress), nil
 }
 
@@ -105,6 +114,10 @@ func ERC721MessageHandler(msg *message.Message, handlerAddr, bridgeAddress commo
 	if !ok {
 		return nil, errors.New("wrong payloads metadata format")
 	}
+	priority, ok := msg.Payload[3].([]byte)
+	if !ok {
+		return nil, errors.New("wrong payloads priority format")
+	}
 	data := bytes.Buffer{}
 	data.Write(common.LeftPadBytes(tokenID, 32))
 	recipientLen := big.NewInt(int64(len(recipient))).Bytes()
@@ -113,6 +126,9 @@ func ERC721MessageHandler(msg *message.Message, handlerAddr, bridgeAddress commo
 	metadataLen := big.NewInt(int64(len(metadata))).Bytes()
 	data.Write(common.LeftPadBytes(metadataLen, 32))
 	data.Write(metadata)
+	priorityLen := big.NewInt(int64(len(priority))).Bytes()
+	data.Write(common.LeftPadBytes(priorityLen, 1))
+	data.Write(priority)
 	return proposal.NewProposal(msg.Source, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress), nil
 }
 
