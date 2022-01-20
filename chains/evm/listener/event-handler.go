@@ -91,9 +91,13 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.Re
 
 	// 64 + recipient address length) - ((64 + recipient address length) + 1) is priority length
 	priorityLength := big.NewInt(0).SetBytes(calldata[(64 + recipientAddressLength.Int64()):((64 + recipientAddressLength.Int64()) + 1)])
-
-	// (64 + recipient address length + 1) - ((64 + recipient address length + 1) + priority length) is priority data
-	priority := calldata[(64 + recipientAddressLength.Int64() + 1):((64 + recipientAddressLength.Int64()) + 1 + priorityLength.Int64())]
+	var priority []byte
+	if priorityLength.Int64() == 0 {
+		priority = []byte{1}
+	} else {
+		// (64 + recipient address length + 1) - ((64 + recipient address length + 1) + priority length) is priority data
+		priority = calldata[(64 + recipientAddressLength.Int64() + 1):((64 + recipientAddressLength.Int64()) + 1 + priorityLength.Int64())]
+	}
 	return &message.Message{
 		Source:       sourceID,
 		Destination:  destId,
