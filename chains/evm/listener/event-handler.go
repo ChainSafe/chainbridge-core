@@ -2,11 +2,12 @@ package listener
 
 import (
 	"errors"
+	"math/big"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/rs/zerolog/log"
-	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -82,9 +83,17 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.Re
 	// within ERC20MessageHandler
 	// https://github.com/ChainSafe/chainbridge-core/blob/main/chains/evm/voter/message-handler.go#L108
 
-	// recipientAddress: last 20 bytes of calldata
-	recipientAddress := calldata[64:]
+	// 32-64 is recipient address length
+	recipientAddressLength := big.NewInt(0).SetBytes(calldata[32:64])
 
+	// 64 - (64 + recipient address length) is recipient address
+	recipientAddress := calldata[64:(64 + recipientAddressLength.Int64())]
+
+	// 64 + recipient address length) - ((64 + recipient address length) + 1) is priority length
+	priorityLength := big.NewInt(0).SetBytes(calldata[(64 + recipientAddressLength.Int64()):((64 + recipientAddressLength.Int64()) + 1)])
+
+	// (64 + recipient address length + 1) - ((64 + recipient address length + 1) + priority length) is priority data
+	priority := calldata[(64 + recipientAddressLength.Int64() + 1):((64 + recipientAddressLength.Int64()) + 1 + priorityLength.Int64())]
 	return &message.Message{
 		Source:       sourceID,
 		Destination:  destId,
@@ -94,6 +103,7 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.Re
 		Payload: []interface{}{
 			amount,
 			recipientAddress,
+			priority,
 		},
 	}, nil
 }
@@ -137,17 +147,23 @@ func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.R
 	recipientAddress := calldata[64:(64 + recipientAddressLength.Int64())]
 
 	// (64 + recipient address length) - ((64 + recipient address length) + 32) is metadata length
-	medataLength := big.NewInt(0).SetBytes(
+	metadataLength := big.NewInt(0).SetBytes(
 		calldata[(64 + recipientAddressLength.Int64()):((64 + recipientAddressLength.Int64()) + 32)],
 	)
 
 	// ((64 + recipient address length) + 32) - ((64 + recipient address length) + 32 + metadata length) is metadata
 	var metadata []byte
-	if medataLength.Cmp(big.NewInt(0)) == 1 {
-		metadataStart := (64 + recipientAddressLength.Int64()) + 32
-		metadata = calldata[metadataStart : metadataStart+medataLength.Int64()]
+	var metadataStart int64
+	if metadataLength.Cmp(big.NewInt(0)) == 1 {
+		metadataStart = (64 + recipientAddressLength.Int64()) + 32
+		metadata = calldata[metadataStart : metadataStart+metadataLength.Int64()]
 	}
 
+	// (metadataStart + metadataLength) - (metadataStart + metadataLength + 1) is priority length
+	priorityLength := big.NewInt(0).SetBytes(calldata[(metadataStart + metadataLength.Int64()):(metadataStart + metadataLength.Int64() + 1)])
+
+	// (metadataStart + metadataLength + 1) - (metadataStart + metadataLength + 1) + priority length) is priority data
+	priority := calldata[(metadataStart + metadataLength.Int64() + 1):(metadataStart + metadataLength.Int64() + 1 + priorityLength.Int64())]
 	return &message.Message{
 		Source:       sourceID,
 		Destination:  destId,
@@ -158,6 +174,7 @@ func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.R
 			tokenId,
 			recipientAddress,
 			metadata,
+			priority,
 		},
 	}, nil
 }
