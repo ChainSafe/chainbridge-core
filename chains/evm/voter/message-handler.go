@@ -71,8 +71,8 @@ func (mh *EVMMessageHandler) RegisterMessageHandler(address string, handler Mess
 }
 
 func ERC20MessageHandler(m *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
-	if len(m.Payload) != 2 {
-		return nil, errors.New("malformed payload. Len  of payload should be 2")
+	if len(m.Payload) != 3 {
+		return nil, errors.New("malformed payload. Len  of payload should be 3")
 	}
 	amount, ok := m.Payload[0].([]byte)
 	if !ok {
@@ -99,8 +99,8 @@ func ERC20MessageHandler(m *message.Message, handlerAddr, bridgeAddress common.A
 }
 
 func ERC721MessageHandler(msg *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
-	if len(msg.Payload) != 3 {
-		return nil, errors.New("malformed payload. Len  of payload should be 3")
+	if len(msg.Payload) != 4 {
+		return nil, errors.New("malformed payload. Len  of payload should be 4")
 	}
 	tokenID, ok := msg.Payload[0].([]byte)
 	if !ok {
