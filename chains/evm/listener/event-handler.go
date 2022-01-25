@@ -88,14 +88,13 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.Re
 
 	// 64 - (64 + recipient address length) is recipient address
 	recipientAddress := calldata[64:(64 + recipientAddressLength.Int64())]
-	var priority []byte
 
 	// if there is priority data, parse it and use it
 	if 64+recipientAddressLength.Int64() < int64(len(calldata)) {
 		priorityLength := big.NewInt(0).SetBytes(calldata[(64 + recipientAddressLength.Int64()):((64 + recipientAddressLength.Int64()) + 1)])
 
 		// (64 + recipient address length + 1) - ((64 + recipient address length + 1) + priority length) is priority data
-		priority = calldata[(64 + recipientAddressLength.Int64() + 1):((64 + recipientAddressLength.Int64()) + 1 + priorityLength.Int64())]
+		priority := calldata[(64 + recipientAddressLength.Int64() + 1):((64 + recipientAddressLength.Int64()) + 1 + priorityLength.Int64())]
 		return &message.Message{
 			Source:       sourceID,
 			Destination:  destId,
@@ -135,12 +134,11 @@ func GenericEventHandler(sourceID, destId uint8, nonce uint64, resourceID types.
 
 	metadata := calldata[32 : 32+metadataLen.Int64()]
 
-	var priority []byte
 	// if there is priority data, parse it and use it
 	if 32+metadataLen.Int64() < int64(len(calldata)) {
 		priorityLength := big.NewInt(0).SetBytes(calldata[(32 + metadataLen.Int64()):(32 + metadataLen.Int64() + 1)])
 		// (64 + metadata length + 1) - ((64 + metadata length + 1) + priority length) is priority data
-		priority = calldata[(32 + metadataLen.Int64() + 1):((64 + metadataLen.Int64()) + 1 + priorityLength.Int64())]
+		priority := calldata[(32 + metadataLen.Int64() + 1):((64 + metadataLen.Int64()) + 1 + priorityLength.Int64())]
 		return &message.Message{
 			Source:       sourceID,
 			Destination:  destId,
@@ -195,12 +193,11 @@ func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.R
 		metadata = calldata[metadataStart : metadataStart+metadataLength.Int64()]
 	}
 
-	var priority []byte
 	if 64+recipientAddressLength.Int64()+32+metadataLength.Int64() < int64(len(calldata)) {
 		// (metadataStart + metadataLength) - (metadataStart + metadataLength + 1) is priority length
 		priorityLength := big.NewInt(0).SetBytes(calldata[(64 + recipientAddressLength.Int64() + 32 + metadataLength.Int64()):(64 + recipientAddressLength.Int64() + 32 + metadataLength.Int64() + 1)])
 		// (metadataStart + metadataLength + 1) - (metadataStart + metadataLength + 1) + priority length) is priority data
-		priority = calldata[(64 + recipientAddressLength.Int64() + 32 + metadataLength.Int64() + 1):(64 + recipientAddressLength.Int64() + 32 + metadataLength.Int64() + 1 + priorityLength.Int64())]
+		priority := calldata[(64 + recipientAddressLength.Int64() + 32 + metadataLength.Int64() + 1):(64 + recipientAddressLength.Int64() + 32 + metadataLength.Int64() + 1 + priorityLength.Int64())]
 		return &message.Message{
 			Source:       sourceID,
 			Destination:  destId,
