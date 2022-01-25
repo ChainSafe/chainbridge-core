@@ -43,7 +43,28 @@ type Message struct {
 	DepositNonce uint64 // Nonce for the deposit
 	ResourceId   types.ResourceID
 	Payload      []interface{} // data associated with event sequence
+	Metadata     []interface{} // Arbitrary data that will be most likely be used by the relayer
 	Type         TransferType
+}
+
+func NewMessage(
+	source uint8,
+	destination uint8,
+	depositNonce uint64,
+	resourceId types.ResourceID,
+	transferType TransferType,
+	payload []interface{},
+	metadata []interface{},
+) *Message {
+	return &Message{
+		source,
+		destination,
+		depositNonce,
+		resourceId,
+		payload,
+		metadata,
+		transferType,
+	}
 }
 
 // extractAmountTransferred is a private method to extract and transform the transfer amount

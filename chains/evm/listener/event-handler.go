@@ -90,36 +90,21 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.Re
 	recipientAddress := calldata[64:(64 + recipientAddressLength.Int64())]
 
 	// if there is priority data, parse it and use it
+	payload := []interface{}{
+		amount,
+		recipientAddress,
+	}
+
+	// arbitrary metadata that will be most likely be used by the relayer
+	var metadata []interface{}
 	if 64+recipientAddressLength.Int64() < int64(len(calldata)) {
 		priorityLength := big.NewInt(0).SetBytes(calldata[(64 + recipientAddressLength.Int64()):((64 + recipientAddressLength.Int64()) + 1)])
 
 		// (64 + recipient address length + 1) - ((64 + recipient address length + 1) + priority length) is priority data
 		priority := calldata[(64 + recipientAddressLength.Int64() + 1):((64 + recipientAddressLength.Int64()) + 1 + priorityLength.Int64())]
-		return &message.Message{
-			Source:       sourceID,
-			Destination:  destId,
-			DepositNonce: nonce,
-			ResourceId:   resourceID,
-			Type:         message.FungibleTransfer,
-			Payload: []interface{}{
-				amount,
-				recipientAddress,
-				priority,
-			},
-		}, nil
-	} else {
-		return &message.Message{
-			Source:       sourceID,
-			Destination:  destId,
-			DepositNonce: nonce,
-			ResourceId:   resourceID,
-			Type:         message.FungibleTransfer,
-			Payload: []interface{}{
-				amount,
-				recipientAddress,
-			},
-		}, nil
+		metadata = append(metadata, priority)
 	}
+	return message.NewMessage(sourceID, destId, nonce, resourceID, message.FungibleTransfer, payload, metadata), nil
 }
 
 // GenericEventHandler converts data pulled from generic deposit event logs into message
@@ -134,34 +119,19 @@ func GenericEventHandler(sourceID, destId uint8, nonce uint64, resourceID types.
 
 	metadata := calldata[32 : 32+metadataLen.Int64()]
 
+	// arbitrary metadata that will be most likely be used by the relayer
+	var meta []interface{}
+	payload := []interface{}{
+		metadata,
+	}
 	// if there is priority data, parse it and use it
 	if 32+metadataLen.Int64() < int64(len(calldata)) {
 		priorityLength := big.NewInt(0).SetBytes(calldata[(32 + metadataLen.Int64()):(32 + metadataLen.Int64() + 1)])
 		// (64 + metadata length + 1) - ((64 + metadata length + 1) + priority length) is priority data
 		priority := calldata[(32 + metadataLen.Int64() + 1):((64 + metadataLen.Int64()) + 1 + priorityLength.Int64())]
-		return &message.Message{
-			Source:       sourceID,
-			Destination:  destId,
-			DepositNonce: nonce,
-			ResourceId:   resourceID,
-			Type:         message.GenericTransfer,
-			Payload: []interface{}{
-				metadata,
-				priority,
-			},
-		}, nil
-	} else {
-		return &message.Message{
-			Source:       sourceID,
-			Destination:  destId,
-			DepositNonce: nonce,
-			ResourceId:   resourceID,
-			Type:         message.GenericTransfer,
-			Payload: []interface{}{
-				metadata,
-			},
-		}, nil
+		meta = append(meta, priority)
 	}
+	return message.NewMessage(sourceID, destId, nonce, resourceID, message.GenericTransfer, payload, meta), nil
 }
 
 // Erc721EventHandler converts data pulled from ERC721 deposit event logs into message
@@ -184,7 +154,6 @@ func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.R
 	metadataLength := big.NewInt(0).SetBytes(
 		calldata[(64 + recipientAddressLength.Int64()):((64 + recipientAddressLength.Int64()) + 32)],
 	)
-
 	// ((64 + recipient address length) + 32) - ((64 + recipient address length) + 32 + metadata length) is metadata
 	var metadata []byte
 	var metadataStart int64
@@ -192,37 +161,21 @@ func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.R
 		metadataStart = (64 + recipientAddressLength.Int64()) + 32
 		metadata = calldata[metadataStart : metadataStart+metadataLength.Int64()]
 	}
+	// arbitrary metadata that will be most likely be used by the relayer
+	var meta []interface{}
+
+	payload := []interface{}{
+		tokenId,
+		recipientAddress,
+		metadata,
+	}
 
 	if 64+recipientAddressLength.Int64()+32+metadataLength.Int64() < int64(len(calldata)) {
 		// (metadataStart + metadataLength) - (metadataStart + metadataLength + 1) is priority length
 		priorityLength := big.NewInt(0).SetBytes(calldata[(64 + recipientAddressLength.Int64() + 32 + metadataLength.Int64()):(64 + recipientAddressLength.Int64() + 32 + metadataLength.Int64() + 1)])
 		// (metadataStart + metadataLength + 1) - (metadataStart + metadataLength + 1) + priority length) is priority data
 		priority := calldata[(64 + recipientAddressLength.Int64() + 32 + metadataLength.Int64() + 1):(64 + recipientAddressLength.Int64() + 32 + metadataLength.Int64() + 1 + priorityLength.Int64())]
-		return &message.Message{
-			Source:       sourceID,
-			Destination:  destId,
-			DepositNonce: nonce,
-			ResourceId:   resourceID,
-			Type:         message.NonFungibleTransfer,
-			Payload: []interface{}{
-				tokenId,
-				recipientAddress,
-				metadata,
-				priority,
-			},
-		}, nil
-	} else {
-		return &message.Message{
-			Source:       sourceID,
-			Destination:  destId,
-			DepositNonce: nonce,
-			ResourceId:   resourceID,
-			Type:         message.NonFungibleTransfer,
-			Payload: []interface{}{
-				tokenId,
-				recipientAddress,
-				metadata,
-			},
-		}, nil
+		meta = append(meta, priority)
 	}
+	return message.NewMessage(sourceID, destId, nonce, resourceID, message.NonFungibleTransfer, payload, meta), nil
 }
