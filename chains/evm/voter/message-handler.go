@@ -71,20 +71,17 @@ func (mh *EVMMessageHandler) RegisterMessageHandler(address string, handler Mess
 }
 
 func ERC20MessageHandler(m *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
-	if len(m.Payload) != 3 {
-		return nil, errors.New("malformed payload. Len  of payload should be 3")
+	payloadLen := len(m.Payload)
+	if payloadLen != 2 && payloadLen != 3 {
+		return nil, errors.New("malformed payload. Len  of payload should be 2 or 3")
 	}
 	amount, ok := m.Payload[0].([]byte)
 	if !ok {
-		return nil, errors.New("wrong payloads amount format")
+		return nil, errors.New("wrong payload amount format")
 	}
 	recipient, ok := m.Payload[1].([]byte)
 	if !ok {
-		return nil, errors.New("wrong payloads recipient format")
-	}
-	priority, ok := m.Payload[2].([]byte)
-	if !ok {
-		return nil, errors.New("wrong payloads priority format")
+		return nil, errors.New("wrong payload recipient format")
 	}
 	var data []byte
 	data = append(data, common.LeftPadBytes(amount, 32)...) // amount (uint256)
@@ -92,31 +89,34 @@ func ERC20MessageHandler(m *message.Message, handlerAddr, bridgeAddress common.A
 	data = append(data, common.LeftPadBytes(recipientLen, 32)...) // length of recipient (uint256)
 	data = append(data, recipient...)                             // recipient ([]byte)
 
-	priorityLen := big.NewInt(int64(len(priority))).Bytes()
-	data = append(data, common.LeftPadBytes(priorityLen, 1)...) // length of priority (uint8)
-	data = append(data, priority...)                            // priority ([]byte)
+	if payloadLen == 3 {
+		priority, ok := m.Payload[2].([]byte)
+		if !ok {
+			return nil, errors.New("wrong payload priority format")
+		}
+		priorityLen := big.NewInt(int64(len(priority))).Bytes()
+		data = append(data, common.LeftPadBytes(priorityLen, 1)...) // length of priority (uint8)
+		data = append(data, priority...)                            // priority ([]byte)
+	}
 	return proposal.NewProposal(m.Source, m.DepositNonce, m.ResourceId, data, handlerAddr, bridgeAddress), nil
 }
 
 func ERC721MessageHandler(msg *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
-	if len(msg.Payload) != 4 {
-		return nil, errors.New("malformed payload. Len  of payload should be 4")
+	payloadLen := len(msg.Payload)
+	if payloadLen != 3 && payloadLen != 4 {
+		return nil, errors.New("malformed payload. Len  of payload should be 3 or 4")
 	}
 	tokenID, ok := msg.Payload[0].([]byte)
 	if !ok {
-		return nil, errors.New("wrong payloads tokenID format")
+		return nil, errors.New("wrong payload tokenID format")
 	}
 	recipient, ok := msg.Payload[1].([]byte)
 	if !ok {
-		return nil, errors.New("wrong payloads recipient format")
+		return nil, errors.New("wrong payload recipient format")
 	}
 	metadata, ok := msg.Payload[2].([]byte)
 	if !ok {
-		return nil, errors.New("wrong payloads metadata format")
-	}
-	priority, ok := msg.Payload[3].([]byte)
-	if !ok {
-		return nil, errors.New("wrong payloads priority format")
+		return nil, errors.New("wrong payload metadata format")
 	}
 	data := bytes.Buffer{}
 	data.Write(common.LeftPadBytes(tokenID, 32))
@@ -126,23 +126,43 @@ func ERC721MessageHandler(msg *message.Message, handlerAddr, bridgeAddress commo
 	metadataLen := big.NewInt(int64(len(metadata))).Bytes()
 	data.Write(common.LeftPadBytes(metadataLen, 32))
 	data.Write(metadata)
-	priorityLen := big.NewInt(int64(len(priority))).Bytes()
-	data.Write(common.LeftPadBytes(priorityLen, 1))
-	data.Write(priority)
+
+	if payloadLen == 4 {
+		priority, ok := msg.Payload[3].([]byte)
+		if !ok {
+			return nil, errors.New("wrong payload priority format")
+		}
+		priorityLen := big.NewInt(int64(len(priority))).Bytes()
+		data.Write(common.LeftPadBytes(priorityLen, 1))
+		data.Write(priority)
+	}
+
 	return proposal.NewProposal(msg.Source, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress), nil
 }
 
 func GenericMessageHandler(msg *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
-	if len(msg.Payload) != 1 {
-		return nil, errors.New("malformed payload. Len  of payload should be 1")
+	payloadLen := len(msg.Payload)
+	if payloadLen != 1 && payloadLen != 2 {
+		return nil, errors.New("malformed payload. Len  of payload should be 1 or 2")
 	}
 	metadata, ok := msg.Payload[0].([]byte)
 	if !ok {
-		return nil, errors.New("unable to convert metadata to []byte")
+		return nil, errors.New("wrong payload metadata format")
 	}
 	data := bytes.Buffer{}
 	metadataLen := big.NewInt(int64(len(metadata))).Bytes()
 	data.Write(common.LeftPadBytes(metadataLen, 32)) // length of metadata (uint256)
 	data.Write(metadata)
+
+	if payloadLen == 2 {
+		priority, ok := msg.Payload[1].([]byte)
+		if !ok {
+			return nil, errors.New("wrong payload priority format")
+		}
+		priorityLen := big.NewInt(int64(len(priority))).Bytes()
+		data.Write(common.LeftPadBytes(priorityLen, 1))
+		data.Write(priority)
+	}
+
 	return proposal.NewProposal(msg.Source, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress), nil
 }
