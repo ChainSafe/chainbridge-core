@@ -1,8 +1,9 @@
 package deposit
 
 import (
-	"github.com/ethereum/go-ethereum/common/math"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/common/math"
 )
 
 func ConstructErc20DepositData(destRecipient []byte, amount *big.Int) []byte {

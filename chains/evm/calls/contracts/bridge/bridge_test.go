@@ -35,6 +35,7 @@ var (
 	testHandlerAddress    = "0xb157b07c616860546464b733a056be414167a09b"
 	testResourceId        = [32]byte{66}
 	testDomainId          = uint8(0)
+	metadata              = message.Metadata{}
 )
 
 func TestRunProposalStatusTestSuite(t *testing.T) {
@@ -49,13 +50,15 @@ func (s *ProposalStatusTestSuite) SetupTest() {
 	s.mockTransactor = mock_transactor.NewMockTransactor(gomockController)
 	s.bridgeAddress = common.HexToAddress("0x3162226db165D8eA0f51720CA2bbf44Db2105ADF")
 	s.bridgeContract = bridge.NewBridgeContract(s.mockContractCaller, common.HexToAddress(testContractAddress), s.mockTransactor)
+
 	s.proposal = *proposal.NewProposal(
 		uint8(1),
 		uint64(1),
 		testResourceId,
 		[]byte{},
 		common.HexToAddress(testHandlerAddress),
-		s.bridgeAddress,
+		common.HexToAddress(testContractAddress),
+		metadata,
 	)
 }
 func (s *ProposalStatusTestSuite) TearDownTest() {}

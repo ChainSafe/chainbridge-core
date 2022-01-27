@@ -12,9 +12,9 @@ import (
 	"testing"
 )
 
-var errIncorrectERC20PayloadLen = errors.New("malformed payload. Len  of payload should be 2 or 3")
-var errIncorrectERC721PayloadLen = errors.New("malformed payload. Len  of payload should be 3 or 4")
-var errIncorrectGenericPayloadLen = errors.New("malformed payload. Len  of payload should be 1 or 2")
+var errIncorrectERC20PayloadLen = errors.New("malformed payload. Len  of payload should be 2")
+var errIncorrectERC721PayloadLen = errors.New("malformed payload. Len  of payload should be 3")
+var errIncorrectGenericPayloadLen = errors.New("malformed payload. Len  of payload should be 1")
 
 var errIncorrectAmount = errors.New("wrong payload amount format")
 var errIncorrectRecipient = errors.New("wrong payload recipient format")
@@ -50,8 +50,7 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleMessage() {
 			[]byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}, // recipientAddress
 		},
 		Metadata: message.Metadata{
-			uint8(1),
-			[]byte{},
+			Priority: uint8(1),
 		},
 	}
 
@@ -74,8 +73,7 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleMessageIncorrectDataLen() {
 			[]byte{2}, // amount
 		},
 		Metadata: message.Metadata{
-			uint8(1),
-			[]byte{},
+			Priority: uint8(1),
 		},
 	}
 
@@ -100,8 +98,7 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleMessageIncorrectAmount() {
 			[]byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}, // recipientAddress
 		},
 		Metadata: message.Metadata{
-			uint8(1),
-			[]byte{},
+			Priority: uint8(1),
 		},
 	}
 
@@ -126,8 +123,7 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleMessageIncorrectRecipient() {
 			"incorrectRecipient", // recipientAddress
 		},
 		Metadata: message.Metadata{
-			uint8(1),
-			[]byte{},
+			Priority: uint8(1),
 		},
 	}
 
@@ -167,8 +163,7 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerEmptyMetadata() {
 			[]byte{}, // metadata
 		},
 		Metadata: message.Metadata{
-			uint8(1),
-			[]byte{},
+			Priority: uint8(1),
 		},
 	}
 
@@ -191,8 +186,7 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectDataLen() {
 			[]byte{2}, // tokenID
 		},
 		Metadata: message.Metadata{
-			uint8(1),
-			[]byte{},
+			Priority: uint8(1),
 		},
 	}
 
@@ -218,8 +212,7 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectAmount() {
 			[]byte{}, // metadata
 		},
 		Metadata: message.Metadata{
-			uint8(1),
-			[]byte{},
+			Priority: uint8(1),
 		},
 	}
 
@@ -245,8 +238,7 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectRecipient() {
 			[]byte{}, // metadata
 		},
 		Metadata: message.Metadata{
-			uint8(1),
-			[]byte{},
+			Priority: uint8(1),
 		},
 	}
 
@@ -272,8 +264,7 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectMetadata() {
 			"incorrectMetadata", // metadata
 		},
 		Metadata: message.Metadata{
-			uint8(1),
-			[]byte{},
+			Priority: uint8(1),
 		},
 	}
 
@@ -310,8 +301,7 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEvent() {
 			[]byte{}, // metadata
 		},
 		Metadata: message.Metadata{
-			uint8(1),
-			[]byte{},
+			Priority: uint8(1),
 		},
 	}
 
@@ -332,8 +322,7 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEventIncorrectDataLen() {
 		Type:         message.FungibleTransfer,
 		Payload:      []interface{}{},
 		Metadata: message.Metadata{
-			uint8(1),
-			[]byte{},
+			Priority: uint8(1),
 		},
 	}
 
@@ -357,8 +346,7 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEventIncorrectMetadata() {
 			"incorrectMetadata", // metadata
 		},
 		Metadata: message.Metadata{
-			uint8(1),
-			[]byte{},
+			Priority: uint8(1),
 		},
 	}
 
