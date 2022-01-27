@@ -55,9 +55,9 @@ func SetupDefaultEVMChain(rawConfig map[string]interface{}, txFabric calls.TxFab
 	t := signAndSend.NewSignAndSendTransactor(txFabric, gasPricer, client)
 	bridgeContract := bridge.NewBridgeContract(client, common.HexToAddress(config.Bridge), t)
 
-	isRegiteredRelayer, _ := bridgeContract.IsRelayer(common.HexToAddress(rawConfig["from"].(string)))
-	if !isRegiteredRelayer {
-		log.Error().Msgf("relayer [address: %s] is not registered on bridge contract [address: %s]:", common.HexToAddress(rawConfig["from"].(string)), rawConfig["bridge"])
+	isRegisteredRelayer, _ := bridgeContract.IsRelayer(common.HexToAddress(config.GeneralChainConfig.From))
+	if !isRegisteredRelayer {
+		log.Error().Msgf("relayer [address: %s] is not registered on bridge contract [address: %s]:", common.HexToAddress(config.GeneralChainConfig.From), config.Bridge)
 	}
 
 	eventHandler := listener.NewETHEventHandler(*bridgeContract)
