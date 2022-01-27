@@ -11,6 +11,10 @@ import (
 )
 
 type TransferType string
+type Metadata struct {
+	Priority uint8
+	Blob     []byte
+}
 
 const (
 	FungibleTransfer    TransferType = "FungibleTransfer"
@@ -44,6 +48,7 @@ type Message struct {
 	ResourceId   types.ResourceID
 	Payload      []interface{} // data associated with event sequence
 	Type         TransferType
+	Metadata     Metadata
 }
 
 // extractAmountTransferred is a private method to extract and transform the transfer amount

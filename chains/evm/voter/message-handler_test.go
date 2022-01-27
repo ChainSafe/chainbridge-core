@@ -48,7 +48,10 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleMessage() {
 		Payload: []interface{}{
 			[]byte{2}, // amount
 			[]byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}, // recipientAddress
-			[]byte{1}, // priority
+		},
+		Metadata: message.Metadata{
+			uint8(1),
+			[]byte{},
 		},
 	}
 
@@ -69,6 +72,10 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleMessageIncorrectDataLen() {
 		Type:         message.FungibleTransfer,
 		Payload: []interface{}{
 			[]byte{2}, // amount
+		},
+		Metadata: message.Metadata{
+			uint8(1),
+			[]byte{},
 		},
 	}
 
@@ -91,7 +98,10 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleMessageIncorrectAmount() {
 		Payload: []interface{}{
 			"incorrectAmount", // amount
 			[]byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}, // recipientAddress
-			[]byte{1}, // priority
+		},
+		Metadata: message.Metadata{
+			uint8(1),
+			[]byte{},
 		},
 	}
 
@@ -114,7 +124,10 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleMessageIncorrectRecipient() {
 		Payload: []interface{}{
 			[]byte{2},            // amount
 			"incorrectRecipient", // recipientAddress
-			[]byte{1},            // priority
+		},
+		Metadata: message.Metadata{
+			uint8(1),
+			[]byte{},
 		},
 	}
 
@@ -123,29 +136,6 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleMessageIncorrectRecipient() {
 	s.Nil(prop)
 	s.NotNil(err)
 	s.EqualError(err, errIncorrectRecipient.Error())
-}
-
-func (s *Erc20HandlerTestSuite) TestErc20HandleMessageIncorrectPriority() {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(big.NewInt(2), 32)...)
-	message := &message.Message{
-		Source:       1,
-		Destination:  0,
-		DepositNonce: 1,
-		ResourceId:   [32]byte{0},
-		Type:         message.FungibleTransfer,
-		Payload: []interface{}{
-			[]byte{2}, // amount
-			[]byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}, // recipientAddress
-			"incorrectPriority", // priority
-		},
-	}
-
-	prop, err := voter.ERC20MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
-
-	s.Nil(prop)
-	s.NotNil(err)
-	s.EqualError(err, errIncorrectPriority.Error())
 }
 
 // ERC721
@@ -174,8 +164,11 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerEmptyMetadata() {
 		Payload: []interface{}{
 			[]byte{2}, // tokenID
 			[]byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}, // recipientAddress
-			[]byte{},  // metadata
-			[]byte{1}, // priority
+			[]byte{}, // metadata
+		},
+		Metadata: message.Metadata{
+			uint8(1),
+			[]byte{},
 		},
 	}
 
@@ -196,7 +189,10 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectDataLen() {
 		Type:         message.FungibleTransfer,
 		Payload: []interface{}{
 			[]byte{2}, // tokenID
-			[]byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}, // recipientAddress
+		},
+		Metadata: message.Metadata{
+			uint8(1),
+			[]byte{},
 		},
 	}
 
@@ -219,8 +215,11 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectAmount() {
 		Payload: []interface{}{
 			"incorrectAmount", // tokenID
 			[]byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}, // recipientAddress
-			[]byte{},  // metadata
-			[]byte{1}, // priority
+			[]byte{}, // metadata
+		},
+		Metadata: message.Metadata{
+			uint8(1),
+			[]byte{},
 		},
 	}
 
@@ -243,8 +242,11 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectRecipient() {
 		Payload: []interface{}{
 			[]byte{2}, // amount
 			"incorrectRecipient",
-			[]byte{},  // metadata
-			[]byte{1}, // priority
+			[]byte{}, // metadata
+		},
+		Metadata: message.Metadata{
+			uint8(1),
+			[]byte{},
 		},
 	}
 
@@ -268,7 +270,10 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectMetadata() {
 			[]byte{2}, // amount
 			[]byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}, // recipientAddress
 			"incorrectMetadata", // metadata
-			[]byte{1},           // priority
+		},
+		Metadata: message.Metadata{
+			uint8(1),
+			[]byte{},
 		},
 	}
 
@@ -277,30 +282,6 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectMetadata() {
 	s.Nil(prop)
 	s.NotNil(err)
 	s.EqualError(err, errIncorrectMetadata.Error())
-}
-
-func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectPriority() {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(big.NewInt(2), 32)...)
-	message := &message.Message{
-		Source:       1,
-		Destination:  0,
-		DepositNonce: 1,
-		ResourceId:   [32]byte{0},
-		Type:         message.FungibleTransfer,
-		Payload: []interface{}{
-			[]byte{2}, // amount
-			[]byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}, // recipientAddress
-			[]byte{},            // metadata
-			"incorrectPriority", // priority
-		},
-	}
-
-	prop, err := voter.ERC721MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
-
-	s.Nil(prop)
-	s.NotNil(err)
-	s.EqualError(err, errIncorrectPriority.Error())
 }
 
 // GENERIC
@@ -326,8 +307,11 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEvent() {
 		ResourceId:   [32]byte{0},
 		Type:         message.FungibleTransfer,
 		Payload: []interface{}{
-			[]byte{},  // metadata
-			[]byte{1}, // priority
+			[]byte{}, // metadata
+		},
+		Metadata: message.Metadata{
+			uint8(1),
+			[]byte{},
 		},
 	}
 
@@ -347,6 +331,10 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEventIncorrectDataLen() {
 		ResourceId:   [32]byte{0},
 		Type:         message.FungibleTransfer,
 		Payload:      []interface{}{},
+		Metadata: message.Metadata{
+			uint8(1),
+			[]byte{},
+		},
 	}
 
 	prop, err := voter.GenericMessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
@@ -368,27 +356,9 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEventIncorrectMetadata() {
 		Payload: []interface{}{
 			"incorrectMetadata", // metadata
 		},
-	}
-
-	prop, err := voter.GenericMessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
-
-	s.Nil(prop)
-	s.NotNil(err)
-	s.EqualError(err, errIncorrectMetadata.Error())
-}
-
-func (s *GenericHandlerTestSuite) TestGenericHandleEventIncorrectPriority() {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(big.NewInt(2), 32)...)
-	message := &message.Message{
-		Source:       1,
-		Destination:  0,
-		DepositNonce: 1,
-		ResourceId:   [32]byte{0},
-		Type:         message.FungibleTransfer,
-		Payload: []interface{}{
-			[]byte{},            // metadata
-			"incorrectPriority", // priority
+		Metadata: message.Metadata{
+			uint8(1),
+			[]byte{},
 		},
 	}
 
@@ -396,5 +366,5 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEventIncorrectPriority() {
 
 	s.Nil(prop)
 	s.NotNil(err)
-	s.EqualError(err, errIncorrectPriority.Error())
+	s.EqualError(err, errIncorrectMetadata.Error())
 }
