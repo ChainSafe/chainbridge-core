@@ -3,12 +3,10 @@ package voter_test
 import (
 	"errors"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
-	"github.com/ethereum/go-ethereum/common/math"
 
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
-	"math/big"
 	"testing"
 )
 
@@ -36,8 +34,6 @@ func (s *Erc20HandlerTestSuite) SetupTest()     {}
 func (s *Erc20HandlerTestSuite) TearDownTest()  {}
 
 func (s *Erc20HandlerTestSuite) TestErc20HandleMessage() {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(big.NewInt(2), 32)...)
 	message := &message.Message{
 		Source:       1,
 		Destination:  0,
@@ -60,8 +56,6 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleMessage() {
 }
 
 func (s *Erc20HandlerTestSuite) TestErc20HandleMessageIncorrectDataLen() {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(big.NewInt(2), 32)...)
 	message := &message.Message{
 		Source:       1,
 		Destination:  0,
@@ -84,8 +78,6 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleMessageIncorrectDataLen() {
 }
 
 func (s *Erc20HandlerTestSuite) TestErc20HandleMessageIncorrectAmount() {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(big.NewInt(2), 32)...)
 	message := &message.Message{
 		Source:       1,
 		Destination:  0,
@@ -109,8 +101,6 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleMessageIncorrectAmount() {
 }
 
 func (s *Erc20HandlerTestSuite) TestErc20HandleMessageIncorrectRecipient() {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(big.NewInt(2), 32)...)
 	message := &message.Message{
 		Source:       1,
 		Destination:  0,
@@ -148,8 +138,6 @@ func (s *Erc721HandlerTestSuite) SetupTest()     {}
 func (s *Erc721HandlerTestSuite) TearDownTest()  {}
 
 func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerEmptyMetadata() {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(big.NewInt(2), 32)...)
 	message := &message.Message{
 		Source:       1,
 		Destination:  0,
@@ -173,8 +161,6 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerEmptyMetadata() {
 }
 
 func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectDataLen() {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(big.NewInt(2), 32)...)
 	message := &message.Message{
 		Source:       1,
 		Destination:  0,
@@ -197,8 +183,6 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectDataLen() {
 }
 
 func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectAmount() {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(big.NewInt(2), 32)...)
 	message := &message.Message{
 		Source:       1,
 		Destination:  0,
@@ -223,8 +207,6 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectAmount() {
 }
 
 func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectRecipient() {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(big.NewInt(2), 32)...)
 	message := &message.Message{
 		Source:       1,
 		Destination:  0,
@@ -249,8 +231,6 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectRecipient() {
 }
 
 func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectMetadata() {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(big.NewInt(2), 32)...)
 	message := &message.Message{
 		Source:       1,
 		Destination:  0,
@@ -288,8 +268,6 @@ func (s *GenericHandlerTestSuite) TearDownSuite() {}
 func (s *GenericHandlerTestSuite) SetupTest()     {}
 func (s *GenericHandlerTestSuite) TearDownTest()  {}
 func (s *GenericHandlerTestSuite) TestGenericHandleEvent() {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(big.NewInt(2), 32)...)
 	message := &message.Message{
 		Source:       1,
 		Destination:  0,
@@ -311,8 +289,6 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEvent() {
 }
 
 func (s *GenericHandlerTestSuite) TestGenericHandleEventIncorrectDataLen() {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(big.NewInt(2), 32)...)
 	message := &message.Message{
 		Source:       1,
 		Destination:  0,
@@ -333,8 +309,6 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEventIncorrectDataLen() {
 }
 
 func (s *GenericHandlerTestSuite) TestGenericHandleEventIncorrectMetadata() {
-	var data []byte
-	data = append(data, math.PaddedBigBytes(big.NewInt(2), 32)...)
 	message := &message.Message{
 		Source:       1,
 		Destination:  0,
