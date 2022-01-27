@@ -18,7 +18,6 @@ var errIncorrectGenericPayloadLen = errors.New("malformed payload. Len  of paylo
 
 var errIncorrectAmount = errors.New("wrong payload amount format")
 var errIncorrectRecipient = errors.New("wrong payload recipient format")
-var errIncorrectPriority = errors.New("wrong payload priority format")
 var errIncorrectTokenID = errors.New("wrong payload tokenID format")
 var errIncorrectMetadata = errors.New("wrong payload metadata format")
 
