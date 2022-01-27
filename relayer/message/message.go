@@ -11,6 +11,10 @@ import (
 )
 
 type TransferType string
+type Metadata struct {
+	Priority uint8
+	Blob     []byte
+}
 
 const (
 	FungibleTransfer    TransferType = "FungibleTransfer"
@@ -43,7 +47,7 @@ type Message struct {
 	DepositNonce uint64 // Nonce for the deposit
 	ResourceId   types.ResourceID
 	Payload      []interface{} // data associated with event sequence
-	Metadata     []interface{} // Arbitrary data that will be most likely be used by the relayer
+	Metadata     Metadata      // Arbitrary data that will be most likely be used by the relayer
 	Type         TransferType
 }
 
@@ -54,7 +58,7 @@ func NewMessage(
 	resourceId types.ResourceID,
 	transferType TransferType,
 	payload []interface{},
-	metadata []interface{},
+	metadata Metadata,
 ) *Message {
 	return &Message{
 		source,
