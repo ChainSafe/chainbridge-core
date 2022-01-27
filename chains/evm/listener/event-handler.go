@@ -128,7 +128,7 @@ func GenericEventHandler(sourceID, destId uint8, nonce uint64, resourceID types.
 	if 32+metadataLen.Int64() < int64(len(calldata)) {
 		priorityLength := big.NewInt(0).SetBytes(calldata[(32 + metadataLen.Int64()):(32 + metadataLen.Int64() + 1)])
 		// (64 + metadata length + 1) - ((64 + metadata length + 1) + priority length) is priority data
-		priority := calldata[(32 + metadataLen.Int64() + 1):((64 + metadataLen.Int64()) + 1 + priorityLength.Int64())]
+		priority := calldata[(32 + metadataLen.Int64() + 1):(32 + metadataLen.Int64() + 1 + priorityLength.Int64())]
 		meta.Priority = priority[0]
 	}
 	return message.NewMessage(sourceID, destId, nonce, resourceID, message.GenericTransfer, payload, meta), nil
