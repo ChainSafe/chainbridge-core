@@ -11,8 +11,8 @@ import (
 // flag vars
 var (
 	Erc721Address  string
-	DstAddress     string
-	TokenId        string
+	Dst            string
+	Token          string
 	Metadata       string
 	Recipient      string
 	Bridge         string
@@ -23,14 +23,14 @@ var (
 
 // processed flag vars
 var (
-	erc721Addr    common.Address
-	dstAddress    common.Address
-	tokenId       *big.Int
-	recipientAddr common.Address
-	bridgeAddr    common.Address
-	destinationID int
-	resourceId    types.ResourceID
-	minterAddr    common.Address
+	Erc721Addr    common.Address
+	DstAddress    common.Address
+	TokenId       *big.Int
+	RecipientAddr common.Address
+	BridgeAddr    common.Address
+	DestinationID int
+	ResourceId    types.ResourceID
+	MinterAddr    common.Address
 )
 
 // global flags
@@ -39,5 +39,6 @@ var (
 	gasLimit      uint64
 	gasPrice      *big.Int
 	senderKeyPair *secp256k1.Keypair
+	prepare       bool
 	err           error
 )

@@ -1,8 +1,9 @@
 package erc20
 
 import (
-	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"math/big"
+
+	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 
 	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -26,12 +27,12 @@ var (
 
 //processed flag vars
 var (
-	recipientAddress   common.Address
-	realAmount         *big.Int
-	erc20Addr          common.Address
-	minterAddr         common.Address
-	bridgeAddr         common.Address
-	resourceIdBytesArr types.ResourceID
+	RecipientAddress   common.Address
+	RealAmount         *big.Int
+	Erc20Addr          common.Address
+	MinterAddr         common.Address
+	BridgeAddr         common.Address
+	ResourceIdBytesArr types.ResourceID
 )
 
 // global flags
@@ -41,4 +42,5 @@ var (
 	gasLimit      uint64
 	gasPrice      *big.Int
 	senderKeyPair *secp256k1.Keypair
+	prepare       bool
 )

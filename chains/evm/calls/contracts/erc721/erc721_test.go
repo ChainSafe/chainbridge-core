@@ -1,13 +1,15 @@
 package erc721_test
 
 import (
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc721"
-	mock_calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
 	"math/big"
 	"testing"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc721"
+	mock_calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	mock_transactor "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/mock"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/signAndSend"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
@@ -22,6 +24,10 @@ type ERC721CallsTestSuite struct {
 	erc721ContractAddress              common.Address
 	erc721Contract                     *erc721.ERC721Contract
 }
+
+var (
+	testInteractorAddress = "0x8362bbbd6d987895E2A4630a55e69Dd8C7b9f87B"
+)
 
 func TestRunERC721CallsTestSuite(t *testing.T) {
 	suite.Run(t, new(ERC721CallsTestSuite))
@@ -88,4 +94,68 @@ func (s *ERC721CallsTestSuite) TestERC721Contract_Approve_Success() {
 
 	s.Nil(err)
 	s.NotNil(res)
+}
+
+func (s *ERC721CallsTestSuite) TestERC721Contract_AddMinter_Success() {
+	s.mockContractCallerDispatcherClient.EXPECT().From().Return(common.HexToAddress(testInteractorAddress))
+	s.mockContractCallerDispatcherClient.EXPECT().CallContract(
+		gomock.Any(),
+		gomock.Any(),
+		nil,
+	).Return([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25}, nil)
+	s.mockTransactor.EXPECT().Transact(
+		gomock.Any(),
+		gomock.Any(),
+		gomock.Any(),
+	).Return(&common.Hash{1, 2, 3}, nil)
+	res, err := s.erc721Contract.AddMinter(common.HexToAddress(testInteractorAddress), signAndSend.DefaultTransactionOptions)
+	s.Equal(
+		&common.Hash{1, 2, 3},
+		res,
+	)
+	s.Nil(err)
+}
+
+func (s *ERC721CallsTestSuite) TestERC721Contract_MintTokens_Success() {
+	s.mockTransactor.EXPECT().Transact(
+		gomock.Any(),
+		gomock.Any(),
+		gomock.Any(),
+	).Return(&common.Hash{1, 2, 3, 4, 5}, nil)
+	res, err := s.erc721Contract.Mint(big.NewInt(5), "token_uri", common.HexToAddress(testInteractorAddress), signAndSend.DefaultTransactionOptions)
+	s.Equal(
+		&common.Hash{1, 2, 3, 4, 5},
+		res,
+	)
+	s.Nil(err)
+}
+
+func (s *ERC721CallsTestSuite) TestERC721Contract_Owner_Success() {
+	s.mockContractCallerDispatcherClient.EXPECT().From().Return(common.HexToAddress(testInteractorAddress))
+	s.mockContractCallerDispatcherClient.EXPECT().CallContract(
+		gomock.Any(),
+		gomock.Any(),
+		nil,
+	).Return([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 50}, nil)
+	res, err := s.erc721Contract.MinterRole()
+	s.Equal(
+		[32]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 50},
+		res,
+	)
+	s.Nil(err)
+}
+
+func (s *ERC721CallsTestSuite) TestERC721Contract_MinterRole_Success() {
+	s.mockContractCallerDispatcherClient.EXPECT().From().Return(common.HexToAddress(testInteractorAddress))
+	s.mockContractCallerDispatcherClient.EXPECT().CallContract(
+		gomock.Any(),
+		gomock.Any(),
+		nil,
+	).Return([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10}, nil)
+	res, err := s.erc721Contract.MinterRole()
+	s.Equal(
+		[32]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10},
+		res,
+	)
+	s.Nil(err)
 }

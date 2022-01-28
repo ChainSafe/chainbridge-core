@@ -33,11 +33,11 @@ var approveCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c, prepare)
 		if err != nil {
 			return err
 		}
-		return ApproveCmd(cmd, args, erc20.NewERC20Contract(c, erc20Addr, t))
+		return ApproveCmd(cmd, args, erc20.NewERC20Contract(c, Erc20Addr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateApproveFlags(cmd, args)
@@ -76,9 +76,9 @@ func ProcessApproveFlags(cmd *cobra.Command, args []string) error {
 	var err error
 
 	decimals := big.NewInt(int64(Decimals))
-	erc20Addr = common.HexToAddress(Erc20Address)
-	recipientAddress = common.HexToAddress(Recipient)
-	realAmount, err = callsUtil.UserAmountToWei(Amount, decimals)
+	Erc20Addr = common.HexToAddress(Erc20Address)
+	RecipientAddress = common.HexToAddress(Recipient)
+	RealAmount, err = callsUtil.UserAmountToWei(Amount, decimals)
 	if err != nil {
 		return err
 	}
@@ -95,14 +95,14 @@ Amount: %s
 Decimals: %v`,
 		Erc20Address, Recipient, Amount, Decimals)
 
-	_, err := contract.ApproveTokens(recipientAddress, realAmount, transactor.TransactOptions{GasLimit: gasLimit})
+	_, err := contract.ApproveTokens(RecipientAddress, RealAmount, transactor.TransactOptions{GasLimit: gasLimit})
 	if err != nil {
 		log.Fatal().Err(err)
 		return err
 	}
 	log.Info().Msgf(
 		"%s account granted allowance on %v tokens of %s",
-		recipientAddress.String(), Amount, recipientAddress.String(),
+		RecipientAddress.String(), Amount, RecipientAddress.String(),
 	)
 	return nil
 }

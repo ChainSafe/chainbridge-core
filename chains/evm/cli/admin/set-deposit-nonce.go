@@ -30,11 +30,11 @@ var setDepositNonceCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c, prepare)
 		if err != nil {
 			return err
 		}
-		return SetDepositNonceEVMCMD(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
+		return SetDepositNonceEVMCMD(cmd, args, bridge.NewBridgeContract(c, BridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateSetDepositNonceFlags(cmd, args)
@@ -66,7 +66,7 @@ func ValidateSetDepositNonceFlags(cmd *cobra.Command, args []string) error {
 }
 
 func ProcessSetDepositNonceFlags(cmd *cobra.Command, args []string) {
-	bridgeAddr = common.HexToAddress(Bridge)
+	BridgeAddr = common.HexToAddress(Bridge)
 }
 
 func SetDepositNonceEVMCMD(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
@@ -79,6 +79,6 @@ Bridge Address: %s`, DomainID, DepositNonce, Bridge)
 	if err != nil {
 		return err
 	}
-	log.Info().Msgf("[domain ID: %v] successfully set nonce: %v at address: %s", DomainID, DepositNonce, bridgeAddr.String())
+	log.Info().Msgf("[domain ID: %v] successfully set nonce: %v at address: %s", DomainID, DepositNonce, BridgeAddr.String())
 	return nil
 }

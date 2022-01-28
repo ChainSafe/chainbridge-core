@@ -33,11 +33,11 @@ var depositCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c, prepare)
 		if err != nil {
 			return err
 		}
-		return DepositCmd(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
+		return DepositCmd(cmd, args, bridge.NewBridgeContract(c, BridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateDepositFlags(cmd, args)
@@ -80,20 +80,20 @@ func ValidateDepositFlags(cmd *cobra.Command, args []string) error {
 func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 	var err error
 
-	recipientAddress = common.HexToAddress(Recipient)
+	RecipientAddress = common.HexToAddress(Recipient)
 	decimals := big.NewInt(int64(Decimals))
-	bridgeAddr = common.HexToAddress(Bridge)
-	realAmount, err = callsUtil.UserAmountToWei(Amount, decimals)
+	BridgeAddr = common.HexToAddress(Bridge)
+	RealAmount, err = callsUtil.UserAmountToWei(Amount, decimals)
 	if err != nil {
 		return err
 	}
-	resourceIdBytesArr, err = flags.ProcessResourceID(ResourceID)
+	ResourceIdBytesArr, err = flags.ProcessResourceID(ResourceID)
 	return err
 }
 
 func DepositCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
 	hash, err := contract.Erc20Deposit(
-		recipientAddress, realAmount, resourceIdBytesArr,
+		RecipientAddress, RealAmount, ResourceIdBytesArr,
 		uint8(DomainID), transactor.TransactOptions{GasLimit: gasLimit},
 	)
 	if err != nil {
@@ -103,7 +103,7 @@ func DepositCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContra
 
 	log.Info().Msgf(
 		"%s tokens were transferred to %s from %s with hash %s",
-		Amount, recipientAddress.Hex(), senderKeyPair.CommonAddress().String(), hash.Hex(),
+		Amount, RecipientAddress.Hex(), senderKeyPair.CommonAddress().String(), hash.Hex(),
 	)
 	return nil
 }

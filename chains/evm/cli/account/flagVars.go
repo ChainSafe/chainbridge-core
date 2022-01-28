@@ -1,8 +1,9 @@
 package account
 
 import (
-	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"math/big"
+
+	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -18,8 +19,8 @@ var (
 
 //processed flag vars
 var (
-	recipientAddress common.Address
-	weiAmount        *big.Int
+	RecipientAddress common.Address
+	WeiAmount        *big.Int
 )
 
 // global flags
@@ -28,4 +29,5 @@ var (
 	gasLimit      uint64
 	gasPrice      *big.Int
 	senderKeyPair *secp256k1.Keypair
+	prepare       bool
 )

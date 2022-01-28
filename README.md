@@ -103,6 +103,7 @@ Flags:
       --network uint                ID of the Network
       --private-key string          Private key to use
       --url string                  URL of the node to receive RPC calls (default "ws://localhost:8545")
+      --prepare                     Generate calldata for contract calls (doesn't require private key and doesn't send a transaction)
 ```
 
 &nbsp;

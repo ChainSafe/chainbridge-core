@@ -28,7 +28,7 @@ func (s *LoggerTestSuite) TearDownSuite() {}
 func (s *LoggerTestSuite) TearDownTest() {}
 
 func (s *LoggerTestSuite) TestWriteCliDataToFile() {
-	expectedLog := "Called evm-cli with args: --gas-limit=\"7000000\" --gas-price=\"25000000000\" --help=\"false\" --json-wallet=\"test-wallet\" --json-wallet-password=\"test-wallet-password\" --network=\"0\" --private-key=\"test-private-key\" --url=\"test-url\" =>\n"
+	expectedLog := "Called evm-cli with args: --gas-limit=\"7000000\" --gas-price=\"25000000000\" --help=\"false\" --json-wallet=\"test-wallet\" --json-wallet-password=\"test-wallet-password\" --network=\"0\" --prepare=\"false\" --private-key=\"test-private-key\" --url=\"test-url\" =>\n"
 
 	rootCmdArgs := []string{
 		"--url", "test-url",

@@ -31,11 +31,11 @@ var ownerCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c, prepare)
 		if err != nil {
 			return err
 		}
-		return OwnerCmd(cmd, args, erc721.NewErc721Contract(c, erc721Addr, t))
+		return OwnerCmd(cmd, args, erc721.NewErc721Contract(c, Erc721Addr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateOwnerFlags(cmd, args)
@@ -50,7 +50,7 @@ var ownerCmd = &cobra.Command{
 
 func BindOwnerFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Erc721Address, "contract", "", "ERC721 contract address")
-	cmd.Flags().StringVar(&TokenId, "token", "", "ERC721 token ID")
+	cmd.Flags().StringVar(&Token, "token", "", "ERC721 token ID")
 	flags.MarkFlagsAsRequired(cmd, "contract", "token")
 }
 
@@ -66,10 +66,10 @@ func ValidateOwnerFlags(cmd *cobra.Command, args []string) error {
 }
 
 func ProcessOwnerFlags(cmd *cobra.Command, args []string) error {
-	erc721Addr = common.HexToAddress(Erc721Address)
+	Erc721Addr = common.HexToAddress(Erc721Address)
 
 	var ok bool
-	if tokenId, ok = big.NewInt(0).SetString(TokenId, 10); !ok {
+	if TokenId, ok = big.NewInt(0).SetString(Token, 10); !ok {
 		return fmt.Errorf("invalid token id value")
 	}
 
@@ -77,11 +77,11 @@ func ProcessOwnerFlags(cmd *cobra.Command, args []string) error {
 }
 
 func OwnerCmd(cmd *cobra.Command, args []string, erc721Contract *erc721.ERC721Contract) error {
-	owner, err := erc721Contract.Owner(tokenId)
+	owner, err := erc721Contract.Owner(TokenId)
 	if err != nil {
 		return err
 	}
 
-	log.Info().Msgf("%v token owner: %v", tokenId, owner)
+	log.Info().Msgf("%v token owner: %v", TokenId, owner)
 	return err
 }

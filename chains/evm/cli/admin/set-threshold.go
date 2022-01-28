@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
@@ -29,11 +30,11 @@ var setThresholdCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c, prepare)
 		if err != nil {
 			return err
 		}
-		return SetThresholdCMD(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
+		return SetThresholdCMD(cmd, args, bridge.NewBridgeContract(c, BridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateSetThresholdFlags(cmd, args)
@@ -64,7 +65,7 @@ func ValidateSetThresholdFlags(cmd *cobra.Command, args []string) error {
 }
 
 func ProcessSetThresholdFlags(cmd *cobra.Command, args []string) {
-	bridgeAddr = common.HexToAddress(Bridge)
+	BridgeAddr = common.HexToAddress(Bridge)
 }
 
 func SetThresholdCMD(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {

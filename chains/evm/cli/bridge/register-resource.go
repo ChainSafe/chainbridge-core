@@ -30,11 +30,11 @@ var registerResourceCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c, prepare)
 		if err != nil {
 			return err
 		}
-		return RegisterResourceCmd(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
+		return RegisterResourceCmd(cmd, args, bridge.NewBridgeContract(c, BridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateRegisterResourceFlags(cmd, args)
@@ -74,11 +74,11 @@ func ValidateRegisterResourceFlags(cmd *cobra.Command, args []string) error {
 
 func ProcessRegisterResourceFlags(cmd *cobra.Command, args []string) error {
 	var err error
-	handlerAddr = common.HexToAddress(Handler)
-	targetContractAddr = common.HexToAddress(Target)
-	bridgeAddr = common.HexToAddress(Bridge)
+	HandlerAddr = common.HexToAddress(Handler)
+	TargetContractAddr = common.HexToAddress(Target)
+	BridgeAddr = common.HexToAddress(Bridge)
 
-	resourceIdBytesArr, err = flags.ProcessResourceID(ResourceID)
+	ResourceIdBytesArr, err = flags.ProcessResourceID(ResourceID)
 	return err
 }
 
@@ -92,13 +92,13 @@ Bridge address: %s
 `, Handler, ResourceID, Target, Bridge)
 
 	h, err := contract.AdminSetResource(
-		handlerAddr, resourceIdBytesArr, targetContractAddr, transactor.TransactOptions{GasLimit: gasLimit},
+		HandlerAddr, ResourceIdBytesArr, TargetContractAddr, transactor.TransactOptions{GasLimit: gasLimit},
 	)
 	if err != nil {
 		log.Error().Err(err)
 		return err
 	}
 
-	log.Info().Msgf("Resource registered with hash: %s", h.Hex())
+	log.Info().Msgf("Resource registered with transaction: %s", h.Hex())
 	return nil
 }

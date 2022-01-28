@@ -7,9 +7,9 @@ import (
 
 	"github.com/status-im/keycard-go/hexutils"
 
-	"github.com/ChainSafe/chainbridge-core/blockstore"
 	"github.com/ChainSafe/chainbridge-core/chains/substrate"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
+	"github.com/ChainSafe/chainbridge-core/store"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/rs/zerolog/log"
 )
@@ -45,7 +45,7 @@ func (l *SubstrateListener) RegisterSubscription(tt message.TransferType, handle
 	l.eventHandlers[tt] = handler
 }
 
-func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw blockstore.KeyValueWriter, stopChn <-chan struct{}, errChn chan<- error) <-chan *message.Message {
+func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, domainID uint8, blockstore store.BlockStore, stopChn <-chan struct{}, errChn chan<- error) <-chan *message.Message {
 	ch := make(chan *message.Message)
 	go func() {
 		for {
@@ -96,7 +96,7 @@ func (l *SubstrateListener) ListenToEvents(startBlock *big.Int, domainID uint8, 
 					// Logging process every 20 blocks to exclude spam
 					log.Debug().Str("block", startBlock.String()).Uint8("domainID", domainID).Msg("Queried block for deposit events")
 				}
-				err = blockstore.StoreBlock(kvrw, startBlock, domainID)
+				err = blockstore.StoreBlock(startBlock, domainID)
 				if err != nil {
 					log.Error().Str("block", startBlock.String()).Err(err).Msg("Failed to write latest block to blockstore")
 				}

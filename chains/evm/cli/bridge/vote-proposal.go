@@ -31,11 +31,11 @@ var voteProposalCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c, prepare)
 		if err != nil {
 			return err
 		}
-		return VoteProposalCmd(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
+		return VoteProposalCmd(cmd, args, bridge.NewBridgeContract(c, BridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateVoteProposalFlags(cmd, args)
@@ -70,10 +70,10 @@ func ValidateVoteProposalFlags(cmd *cobra.Command, args []string) error {
 
 func ProcessVoteProposalFlags(cmd *cobra.Command, args []string) error {
 	var err error
-	bridgeAddr = common.HexToAddress(Bridge)
-	dataBytes = common.Hex2Bytes(Data)
+	BridgeAddr = common.HexToAddress(Bridge)
+	DataBytes = common.Hex2Bytes(Data)
 
-	resourceIdBytesArr, err = flags.ProcessResourceID(ResourceID)
+	ResourceIdBytesArr, err = flags.ProcessResourceID(ResourceID)
 	return err
 }
 
@@ -86,8 +86,8 @@ func VoteProposalCmd(cmd *cobra.Command, args []string, voter Voter) error {
 	prop := &proposal.Proposal{
 		Source:       uint8(DomainID),
 		DepositNonce: DepositNonce,
-		Data:         dataBytes,
-		ResourceId:   resourceIdBytesArr,
+		Data:         DataBytes,
+		ResourceId:   ResourceIdBytesArr,
 	}
 
 	err := voter.SimulateVoteProposal(prop)

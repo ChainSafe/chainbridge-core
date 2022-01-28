@@ -1,7 +1,7 @@
 // Copyright 2021 ChainSafe Systems
 // SPDX-License-Identifier: LGPL-3.0-only
 
-package blockstore
+package store
 
 import (
 	"bytes"
@@ -12,52 +12,51 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
-type KeyValueReaderWriter interface {
-	KeyValueReader
-	KeyValueWriter
+type BlockStore struct {
+	db KeyValueReaderWriter
 }
 
-type KeyValueReader interface {
-	GetByKey(key []byte) ([]byte, error)
+func NewBlockStore(db KeyValueReaderWriter) *BlockStore {
+	return &BlockStore{
+		db: db,
+	}
 }
 
-type KeyValueWriter interface {
-	SetByKey(key []byte, value []byte) error
-}
-
-var (
-	ErrNotFound = errors.New("key not found")
-)
-
-func StoreBlock(db KeyValueWriter, block *big.Int, domainID uint8) error {
+// StoreBlock stores block number per domainID into blockstore
+func (bs *BlockStore) StoreBlock(block *big.Int, domainID uint8) error {
 	key := bytes.Buffer{}
-	keyS := fmt.Sprintf("chain:%s:block", string(domainID))
+	keyS := fmt.Sprintf("chain:%d:block", domainID)
 	key.WriteString(keyS)
-	err := db.SetByKey(key.Bytes(), block.Bytes())
+
+	err := bs.db.SetByKey(key.Bytes(), block.Bytes())
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
-func GetLastStoredBlock(db KeyValueReader, domainID uint8) (*big.Int, error) {
+// GetLastStoredBlock queries the blockstore and returns latest known block
+func (bs *BlockStore) GetLastStoredBlock(domainID uint8) (*big.Int, error) {
 	key := bytes.Buffer{}
-	keyS := fmt.Sprintf("chain:%s:block", string(domainID))
+	keyS := fmt.Sprintf("chain:%d:block", domainID)
 	key.WriteString(keyS)
-	v, err := db.GetByKey(key.Bytes())
+
+	v, err := bs.db.GetByKey(key.Bytes())
 	if err != nil {
 		if errors.Is(err, leveldb.ErrNotFound) {
 			return big.NewInt(0), nil
 		}
 		return nil, err
 	}
+
 	block := big.NewInt(0).SetBytes(v)
 	return block, nil
 }
 
 // GetStartBlock queries the blockstore for the latest known block. If the latest block is
 // greater than configured startBlock, then startBlock is replaced with the latest known block.
-func GetStartBlock(kvdb KeyValueReaderWriter, domainID uint8, startBlock *big.Int, latest bool, fresh bool) (*big.Int, error) {
+func (bs *BlockStore) GetStartBlock(domainID uint8, startBlock *big.Int, latest bool, fresh bool) (*big.Int, error) {
 	if latest {
 		return nil, nil
 	}
@@ -66,7 +65,7 @@ func GetStartBlock(kvdb KeyValueReaderWriter, domainID uint8, startBlock *big.In
 		return startBlock, nil
 	}
 
-	latestBlock, err := GetLastStoredBlock(kvdb, domainID)
+	latestBlock, err := bs.GetLastStoredBlock(domainID)
 	if err != nil {
 		return nil, err
 	}

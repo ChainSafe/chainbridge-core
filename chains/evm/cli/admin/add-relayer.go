@@ -2,13 +2,14 @@ package admin
 
 import (
 	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/util"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -30,11 +31,11 @@ var addRelayerCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c, prepare)
 		if err != nil {
 			return err
 		}
-		return AddRelayerEVMCMD(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
+		return AddRelayerEVMCMD(cmd, args, bridge.NewBridgeContract(c, BridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateAddRelayerFlags(cmd, args)
@@ -68,8 +69,8 @@ func ValidateAddRelayerFlags(cmd *cobra.Command, args []string) error {
 }
 
 func ProcessAddRelayerFlags(cmd *cobra.Command, args []string) {
-	relayerAddr = common.HexToAddress(Relayer)
-	bridgeAddr = common.HexToAddress(Bridge)
+	RelayerAddr = common.HexToAddress(Relayer)
+	BridgeAddr = common.HexToAddress(Bridge)
 }
 
 func AddRelayerEVMCMD(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
@@ -77,6 +78,6 @@ func AddRelayerEVMCMD(cmd *cobra.Command, args []string, contract *bridge.Bridge
 Adding relayer
 Relayer address: %s
 Bridge address: %s`, Relayer, Bridge)
-	_, err := contract.AddRelayer(relayerAddr, transactor.TransactOptions{GasLimit: gasLimit})
+	_, err := contract.AddRelayer(RelayerAddr, transactor.TransactOptions{GasLimit: gasLimit})
 	return err
 }

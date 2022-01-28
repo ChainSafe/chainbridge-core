@@ -3,6 +3,7 @@ package chain_test
 import (
 	"math/big"
 	"testing"
+	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/config/chain"
@@ -47,6 +48,20 @@ func (s *NewEVMConfigTestSuite) Test_FailedEVMConfigValidation() {
 	s.NotNil(err)
 }
 
+func (s *NewEVMConfigTestSuite) Test_InvalidBlockConfirmation() {
+	_, err := chain.NewEVMConfig(map[string]interface{}{
+		"id":                 1,
+		"endpoint":           "ws://domain.com",
+		"name":               "evm1",
+		"from":               "address",
+		"bridge":             "bridgeAddress",
+		"blockConfirmations": -1,
+	})
+
+	s.NotNil(err)
+	s.Equal(err.Error(), "blockConfirmations has to be >=1")
+}
+
 func (s *NewEVMConfigTestSuite) Test_ValidConfig() {
 	rawConfig := map[string]interface{}{
 		"id":       1,
@@ -76,7 +91,8 @@ func (s *NewEVMConfigTestSuite) Test_ValidConfig() {
 		MaxGasPrice:        big.NewInt(consts.DefaultGasPrice),
 		GasMultiplier:      big.NewFloat(consts.DefaultGasMultiplier),
 		StartBlock:         big.NewInt(0),
-		BlockConfirmations: consts.DefaultBlockConfirmations,
+		BlockConfirmations: big.NewInt(consts.DefaultBlockConfirmations),
+		BlockRetryInterval: time.Duration(5) * time.Second,
 	})
 }
 
@@ -92,6 +108,7 @@ func (s *NewEVMConfigTestSuite) Test_ValidConfigWithCustomTxParams() {
 		"gasLimit":           1000,
 		"startBlock":         1000,
 		"blockConfirmations": 10,
+		"blockRetryInterval": 10,
 	}
 
 	actualConfig, err := chain.NewEVMConfig(rawConfig)
@@ -114,6 +131,7 @@ func (s *NewEVMConfigTestSuite) Test_ValidConfigWithCustomTxParams() {
 		MaxGasPrice:        big.NewInt(1000),
 		GasMultiplier:      big.NewFloat(1000),
 		StartBlock:         big.NewInt(1000),
-		BlockConfirmations: 10,
+		BlockConfirmations: big.NewInt(10),
+		BlockRetryInterval: time.Duration(10) * time.Second,
 	})
 }

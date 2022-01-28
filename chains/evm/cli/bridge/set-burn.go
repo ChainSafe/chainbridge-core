@@ -30,11 +30,11 @@ var setBurnCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c)
+		t, err := initialize.InitializeTransactor(gasPrice, evmtransaction.NewTransaction, c, prepare)
 		if err != nil {
 			return err
 		}
-		return SetBurnCmd(cmd, args, bridge.NewBridgeContract(c, bridgeAddr, t))
+		return SetBurnCmd(cmd, args, bridge.NewBridgeContract(c, BridgeAddr, t))
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := ValidateSetBurnFlags(cmd, args)
@@ -71,17 +71,17 @@ func ValidateSetBurnFlags(cmd *cobra.Command, args []string) error {
 }
 
 func ProcessSetBurnFlags(cmd *cobra.Command, args []string) {
-	handlerAddr = common.HexToAddress(Handler)
-	bridgeAddr = common.HexToAddress(Bridge)
-	tokenContractAddr = common.HexToAddress(TokenContract)
+	HandlerAddr = common.HexToAddress(Handler)
+	BridgeAddr = common.HexToAddress(Bridge)
+	TokenContractAddr = common.HexToAddress(TokenContract)
 }
 func SetBurnCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
 	log.Info().Msgf(
 		"Setting contract %s as burnable on handler %s",
-		tokenContractAddr.String(), handlerAddr.String(),
+		TokenContractAddr.String(), HandlerAddr.String(),
 	)
 	_, err := contract.SetBurnableInput(
-		handlerAddr, tokenContractAddr, transactor.TransactOptions{GasLimit: gasLimit},
+		HandlerAddr, TokenContractAddr, transactor.TransactOptions{GasLimit: gasLimit},
 	)
 	if err != nil {
 		log.Error().Err(err)
