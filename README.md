@@ -3,7 +3,7 @@
   <img alt="discord" src="https://img.shields.io/discord/593655374469660673?label=Discord&logo=discord&style=flat" />
 </a>
 
-Chainbridge-core is the project that was born from the existing version of [Chainbridge](https://github.com/ChainSafe/chainbridge). It was built to improve the maintainability and modularity of the current solution. The fundamental distinction is that chainbridge-core is more of a framework rather than a stand-alone application.
+ChainBridge-Core was born from and was built to improve the maintainability and modularity of the existing version of [ChainBridge](https://github.com/ChainSafe/chainbridge). The fundamental distinction between the two is that ChainBridge-Core is more of a framework rather than a stand-alone application.
 
 *Project still in deep beta*
 - Chat with us on [discord](https://discord.gg/ykXsJKfhgq).
@@ -14,24 +14,24 @@ Chainbridge-core is the project that was born from the existing version of [Chai
 2. [Modules](#modules)
 3. [Usage](#usage)
 4. [Metrics](#metrics)
-4. [EVM-CLI](#evm-cli)
-5. [Celo-CLI](#celo-cli)
-6. [Substrate](#substrate)
-7. [Contributing](#contributing)
-8. [Local Setup](#local-setup)
+5. [Local Setup](#local-setup)
+6. [EVM-CLI](#evm-cli)
+7. [Celo-CLI](#celo-cli)
+8. [Substrate](#substrate)
+9. [Contributing](#contributing)
 
 ## Installation
 Refer to [installation](https://github.com/ChainSafe/chainbridge-docs/blob/develop/docs/installation.md) guide for assistance in installing.
 
 ## Modules
 
-The chainbridge-core-example currently supports two modules:
+The ChainBridge-Core-Example currently supports ~~three~~ two modules:
 1. [EVM-CLI](#evm-cli)
 2. [Celo-CLI](#celo-cli)
-3. [Substrate](#substrate)
+3. ~~[Substrate](#substrate)~~ -> 🚧 undergoing refactor
 
 ## Usage
-Since chainbridge-core is the modular framework it will require writing some code to get it running. 
+Since ChainBridge-Core is the modular framework it will require writing some code to get it running. 
 
 You can find some examples [here](https://github.com/ChainSafe/chainbridge-core-example).
 
@@ -46,6 +46,35 @@ which is called inside relayer router when a `Deposit` event appears and should 
 
 `chainbridge-core` provides already implemented metrics [provider](./opentelemetry/opentelemetry.go) via [OpenTelemetry](https://opentelemetry.io/) that is vendor-agnostic. It sends metrics to a separate [collector](https://opentelemetry.io/docs/collector/) that then sends metrics via configured [exporters](https://opentelemetry.io/docs/collector/configuration/#exporters) to one or many metrics back-ends.
 
+&nbsp;
+
+## Local Setup
+
+This section allows developers with a way to quickly and with minimal effort stand-up a local development environment in order to test out functionality of the ChainBridge.
+
+### `local-setup`
+The local-setup command deploys the bridge, ERC20, ERC721 and generic handler contracts- everything needed for a developer to get started issuing commands and interacting with the bridge.
+
+```bash
+Usage:
+   local-setup [flags]
+
+Flags:
+  -h, --help   help for local-setup
+```
+
+Run by building the [chainbridge-core-example](https://github.com/ChainSafe/chainbridge-core-example) app, or by issuing a `Makefile` instruction directly from the root of the [chainbridge-core](https://github.com/ChainSafe/chainbridge-core) itself.
+
+```bash
+make local-setup
+```
+##### ^ this command will execute a shell script that contains instructions for running two EVM chains via [Docker](https://www.docker.com/) (`docker-compose`). Note: this entire process will likely take a few minutes to run.
+
+&nbsp;
+
+You can also review our [Local Setup Guide](https://github.com/ChainSafe/chainbridge-docs/blob/develop/docs/guides/local-setup-guide.md) for a more detailed example of setting up a local development environment manually.
+
+&nbsp;
 
 ## `EVM-CLI`
 This module provides instruction for communicating with EVM-compatible chains.
@@ -790,30 +819,6 @@ When reporting issues, always include:
  - steps required to reproduce the problem
 
  Putting large logs into a [gist](https://gist.github.com) will be appreciated.
-
-## Local Setup
-
-This section allows developers with a way to quickly and with minimal effort stand-up a local development environment in order to fully test out functionality of the chainbridge.
-
-### `local-setup`
-The local-setup command deploys a bridge, ERC20, ERC721 and generic handler contracts with preconfigured accounts and appropriate handlers.
-
-```bash
-Usage:
-   local-setup [flags]
-
-Flags:
-  -h, --help   help for local-setup
-```
-
-This can be easily run by building the [chainbridge-core-example](https://github.com/ChainSafe/chainbridge-core-example) app, or by issuing a `Makefile` instruction directly from the root of the [chainbridge-core](https://github.com/ChainSafe/chainbridge-core) itself.
-```bash
-make local-setup
-```
-##### ^ this command will run a shell script that contains instructions for running two EVM chains via [Docker](https://www.docker.com/) (`docker-compose`). Note: this will likely take a few minutes to run.
-&nbsp;
-
-You can also review our [Local Setup Guide](https://github.com/ChainSafe/chainbridge-docs/blob/develop/docs/guides/local-setup-guide.md) for a more detailed example of setting up a local development environment manually.
 
 &nbsp;
 
