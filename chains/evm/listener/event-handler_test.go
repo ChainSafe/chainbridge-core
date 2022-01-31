@@ -2,6 +2,9 @@ package listener_test
 
 import (
 	"errors"
+	"math/big"
+	"testing"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/deposit"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
@@ -9,8 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/stretchr/testify/suite"
-	"math/big"
-	"testing"
 )
 
 var errIncorrectDataLen = errors.New("invalid calldata length: less than 84 bytes")
@@ -399,47 +400,6 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEvent() {
 		},
 	}
 
-	message, err := listener.GenericEventHandler(
-		sourceID,
-		depositLog.DestinationDomainID,
-		depositLog.DepositNonce,
-		depositLog.ResourceID,
-		depositLog.Data,
-		depositLog.HandlerResponse,
-	)
-
-	s.Nil(err)
-	s.NotNil(message)
-	s.Equal(message, expected)
-}
-
-func (s *GenericHandlerTestSuite) TestGenericHandleEventWithPriority() {
-	metadata := []byte("0xdeadbeef")
-	calldata := deposit.ConstructGenericDepositDataWithPriority(metadata, uint8(1))
-
-	depositLog := &evmclient.DepositLogs{
-		DestinationDomainID: 0,
-		ResourceID:          [32]byte{0},
-		DepositNonce:        1,
-		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
-		Data:                calldata,
-		HandlerResponse:     []byte{},
-	}
-
-	sourceID := uint8(1)
-	expected := &message.Message{
-		Source:       sourceID,
-		Destination:  depositLog.DestinationDomainID,
-		DepositNonce: depositLog.DepositNonce,
-		ResourceId:   depositLog.ResourceID,
-		Type:         message.GenericTransfer,
-		Payload: []interface{}{
-			metadata,
-		},
-		Metadata: message.Metadata{
-			Priority: uint8(1),
-		},
-	}
 	message, err := listener.GenericEventHandler(
 		sourceID,
 		depositLog.DestinationDomainID,

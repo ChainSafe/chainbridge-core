@@ -49,11 +49,9 @@ func ConstructGenericDepositData(metadata []byte) []byte {
 	return data
 }
 
-func ConstructGenericDepositDataWithPriority(metadata []byte, priority uint8) []byte {
+func ConstructGenericDepositDataWithPriority(metadata []byte) []byte {
 	var data []byte
 	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len(metadata))), 32)...)
-	data = append(data, metadata...)                                                          // Metadata
-	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len([]uint8{priority}))), 1)...) // Length of priority
-	data = append(data, math.PaddedBigBytes(big.NewInt(int64(priority)), 1)...)               // Priority
+	data = append(data, metadata...) // Metadata
 	return data
 }
