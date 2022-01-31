@@ -251,7 +251,28 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPr
 			deployedContracts["genericHandler"] = genericHandlerAddr.String()
 		}
 	}
-
-	log.Info().Msgf("%+v", deployedContracts)
+	fmt.Printf(`
+	Deployed contracts
+=========================================================
+Bridge: %s
+---------------------------------------------------------
+ERC20 Token: %s
+---------------------------------------------------------
+ERC20 Handler: %s
+---------------------------------------------------------
+ERC721 Token: %s
+---------------------------------------------------------
+ERC721 Handler: %s
+---------------------------------------------------------
+Generic Handler: %s
+=========================================================
+	`,
+		deployedContracts["bridge"],
+		deployedContracts["erc20Token"],
+		deployedContracts["erc20Handler"],
+		deployedContracts["erc721Token"],
+		deployedContracts["erc721Handler"],
+		deployedContracts["genericHandler"],
+	)
 	return nil
 }

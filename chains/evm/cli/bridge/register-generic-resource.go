@@ -130,6 +130,6 @@ func RegisterGenericResource(cmd *cobra.Command, args []string, contract *bridge
 		return err
 	}
 
-	log.Info().Msgf("Generic resource registered with hash: %s", h.Hex())
+	log.Info().Msgf("Generic resource registered with transaction: %s", h.Hex())
 	return nil
 }
