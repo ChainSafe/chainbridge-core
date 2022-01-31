@@ -99,6 +99,6 @@ Bridge address: %s
 		return err
 	}
 
-	log.Info().Msgf("Resource registered with hash: %s", h.Hex())
+	log.Info().Msgf("Resource registered with transaction: %s", h.Hex())
 	return nil
 }
