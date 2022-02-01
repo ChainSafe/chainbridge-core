@@ -2,11 +2,11 @@ package listener_test
 
 import (
 	"errors"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/deposit"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"math/big"
 	"testing"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/deposit"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/common"
@@ -56,6 +56,49 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleEvent() {
 		Payload: []interface{}{
 			amountParsed,
 			recipientAddressParsed,
+		},
+	}
+
+	message, err := listener.Erc20EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
+
+	s.Nil(err)
+	s.NotNil(message)
+	s.Equal(message, expected)
+}
+
+func (s *Erc20HandlerTestSuite) TestErc20HandleEventWithPriority() {
+	// 0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b
+	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}
+
+	calldata := deposit.ConstructErc20DepositDataWithPriority(recipientByteSlice, big.NewInt(2), uint8(1))
+	depositLog := &evmclient.DepositLogs{
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		Data:                calldata,
+		HandlerResponse:     []byte{},
+	}
+
+	sourceID := uint8(1)
+	amountParsed := calldata[:32]
+	// 32-64 is recipient address length
+	recipientAddressLength := big.NewInt(0).SetBytes(calldata[32:64])
+
+	// 64 - (64 + recipient address length) is recipient address
+	recipientAddressParsed := calldata[64:(64 + recipientAddressLength.Int64())]
+	expected := &message.Message{
+		Source:       sourceID,
+		Destination:  depositLog.DestinationDomainID,
+		DepositNonce: depositLog.DepositNonce,
+		ResourceId:   depositLog.ResourceID,
+		Type:         message.FungibleTransfer,
+		Payload: []interface{}{
+			amountParsed,
+			recipientAddressParsed,
+		},
+		Metadata: message.Metadata{
+			Priority: uint8(1),
 		},
 	}
 
@@ -190,6 +233,57 @@ func (s *Erc721HandlerTestSuite) TestErc721EventHandler() {
 			tokenId,
 			recipientAddressParsed,
 			parsedMetadata,
+		},
+	}
+
+	m, err := listener.Erc721EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
+	s.Nil(err)
+	s.NotNil(m)
+	s.Equal(expected, m)
+}
+func (s *Erc721HandlerTestSuite) TestErc721EventHandlerWithPriority() {
+	recipient := common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b")
+	metadata := []byte("metadata.url")
+
+	calldata := deposit.ConstructErc721DepositDataWithPriority(recipient.Bytes(), big.NewInt(2), metadata, uint8(1))
+	depositLog := &evmclient.DepositLogs{
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		Data:                calldata,
+		HandlerResponse:     []byte{},
+	}
+
+	sourceID := uint8(1)
+	tokenId := calldata[:32]
+
+	// 32 - 64 is recipient address length
+	recipientAddressLength := big.NewInt(0).SetBytes(calldata[32:64])
+
+	// 64 - (64 + recipient address length) is recipient address
+	recipientAddressParsed := calldata[64:(64 + recipientAddressLength.Int64())]
+
+	// (64 + recipient address length) - ((64 + recipient address length) + 32) is metadata length
+	metadataLength := big.NewInt(0).SetBytes(
+		calldata[(64 + recipientAddressLength.Int64()):((64 + recipientAddressLength.Int64()) + 32)],
+	)
+
+	metadataStart := (64 + recipientAddressLength.Int64()) + 32
+	parsedMetadata := calldata[metadataStart : metadataStart+metadataLength.Int64()]
+
+	expected := &message.Message{
+		Source:       sourceID,
+		Destination:  depositLog.DestinationDomainID,
+		DepositNonce: depositLog.DepositNonce,
+		ResourceId:   depositLog.ResourceID,
+		Type:         message.NonFungibleTransfer,
+		Payload: []interface{}{
+			tokenId,
+			recipientAddressParsed,
+			parsedMetadata,
+		},
+		Metadata: message.Metadata{
+			Priority: uint8(1),
 		},
 	}
 
