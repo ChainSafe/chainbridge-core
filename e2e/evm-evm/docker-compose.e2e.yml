@@ -50,6 +50,7 @@ services:
       - evm2
     volumes:
       - ./example/cfg:/cfg
+    restart: always
 
   relayer2:
     container_name: relayer2
@@ -65,6 +66,7 @@ services:
       - evm2
     volumes:
       - ./example/cfg:/cfg
+    restart: always
 
   relayer3:
     container_name: relayer3
@@ -80,6 +82,7 @@ services:
       - evm2
     volumes:
       - ./example/cfg:/cfg
+    restart: always
 
 networks:
   evm2:
