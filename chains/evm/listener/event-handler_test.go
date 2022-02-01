@@ -221,7 +221,7 @@ func (s *Erc721HandlerTestSuite) TestErc721EventHandler() {
 	sourceID := uint8(1)
 	tokenId := calldata[:32]
 	recipientAddressParsed := calldata[64:84]
-	parsedMetadata := calldata[116:]
+	parsedMetadata := calldata[116:128]
 
 	expected := &message.Message{
 		Source:       sourceID,

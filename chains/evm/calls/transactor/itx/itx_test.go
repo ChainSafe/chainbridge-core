@@ -61,7 +61,7 @@ func (s *TransactTestSuite) TestTransact_FailedFetchingForwarderData() {
 	opts := transactor.TransactOptions{
 		GasLimit: 200000,
 		GasPrice: big.NewInt(1),
-		Priority: "slow",
+		Priority: 1, // slow
 		Value:    big.NewInt(0),
 		ChainID:  big.NewInt(5),
 		Nonce:    big.NewInt(1),
@@ -82,7 +82,7 @@ func (s *TransactTestSuite) TestTransact_FailedSendingTransaction() {
 	opts := transactor.TransactOptions{
 		GasLimit: 200000,
 		GasPrice: big.NewInt(1),
-		Priority: "slow",
+		Priority: 1, // slow
 		Value:    big.NewInt(0),
 		ChainID:  big.NewInt(5),
 		Nonce:    big.NewInt(1),
@@ -112,7 +112,7 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSend() {
 	opts := transactor.TransactOptions{
 		GasLimit: 200000,
 		GasPrice: big.NewInt(1),
-		Priority: "slow",
+		Priority: 1, // slow
 		Value:    big.NewInt(0),
 		ChainID:  big.NewInt(5),
 		Nonce:    big.NewInt(1),
@@ -135,7 +135,7 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSend() {
 	s.NotNil(hash)
 }
 
-func (s *TransactTestSuite) TestTransact_SuccessfulSendWithDefaultOpts() {
+func (s *TransactTestSuite) TestTransact_SuccessfulSendWithDefaultOpts_WithSetPriority() {
 	s.forwarder.EXPECT().LockNonce()
 	s.forwarder.EXPECT().UnlockNonce()
 	s.forwarder.EXPECT().UnsafeNonce().Return(big.NewInt(1), nil)
@@ -145,7 +145,42 @@ func (s *TransactTestSuite) TestTransact_SuccessfulSendWithDefaultOpts() {
 	expectedOpts := transactor.TransactOptions{
 		GasLimit: 400000,
 		GasPrice: big.NewInt(1),
-		Priority: "slow",
+		Priority: 2, // fast
+		Value:    big.NewInt(0),
+		ChainID:  big.NewInt(5),
+		Nonce:    big.NewInt(1),
+	}
+	expectedSig := "0x97e8845b060718b04c710e2e4bd786d80bc5d5843f41b0b461d756f5c5a5865f32fe1d82f838de6ac212d7caaf7e7f469510a75d3803173f5b5c21fec62a989900"
+
+	s.forwarder.EXPECT().ForwarderData(&to, data, expectedOpts).Return([]byte{}, nil)
+	s.forwarder.EXPECT().ForwarderAddress().Return(to)
+	s.relayCaller.EXPECT().CallContext(
+		context.Background(),
+		gomock.Any(),
+		"relay_sendTransaction",
+		gomock.Any(),
+		expectedSig,
+	).Return(nil)
+
+	hash, err := s.transactor.Transact(&to, data, transactor.TransactOptions{
+		Priority: 2,
+	})
+
+	s.Nil(err)
+	s.NotNil(hash)
+}
+
+func (s *TransactTestSuite) TestTransact_SuccessfulSendWithDefaultOpts_WithDefaultPriority() {
+	s.forwarder.EXPECT().LockNonce()
+	s.forwarder.EXPECT().UnlockNonce()
+	s.forwarder.EXPECT().UnsafeNonce().Return(big.NewInt(1), nil)
+	s.forwarder.EXPECT().UnsafeIncreaseNonce()
+	to := common.HexToAddress("0x04005C8A516292af163b1AFe3D855b9f4f4631B5")
+	data := []byte{}
+	expectedOpts := transactor.TransactOptions{
+		GasLimit: 400000,
+		GasPrice: big.NewInt(1),
+		Priority: 1, // slow
 		Value:    big.NewInt(0),
 		ChainID:  big.NewInt(5),
 		Nonce:    big.NewInt(1),

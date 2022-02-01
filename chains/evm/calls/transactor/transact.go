@@ -14,7 +14,15 @@ type TransactOptions struct {
 	Value    *big.Int
 	Nonce    *big.Int
 	ChainID  *big.Int
-	Priority string
+	Priority uint8
+}
+
+// to save on data, we encode uin8 for transaction priority
+var TxPriorities = map[string]uint8{
+	"none":   0,
+	"slow":   1,
+	"medium": 2,
+	"fast":   3,
 }
 
 func MergeTransactionOptions(primary *TransactOptions, additional *TransactOptions) error {

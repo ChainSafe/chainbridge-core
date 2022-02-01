@@ -23,6 +23,7 @@ var (
 	OwnerAddress   string
 	SpenderAddress string
 	Minter         string
+	Priority       string
 )
 
 //processed flag vars

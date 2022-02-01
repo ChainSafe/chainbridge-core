@@ -141,7 +141,12 @@ func (c *BridgeContract) Erc20Deposit(
 		Str("resourceID", hexutil.Encode(resourceID[:])).
 		Str("amount", amount.String()).
 		Msgf("ERC20 deposit")
-	data := deposit.ConstructErc20DepositData(recipient.Bytes(), amount)
+	var data []byte
+	if opts.Priority == 0 {
+		data = deposit.ConstructErc20DepositData(recipient.Bytes(), amount)
+	} else {
+		data = deposit.ConstructErc20DepositDataWithPriority(recipient.Bytes(), amount, opts.Priority)
+	}
 	txHash, err := c.deposit(resourceID, destDomainID, data, opts)
 	if err != nil {
 		log.Error().Err(err)
@@ -163,7 +168,12 @@ func (c *BridgeContract) Erc721Deposit(
 		Str("resourceID", hexutil.Encode(resourceID[:])).
 		Str("tokenID", tokenId.String()).
 		Msgf("ERC721 deposit")
-	data := deposit.ConstructErc721DepositData(recipient.Bytes(), tokenId, []byte(metadata))
+	var data []byte
+	if opts.Priority == 0 {
+		data = deposit.ConstructErc721DepositData(recipient.Bytes(), tokenId, []byte(metadata))
+	} else {
+		data = deposit.ConstructErc721DepositDataWithPriority(recipient.Bytes(), tokenId, []byte(metadata), opts.Priority)
+	}
 	txHash, err := c.deposit(resourceID, destDomainID, data, opts)
 	if err != nil {
 		log.Error().Err(err)
