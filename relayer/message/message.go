@@ -49,7 +49,6 @@ type Message struct {
 	Payload      []interface{} // data associated with event sequence
 	Metadata     Metadata      // Arbitrary data that will be most likely be used by the relayer
 	Type         TransferType
-	Metadata     Metadata
 }
 
 func NewMessage(
