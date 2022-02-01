@@ -64,6 +64,7 @@ func BindDepositFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint8Var(&DomainID, "domain", 0, "Destination domain ID")
 	cmd.Flags().StringVar(&ResourceID, "resource", "", "Resource ID for transfer")
 	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
+	cmd.Flags().StringVar(&Priority, "priority", "none", "Transaction priority speed")
 	flags.MarkFlagsAsRequired(cmd, "recipient", "bridge", "amount", "domain", "resource", "decimals")
 }
 
@@ -74,7 +75,12 @@ func ValidateDepositFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Bridge) {
 		return fmt.Errorf("invalid bridge address %s", Bridge)
 	}
-	return nil
+	switch Priority {
+	case "none", "slow", "medium", "fast":
+		return nil
+	default:
+		return fmt.Errorf("invalid priority value %s, supported priorities: \"slow|medium|fast\"", Priority)
+	}
 }
 
 func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
@@ -94,7 +100,7 @@ func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 func DepositCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
 	hash, err := contract.Erc20Deposit(
 		RecipientAddress, RealAmount, ResourceIdBytesArr,
-		uint8(DomainID), transactor.TransactOptions{GasLimit: gasLimit},
+		uint8(DomainID), transactor.TransactOptions{GasLimit: gasLimit, Priority: transactor.TxPriorities[Priority]},
 	)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit error: %v", err))

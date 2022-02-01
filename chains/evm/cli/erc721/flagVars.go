@@ -19,6 +19,7 @@ var (
 	DestionationID string
 	ResourceID     string
 	Minter         string
+	Priority       string
 )
 
 // processed flag vars
