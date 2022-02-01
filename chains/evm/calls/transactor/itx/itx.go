@@ -17,10 +17,18 @@ var (
 	DefaultTransactionOptions = transactor.TransactOptions{
 		GasLimit: 400000,
 		GasPrice: big.NewInt(1),
-		Priority: "slow",
+		Priority: 1, // slow
 		Value:    big.NewInt(0),
 	}
 )
+
+// itx only supports priority as string - we use uint8 to save on data
+// currently we support only "slow" and "fast" - that's why 2 (medium) defaults to slow
+var ItxTxPriorities = map[uint8]string{
+	1: "slow",
+	2: "slow",
+	3: "fast",
+}
 
 type RelayTx struct {
 	to   common.Address
@@ -121,7 +129,7 @@ func (itx *ITXTransactor) signRelayTx(tx *RelayTx) (*SignedRelayTx, error) {
 		tx.data,
 		big.NewInt(int64(tx.opts.GasLimit)),
 		tx.opts.ChainID,
-		tx.opts.Priority,
+		ItxTxPriorities[tx.opts.Priority],
 	)
 	if err != nil {
 		return nil, err
@@ -148,7 +156,7 @@ func (itx *ITXTransactor) sendTransaction(ctx context.Context, signedTx *SignedR
 		"to":       &signedTx.to,
 		"data":     "0x" + common.Bytes2Hex(signedTx.data),
 		"gas":      fmt.Sprint(signedTx.opts.GasLimit),
-		"schedule": signedTx.opts.Priority,
+		"schedule": ItxTxPriorities[signedTx.opts.Priority],
 	}
 
 	resp := struct {
