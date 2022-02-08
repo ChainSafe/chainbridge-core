@@ -3,10 +3,12 @@ package evm
 import (
 	"context"
 	"errors"
+	"math/big"
 	"strings"
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+
 	"github.com/ChainSafe/chainbridge-core/util"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -27,19 +29,36 @@ func WaitForProposalExecuted(client TestClient, bridge common.Address) error {
 			{util.ProposalEvent.GetTopic()},
 		},
 	}
+	timeout := time.After(TestTimeout)
 	ch := make(chan types.Log)
-
-	sub, err := client.SubscribeFilterLogs(context.Background(), query, ch)
-	if err != nil {
-		return err
-	}
-	defer sub.Unsubscribe()
-
 	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
 		return err
 	}
-	timeout := time.After(TestTimeout)
+	sub, err := client.SubscribeFilterLogs(context.Background(), query, ch)
+	// if unable to subscribe check for the proposal execution every 5 sec
+	if err != nil {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				endBlock, _ := client.LatestBlock()
+				res, err := checkProposalExecuted(client, startBlock, endBlock, bridge, a)
+				if err != nil {
+					return err
+				}
+				if res {
+					return nil
+				}
+				startBlock = endBlock
+			case <-timeout:
+				return errors.New("test timed out waiting for ProposalCreated event")
+			}
+		}
+	}
+	defer sub.Unsubscribe()
+
 	for {
 		select {
 		case evt := <-ch:
@@ -63,4 +82,25 @@ func WaitForProposalExecuted(client TestClient, bridge common.Address) error {
 			return errors.New("test timed out waiting for ProposalCreated event")
 		}
 	}
+}
+
+func checkProposalExecuted(client TestClient, startBlock, endBlock *big.Int, bridge common.Address, a abi.ABI) (bool, error) {
+	logs, err := client.FetchEventLogs(context.TODO(), bridge, string(util.ProposalEvent), startBlock, endBlock)
+	if err != nil {
+		return false, err
+	}
+	for _, evt := range logs {
+		out, err := a.Unpack("ProposalEvent", evt.Data)
+		if err != nil {
+			return false, err
+		}
+		status := abi.ConvertType(out[2], new(uint8)).(*uint8)
+		if util.IsExecuted(*status) {
+			log.Info().Msgf("Got Proposal executed event status, continuing..., status: %v", *status)
+			return true, nil
+		} else {
+			log.Info().Msgf("Got Proposal event status: %v", *status)
+		}
+	}
+	return false, nil
 }
