@@ -6,7 +6,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/signAndSend"
+	"github.com/ChainSafe/chainbridge-core/e2e/dummy"
 	substrateTypes "github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/ethereum/go-ethereum/common"
 
@@ -15,7 +15,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc721"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/local"
 	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum"
@@ -29,6 +28,9 @@ type TestClient interface {
 	LatestBlock() (*big.Int, error)
 	FetchEventLogs(ctx context.Context, contractAddress common.Address, event string, startBlock *big.Int, endBlock *big.Int) ([]types.Log, error)
 	SubscribeFilterLogs(ctx context.Context, q ethereum.FilterQuery, ch chan<- types.Log) (ethereum.Subscription, error)
+	FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error)
+	BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error)
+	TransactionByHash(ctx context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error)
 }
 
 func SetupEVM2EVMTestSuite(fabric1, fabric2 calls.TxFabric, client1, client2 TestClient, relayerAddresses1, relayerAddresses2 []common.Address) *IntegrationTestSuite {
@@ -48,8 +50,8 @@ type IntegrationTestSuite struct {
 	relayerAddresses2 []common.Address
 	client1           TestClient
 	client2           TestClient
-	gasPricer1        calls.GasPricer
-	gasPricer2        calls.GasPricer
+	gasPricer1        dummy.GasPricer
+	gasPricer2        dummy.GasPricer
 	fabric1           calls.TxFabric
 	fabric2           calls.TxFabric
 	erc20RID          [32]byte
@@ -75,8 +77,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.erc20RID = calls.SliceTo32Bytes(common.LeftPadBytes([]byte{0}, 31))
 	s.genericRID = calls.SliceTo32Bytes(common.LeftPadBytes([]byte{1}, 31))
 	s.erc721RID = calls.SliceTo32Bytes(common.LeftPadBytes([]byte{2}, 31))
-	s.gasPricer1 = evmgaspricer.NewStaticGasPriceDeterminant(s.client1, nil)
-	s.gasPricer2 = evmgaspricer.NewStaticGasPriceDeterminant(s.client2, nil)
+	s.gasPricer1 = dummy.NewStaticGasPriceDeterminant(s.client1, nil)
+	s.gasPricer2 = dummy.NewStaticGasPriceDeterminant(s.client2, nil)
 }
 func (s *IntegrationTestSuite) TearDownSuite() {}
 func (s *IntegrationTestSuite) SetupTest()     {}
@@ -85,11 +87,11 @@ func (s *IntegrationTestSuite) TearDownTest()  {}
 func (s *IntegrationTestSuite) TestErc20Deposit() {
 	dstAddr := keystore.TestKeyRing.EthereumKeys[keystore.BobKey].CommonAddress()
 
-	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer1, s.client1)
+	transactor1 := dummy.NewSignAndSendTransactor(s.fabric1, s.gasPricer1, s.client1)
 	erc20Contract1 := erc20.NewERC20Contract(s.client1, s.config1.Erc20Addr, transactor1)
 	bridgeContract1 := bridge.NewBridgeContract(s.client1, s.config1.BridgeAddr, transactor1)
 
-	transactor2 := signAndSend.NewSignAndSendTransactor(s.fabric2, s.gasPricer2, s.client2)
+	transactor2 := dummy.NewSignAndSendTransactor(s.fabric2, s.gasPricer2, s.client2)
 	erc20Contract2 := erc20.NewERC20Contract(s.client2, s.config2.Erc20Addr, transactor2)
 
 	senderBalBefore, err := erc20Contract1.GetBalance(local.EveKp.CommonAddress())
@@ -98,11 +100,22 @@ func (s *IntegrationTestSuite) TestErc20Deposit() {
 	s.Nil(err)
 
 	amountToDeposit := big.NewInt(1000000)
-	_, err = bridgeContract1.Erc20Deposit(dstAddr, amountToDeposit, s.erc20RID, 2, transactor.TransactOptions{})
+	depositTxHash, err := bridgeContract1.Erc20Deposit(dstAddr, amountToDeposit, s.erc20RID, 2, transactor.TransactOptions{
+		Priority: uint8(2), // fast
+	})
+
 	if err != nil {
 		return
 	}
 	s.Nil(err)
+
+	depositTx, _, err := s.client2.TransactionByHash(context.Background(), *depositTxHash)
+	if err != nil {
+		return
+	}
+	s.Nil(err)
+	// check gas price of deposit tx - 140 gwei
+	s.Equal([]*big.Int{big.NewInt(140000000000)}, depositTx.GasPrice())
 
 	err = WaitForProposalExecuted(s.client2, s.config2.BridgeAddr)
 	s.Nil(err)
@@ -123,15 +136,17 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 
 	dstAddr := keystore.TestKeyRing.EthereumKeys[keystore.BobKey].CommonAddress()
 
-	txOptions := transactor.TransactOptions{}
+	txOptions := transactor.TransactOptions{
+		Priority: uint8(2), // fast
+	}
 
 	// erc721 contract for evm1
-	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer1, s.client1)
+	transactor1 := dummy.NewSignAndSendTransactor(s.fabric1, s.gasPricer1, s.client1)
 	erc721Contract1 := erc721.NewErc721Contract(s.client1, s.config1.Erc721Addr, transactor1)
 	bridgeContract1 := bridge.NewBridgeContract(s.client1, s.config1.BridgeAddr, transactor1)
 
 	// erc721 contract for evm2
-	transactor2 := signAndSend.NewSignAndSendTransactor(s.fabric2, s.gasPricer2, s.client2)
+	transactor2 := dummy.NewSignAndSendTransactor(s.fabric2, s.gasPricer2, s.client2)
 	erc721Contract2 := erc721.NewErc721Contract(s.client2, s.config2.Erc721Addr, transactor2)
 
 	// Mint token and give approval
@@ -150,13 +165,24 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 	_, err = erc721Contract2.Owner(tokenId)
 	s.Error(err)
 
-	_, err = bridgeContract1.Erc721Deposit(
-		tokenId, metadata, dstAddr, s.erc721RID, 2, transactor.TransactOptions{},
+	depositTxHash, err := bridgeContract1.Erc721Deposit(
+		tokenId, metadata, dstAddr, s.erc721RID, 2, transactor.TransactOptions{
+			Priority: uint8(2), // fast
+		},
 	)
 	s.Nil(err)
 
+	depositTx, _, err := s.client2.TransactionByHash(context.Background(), *depositTxHash)
+	if err != nil {
+		return
+	}
+	s.Nil(err)
+	// check gas price of deposit tx - 140 gwei
+	s.Equal([]*big.Int{big.NewInt(140000000000)}, depositTx.GasPrice())
+
 	err = WaitForProposalExecuted(s.client2, s.config2.BridgeAddr)
 	s.Nil(err)
+
 	// Check on evm1 that token is burned
 	_, err = erc721Contract1.Owner(tokenId)
 	s.Error(err)
@@ -168,19 +194,29 @@ func (s *IntegrationTestSuite) TestErc721Deposit() {
 }
 
 func (s *IntegrationTestSuite) TestGenericDeposit() {
-	transactor1 := signAndSend.NewSignAndSendTransactor(s.fabric1, s.gasPricer1, s.client1)
-	transactor2 := signAndSend.NewSignAndSendTransactor(s.fabric2, s.gasPricer2, s.client2)
+	transactor1 := dummy.NewSignAndSendTransactor(s.fabric1, s.gasPricer1, s.client1)
+	transactor2 := dummy.NewSignAndSendTransactor(s.fabric2, s.gasPricer2, s.client2)
 
 	bridgeContract1 := bridge.NewBridgeContract(s.client1, s.config1.BridgeAddr, transactor1)
 	assetStoreContract2 := centrifuge.NewAssetStoreContract(s.client2, s.config2.AssetStoreAddr, transactor2)
 
 	hash, _ := substrateTypes.GetHash(substrateTypes.NewI64(int64(1)))
 
-	_, err := bridgeContract1.GenericDeposit(hash[:], s.genericRID, 2, transactor.TransactOptions{})
+	depositTxHash, err := bridgeContract1.GenericDeposit(hash[:], s.genericRID, 2, transactor.TransactOptions{
+		Priority: uint8(2), // fast
+	})
 	if err != nil {
 		return
 	}
 	s.Nil(err)
+
+	depositTx, _, err := s.client2.TransactionByHash(context.Background(), *depositTxHash)
+	if err != nil {
+		return
+	}
+	s.Nil(err)
+	// check gas price of deposit tx - 140 gwei
+	s.Equal([]*big.Int{big.NewInt(140000000000)}, depositTx.GasPrice())
 
 	err = WaitForProposalExecuted(s.client2, s.config2.BridgeAddr)
 	s.Nil(err)
