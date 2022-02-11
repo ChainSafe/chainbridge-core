@@ -7,7 +7,7 @@ import (
 )
 
 type GasPricer interface {
-	GasPrice(priority uint8) ([]*big.Int, error)
+	GasPrice(priority *uint8) ([]*big.Int, error)
 }
 
 type StaticGasPriceDeterminant struct {
@@ -19,9 +19,9 @@ func NewStaticGasPriceDeterminant(client evmgaspricer.GasPriceClient, opts *evmg
 	return &StaticGasPriceDeterminant{client: client, opts: opts}
 }
 
-func (gasPricer *StaticGasPriceDeterminant) GasPrice(priority uint8) ([]*big.Int, error) {
+func (gasPricer *StaticGasPriceDeterminant) GasPrice(priority *uint8) ([]*big.Int, error) {
 	var gasPrice []*big.Int
-	switch priority {
+	switch *priority {
 	// slow
 	case 0:
 		gasPrice = []*big.Int{big.NewInt(50000000000)}

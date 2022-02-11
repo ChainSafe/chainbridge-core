@@ -13,6 +13,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/signAndSend"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 	"github.com/ChainSafe/chainbridge-core/config"
@@ -56,7 +57,7 @@ func Run() error {
 				}
 
 				dummyGasPricer := dummy.NewStaticGasPriceDeterminant(client, nil)
-				t := dummy.NewSignAndSendTransactor(evmtransaction.NewTransaction, dummyGasPricer, client)
+				t := signAndSend.NewSignAndSendTransactor(evmtransaction.NewTransaction, dummyGasPricer, client)
 				bridgeContract := bridge.NewBridgeContract(client, common.HexToAddress(config.Bridge), t)
 
 				_, err = bridgeContract.IsRelayer(common.HexToAddress(config.GeneralChainConfig.From))
