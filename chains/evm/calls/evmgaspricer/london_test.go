@@ -1,9 +1,10 @@
 package evmgaspricer
 
 import (
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer/mock"
 	"math/big"
 	"testing"
+
+	mock_evmgaspricer "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer/mock"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
@@ -33,7 +34,7 @@ func (s *LondonGasPriceTestSuite) TestLondonGasPricerNoOpts() {
 	s.gasPricerMock.EXPECT().BaseFee().Return(twentyGwei, nil)
 	s.gasPricerMock.EXPECT().SuggestGasTipCap(gomock.Any()).Return(twoGwei, nil)
 
-	res, err := gpd.GasPrice()
+	res, err := gpd.GasPrice(nil)
 	s.Nil(err)
 	s.Equal(len(res), 2)
 	s.Equal(res[0].Cmp(twoGwei), 0)
@@ -48,7 +49,7 @@ func (s *LondonGasPriceTestSuite) TestLondonGasPricerWithUpperLimit() {
 	s.gasPricerMock.EXPECT().BaseFee().Return(twentyGwei, nil)
 	s.gasPricerMock.EXPECT().SuggestGasTipCap(gomock.Any()).Return(twoGwei, nil)
 
-	res, err := gpd.GasPrice()
+	res, err := gpd.GasPrice(nil)
 	s.Nil(err)
 	s.Equal(len(res), 2)
 	s.Equal(res[0].Cmp(big.NewInt(10000000000)), 0) // 10 gwei. Bcs MaxFee is UpperLimit and BaseFee is 20Gwei so PriorityFee is 30-20=10Gwei
@@ -62,7 +63,7 @@ func (s *LondonGasPriceTestSuite) TestLondonGasPricerWithUpperLimitLowerBaseFee(
 	s.gasPricerMock.EXPECT().BaseFee().Return(thirtyGwei, nil)
 	//s.gasPricerMock.EXPECT().SuggestGasTipCap(gomock.Any()).Return(twoGwei, nil) // Code is not get to the point where this call happens
 
-	res, err := gpd.GasPrice()
+	res, err := gpd.GasPrice(nil)
 	s.Nil(err)
 	s.Equal(len(res), 2)
 	s.Equal(res[0].Cmp(big.NewInt(TwoAndTheHalfGwei)), 0) // Lowest MaxPriorityFee

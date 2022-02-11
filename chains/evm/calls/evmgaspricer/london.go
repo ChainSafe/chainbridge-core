@@ -14,7 +14,7 @@ func NewLondonGasPriceClient(client LondonGasClient, opts *GasPricerOpts) *Londo
 	return &LondonGasPriceDeterminant{client: client, opts: opts}
 }
 
-func (gasPricer *LondonGasPriceDeterminant) GasPrice() ([]*big.Int, error) {
+func (gasPricer *LondonGasPriceDeterminant) GasPrice(priority *uint8) ([]*big.Int, error) {
 	baseFee, err := gasPricer.client.BaseFee()
 	if err != nil {
 		return nil, err
@@ -25,7 +25,7 @@ func (gasPricer *LondonGasPriceDeterminant) GasPrice() ([]*big.Int, error) {
 		// we are using staticGasPriceDeterminant because it counts configs in its gasPrice calculations
 		// and seem to be the most favorable option
 		staticGasPricer := NewStaticGasPriceDeterminant(gasPricer.client, gasPricer.opts)
-		return staticGasPricer.GasPrice()
+		return staticGasPricer.GasPrice(nil)
 	}
 	gasTipCap, gasFeeCap, err := gasPricer.estimateGasLondon(baseFee)
 	if err != nil {

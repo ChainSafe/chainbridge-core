@@ -6,6 +6,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/e2e/dummy"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
@@ -18,11 +19,11 @@ var DefaultTransactionOptions = transactor.TransactOptions{
 
 type signAndSendTransactor struct {
 	TxFabric       calls.TxFabric
-	gasPriceClient calls.GasPricer
+	gasPriceClient dummy.GasPricer
 	client         calls.ClientDispatcher
 }
 
-func NewSignAndSendTransactor(txFabric calls.TxFabric, gasPriceClient calls.GasPricer, client calls.ClientDispatcher) transactor.Transactor {
+func NewSignAndSendTransactor(txFabric calls.TxFabric, gasPriceClient dummy.GasPricer, client calls.ClientDispatcher) transactor.Transactor {
 	return &signAndSendTransactor{
 		TxFabric:       txFabric,
 		gasPriceClient: gasPriceClient,
@@ -45,7 +46,7 @@ func (t *signAndSendTransactor) Transact(to *common.Address, data []byte, opts t
 
 	gp := []*big.Int{opts.GasPrice}
 	if opts.GasPrice.Cmp(big.NewInt(0)) == 0 {
-		gp, err = t.gasPriceClient.GasPrice()
+		gp, err = t.gasPriceClient.GasPrice(&opts.Priority)
 		if err != nil {
 			return &common.Hash{}, err
 		}
