@@ -6,7 +6,6 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"github.com/ChainSafe/chainbridge-core/e2e/dummy"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
@@ -19,11 +18,11 @@ var DefaultTransactionOptions = transactor.TransactOptions{
 
 type signAndSendTransactor struct {
 	TxFabric       calls.TxFabric
-	gasPriceClient dummy.GasPricer
+	gasPriceClient calls.GasPricer
 	client         calls.ClientDispatcher
 }
 
-func NewSignAndSendTransactor(txFabric calls.TxFabric, gasPriceClient dummy.GasPricer, client calls.ClientDispatcher) transactor.Transactor {
+func NewSignAndSendTransactor(txFabric calls.TxFabric, gasPriceClient calls.GasPricer, client calls.ClientDispatcher) transactor.Transactor {
 	return &signAndSendTransactor{
 		TxFabric:       txFabric,
 		gasPriceClient: gasPriceClient,
