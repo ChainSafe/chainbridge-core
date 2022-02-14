@@ -45,6 +45,10 @@ var DeployEVM = &cobra.Command{
 	},
 }
 
+const (
+	TwoDaysTermInBlocks int64 = 6200
+)
+
 var (
 	// Flags for all EVM Deploy CLI commands
 	Bridge           bool
@@ -191,7 +195,7 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPr
 				RelayerAddresses,
 				big.NewInt(0).SetUint64(RelayerThreshold),
 				big.NewInt(0).SetUint64(Fee),
-				big.NewInt(0),
+				big.NewInt(TwoDaysTermInBlocks), // _expiry is set to 48 hours by default
 			)
 			if err != nil {
 				log.Error().Err(fmt.Errorf("bridge deploy failed: %w", err))
