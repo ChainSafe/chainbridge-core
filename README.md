@@ -1,12 +1,24 @@
 # Chainbridge Core
+
 <a href="https://discord.gg/ykXsJKfhgq">
-  <img alt="discord" src="https://img.shields.io/discord/593655374469660673?label=Discord&logo=discord&style=flat" />
+  <img alt="discord" src="https://img.shields.io/discord/593655374469660673?label=Discord&style=for-the-badge&logo=discord&logoColor=white" />
+</a>
+<a href="https://chainbridge-docs.chainsafe.io">
+  <img alt="docs" src="https://img.shields.io/badge/GitBook-7B36ED?style=for-the-badge&logo=gitbook&logoColor=white/" />
+</a>
+<a href="https://golang.org">
+<img alt="go" src="https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white" />
 </a>
 
-ChainBridge-Core was born from and was built to improve the maintainability and modularity of the existing version of [ChainBridge](https://github.com/ChainSafe/chainbridge). The fundamental distinction between the two is that ChainBridge-Core is more of a framework rather than a stand-alone application.
+&nbsp;
+
+ChainBridge-Core was born from and built to improve the maintainability and modularity of the existing version of [ChainBridge](https://github.com/ChainSafe/chainbridge). The fundamental distinction between the two is that ChainBridge-Core is more of a framework rather than a stand-alone application.
+
+&nbsp;
 
 *Project still in deep beta*
-- Chat with us on [discord](https://discord.gg/ykXsJKfhgq).
+
+&nbsp;
 
 ### Table of Contents
 
@@ -17,21 +29,23 @@ ChainBridge-Core was born from and was built to improve the maintainability and 
 5. [Local Setup](#local-setup)
 6. [EVM-CLI](#evm-cli)
 7. [Celo-CLI](#celo-cli)
-8. [Substrate](#substrate)
-9. [Contributing](#contributing)
+8. [Optimism](#optimism)
+9. [Substrate](#substrate)
+10. [Contributing](#contributing)
 
 ## Installation
-Refer to [installation](https://github.com/ChainSafe/chainbridge-docs/blob/develop/docs/installation.md) guide for assistance in installing.
+Refer to the [installation](https://github.com/ChainSafe/chainbridge-docs/blob/develop/docs/installation.md) guide for assistance with installing the ChainBridge binary.
 
 ## Modules
 
-The ChainBridge-Core-Example currently supports ~~three~~ two modules:
+The ChainBridge-Core-Example currently supports ~~four~~ three modules:
 1. [EVM-CLI](#evm-cli)
 2. [Celo-CLI](#celo-cli)
-3. ~~[Substrate](#substrate)~~ -> 🚧 undergoing refactor
+3. [Optimism](#optimism)
+4. ~~[Substrate](#substrate)~~ -> _refactor in progress_ 🚧
 
 ## Usage
-Since ChainBridge-Core is the modular framework it will require writing some code to get it running. 
+Since ChainBridge-Core is a library it will require writing some code to get it running.
 
 You can find some examples [here](https://github.com/ChainSafe/chainbridge-core-example).
 
@@ -42,9 +56,11 @@ You can find some examples [here](https://github.com/ChainSafe/chainbridge-core-
 Metrics, in `chainbridge-core` are handled via injecting metrics provider compatible with [Metrics](./relayer/relayer.go) interface into `Relayer` instance. It currently needs only one method, `TrackDepositMessage(m *message.Message)`
 which is called inside relayer router when a `Deposit` event appears and should contain all necessary metrics data for extraction in custom implementations.
 
+&nbsp;
+
 ### OpenTelementry
 
-`chainbridge-core` provides already implemented metrics [provider](./opentelemetry/opentelemetry.go) via [OpenTelemetry](https://opentelemetry.io/) that is vendor-agnostic. It sends metrics to a separate [collector](https://opentelemetry.io/docs/collector/) that then sends metrics via configured [exporters](https://opentelemetry.io/docs/collector/configuration/#exporters) to one or many metrics back-ends.
+The `chainbridge-core` provides already implemented metrics [provider](./opentelemetry/opentelemetry.go) via [OpenTelemetry](https://opentelemetry.io/) that is vendor-agnostic. It sends metrics to a separate [collector](https://opentelemetry.io/docs/collector/) that then sends metrics via configured [exporters](https://opentelemetry.io/docs/collector/configuration/#exporters) to one or many metrics back-ends.
 
 &nbsp;
 
@@ -103,7 +119,6 @@ Flags:
       --network uint                ID of the Network
       --private-key string          Private key to use
       --url string                  URL of the node to receive RPC calls (default "ws://localhost:8545")
-      --prepare                     Generate calldata for contract calls (doesn't require private key and doesn't send a transaction)
 ```
 
 &nbsp;
@@ -772,6 +787,15 @@ This module provides instruction for communicating with Celo-compatible chains.
 More information can be found about this module within its repository, listed below.
 
 [Celo Module Repository](https://github.com/ChainSafe/chainbridge-celo-module)
+
+&nbsp;
+
+## Optimism
+This module provides instruction for communicating with [Optimism](https://www.optimism.io/), an Ethereum-L2 Optimistic Rollup network.
+
+Currently there is no CLI for this, though more information can be found about this module within its repository, listed below.
+
+[Optimism Module Repository](https://github.com/ChainSafe/chainbridge-optimism-module)
 
 &nbsp;
 
