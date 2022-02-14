@@ -5,18 +5,26 @@ package app
 
 import (
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/signAndSend"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 	"github.com/ChainSafe/chainbridge-core/config"
+	"github.com/ChainSafe/chainbridge-core/config/chain"
+	"github.com/ChainSafe/chainbridge-core/e2e/dummy"
 	"github.com/ChainSafe/chainbridge-core/flags"
 	"github.com/ChainSafe/chainbridge-core/lvldb"
 	"github.com/ChainSafe/chainbridge-core/opentelemetry"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ChainSafe/chainbridge-core/store"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
@@ -38,10 +46,44 @@ func Run() error {
 		switch chainConfig["type"] {
 		case "evm":
 			{
-				chain, err := evm.SetupDefaultEVMChain(chainConfig, evmtransaction.NewTransaction, blockstore)
+				config, err := chain.NewEVMConfig(chainConfig)
 				if err != nil {
 					panic(err)
 				}
+
+				client, err := evmclient.NewEVMClient(config)
+				if err != nil {
+					panic(err)
+				}
+
+				dummyGasPricer := dummy.NewStaticGasPriceDeterminant(client, nil)
+				t := signAndSend.NewSignAndSendTransactor(evmtransaction.NewTransaction, dummyGasPricer, client)
+				bridgeContract := bridge.NewBridgeContract(client, common.HexToAddress(config.Bridge), t)
+
+				_, err = bridgeContract.IsRelayer(common.HexToAddress(config.GeneralChainConfig.From))
+				if err != nil {
+					panic(err)
+				}
+
+				eventHandler := listener.NewETHEventHandler(*bridgeContract)
+				eventHandler.RegisterEventHandler(config.Erc20Handler, listener.Erc20EventHandler)
+				eventHandler.RegisterEventHandler(config.Erc721Handler, listener.Erc721EventHandler)
+				eventHandler.RegisterEventHandler(config.GenericHandler, listener.GenericEventHandler)
+				evmListener := listener.NewEVMListener(client, eventHandler, common.HexToAddress(config.Bridge))
+
+				mh := voter.NewEVMMessageHandler(*bridgeContract)
+				mh.RegisterMessageHandler(config.Erc20Handler, voter.ERC20MessageHandler)
+				mh.RegisterMessageHandler(config.Erc721Handler, voter.ERC721MessageHandler)
+				mh.RegisterMessageHandler(config.GenericHandler, voter.GenericMessageHandler)
+
+				var evmVoter *voter.EVMVoter
+				evmVoter, err = voter.NewVoterWithSubscription(mh, client, bridgeContract)
+				if err != nil {
+					log.Error().Msgf("failed creating voter with subscription: %s. Falling back to default voter.", err.Error())
+					evmVoter = voter.NewVoter(mh, client, bridgeContract)
+				}
+
+				chain := evm.NewEVMChain(evmListener, evmVoter, blockstore, config)
 
 				chains = append(chains, chain)
 			}

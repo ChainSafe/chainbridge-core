@@ -45,7 +45,7 @@ func (t *signAndSendTransactor) Transact(to *common.Address, data []byte, opts t
 
 	gp := []*big.Int{opts.GasPrice}
 	if opts.GasPrice.Cmp(big.NewInt(0)) == 0 {
-		gp, err = t.gasPriceClient.GasPrice()
+		gp, err = t.gasPriceClient.GasPrice(&opts.Priority)
 		if err != nil {
 			return &common.Hash{}, err
 		}
