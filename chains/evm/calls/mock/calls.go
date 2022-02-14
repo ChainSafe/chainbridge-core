@@ -115,18 +115,18 @@ func (m *MockGasPricer) EXPECT() *MockGasPricerMockRecorder {
 }
 
 // GasPrice mocks base method.
-func (m *MockGasPricer) GasPrice() ([]*big.Int, error) {
+func (m *MockGasPricer) GasPrice(priority *uint8) ([]*big.Int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GasPrice")
+	ret := m.ctrl.Call(m, "GasPrice", priority)
 	ret0, _ := ret[0].([]*big.Int)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GasPrice indicates an expected call of GasPrice.
-func (mr *MockGasPricerMockRecorder) GasPrice() *gomock.Call {
+func (mr *MockGasPricerMockRecorder) GasPrice(priority interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GasPrice", reflect.TypeOf((*MockGasPricer)(nil).GasPrice))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GasPrice", reflect.TypeOf((*MockGasPricer)(nil).GasPrice), priority)
 }
 
 // MockClientDispatcher is a mock of ClientDispatcher interface.

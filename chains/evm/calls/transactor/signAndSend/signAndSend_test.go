@@ -52,7 +52,7 @@ func (s *TransactorTestSuite) TestTransactor_SignAndSend_Success() {
 
 	s.mockContractCallerDispatcherClient.EXPECT().LockNonce()
 	s.mockContractCallerDispatcherClient.EXPECT().UnsafeNonce().Return(big.NewInt(1), nil)
-	s.mockGasPricer.EXPECT().GasPrice().Return([]*big.Int{big.NewInt(1)}, nil)
+	s.mockGasPricer.EXPECT().GasPrice(gomock.Any()).Return([]*big.Int{big.NewInt(1)}, nil)
 	s.mockContractCallerDispatcherClient.EXPECT().SignAndSendTransaction(gomock.Any(), gomock.Any()).Return(common.Hash{1, 2, 3, 4, 5}, nil)
 	s.mockContractCallerDispatcherClient.EXPECT().WaitAndReturnTxReceipt(gomock.Any()).Return(&types.Receipt{}, nil)
 	s.mockContractCallerDispatcherClient.EXPECT().UnsafeIncreaseNonce().Return(nil)

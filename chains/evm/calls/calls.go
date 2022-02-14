@@ -3,12 +3,13 @@ package calls
 import (
 	"context"
 	"encoding/hex"
+	"math/big"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/rs/zerolog/log"
-	"math/big"
 )
 
 type TxFabric func(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrices []*big.Int, data []byte) (evmclient.CommonTransaction, error)
@@ -22,7 +23,8 @@ type ContractCaller interface {
 }
 
 type GasPricer interface {
-	GasPrice() ([]*big.Int, error)
+	// make priority a pointer to uint8 to pass nil into all GasPrice functions (instead of magic numbers)
+	GasPrice(priority *uint8) ([]*big.Int, error)
 }
 
 type ClientDispatcher interface {

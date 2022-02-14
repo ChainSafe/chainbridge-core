@@ -1,10 +1,11 @@
 package evmtransaction
 
 import (
-	evmgaspricer "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer/mock"
 	"math/big"
 	"testing"
+
+	evmgaspricer "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
+	mock_evmgaspricer "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer/mock"
 
 	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -38,7 +39,7 @@ func (s *EVMTxTestSuite) TestNewTransactionWithStaticGasPricer() {
 	s.client.EXPECT().SuggestGasPrice(gomock.Any()).Return(big.NewInt(1000), nil)
 	txFabric := NewTransaction
 	gasPriceClient := evmgaspricer.NewStaticGasPriceDeterminant(s.client, nil)
-	gp, err := gasPriceClient.GasPrice()
+	gp, err := gasPriceClient.GasPrice(nil)
 	s.Nil(err)
 	tx, err := txFabric(1, &common.Address{}, big.NewInt(0), 10000, gp, []byte{})
 	s.Nil(err)
@@ -55,7 +56,7 @@ func (s *EVMTxTestSuite) TestNewTransactionWithLondonGasPricer() {
 	s.client.EXPECT().SuggestGasTipCap(gomock.Any()).Return(big.NewInt(1000), nil)
 	txFabric := NewTransaction
 	gasPriceClient := evmgaspricer.NewLondonGasPriceClient(s.client, nil)
-	gp, err := gasPriceClient.GasPrice()
+	gp, err := gasPriceClient.GasPrice(nil)
 	s.Nil(err)
 	tx, err := txFabric(1, &common.Address{}, big.NewInt(0), 10000, gp, []byte{})
 	s.Nil(err)
