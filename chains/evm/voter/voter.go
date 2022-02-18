@@ -132,7 +132,7 @@ func (v *EVMVoter) VoteProposal(m *message.Message) error {
 		return err
 	}
 
-	hash, err := v.bridgeContract.VoteProposal(prop, transactor.TransactOptions{})
+	hash, err := v.bridgeContract.VoteProposal(prop, transactor.TransactOptions{Priority: prop.Metadata.Priority})
 	if err != nil {
 		return fmt.Errorf("voting failed. Err: %w", err)
 	}
