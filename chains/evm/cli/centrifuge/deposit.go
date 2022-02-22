@@ -86,10 +86,13 @@ func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 	RecipientAddr = common.HexToAddress(Recipient)
 	BridgeAddr = common.HexToAddress(Bridge)
 	ResourceIdBytesArr, err = flags.ProcessResourceID(ResourceID)
+	if err != nil {
+		return err
+	}
 
 	MetadataBytes, err = hex.DecodeString(Metadata)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	return err
@@ -97,7 +100,7 @@ func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 
 func DepositCmd(cmd *cobra.Command, args []string, bridgeContract *bridge.BridgeContract) error {
 	txHash, err := bridgeContract.GenericDeposit(
-		[]byte(Metadata), ResourceIdBytesArr, uint8(DomainID), transactor.TransactOptions{GasLimit: gasLimit, Priority: transactor.TxPriorities[Priority]},
+		MetadataBytes, ResourceIdBytesArr, uint8(DomainID), transactor.TransactOptions{GasLimit: gasLimit, Priority: transactor.TxPriorities[Priority]},
 	)
 	if err != nil {
 		return err

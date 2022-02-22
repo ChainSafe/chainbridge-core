@@ -116,13 +116,13 @@ func ProcessRegisterGenericResourceFlags(cmd *cobra.Command, args []string) erro
 	} else {
 		depositBytes, err := hex.DecodeString(Deposit)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		copy(DepositSigBytes[:], depositBytes[:])
 
 		executeBytes, err := hex.DecodeString(Execute)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		copy(ExecuteSigBytes[:], executeBytes[:])
 	}
