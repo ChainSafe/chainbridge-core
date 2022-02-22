@@ -808,6 +808,70 @@ Currently there is no CLI for this, though more information can be found about t
 
 &nbsp;
 
+
+## Transaction priorities
+
+`ChainBridge` supports making deposits with different transaction speeds. To utilize those you can
+pass priority flag [`slow`/`medium`/ `fast`] when executing a [deposit](#deposit).
+Transaction priorities can be implemented via `ITX` or `metadata priority`, which will be clarified below. The following example show hot to utilize `priority` flag.
+
+```bash
+erc20 deposit
+  --url=**'node endpoint'**
+  --private-key=**'bridge admin private key'**
+  --amount=1
+  --decimals=18
+  --bridge=**'bridge contract address'**
+  --recipient=**'recipient address'**
+  --domain=**'domain id'**
+  --resource=**'registered resource'**
+  --priority=slow
+```
+### `ITX`
+[Infura Transactions (ITX)](https://blog.infura.io/how-to-use-itx-step-by-step-guide/) is the simplest way to send transactions on Ethereum because if handles all edge cases for sending transactions and spares users of gas management complexities. Also a notable benefit is that it allows dapp users to send transactions without holding ETH.
+
+&nbsp;
+
+To start using `ITX` with `ChainBridge` you'll need the following:
+* setup everything according to this [guide](https://github.com/ChainSafe/chainbridge-docs/blob/develop/docs/guides/deployment-guide.md)
+* create a new `Infura` project and enable `ITX` (if not enabled by default)
+* register forwarder address on the bridge contract, for that  use the `adminSetForwarder` function in bridge contract
+* deposit some funds to the `Infura` deposit contract (these will be used for `ITX` transactions), address of the contract: `0x015C7C7A7D65bbdb117C573007219107BD7486f9` - this is the same for the following networks: `Mainnet`, `Ropsten`, `Rinkeby`, `Kovan`, `Goerli`
+* modify `app.go` file with the following:
+  * add nonce store
+  ```
+	  dbNonce, err := lvldb.NewLvlDB(viper.GetString(flags.NoncestoreFlagName))
+	  if err != nil {
+	  	panic(err)
+	  }
+	  nonceStore := store.NewNonceStore(dbNonce)
+  ```
+
+  * replace `gasPricer` and `NewSignAndSendTransactor` with:
+  ```
+  	kp, _ := secp256k1.NewKeypairFromString(config.GeneralChainConfig.Pk)
+  	forwarderContract := forwarder.NewForwarderContract(client, common.HexToAddress(config.GeneralChainConfig.Forwarder))
+  	id, err := client.ChainID(context.TODO())
+
+  	forwarder := itx.NewMinimalForwarder(id, kp, forwarderContract, nonceStore)
+
+  	t := itx.NewITXTransactor(client, forwarder, kp)
+  ```
+
+### `Metadata priority`
+Metadata priority like `ITX` enables users to make transactions with different priorities.
+When deposit command is executed via the cli, `Event handler` reads deposit event metadata emitted from the smart contract and stores it in the payload of the message.
+Then `Message handler` reads the data from the payload and processes it, after which if voting is passed, `VoteProposal` function passes metadata to `executeProposal` on the handler smart contract, where some custom logic can be executed.
+
+&nbsp;
+
+To start using `Metadata priority` with `ChainBridge` you'll need the following:
+* write your own custom `gasPricer` like in the [example](e2e/dummy/gas-pricer.go)
+* replace current `gasPricer` with your own implementation in `app.go`:
+
+&nbsp;
+
+
 ## Contributing
 
 Chainbridge-core is a open project and welcomes contributions of all kinds: code, docs, and more. If you wish to submit more complex changes,
