@@ -168,7 +168,7 @@ func (c *MinimalForwarder) typedHash(
 		},
 		PrimaryType: "ForwardRequest",
 		Domain: signer.TypedDataDomain{
-			Name:              "MinimalForwarder",
+			Name:              "Forwarder",
 			ChainId:           chainId,
 			Version:           "0.0.1",
 			VerifyingContract: verifyingContract,
