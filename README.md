@@ -813,7 +813,7 @@ Currently there is no CLI for this, though more information can be found about t
 
 `ChainBridge` supports making deposits with different transaction speeds. To utilize those you can
 pass priority flag [`slow`/`medium`/ `fast`] when executing a [deposit](#deposit).
-Transaction priorities can be implemented via `ITX` or `metadata priority`, which will be clarified below. The following example show hot to utilize `priority` flag.
+Transaction priorities can be implemented via `ITX` or `metadata priority`, which will be clarified below. The following example show how to utilize the `priority` flag.
 
 ```bash
 erc20 deposit
