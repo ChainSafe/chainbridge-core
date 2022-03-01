@@ -813,7 +813,7 @@ Currently there is no CLI for this, though more information can be found about t
 
 `ChainBridge` supports making deposits with different transaction speeds. To utilize those you can
 pass priority flag [`slow`/`medium`/ `fast`] when executing a [deposit](#deposit).
-Transaction priorities can be implemented via `ITX` or `metadata priority`, which will be clarified below. The following example show how to utilize the `priority` flag.
+Transaction priorities can be implemented via `ITX`, which will be clarified below. The following example shows how to utilize the `priority` flag.
 
 ```bash
 erc20 deposit
@@ -828,7 +828,7 @@ erc20 deposit
   --priority=slow
 ```
 ### `ITX`
-[Infura Transactions (ITX)](https://blog.infura.io/how-to-use-itx-step-by-step-guide/) is the simplest way to send transactions on Ethereum because if handles all edge cases for sending transactions and spares users of gas management complexities. Also a notable benefit is that it allows dapp users to send transactions without holding ETH.
+[Infura Transactions (ITX)](https://blog.infura.io/how-to-use-itx-step-by-step-guide/) is the simplest way to send transactions on Ethereum because it handles all edge cases for sending transactions and spares users of gas management complexities. Also a notable benefit is that it allows dapp users to send transactions without holding ETH.
 
 &nbsp;
 
@@ -859,15 +859,17 @@ To start using `ITX` with `ChainBridge` you'll need the following:
   ```
 
 ### `Metadata priority`
-Metadata priority like `ITX` enables users to make transactions with different priorities.
-When deposit command is executed via the cli, `Event handler` reads deposit event metadata emitted from the smart contract and stores it in the payload of the message.
-Then `Message handler` reads the data from the payload and processes it, after which if voting is passed, `VoteProposal` function passes metadata to `executeProposal` on the handler smart contract, where some custom logic can be executed.
-
-&nbsp;
-
-To start using `Metadata priority` with `ChainBridge` you'll need the following:
-* write your own custom `gasPricer` like in the [example](e2e/dummy/gas-pricer.go)
-* replace current `gasPricer` with your own implementation in `app.go`:
+Metadata priority enables users to make transactions with different priorities.
+Since the most used use case will be implementing `metadata priority` on the front-end, we'll cover metadata design (priority length and priority).
+```
+metadata length: (64 bytes + recipient address length) - ((64 bytes + recipient address length) + 32 bytes)
+metadata:        ((64 bytes + recipient address length) + 32 bytes) - ((64 bytes + recipient address length) + 32 bytes + metadata length)
+```
+and then priority inside metadata is:
+```
+priority length: (metadataStart + metadataLength) - (metadataStart + metadataLength + 1 byte)
+priority data:	 (metadataStart + metadataLength + 1 byte) - (metadataStart + metadataLength + 1 byte) + priority length)
+```
 
 &nbsp;
 
