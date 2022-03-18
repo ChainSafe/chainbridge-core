@@ -70,6 +70,9 @@ ERC721: %s
 ERC721 Handler: %s
 Generic Handler: %s
 Asset Store: %s
+ERC20 resourceId: %s
+ERC721 resourceId %s
+Generic resourceId %s
 
 - Chain 2 -
 Bridge: %s
@@ -79,6 +82,9 @@ ERC721: %s
 ERC721 Handler: %s
 Generic Handler: %s
 Asset Store: %s
+ERC20 resourceId: %s
+ERC721 resourceId %s
+Generic resourceId %s
 
 ===============================================
 `,
@@ -90,6 +96,9 @@ Asset Store: %s
 		config.Erc721HandlerAddr,
 		config.GenericHandlerAddr,
 		config.AssetStoreAddr,
+		config.ResourceIDERC20,
+		config.ResourceIDERC721,
+		config.ResourceIDGeneric,
 		// config2
 		config2.BridgeAddr,
 		config2.Erc20Addr,
@@ -98,5 +107,8 @@ Asset Store: %s
 		config.Erc721HandlerAddr,
 		config2.GenericHandlerAddr,
 		config2.AssetStoreAddr,
+		config2.ResourceIDERC20,
+		config2.ResourceIDERC721,
+		config2.ResourceIDGeneric,
 	)
 }
