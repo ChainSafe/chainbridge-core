@@ -15,7 +15,9 @@ import (
 )
 
 var errIncorrectDataLen = errors.New("invalid calldata length: less than 84 bytes")
+var errIncorrect1155DataLen = errors.New("invalid calldata length: less than 116 bytes")
 
+// ERC20
 type Erc20HandlerTestSuite struct {
 	suite.Suite
 }
@@ -133,6 +135,7 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleEventIncorrectDataLen() {
 	s.EqualError(err, errIncorrectDataLen.Error())
 }
 
+// ERC721
 type Erc721HandlerTestSuite struct {
 	suite.Suite
 }
@@ -293,6 +296,129 @@ func (s *Erc721HandlerTestSuite) TestErc721EventHandlerWithPriority() {
 	s.Equal(expected, m)
 }
 
+// ERC1155
+type Erc1155HandlerTestSuite struct {
+	suite.Suite
+}
+
+func TestRunErc1155HandlerTestSuite(t *testing.T) {
+	suite.Run(t, new(Erc1155HandlerTestSuite))
+}
+
+func (s *Erc1155HandlerTestSuite) SetupSuite()    {}
+func (s *Erc1155HandlerTestSuite) TearDownSuite() {}
+func (s *Erc1155HandlerTestSuite) SetupTest()     {}
+func (s *Erc1155HandlerTestSuite) TearDownTest()  {}
+
+func (s *Erc1155HandlerTestSuite) TestErc1155HandleEvent() {
+	// 0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b
+	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}
+
+	calldata := deposit.ConstructErc1155DepositData(recipientByteSlice, big.NewInt(2), big.NewInt(1))
+	depositLog := &evmclient.DepositLogs{
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		Data:                calldata,
+		HandlerResponse:     []byte{},
+	}
+
+	sourceID := uint8(1)
+	tokenId := calldata[:32]
+	amountParsed := calldata[32:64]
+	recipientAddressParsed := calldata[96:]
+
+	expected := &message.Message{
+		Source:       sourceID,
+		Destination:  depositLog.DestinationDomainID,
+		DepositNonce: depositLog.DepositNonce,
+		ResourceId:   depositLog.ResourceID,
+		Type:         message.SemiFungibleTransfer,
+		Payload: []interface{}{
+			tokenId,
+			amountParsed,
+			recipientAddressParsed,
+		},
+	}
+
+	message, err := listener.Erc1155EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
+
+	s.Nil(err)
+	s.NotNil(message)
+	s.Equal(message, expected)
+}
+
+func (s *Erc1155HandlerTestSuite) TestErc1155HandleEventWithPriority() {
+	// 0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b
+	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}
+
+	calldata := deposit.ConstructErc1155DepositDataWithPriority(recipientByteSlice, big.NewInt(2), big.NewInt(1), uint8(1))
+	depositLog := &evmclient.DepositLogs{
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		Data:                calldata,
+		HandlerResponse:     []byte{},
+	}
+
+	sourceID := uint8(1)
+	tokenId := calldata[:32]
+	amountParsed := calldata[32:64]
+	// 32-64 is recipient address length
+	recipientAddressLength := big.NewInt(0).SetBytes(calldata[64:96])
+
+	// 64 - (64 + recipient address length) is recipient address
+	recipientAddressParsed := calldata[96:(96 + recipientAddressLength.Int64())]
+	expected := &message.Message{
+		Source:       sourceID,
+		Destination:  depositLog.DestinationDomainID,
+		DepositNonce: depositLog.DepositNonce,
+		ResourceId:   depositLog.ResourceID,
+		Type:         message.SemiFungibleTransfer,
+		Payload: []interface{}{
+			tokenId,
+			amountParsed,
+			recipientAddressParsed,
+		},
+		Metadata: message.Metadata{
+			Priority: uint8(1),
+		},
+	}
+
+	message, err := listener.Erc1155EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
+
+	s.Nil(err)
+	s.NotNil(message)
+	s.Equal(message, expected)
+}
+
+func (s *Erc1155HandlerTestSuite) TestErc1155HandleEventIncorrectDataLen() {
+	metadata := []byte("0xdeadbeef")
+
+	var calldata []byte
+	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(metadata))), 32)...)
+	calldata = append(calldata, metadata...)
+
+	depositLog := &evmclient.DepositLogs{
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
+		Data:                calldata,
+		HandlerResponse:     []byte{},
+	}
+
+	sourceID := uint8(1)
+
+	message, err := listener.Erc1155EventHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
+
+	s.Nil(message)
+	s.EqualError(err, errIncorrect1155DataLen.Error())
+}
+
+// Generic
 type GenericHandlerTestSuite struct {
 	suite.Suite
 }
