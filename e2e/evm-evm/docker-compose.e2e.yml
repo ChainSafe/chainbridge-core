@@ -15,7 +15,7 @@ services:
       - "8546:8546"
     environment:
       - NODEKEY=98ab333347a12cef869f92b3de44085f9e44891e513bcf1d76a99eecbcdd5e17
-      - NETWORKID=421
+      - NETWORKID=1
       - MINE=true
     entrypoint: "/root/entrypoint.sh"
 
@@ -32,7 +32,7 @@ services:
       - "8548:8546"
     environment:
       - NODEKEY=98ab333347a12cef869f92b3de44085f9e44891e513bcf1d76a99eecbcdd5e17
-      - NETWORKID=420
+      - NETWORKID=2
       - MINE=true
     entrypoint: "/root/entrypoint.sh"
 
