@@ -90,6 +90,33 @@ func ERC20MessageHandler(m *message.Message, handlerAddr, bridgeAddress common.A
 	return proposal.NewProposal(m.Source, m.DepositNonce, m.ResourceId, data, handlerAddr, bridgeAddress, m.Metadata), nil
 }
 
+// Same as ERC20, except the payload contains an extra integer for the tokenID
+func ERC1155MessageHandler(m *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
+	if len(m.Payload) != 3 {
+		return nil, errors.New("malformed payload. Len  of payload should be 3")
+	}
+	tokenId, ok := m.Payload[0].([]byte)
+	if !ok {
+		return nil, errors.New("wrong payload tokenID format")
+	}
+
+	amount, ok := m.Payload[1].([]byte)
+	if !ok {
+		return nil, errors.New("wrong payload amount format")
+	}
+	recipient, ok := m.Payload[2].([]byte)
+	if !ok {
+		return nil, errors.New("wrong payload recipient format")
+	}
+	var data []byte
+	data = append(data, common.LeftPadBytes(tokenId, 32)...) // tokenId (uint256)
+	data = append(data, common.LeftPadBytes(amount, 32)...)  // amount (uint256)
+	recipientLen := big.NewInt(int64(len(recipient))).Bytes()
+	data = append(data, common.LeftPadBytes(recipientLen, 32)...) // length of recipient (uint256)
+	data = append(data, recipient...)                             // recipient ([]byte)
+	return proposal.NewProposal(m.Source, m.DepositNonce, m.ResourceId, data, handlerAddr, bridgeAddress, m.Metadata), nil
+}
+
 func ERC721MessageHandler(msg *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
 
 	if len(msg.Payload) != 3 {

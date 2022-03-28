@@ -2,16 +2,19 @@ package voter_test
 
 import (
 	"errors"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
+
+	"testing"
 
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
-	"testing"
 )
 
 var errIncorrectERC20PayloadLen = errors.New("malformed payload. Len  of payload should be 2")
 var errIncorrectERC721PayloadLen = errors.New("malformed payload. Len  of payload should be 3")
+var errIncorrectERC1155PayloadLen = errors.New("malformed payload. Len  of payload should be 3")
 var errIncorrectGenericPayloadLen = errors.New("malformed payload. Len  of payload should be 1")
 
 var errIncorrectAmount = errors.New("wrong payload amount format")
@@ -252,6 +255,113 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectMetadata() {
 	s.Nil(prop)
 	s.NotNil(err)
 	s.EqualError(err, errIncorrectMetadata.Error())
+}
+
+// ERC1155
+type Erc1155HandlerTestSuite struct {
+	suite.Suite
+}
+
+func TestRunErc1155HandlerTestSuite(t *testing.T) {
+	suite.Run(t, new(Erc1155HandlerTestSuite))
+}
+
+func (s *Erc1155HandlerTestSuite) SetupSuite()    {}
+func (s *Erc1155HandlerTestSuite) TearDownSuite() {}
+func (s *Erc1155HandlerTestSuite) SetupTest()     {}
+func (s *Erc1155HandlerTestSuite) TearDownTest()  {}
+
+func (s *Erc1155HandlerTestSuite) TestErc1155MessageHandlerEmptyMetadata() {
+	message := &message.Message{
+		Source:       1,
+		Destination:  0,
+		DepositNonce: 1,
+		ResourceId:   [32]byte{0},
+		Type:         message.SemiFungibleTransfer,
+		Payload: []interface{}{
+			[]byte{2}, // tokenID
+			[]byte{1}, // amount
+			[]byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}, // recipientAddress
+		},
+		Metadata: message.Metadata{
+			Priority: uint8(1),
+		},
+	}
+
+	prop, err := voter.ERC1155MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
+
+	s.Nil(err)
+	s.NotNil(prop)
+}
+
+func (s *Erc1155HandlerTestSuite) TestErc1155MessageHandlerIncorrectDataLen() {
+	message := &message.Message{
+		Source:       1,
+		Destination:  0,
+		DepositNonce: 1,
+		ResourceId:   [32]byte{0},
+		Type:         message.FungibleTransfer,
+		Payload: []interface{}{
+			[]byte{2}, // tokenID
+		},
+		Metadata: message.Metadata{
+			Priority: uint8(1),
+		},
+	}
+
+	prop, err := voter.ERC1155MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
+
+	s.Nil(prop)
+	s.NotNil(err)
+	s.EqualError(err, errIncorrectERC1155PayloadLen.Error())
+}
+
+func (s *Erc1155HandlerTestSuite) TestErc1155MessageHandlerIncorrectAmount() {
+	message := &message.Message{
+		Source:       1,
+		Destination:  0,
+		DepositNonce: 1,
+		ResourceId:   [32]byte{0},
+		Type:         message.SemiFungibleTransfer,
+		Payload: []interface{}{
+			"incorrectAmount", // tokenID
+			[]byte{1},         // amount
+			[]byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}, // recipientAddress
+		},
+		Metadata: message.Metadata{
+			Priority: uint8(1),
+		},
+	}
+
+	prop, err := voter.ERC1155MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
+
+	s.Nil(prop)
+	s.NotNil(err)
+	s.EqualError(err, errIncorrectTokenID.Error())
+}
+
+func (s *Erc1155HandlerTestSuite) TestErc1155MessageHandlerIncorrectRecipient() {
+	message := &message.Message{
+		Source:       1,
+		Destination:  0,
+		DepositNonce: 1,
+		ResourceId:   [32]byte{0},
+		Type:         message.SemiFungibleTransfer,
+		Payload: []interface{}{
+			[]byte{1}, // tokenId
+			[]byte{2}, // amount
+			"incorrectRecipient",
+		},
+		Metadata: message.Metadata{
+			Priority: uint8(1),
+		},
+	}
+
+	prop, err := voter.ERC1155MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
+
+	s.Nil(prop)
+	s.NotNil(err)
+	s.EqualError(err, errIncorrectRecipient.Error())
 }
 
 // GENERIC

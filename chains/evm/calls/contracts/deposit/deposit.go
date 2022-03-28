@@ -19,8 +19,25 @@ func ConstructErc20DepositData(destRecipient []byte, amount *big.Int) []byte {
 	return data
 }
 
+func ConstructErc1155DepositData(destRecipient []byte, tokenId *big.Int, amount *big.Int) []byte {
+	var data []byte
+	data = append(data, math.PaddedBigBytes(tokenId, 32)...)
+	data = append(data, constructMainDepositData(amount, destRecipient)...)
+	return data
+}
+
 func ConstructErc20DepositDataWithPriority(destRecipient []byte, amount *big.Int, priority uint8) []byte {
 	data := constructMainDepositData(amount, destRecipient)
+	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len([]uint8{priority}))), 1)...) // Length of priority
+	data = append(data, math.PaddedBigBytes(big.NewInt(int64(priority)), 1)...)               // Priority
+	return data
+}
+
+func ConstructErc1155DepositDataWithPriority(destRecipient []byte, tokenId *big.Int, amount *big.Int, priority uint8) []byte {
+	var data []byte
+	data = append(data, math.PaddedBigBytes(tokenId, 32)...)
+
+	data = append(data, constructMainDepositData(amount, destRecipient)...)
 	data = append(data, math.PaddedBigBytes(big.NewInt(int64(len([]uint8{priority}))), 1)...) // Length of priority
 	data = append(data, math.PaddedBigBytes(big.NewInt(int64(priority)), 1)...)               // Priority
 	return data

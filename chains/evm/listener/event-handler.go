@@ -107,6 +107,51 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.Re
 	return message.NewMessage(sourceID, destId, nonce, resourceID, message.FungibleTransfer, payload, metadata), nil
 }
 
+// Erc1155EventHandler converts data pulled from event logs into message
+// handlerResponse can be an empty slice
+func Erc1155EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
+	if len(calldata) < 116 {
+		err := errors.New("invalid calldata length: less than 116 bytes")
+		return nil, err
+	}
+
+	// @dev
+	// tokenId: first 32 bytes of calldata
+	tokenId := calldata[:32]
+
+	// @dev
+	// amount: second 32 bytes of calldata
+	amount := calldata[32:64]
+
+	// lenRecipientAddress: third 32 bytes of calldata [64:96]
+	// does not need to be derived because it is being calculated
+	// within ERC1155MessageHandler
+	// https://github.com/ChainSafe/chainbridge-core/blob/main/chains/evm/voter/message-handler.go#L108
+
+	// 32-64 is recipient address length
+	recipientAddressLength := big.NewInt(0).SetBytes(calldata[64:96])
+
+	// 64 - (64 + recipient address length) is recipient address
+	recipientAddress := calldata[96:(96 + recipientAddressLength.Int64())]
+	// if there is priority data, parse it and use it
+	payload := []interface{}{
+		tokenId,
+		amount,
+		recipientAddress,
+	}
+
+	// arbitrary metadata that will be most likely be used by the relayer
+	var metadata message.Metadata
+	if 96+recipientAddressLength.Int64() < int64(len(calldata)) {
+		priorityLength := big.NewInt(0).SetBytes(calldata[(96 + recipientAddressLength.Int64()):((96 + recipientAddressLength.Int64()) + 1)])
+
+		// (64 + recipient address length + 1) - ((64 + recipient address length + 1) + priority length) is priority data
+		priority := calldata[(96 + recipientAddressLength.Int64() + 1):((96 + recipientAddressLength.Int64()) + 1 + priorityLength.Int64())]
+		metadata.Priority = priority[0]
+	}
+	return message.NewMessage(sourceID, destId, nonce, resourceID, message.SemiFungibleTransfer, payload, metadata), nil
+}
+
 // GenericEventHandler converts data pulled from generic deposit event logs into message
 func GenericEventHandler(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
 	if len(calldata) < 32 {

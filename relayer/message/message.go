@@ -17,9 +17,10 @@ type Metadata struct {
 }
 
 const (
-	FungibleTransfer    TransferType = "FungibleTransfer"
-	NonFungibleTransfer TransferType = "NonFungibleTransfer"
-	GenericTransfer     TransferType = "GenericTransfer"
+	FungibleTransfer     TransferType = "FungibleTransfer"
+	NonFungibleTransfer  TransferType = "NonFungibleTransfer"
+	SemiFungibleTransfer TransferType = "SemiFungibleTransfer"
+	GenericTransfer      TransferType = "GenericTransfer"
 )
 
 type ProposalStatus struct {

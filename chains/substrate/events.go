@@ -191,6 +191,16 @@ type EventFungibleTransfer struct {
 	Topics       []types.Hash
 }
 
+type EventSemiFungibleTransfer struct {
+	Phase        types.Phase
+	Destination  types.U8
+	DepositNonce types.U64
+	ResourceId   types.Bytes32
+	TokenID      types.U256
+	Amount       types.U256
+	Recipient    types.Bytes
+	Topics       []types.Hash
+}
 type EventNonFungibleTransfer struct {
 	Phase        types.Phase
 	Destination  types.U8
@@ -282,6 +292,7 @@ type EventProposalFailed struct {
 type Events struct {
 	types.EventRecords
 	ChainBridge_FungibleTransfer        []EventFungibleTransfer               //nolint:stylecheck,golint
+	ChainBridge_SemiFungibleTransfer    []EventSemiFungibleTransfer           //nolint:stylecheck,golint
 	ChainBridge_NonFungibleTransfer     []EventNonFungibleTransfer            //nolint:stylecheck,golint
 	ChainBridge_GenericTransfer         []EventGenericTransfer                //nolint:stylecheck,golint
 	ChainBridge_RelayerThresholdChanged []EventRelayerThresholdChanged        //nolint:stylecheck,golint

@@ -119,6 +119,16 @@ func (l *SubstrateListener) handleEvents(domainID uint8, evts *substrate.Events)
 			msgs = append(msgs, m)
 		}
 	}
+	if l.eventHandlers[message.SemiFungibleTransfer] != nil {
+		for _, evt := range evts.ChainBridge_SemiFungibleTransfer {
+			m, err := l.eventHandlers[message.SemiFungibleTransfer](domainID, evt)
+			if err != nil {
+				return nil, err
+			}
+			msgs = append(msgs, m)
+		}
+	}
+
 	if l.eventHandlers[message.NonFungibleTransfer] != nil {
 		for _, evt := range evts.ChainBridge_NonFungibleTransfer {
 			m, err := l.eventHandlers[message.NonFungibleTransfer](domainID, evt)

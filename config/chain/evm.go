@@ -14,6 +14,7 @@ type EVMConfig struct {
 	Bridge             string
 	Erc20Handler       string
 	Erc721Handler      string
+	Erc1155Handler      string
 	GenericHandler     string
 	MaxGasPrice        *big.Int
 	GasMultiplier      *big.Float
@@ -28,6 +29,7 @@ type RawEVMConfig struct {
 	Bridge             string  `mapstructure:"bridge"`
 	Erc20Handler       string  `mapstructure:"erc20Handler"`
 	Erc721Handler      string  `mapstructure:"erc721Handler"`
+	Erc1155Handler      string  `mapstructure:"erc1155Handler"`
 	GenericHandler     string  `mapstructure:"genericHandler"`
 	MaxGasPrice        int64   `mapstructure:"maxGasPrice"`
 	GasMultiplier      float64 `mapstructure:"gasMultiplier"`
@@ -69,6 +71,7 @@ func NewEVMConfig(chainConfig map[string]interface{}) (*EVMConfig, error) {
 		GeneralChainConfig: c.GeneralChainConfig,
 		Erc20Handler:       c.Erc20Handler,
 		Erc721Handler:      c.Erc721Handler,
+		Erc1155Handler:      c.Erc1155Handler,
 		GenericHandler:     c.GenericHandler,
 		Bridge:             c.Bridge,
 		BlockRetryInterval: consts.DefaultBlockRetryInterval,
