@@ -1,13 +1,16 @@
 name: Deploy ECS
 
+# on:
+#   workflow_run:
+#     workflows:
+#       - test
+#     branches:
+#       - main
+#     types:
+#       - completed
+
 on:
-  workflow_run:
-    workflows:
-      - test
-    branches:
-      - main
-    types:
-      - completed
+  push: []
 
 env:
   AWS_REGION: "us-east-2"
