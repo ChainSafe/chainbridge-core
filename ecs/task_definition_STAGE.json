@@ -1,0 +1,47 @@
+{
+  "containerDefinitions": [ 
+     { 
+        "essential": true,
+        "image": "852551629426.dkr.ecr.us-east-2.amazonaws.com/core-stage:STAGE",
+        "logConfiguration": { 
+           "logDriver": "awslogs",
+           "options": { 
+              "awslogs-group": "/ecs/core-STAGE",
+              "awslogs-region": "us-east-2",
+              "awslogs-stream-prefix": "ecs"
+           }
+        },
+        "name": "core-container-STAGE",
+        "portMappings": [ 
+           { 
+              "containerPort": 8545,
+              "hostPort": 8545,
+              "protocol": "tcp"
+           }
+        ],
+        "environment": [
+         {
+            "name": "example",
+            "value": "setanenv"
+          }
+        ],
+        "secrets": [ 
+           { 
+              "name": "mychainbridgesecret",
+              "valueFrom": "/chainbridge/example"
+           }
+        ]
+     }
+  ],
+  "cpu": "256",
+  "executionRoleArn": "arn:aws:iam::852551629426:role/core-ecsTaskExecutionRole",
+  "family": "core-container-STAGE",
+  "memory": "512",
+  "networkMode": "awsvpc",
+  "runtimePlatform": {
+       "operatingSystemFamily": "LINUX"
+   },
+  "requiresCompatibilities": [ 
+      "FARGATE" 
+   ]
+}
