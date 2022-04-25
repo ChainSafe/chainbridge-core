@@ -1,0 +1,53 @@
+name: Deploy ECS
+
+on:
+  workflow_run:
+    workflows:
+      - test
+    branches:
+      - main
+    types:
+      - completed
+
+env:
+  AWS_REGION: "us-east-2"
+  ECR_REPOSITORY: core-stage
+  ENVIRONMENT: STAGE
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-18.04
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: sleep 5
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::852551629426:role/github-actions-${{ env.ENVIRONMENT }}-chainbridge
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GithubActions
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.ENVIRONMENT }} .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.ENVIRONMENT }}
+
+      - name: Deploy to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ecs/task_definition_${{ env.ENVIRONMENT }}.json
+          service: core-service-${{ env.ENVIRONMENT }}
+          cluster: core-${{ env.ENVIRONMENT }}
+          wait-for-service-stability: true
