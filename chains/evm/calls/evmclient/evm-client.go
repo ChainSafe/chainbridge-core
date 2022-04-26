@@ -180,6 +180,8 @@ func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common
 			log.Error().Msgf("failed unpacking deposit event log: %v", err)
 			continue
 		}
+
+		dl.SenderAddress = common.BytesToAddress(l.Topics[1].Bytes())
 		log.Debug().Msgf("Found deposit log in block: %d, TxHash: %s, contractAddress: %s, sender: %s", l.BlockNumber, l.TxHash, l.Address, dl.SenderAddress)
 
 		depositLogs = append(depositLogs, dl)
