@@ -58,7 +58,7 @@ func init() {
 func BindDepositFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Recipient, "recipient", "", "Address of contract to receive generic data")
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "Address of bridge contract")
-	cmd.Flags().StringVar(&Metadata, "metadata", "", "Piece of data (hex) to transfer")
+	cmd.Flags().StringVar(&Metadata, "metadata", "", "Data (hex bytes) representing params for previously registered functions. Params should be encoded as 32 bytes each")
 	cmd.Flags().Uint8Var(&DomainID, "domain", 0, "Destination domain ID")
 	cmd.Flags().StringVar(&ResourceID, "resource", "", "Resource ID for transfer")
 	cmd.Flags().StringVar(&Priority, "priority", "none", "Transaction priority speed")

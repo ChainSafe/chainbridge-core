@@ -61,6 +61,7 @@ func BindRegisterGenericResourceFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	cmd.Flags().StringVar(&Target, "target", "", "Contract address or hash storage to be registered")
 	cmd.Flags().StringVar(&Deposit, "deposit", "00000000", "Deposit function signature")
+	cmd.Flags().Uint64Var(&DepositerOffset, "depositerOffset", 0, "Offset to find the bridge tx depositer address inside the metadata sent on a deposit")
 	cmd.Flags().StringVar(&Execute, "execute", "00000000", "Execute proposal function signature")
 	cmd.Flags().BoolVar(&Hash, "hash", false, "Treat signature inputs as function prototype strings, hash and take the first 4 bytes")
 	flags.MarkFlagsAsRequired(cmd, "handler", "resource", "bridge", "target")
@@ -136,19 +137,20 @@ func ProcessRegisterGenericResourceFlags(cmd *cobra.Command, args []string) erro
 func RegisterGenericResource(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
 	log.Info().Msgf("Registering contract %s with resource ID %s on handler %s", TargetContractAddr, ResourceID, HandlerAddr)
 
+	depositerOffsetBigInt := new(big.Int).SetUint64(DepositerOffset)
 	log.Info().Msgf("handlerAddr: %s, resourceId: %s, targetcontract: %s, depositsigbytes: %s, depositerOffset: %s, executeSigBytes: %s",
 		HandlerAddr,
 		ResourceIdBytesArr,
 		TargetContractAddr,
 		string(DepositSigBytes[:]),
-		big.NewInt(int64(DepositerOffset)),
+		depositerOffsetBigInt,
 		string(DepositSigBytes[:]))
 	h, err := contract.AdminSetGenericResource(
 		HandlerAddr,
 		ResourceIdBytesArr,
 		TargetContractAddr,
 		DepositSigBytes,
-		big.NewInt(int64(DepositerOffset)),
+		depositerOffsetBigInt,
 		ExecuteSigBytes,
 		transactor.TransactOptions{GasLimit: gasLimit},
 	)
