@@ -4,103 +4,86 @@ import (
 	"context"
 	"errors"
 	"math/big"
-	"strings"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/events"
 
-	"github.com/ChainSafe/chainbridge-core/util"
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/rs/zerolog/log"
 )
 
 var TestTimeout = time.Second * 600
 
-func WaitForProposalExecuted(client TestClient, bridge common.Address) error {
+type Client interface {
+	LatestBlock() (*big.Int, error)
+	SubscribeFilterLogs(ctx context.Context, q ethereum.FilterQuery, ch chan<- types.Log) (ethereum.Subscription, error)
+	FetchEventLogs(ctx context.Context, contractAddress common.Address, event string, startBlock *big.Int, endBlock *big.Int) ([]types.Log, error)
+}
+
+func WaitForProposalExecuted(client Client, bridge common.Address) error {
 	startBlock, _ := client.LatestBlock()
 
 	query := ethereum.FilterQuery{
 		FromBlock: startBlock,
 		Addresses: []common.Address{bridge},
 		Topics: [][]common.Hash{
-			{util.ProposalEvent.GetTopic()},
+			{events.ProposalExecutionSig.GetTopic()},
 		},
 	}
 	timeout := time.After(TestTimeout)
 	ch := make(chan types.Log)
-	a, err := abi.JSON(strings.NewReader(consts.BridgeABI))
+	sub, err := client.SubscribeFilterLogs(context.Background(), query, ch)
 	if err != nil {
 		return err
 	}
-	sub, err := client.SubscribeFilterLogs(context.Background(), query, ch)
-	// if unable to subscribe check for the proposal execution every 5 sec
-	if err != nil {
-		ticker := time.NewTicker(5 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				endBlock, _ := client.LatestBlock()
-				res, err := checkProposalExecuted(client, startBlock, endBlock, bridge, a)
-				if err != nil {
-					return err
-				}
-				if res {
-					return nil
-				}
-				startBlock = endBlock
-			case <-timeout:
-				return errors.New("test timed out waiting for ProposalCreated event")
-			}
-		}
-	}
-	defer sub.Unsubscribe()
 
+	defer sub.Unsubscribe()
 	for {
 		select {
-		case evt := <-ch:
-			out, err := a.Unpack("ProposalEvent", evt.Data)
-			if err != nil {
-				return err
-			}
-			status := abi.ConvertType(out[2], new(uint8)).(*uint8)
-			// Check status
-			if util.IsExecuted(*status) {
-				log.Info().Msgf("Got Proposal executed event status, continuing..., status: %v", *status)
-				return nil
-			} else {
-				log.Info().Msgf("Got Proposal event status: %v", *status)
-			}
+		case <-ch:
+			return nil
 		case err := <-sub.Err():
 			if err != nil {
 				return err
 			}
 		case <-timeout:
-			return errors.New("test timed out waiting for ProposalCreated event")
+			return errors.New("test timed out waiting for proposal execution event")
 		}
 	}
 }
 
-func checkProposalExecuted(client TestClient, startBlock, endBlock *big.Int, bridge common.Address, a abi.ABI) (bool, error) {
-	logs, err := client.FetchEventLogs(context.TODO(), bridge, string(util.ProposalEvent), startBlock, endBlock)
+func WaitUntilBridgeReady(client Client, bridge common.Address) error {
+	startBlock, _ := client.LatestBlock()
+	logs, err := client.FetchEventLogs(context.Background(), bridge, string(events.FeeChangedSig), big.NewInt(1), startBlock)
 	if err != nil {
-		return false, err
+		return err
 	}
-	for _, evt := range logs {
-		out, err := a.Unpack("ProposalEvent", evt.Data)
-		if err != nil {
-			return false, err
-		}
-		status := abi.ConvertType(out[2], new(uint8)).(*uint8)
-		if util.IsExecuted(*status) {
-			log.Info().Msgf("Got Proposal executed event status, continuing..., status: %v", *status)
-			return true, nil
-		} else {
-			log.Info().Msgf("Got Proposal event status: %v", *status)
+	if len(logs) > 0 {
+		return nil
+	}
+
+	query := ethereum.FilterQuery{
+		FromBlock: startBlock,
+		Addresses: []common.Address{bridge},
+		Topics: [][]common.Hash{
+			{events.FeeChangedSig.GetTopic()},
+		},
+	}
+	ch := make(chan types.Log)
+	sub, err := client.SubscribeFilterLogs(context.Background(), query, ch)
+	if err != nil {
+		return err
+	}
+	defer sub.Unsubscribe()
+	for {
+		select {
+		case <-ch:
+			return nil
+		case err := <-sub.Err():
+			if err != nil {
+				return err
+			}
 		}
 	}
-	return false, nil
 }

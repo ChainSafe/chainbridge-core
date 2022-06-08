@@ -4,7 +4,7 @@
 package main
 
 import (
-	"github.com/ChainSafe/chainbridge-core/e2e/evm-evm/example/cmd"
+	"github.com/ChainSafe/chainbridge-core/example/cmd"
 )
 
 func main() {

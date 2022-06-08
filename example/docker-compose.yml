@@ -5,9 +5,11 @@ version: '3'
 services:
   evm1-1:
     build:
-      context: ../geth-build
+      context: ./geth-build
       dockerfile: Dockerfile
     container_name: evm1-1
+    logging:
+      driver: none
     networks:
       - evm1
     ports:
@@ -22,9 +24,11 @@ services:
   # SECOND CHAIN
   evm2-1:
     build:
-      context: ../geth-build
+      context: ./geth-build
       dockerfile: Dockerfile
     container_name: evm2-1
+    logging:
+      driver: none
     networks:
       - evm2
     ports:
@@ -36,12 +40,26 @@ services:
       - MINE=true
     entrypoint: "/root/entrypoint.sh"
 
+  setup:
+    container_name: setup
+    build:
+      context: ../.
+      dockerfile: ./example/Dockerfile
+    command: local-setup --endpoint1 ws://evm1-1:8546 --endpoint2 ws://evm2-1:8546
+    depends_on:
+      - evm1-1
+      - evm2-1
+    networks:
+      - evm1
+      - evm2
+    restart: "no"
+
   relayer1:
     container_name: relayer1
     build:
-      context: ../../.
-      dockerfile: Dockerfile
-    command: run --config /cfg/config_evm-evm.json --testkey alice --fresh
+      context: ../.
+      dockerfile: ./example/Dockerfile
+    command: run --config /cfg/config_evm-evm_1.json --testkey alice --fresh
     depends_on:
       - evm1-1
       - evm2-1
@@ -49,15 +67,15 @@ services:
       - evm1
       - evm2
     volumes:
-      - ./example/cfg:/cfg
+      - ./cfg:/cfg
     restart: always
 
   relayer2:
     container_name: relayer2
     build:
-      context: ../../.
-      dockerfile: Dockerfile
-    command: run --config /cfg/config_evm-evm.json --testkey bob --fresh
+      context: ../.
+      dockerfile: ./example/Dockerfile
+    command: run --config /cfg/config_evm-evm_2.json --testkey bob --fresh
     depends_on:
       - evm1-1
       - evm2-1
@@ -65,15 +83,15 @@ services:
       - evm1
       - evm2
     volumes:
-      - ./example/cfg:/cfg
+      - ./cfg:/cfg
     restart: always
 
   relayer3:
     container_name: relayer3
     build:
-      context: ../../.
-      dockerfile: Dockerfile
-    command: run --config /cfg/config_evm-evm.json --testkey charlie --fresh
+      context: ../.
+      dockerfile: ./example/Dockerfile
+    command: run --config /cfg/config_evm-evm_3.json --testkey charlie --fresh
     depends_on:
       - evm1-1
       - evm2-1
@@ -81,7 +99,7 @@ services:
       - evm1
       - evm2
     volumes:
-      - ./example/cfg:/cfg
+      - ./cfg:/cfg
     restart: always
 
 networks:

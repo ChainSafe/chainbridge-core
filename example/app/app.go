@@ -88,7 +88,7 @@ func Run() error {
 				chains = append(chains, chain)
 			}
 		default:
-			panic(fmt.Errorf("Type '%s' not recognized", chainConfig["type"]))
+			panic(fmt.Errorf("type '%s' not recognized", chainConfig["type"]))
 		}
 	}
 
