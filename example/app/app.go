@@ -4,6 +4,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -80,11 +81,11 @@ func Run() error {
 				mh.RegisterMessageHandler(config.Erc721Handler, executor.ERC721MessageHandler)
 				mh.RegisterMessageHandler(config.GenericHandler, executor.GenericMessageHandler)
 
-				var evmVoter *voter.EVMVoter
-				evmVoter, err = voter.NewVoterWithSubscription(mh, client, bridgeContract)
+				var evmVoter *executor.EVMVoter
+				evmVoter, err = executor.NewVoterWithSubscription(mh, client, bridgeContract)
 				if err != nil {
 					log.Error().Msgf("failed creating voter with subscription: %s. Falling back to default voter.", err.Error())
-					evmVoter = voter.NewVoter(mh, client, bridgeContract)
+					evmVoter = executor.NewVoter(mh, client, bridgeContract)
 				}
 
 				chain := evm.NewEVMChain(evmListener, evmVoter, blockstore, config)
@@ -102,8 +103,9 @@ func Run() error {
 	)
 
 	errChn := make(chan error)
-	stopChn := make(chan struct{})
-	go r.Start(stopChn, errChn)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go r.Start(ctx, errChn)
 
 	sysErr := make(chan os.Signal, 1)
 	signal.Notify(sysErr,
@@ -115,7 +117,6 @@ func Run() error {
 	select {
 	case err := <-errChn:
 		log.Error().Err(err).Msg("failed to listen and serve")
-		close(stopChn)
 		return err
 	case sig := <-sysErr:
 		log.Info().Msgf("terminating got ` [%v] signal", sig)

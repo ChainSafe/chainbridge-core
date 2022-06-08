@@ -66,7 +66,6 @@ func (t *signAndSendTransactor) Transact(to *common.Address, data []byte, opts t
 	if err != nil {
 		return &common.Hash{}, err
 	}
-	t.client.UnlockNonce()
 
 	_, err = t.client.WaitAndReturnTxReceipt(h)
 	if err != nil {

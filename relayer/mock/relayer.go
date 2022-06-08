@@ -5,6 +5,7 @@
 package mock_relayer
 
 import (
+	context "context"
 	reflect "reflect"
 
 	message "github.com/ChainSafe/chainbridge-core/relayer/message"
@@ -84,15 +85,15 @@ func (mr *MockRelayedChainMockRecorder) DomainID() *gomock.Call {
 }
 
 // PollEvents mocks base method.
-func (m *MockRelayedChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *message.Message) {
+func (m *MockRelayedChain) PollEvents(ctx context.Context, sysErr chan<- error, msgChan chan *message.Message) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PollEvents", stop, sysErr, eventsChan)
+	m.ctrl.Call(m, "PollEvents", ctx, sysErr, msgChan)
 }
 
 // PollEvents indicates an expected call of PollEvents.
-func (mr *MockRelayedChainMockRecorder) PollEvents(stop, sysErr, eventsChan interface{}) *gomock.Call {
+func (mr *MockRelayedChainMockRecorder) PollEvents(ctx, sysErr, msgChan interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PollEvents", reflect.TypeOf((*MockRelayedChain)(nil).PollEvents), stop, sysErr, eventsChan)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PollEvents", reflect.TypeOf((*MockRelayedChain)(nil).PollEvents), ctx, sysErr, msgChan)
 }
 
 // Write mocks base method.

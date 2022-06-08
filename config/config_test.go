@@ -62,7 +62,7 @@ func (s *GetConfigTestSuite) Test_InvalidRelayerConfig() {
 
 	_ = os.Remove("test.json")
 	s.NotNil(err)
-	s.Equal(err.Error(), "Unknown log level: invalid")
+	s.Equal(err.Error(), "unknown log level: invalid")
 }
 
 func (s *GetConfigTestSuite) Test_ValidConfig() {
@@ -85,7 +85,7 @@ func (s *GetConfigTestSuite) Test_ValidConfig() {
 	s.Equal(actualConfig, config.Config{
 		RelayerConfig: relayer.RelayerConfig{
 			LogLevel:                  1,
-			LogFile:                   "",
+			LogFile:                   "out.log",
 			OpenTelemetryCollectorURL: "",
 		},
 		ChainConfigs: []map[string]interface{}{{
