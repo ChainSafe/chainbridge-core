@@ -62,12 +62,13 @@ func (t *signAndSendTransactor) Transact(to *common.Address, data []byte, opts t
 		return &common.Hash{}, err
 	}
 
-	_, err = t.client.WaitAndReturnTxReceipt(h)
+	err = t.client.UnsafeIncreaseNonce()
 	if err != nil {
 		return &common.Hash{}, err
 	}
+	t.client.UnlockNonce()
 
-	err = t.client.UnsafeIncreaseNonce()
+	_, err = t.client.WaitAndReturnTxReceipt(h)
 	if err != nil {
 		return &common.Hash{}, err
 	}

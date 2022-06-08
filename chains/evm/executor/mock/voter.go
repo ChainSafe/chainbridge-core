@@ -11,7 +11,7 @@ import (
 
 	evmclient "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	transactor "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	proposal "github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
+	proposal "github.com/ChainSafe/chainbridge-core/chains/evm/executor/proposal"
 	message "github.com/ChainSafe/chainbridge-core/relayer/message"
 	common "github.com/ethereum/go-ethereum/common"
 	types "github.com/ethereum/go-ethereum/core/types"

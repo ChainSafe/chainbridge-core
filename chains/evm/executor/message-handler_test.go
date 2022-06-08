@@ -1,13 +1,14 @@
-package voter_test
+package executor_test
 
 import (
 	"errors"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/voter"
 
+	"testing"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/executor"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
-	"testing"
 )
 
 var errIncorrectERC20PayloadLen = errors.New("malformed payload. Len  of payload should be 2")
@@ -49,7 +50,7 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleMessage() {
 		},
 	}
 
-	prop, err := voter.ERC20MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
+	prop, err := executor.ERC20MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
 
 	s.Nil(err)
 	s.NotNil(prop)
@@ -70,7 +71,7 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleMessageIncorrectDataLen() {
 		},
 	}
 
-	prop, err := voter.ERC20MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
+	prop, err := executor.ERC20MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
 
 	s.Nil(prop)
 	s.NotNil(err)
@@ -93,7 +94,7 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleMessageIncorrectAmount() {
 		},
 	}
 
-	prop, err := voter.ERC20MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
+	prop, err := executor.ERC20MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
 
 	s.Nil(prop)
 	s.NotNil(err)
@@ -116,7 +117,7 @@ func (s *Erc20HandlerTestSuite) TestErc20HandleMessageIncorrectRecipient() {
 		},
 	}
 
-	prop, err := voter.ERC20MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
+	prop, err := executor.ERC20MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
 
 	s.Nil(prop)
 	s.NotNil(err)
@@ -154,7 +155,7 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerEmptyMetadata() {
 		},
 	}
 
-	prop, err := voter.ERC721MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
+	prop, err := executor.ERC721MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
 
 	s.Nil(err)
 	s.NotNil(prop)
@@ -175,7 +176,7 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectDataLen() {
 		},
 	}
 
-	prop, err := voter.ERC721MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
+	prop, err := executor.ERC721MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
 
 	s.Nil(prop)
 	s.NotNil(err)
@@ -199,7 +200,7 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectAmount() {
 		},
 	}
 
-	prop, err := voter.ERC721MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
+	prop, err := executor.ERC721MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
 
 	s.Nil(prop)
 	s.NotNil(err)
@@ -223,7 +224,7 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectRecipient() {
 		},
 	}
 
-	prop, err := voter.ERC721MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
+	prop, err := executor.ERC721MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
 
 	s.Nil(prop)
 	s.NotNil(err)
@@ -247,7 +248,7 @@ func (s *Erc721HandlerTestSuite) TestErc721MessageHandlerIncorrectMetadata() {
 		},
 	}
 
-	prop, err := voter.ERC721MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
+	prop, err := executor.ERC721MessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
 
 	s.Nil(prop)
 	s.NotNil(err)
@@ -282,7 +283,7 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEvent() {
 		},
 	}
 
-	prop, err := voter.GenericMessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
+	prop, err := executor.GenericMessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
 
 	s.Nil(err)
 	s.NotNil(prop)
@@ -301,7 +302,7 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEventIncorrectDataLen() {
 		},
 	}
 
-	prop, err := voter.GenericMessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
+	prop, err := executor.GenericMessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
 
 	s.Nil(prop)
 	s.NotNil(err)
@@ -323,7 +324,7 @@ func (s *GenericHandlerTestSuite) TestGenericHandleEventIncorrectMetadata() {
 		},
 	}
 
-	prop, err := voter.GenericMessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
+	prop, err := executor.GenericMessageHandler(message, common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"), common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b"))
 
 	s.Nil(prop)
 	s.NotNil(err)

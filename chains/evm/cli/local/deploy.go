@@ -133,6 +133,11 @@ func SetupEVMBridge(
 		return BridgeConfig{}, err
 	}
 
+	_, err = bridgeContract.AdminChangeRelayerThreshold(threshold.Uint64(), transactor.TransactOptions{})
+	if err != nil {
+		return BridgeConfig{}, err
+	}
+
 	log.Debug().Msgf("All deployments and preparations are done")
 	return conf, nil
 }

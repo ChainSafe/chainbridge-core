@@ -1,4 +1,4 @@
-package voter
+package executor
 
 import (
 	"bytes"
@@ -7,7 +7,7 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/executor/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
@@ -87,7 +87,7 @@ func ERC20MessageHandler(m *message.Message, handlerAddr, bridgeAddress common.A
 	recipientLen := big.NewInt(int64(len(recipient))).Bytes()
 	data = append(data, common.LeftPadBytes(recipientLen, 32)...) // length of recipient (uint256)
 	data = append(data, recipient...)                             // recipient ([]byte)
-	return proposal.NewProposal(m.Source, m.DepositNonce, m.ResourceId, data, handlerAddr, bridgeAddress, m.Metadata), nil
+	return proposal.NewProposal(m.Source, m.Destination, m.DepositNonce, m.ResourceId, data, handlerAddr, bridgeAddress, m.Metadata), nil
 }
 
 func ERC721MessageHandler(msg *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
@@ -115,7 +115,7 @@ func ERC721MessageHandler(msg *message.Message, handlerAddr, bridgeAddress commo
 	metadataLen := big.NewInt(int64(len(metadata))).Bytes()
 	data.Write(common.LeftPadBytes(metadataLen, 32))
 	data.Write(metadata)
-	return proposal.NewProposal(msg.Source, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress, msg.Metadata), nil
+	return proposal.NewProposal(msg.Source, msg.Destination, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress, msg.Metadata), nil
 }
 
 func GenericMessageHandler(msg *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
@@ -130,5 +130,5 @@ func GenericMessageHandler(msg *message.Message, handlerAddr, bridgeAddress comm
 	metadataLen := big.NewInt(int64(len(metadata))).Bytes()
 	data.Write(common.LeftPadBytes(metadataLen, 32)) // length of metadata (uint256)
 	data.Write(metadata)
-	return proposal.NewProposal(msg.Source, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress, msg.Metadata), nil
+	return proposal.NewProposal(msg.Source, msg.Destination, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress, msg.Metadata), nil
 }

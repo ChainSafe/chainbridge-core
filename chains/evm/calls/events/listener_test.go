@@ -1,12 +1,12 @@
-package evmclient_test
+package events_test
 
 import (
 	"encoding/hex"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"strings"
 	"testing"
 
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/events"
 	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/golang/mock/gomock"
@@ -19,8 +19,8 @@ var (
 
 type EvmClientTestSuite struct {
 	suite.Suite
-	client           *evmclient.EVMClient
 	gomockController *gomock.Controller
+	listener         events.Listener
 }
 
 func TestRunEvmClientTestSuite(t *testing.T) {
@@ -29,18 +29,12 @@ func TestRunEvmClientTestSuite(t *testing.T) {
 
 func (s *EvmClientTestSuite) SetupSuite() {
 	s.gomockController = gomock.NewController(s.T())
-	s.client = &evmclient.EVMClient{}
+	s.listener = *events.NewListener(nil)
 }
-func (s *EvmClientTestSuite) TearDownSuite() {}
-func (s *EvmClientTestSuite) SetupTest() {
-}
-func (s *EvmClientTestSuite) TearDownTest() {}
 
 func (s *EvmClientTestSuite) TestUnpackDepositEventLogFailedUnpack() {
 	abi, _ := abi.JSON(strings.NewReader(consts.BridgeABI))
-
-	_, err := s.client.UnpackDepositEventLog(abi, []byte("invalid"))
-
+	_, err := s.listener.UnpackDeposit(abi, []byte("invalid"))
 	s.NotNil(err)
 }
 
@@ -48,9 +42,7 @@ func (s *EvmClientTestSuite) TestUnpackDepositEventLogValidData() {
 	abi, _ := abi.JSON(strings.NewReader(consts.BridgeABI))
 	logDataBytes, _ := hex.DecodeString(logData)
 	expectedRID := types.ResourceID(types.ResourceID{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xd6, 0x6, 0xa0, 0xc, 0x1a, 0x39, 0xda, 0x53, 0xea, 0x7b, 0xb3, 0xab, 0x57, 0xb, 0xbe, 0x40, 0xb1, 0x56, 0xeb, 0x66, 0x0})
-
-	dl, err := s.client.UnpackDepositEventLog(abi, logDataBytes)
-
+	dl, err := s.listener.UnpackDeposit(abi, logDataBytes)
 	s.Nil(err)
 	s.Equal(dl.SenderAddress.String(), "0x0000000000000000000000000000000000000000")
 	s.Equal(dl.DepositNonce, uint64(1))

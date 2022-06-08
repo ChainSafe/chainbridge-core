@@ -7,10 +7,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-func NewProposal(source uint8, depositNonce uint64, resourceId types.ResourceID, data []byte, handlerAddress, bridgeAddress common.Address, metadata message.Metadata) *Proposal {
+func NewProposal(source, destination uint8, depositNonce uint64, resourceId types.ResourceID, data []byte, handlerAddress, bridgeAddress common.Address, metadata message.Metadata) *Proposal {
 
 	return &Proposal{
 		Source:         source,
+		Destination:    destination,
 		DepositNonce:   depositNonce,
 		ResourceId:     resourceId,
 		Data:           data,
@@ -22,6 +23,7 @@ func NewProposal(source uint8, depositNonce uint64, resourceId types.ResourceID,
 
 type Proposal struct {
 	Source         uint8  // Source domainID where message was initiated
+	Destination    uint8  // Destination domainID where message is to be sent
 	DepositNonce   uint64 // Nonce for the deposit
 	ResourceId     types.ResourceID
 	Metadata       message.Metadata

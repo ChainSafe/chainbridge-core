@@ -1,7 +1,7 @@
 // Copyright 2021 ChainSafe Systems
 // SPDX-License-Identifier: LGPL-3.0-only
 
-package voter
+package executor
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/executor/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -100,9 +100,9 @@ func NewVoter(mh MessageHandler, client ChainClient, bridgeContract BridgeContra
 	}
 }
 
-// VoteProposal checks if relayer already voted and is threshold
+// Execute checks if relayer already voted and is threshold
 // satisfied and casts a vote if it isn't.
-func (v *EVMVoter) VoteProposal(m *message.Message) error {
+func (v *EVMVoter) Execute(m *message.Message) error {
 	prop, err := v.mh.HandleMessage(m)
 	if err != nil {
 		return err

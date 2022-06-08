@@ -7,19 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/config/chain"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/keystore"
-	"github.com/ChainSafe/chainbridge-core/util"
 
-	bridgeTypes "github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -27,7 +22,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/ethclient/gethclient"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/rs/zerolog/log"
 )
 
 type EVMClient struct {
@@ -37,25 +31,6 @@ type EVMClient struct {
 	rpClient   *rpc.Client
 	nonce      *big.Int
 	nonceLock  sync.Mutex
-}
-
-// DepositLogs struct holds event data with all necessary parameters and a handler response
-// https://github.com/ChainSafe/chainbridge-solidity/blob/develop/contracts/Bridge.sol#L47
-type DepositLogs struct {
-	// ID of chain deposit will be bridged to
-	DestinationDomainID uint8
-	// ResourceID used to find address of handler to be used for deposit
-	ResourceID bridgeTypes.ResourceID
-	// Nonce of deposit
-	DepositNonce uint64
-	// Address of sender (msg.sender: user)
-	SenderAddress common.Address
-	// Additional data to be passed to specified handler
-	Data []byte
-	// ERC20Handler: responds with empty data
-	// ERC721Handler: responds with deposited token metadata acquired by calling a tokenURI method in the token contract
-	// GenericHandler: responds with the raw bytes returned from the call to the target contract
-	HandlerResponse []byte
 }
 
 type CommonTransaction interface {
@@ -160,45 +135,6 @@ func (c *EVMClient) WaitAndReturnTxReceipt(h common.Hash) (*types.Receipt, error
 
 func (c *EVMClient) GetTransactionByHash(h common.Hash) (tx *types.Transaction, isPending bool, err error) {
 	return c.Client.TransactionByHash(context.Background(), h)
-}
-
-func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common.Address, startBlock *big.Int, endBlock *big.Int) ([]*DepositLogs, error) {
-	logs, err := c.FilterLogs(ctx, buildQuery(contractAddress, string(util.Deposit), startBlock, endBlock))
-	if err != nil {
-		return nil, err
-	}
-	depositLogs := make([]*DepositLogs, 0)
-
-	abi, err := abi.JSON(strings.NewReader(consts.BridgeABI))
-	if err != nil {
-		return nil, err
-	}
-
-	for _, l := range logs {
-		dl, err := c.UnpackDepositEventLog(abi, l.Data)
-		if err != nil {
-			log.Error().Msgf("failed unpacking deposit event log: %v", err)
-			continue
-		}
-
-		dl.SenderAddress = common.BytesToAddress(l.Topics[1].Bytes())
-		log.Debug().Msgf("Found deposit log in block: %d, TxHash: %s, contractAddress: %s, sender: %s", l.BlockNumber, l.TxHash, l.Address, dl.SenderAddress)
-
-		depositLogs = append(depositLogs, dl)
-	}
-
-	return depositLogs, nil
-}
-
-func (c *EVMClient) UnpackDepositEventLog(abi abi.ABI, data []byte) (*DepositLogs, error) {
-	var dl DepositLogs
-
-	err := abi.UnpackIntoInterface(&dl, "Deposit", data)
-	if err != nil {
-		return &DepositLogs{}, err
-	}
-
-	return &dl, nil
 }
 
 func (c *EVMClient) FetchEventLogs(ctx context.Context, contractAddress common.Address, event string, startBlock *big.Int, endBlock *big.Int) ([]types.Log, error) {

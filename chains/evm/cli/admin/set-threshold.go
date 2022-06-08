@@ -73,7 +73,7 @@ func SetThresholdCMD(cmd *cobra.Command, args []string, contract *bridge.BridgeC
 Setting new threshold
 Threshold: %d
 Bridge address: %s`, RelayerThreshold, Bridge)
-	_, err := contract.SetThresholdInput(RelayerThreshold, transactor.TransactOptions{GasLimit: gasLimit})
+	_, err := contract.AdminChangeRelayerThreshold(RelayerThreshold, transactor.TransactOptions{GasLimit: gasLimit})
 	if err != nil {
 		return err
 	}
