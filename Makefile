@@ -22,7 +22,7 @@ test:
 	./scripts/tests.sh
 
 e2e-test:
-	./scripts/int_tests.sh
+	./scripts/e2e_tests.sh
 
 example:
 	docker-compose --file=./example/docker-compose.yml up
