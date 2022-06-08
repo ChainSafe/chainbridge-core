@@ -116,7 +116,6 @@ type IntegrationTestSuite struct {
 
 // SetupSuite waits until all contracts are deployed
 func (s *IntegrationTestSuite) SetupSuite() {
-	// TODO
 	err := evm.WaitUntilBridgeReady(s.client2, s.config2.BridgeAddr)
 	if err != nil {
 		panic(err)
@@ -150,7 +149,7 @@ func (s *IntegrationTestSuite) Test_Erc20Deposit() {
 	// check gas price of deposit tx - 140 gwei
 	s.Equal(big.NewInt(140000000000), depositTx.GasPrice())
 
-	err = evm.WaitForProposalExecuted(s.client2, s.config2.BridgeAddr)
+	err = evm.WaitUntilProposalExecuted(s.client2, s.config2.BridgeAddr)
 	s.Nil(err)
 
 	senderBalAfter, err := erc20Contract1.GetBalance(s.client1.From())
@@ -208,7 +207,7 @@ func (s *IntegrationTestSuite) Test_Erc721Deposit() {
 	// check gas price of deposit tx - 50 gwei (slow)
 	s.Equal(big.NewInt(50000000000), depositTx.GasPrice())
 
-	err = evm.WaitForProposalExecuted(s.client2, s.config2.BridgeAddr)
+	err = evm.WaitUntilProposalExecuted(s.client2, s.config2.BridgeAddr)
 	s.Nil(err)
 
 	// Check on evm1 that token is burned
@@ -240,7 +239,7 @@ func (s *IntegrationTestSuite) Test_GenericDeposit() {
 	// check gas price of deposit tx - 140 gwei
 	s.Equal(big.NewInt(50000000000), depositTx.GasPrice())
 
-	err = evm.WaitForProposalExecuted(s.client2, s.config2.BridgeAddr)
+	err = evm.WaitUntilProposalExecuted(s.client2, s.config2.BridgeAddr)
 	s.Nil(err)
 	// Asset hash sent is stored in centrifuge asset store contract
 	exists, err := assetStoreContract2.IsCentrifugeAssetStored(hash)
