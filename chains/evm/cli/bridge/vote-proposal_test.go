@@ -10,7 +10,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/bridge"
 	mock_bridge "github.com/ChainSafe/chainbridge-core/chains/evm/cli/bridge/mock"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/executor/proposal"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/cobra"

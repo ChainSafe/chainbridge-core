@@ -14,8 +14,8 @@ type RelayerConfig struct {
 
 type RawRelayerConfig struct {
 	OpenTelemetryCollectorURL string `mapstructure:"OpenTelemetryCollectorURL" json:"opentelemetryCollectorURL"`
-	LogLevel                  string `mapstructure:"LogLevel" json:"logLevel"`
-	LogFile                   string `mapstructure:"LogFile" json:"logFile"`
+	LogLevel                  string `mapstructure:"LogLevel" json:"logLevel" default:"info"`
+	LogFile                   string `mapstructure:"LogFile" json:"logFile" default:"out.log"`
 }
 
 func (c *RawRelayerConfig) Validate() error {
@@ -32,7 +32,7 @@ func NewRelayerConfig(rawConfig RawRelayerConfig) (RelayerConfig, error) {
 
 	logLevel, err := zerolog.ParseLevel(rawConfig.LogLevel)
 	if err != nil {
-		return config, fmt.Errorf("Unknown log level: %s", rawConfig.LogLevel)
+		return config, fmt.Errorf("unknown log level: %s", rawConfig.LogLevel)
 	}
 	config.LogLevel = logLevel
 
