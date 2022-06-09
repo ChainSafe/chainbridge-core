@@ -76,7 +76,7 @@ func Run() error {
 				eventHandlers = append(eventHandlers, listener.NewDepositEventHandler(eventListener, depositHandler, common.HexToAddress(config.Bridge), *config.GeneralChainConfig.Id))
 				evmListener := listener.NewEVMListener(client, eventHandlers, blockstore, config)
 
-				mh := executor.NewEVMMessageHandler(*bridgeContract)
+				mh := executor.NewEVMMessageHandler(bridgeContract)
 				mh.RegisterMessageHandler(config.Erc20Handler, executor.ERC20MessageHandler)
 				mh.RegisterMessageHandler(config.Erc721Handler, executor.ERC721MessageHandler)
 				mh.RegisterMessageHandler(config.GenericHandler, executor.GenericMessageHandler)
