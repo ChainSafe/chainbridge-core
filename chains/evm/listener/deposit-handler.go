@@ -4,7 +4,6 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/rs/zerolog/log"
@@ -15,22 +14,26 @@ import (
 type DepositHandlers map[common.Address]DepositHandlerFunc
 type DepositHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error)
 
+type HandlerMatcher interface {
+	GetHandlerAddressForResourceID(resourceID types.ResourceID) (common.Address, error)
+}
+
 type ETHDepositHandler struct {
-	bridgeContract  bridge.BridgeContract
+	handlerMatcher  HandlerMatcher
 	depositHandlers DepositHandlers
 }
 
 // NewETHDepositHandler creates an instance of ETHDepositHandler that contains
 // handler functions for processing deposit events
-func NewETHDepositHandler(bridgeContract bridge.BridgeContract) *ETHDepositHandler {
+func NewETHDepositHandler(handlerMatcher HandlerMatcher) *ETHDepositHandler {
 	return &ETHDepositHandler{
-		bridgeContract:  bridgeContract,
+		handlerMatcher:  handlerMatcher,
 		depositHandlers: make(map[common.Address]DepositHandlerFunc),
 	}
 }
 
 func (e *ETHDepositHandler) HandleDeposit(sourceID, destID uint8, depositNonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
-	handlerAddr, err := e.bridgeContract.GetHandlerAddressForResourceID(resourceID)
+	handlerAddr, err := e.handlerMatcher.GetHandlerAddressForResourceID(resourceID)
 	if err != nil {
 		return nil, err
 	}

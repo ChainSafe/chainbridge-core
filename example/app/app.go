@@ -67,7 +67,7 @@ func Run() error {
 					panic(err)
 				}
 
-				depositHandler := listener.NewETHDepositHandler(*bridgeContract)
+				depositHandler := listener.NewETHDepositHandler(bridgeContract)
 				depositHandler.RegisterDepositHandler(config.Erc20Handler, listener.Erc20DepositHandler)
 				depositHandler.RegisterDepositHandler(config.Erc721Handler, listener.Erc721DepositHandler)
 				depositHandler.RegisterDepositHandler(config.GenericHandler, listener.GenericDepositHandler)
