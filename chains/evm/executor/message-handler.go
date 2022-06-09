@@ -6,32 +6,37 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/executor/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
+	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
+
+type HandlerMatcher interface {
+	GetHandlerAddressForResourceID(resourceID types.ResourceID) (common.Address, error)
+	ContractAddress() *common.Address
+}
 
 type MessageHandlerFunc func(m *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error)
 
 // NewEVMMessageHandler creates an instance of EVMMessageHandler that contains
 // message handler functions for converting deposit message into a chain specific
 // proposal
-func NewEVMMessageHandler(bridgeContract bridge.BridgeContract) *EVMMessageHandler {
+func NewEVMMessageHandler(handlerMatcher HandlerMatcher) *EVMMessageHandler {
 	return &EVMMessageHandler{
-		bridgeContract: bridgeContract,
+		handlerMatcher: handlerMatcher,
 	}
 }
 
 type EVMMessageHandler struct {
-	bridgeContract bridge.BridgeContract
+	handlerMatcher HandlerMatcher
 	handlers       map[common.Address]MessageHandlerFunc
 }
 
 func (mh *EVMMessageHandler) HandleMessage(m *message.Message) (*proposal.Proposal, error) {
 	// Matching resource ID with handler.
-	addr, err := mh.bridgeContract.GetHandlerAddressForResourceID(m.ResourceId)
+	addr, err := mh.handlerMatcher.GetHandlerAddressForResourceID(m.ResourceId)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +46,7 @@ func (mh *EVMMessageHandler) HandleMessage(m *message.Message) (*proposal.Propos
 		return nil, err
 	}
 	log.Info().Str("type", string(m.Type)).Uint8("src", m.Source).Uint8("dst", m.Destination).Uint64("nonce", m.DepositNonce).Str("resourceID", fmt.Sprintf("%x", m.ResourceId)).Msg("Handling new message")
-	prop, err := handleMessage(m, addr, *mh.bridgeContract.ContractAddress())
+	prop, err := handleMessage(m, addr, *mh.handlerMatcher.ContractAddress())
 	if err != nil {
 		return nil, err
 	}
