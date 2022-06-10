@@ -18,7 +18,7 @@ func InitializeClient(
 	url string,
 	senderKeyPair *secp256k1.Keypair,
 ) (*evmclient.EVMClient, error) {
-	ethClient, err := evmclient.NewEVMClientFromParams(
+	ethClient, err := evmclient.NewEVMClient(
 		url, senderKeyPair.PrivateKey())
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client initialization error: %v", err))

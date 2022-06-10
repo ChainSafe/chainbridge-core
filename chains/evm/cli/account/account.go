@@ -23,7 +23,6 @@ var AccountRootCMD = &cobra.Command{
 }
 
 func init() {
-	AccountRootCMD.AddCommand(importPrivKeyCmd)
 	AccountRootCMD.AddCommand(generateKeyPairCmd)
 	AccountRootCMD.AddCommand(transferBaseCurrencyCmd)
 }

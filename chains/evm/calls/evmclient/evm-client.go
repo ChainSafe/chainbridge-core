@@ -10,9 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/config/chain"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
-	"github.com/ChainSafe/chainbridge-core/keystore"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -41,9 +39,9 @@ type CommonTransaction interface {
 	RawWithSignature(key *ecdsa.PrivateKey, domainID *big.Int) ([]byte, error)
 }
 
-// NewEVMClientFromParams creates a client for EVMChain with provided
+// NewEVMClient creates a client for EVMChain with provided
 // private key.
-func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey) (*EVMClient, error) {
+func NewEVMClient(url string, privateKey *ecdsa.PrivateKey) (*EVMClient, error) {
 	rpcClient, err := rpc.DialContext(context.TODO(), url)
 	if err != nil {
 		return nil, err
@@ -53,30 +51,6 @@ func NewEVMClientFromParams(url string, privateKey *ecdsa.PrivateKey) (*EVMClien
 	c.gethClient = gethclient.New(rpcClient)
 	c.rpClient = rpcClient
 	c.kp = secp256k1.NewKeypair(*privateKey)
-	return c, nil
-}
-
-// NewEVMClient creates a client for EVM chain configured with specified config.
-// Private key is chosen by 'from' param in chain config that matches filename inside keystore path.
-func NewEVMClient(cfg *chain.EVMConfig) (*EVMClient, error) {
-	c := &EVMClient{}
-	generalConfig := cfg.GeneralChainConfig
-
-	kp, err := keystore.KeypairFromAddress(generalConfig.From, keystore.EthChain, generalConfig.KeystorePath, generalConfig.Insecure)
-	if err != nil {
-		return c, err
-	}
-	krp := kp.(*secp256k1.Keypair)
-	c.kp = krp
-
-	rpcClient, err := rpc.DialContext(context.TODO(), generalConfig.Endpoint)
-	if err != nil {
-		return c, err
-	}
-	c.Client = ethclient.NewClient(rpcClient)
-	c.rpClient = rpcClient
-	c.gethClient = gethclient.New(rpcClient)
-
 	return c, nil
 }
 

@@ -1,5 +1,5 @@
 
-.PHONY: help run build install license
+.PHONY: help run build install license example
 all: help
 
 ## license: Adds license header to missing files.

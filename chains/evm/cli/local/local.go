@@ -36,13 +36,13 @@ func init() {
 
 func localSetup(cmd *cobra.Command, args []string) error {
 	// init client1
-	ethClient, err := evmclient.NewEVMClientFromParams(ethEndpoint1, EveKp.PrivateKey())
+	ethClient, err := evmclient.NewEVMClient(ethEndpoint1, EveKp.PrivateKey())
 	if err != nil {
 		return err
 	}
 
 	// init client2
-	ethClient2, err := evmclient.NewEVMClientFromParams(ethEndpoint2, EveKp.PrivateKey())
+	ethClient2, err := evmclient.NewEVMClient(ethEndpoint2, EveKp.PrivateKey())
 	if err != nil {
 		return err
 	}
