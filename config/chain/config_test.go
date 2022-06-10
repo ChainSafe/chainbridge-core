@@ -29,12 +29,6 @@ func TestValidateConfig(t *testing.T) {
 		Endpoint: "endpoint",
 	}
 
-	missingFrom := GeneralChainConfig{
-		Name:     "chain",
-		Id:       &id,
-		Endpoint: "endpoint",
-	}
-
 	err := valid.Validate()
 	if err != nil {
 		t.Fatal(err)
@@ -53,10 +47,5 @@ func TestValidateConfig(t *testing.T) {
 	err = missingId.Validate()
 	if err == nil {
 		t.Fatalf("must require domain id field, %v", err)
-	}
-
-	err = missingFrom.Validate()
-	if err == nil {
-		t.Fatalf("must require from field, %v", err)
 	}
 }
