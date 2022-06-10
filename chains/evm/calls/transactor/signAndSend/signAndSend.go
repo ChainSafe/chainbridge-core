@@ -31,15 +31,16 @@ func NewSignAndSendTransactor(txFabric calls.TxFabric, gasPriceClient calls.GasP
 }
 
 func (t *signAndSendTransactor) Transact(to *common.Address, data []byte, opts transactor.TransactOptions) (*common.Hash, error) {
-	defer t.client.UnlockNonce()
 	t.client.LockNonce()
 	n, err := t.client.UnsafeNonce()
 	if err != nil {
+		t.client.UnlockNonce()
 		return &common.Hash{}, err
 	}
 
 	err = transactor.MergeTransactionOptions(&opts, &DefaultTransactionOptions)
 	if err != nil {
+		t.client.UnlockNonce()
 		return &common.Hash{}, err
 	}
 
@@ -47,22 +48,26 @@ func (t *signAndSendTransactor) Transact(to *common.Address, data []byte, opts t
 	if opts.GasPrice.Cmp(big.NewInt(0)) == 0 {
 		gp, err = t.gasPriceClient.GasPrice(&opts.Priority)
 		if err != nil {
+			t.client.UnlockNonce()
 			return &common.Hash{}, err
 		}
 	}
 
 	tx, err := t.TxFabric(n.Uint64(), to, opts.Value, opts.GasLimit, gp, data)
 	if err != nil {
+		t.client.UnlockNonce()
 		return &common.Hash{}, err
 	}
 
 	h, err := t.client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
+		t.client.UnlockNonce()
 		log.Error().Err(err)
 		return &common.Hash{}, err
 	}
 
 	err = t.client.UnsafeIncreaseNonce()
+	t.client.UnlockNonce()
 	if err != nil {
 		return &common.Hash{}, err
 	}
