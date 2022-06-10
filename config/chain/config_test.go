@@ -10,34 +10,29 @@ func TestValidateConfig(t *testing.T) {
 		Name:     "chain",
 		Id:       &id,
 		Endpoint: "endpoint",
-		From:     "0x0",
 	}
 
 	missingEndpoint := GeneralChainConfig{
 		Name:     "chain",
 		Id:       &id,
 		Endpoint: "",
-		From:     "0x0",
 	}
 
 	missingName := GeneralChainConfig{
 		Name:     "",
 		Id:       &id,
 		Endpoint: "endpoint",
-		From:     "0x0",
 	}
 
 	missingId := GeneralChainConfig{
 		Name:     "chain",
 		Endpoint: "endpoint",
-		From:     "0x0",
 	}
 
 	missingFrom := GeneralChainConfig{
 		Name:     "chain",
 		Id:       &id,
 		Endpoint: "endpoint",
-		From:     "",
 	}
 
 	err := valid.Validate()

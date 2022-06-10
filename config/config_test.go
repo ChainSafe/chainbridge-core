@@ -19,11 +19,6 @@ func TestRunGetConfigTestSuite(t *testing.T) {
 	suite.Run(t, new(GetConfigTestSuite))
 }
 
-func (s *GetConfigTestSuite) SetupSuite()    {}
-func (s *GetConfigTestSuite) TearDownSuite() {}
-func (s *GetConfigTestSuite) SetupTest()     {}
-func (s *GetConfigTestSuite) TearDownTest()  {}
-
 func (s *GetConfigTestSuite) Test_InvalidPath() {
 	_, err := config.GetConfig("invalid")
 

@@ -69,11 +69,6 @@ func Run() error {
 				t := signAndSend.NewSignAndSendTransactor(evmtransaction.NewTransaction, dummyGasPricer, client)
 				bridgeContract := bridge.NewBridgeContract(client, common.HexToAddress(config.Bridge), t)
 
-				_, err = bridgeContract.IsRelayer(common.HexToAddress(config.GeneralChainConfig.From))
-				if err != nil {
-					panic(err)
-				}
-
 				depositHandler := listener.NewETHDepositHandler(bridgeContract)
 				depositHandler.RegisterDepositHandler(config.Erc20Handler, listener.Erc20DepositHandler)
 				depositHandler.RegisterDepositHandler(config.Erc721Handler, listener.Erc721DepositHandler)
