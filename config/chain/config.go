@@ -11,7 +11,6 @@ type GeneralChainConfig struct {
 	Name           string `mapstructure:"name"`
 	Id             *uint8 `mapstructure:"id"`
 	Endpoint       string `mapstructure:"endpoint"`
-	From           string `mapstructure:"from"`
 	Type           string `mapstructure:"type"`
 	Key            string
 	Insecure       bool
@@ -30,9 +29,6 @@ func (c *GeneralChainConfig) Validate() error {
 	}
 	if c.Name == "" {
 		return fmt.Errorf("required field chain.Name empty for chain %v", *c.Id)
-	}
-	if c.From == "" {
-		return fmt.Errorf("required field chain.From empty for chain %v", *c.Id)
 	}
 	return nil
 }
