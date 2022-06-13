@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/config/chain"
 	"github.com/stretchr/testify/suite"
 )
@@ -86,11 +85,11 @@ func (s *NewEVMConfigTestSuite) Test_ValidConfig() {
 		Erc20Handler:       "",
 		Erc721Handler:      "",
 		GenericHandler:     "",
-		GasLimit:           big.NewInt(consts.DefaultGasLimit),
-		MaxGasPrice:        big.NewInt(consts.DefaultGasPrice),
-		GasMultiplier:      big.NewFloat(consts.DefaultGasMultiplier),
+		GasLimit:           big.NewInt(2000000),
+		MaxGasPrice:        big.NewInt(20000000000),
+		GasMultiplier:      big.NewFloat(1),
 		StartBlock:         big.NewInt(0),
-		BlockConfirmations: big.NewInt(consts.DefaultBlockConfirmations),
+		BlockConfirmations: big.NewInt(10),
 		BlockRetryInterval: time.Duration(5) * time.Second,
 	})
 }

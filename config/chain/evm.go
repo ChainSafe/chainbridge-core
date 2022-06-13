@@ -2,10 +2,10 @@ package chain
 
 import (
 	"fmt"
+	"github.com/creasty/defaults"
 	"math/big"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -29,12 +29,12 @@ type RawEVMConfig struct {
 	Erc20Handler       string  `mapstructure:"erc20Handler"`
 	Erc721Handler      string  `mapstructure:"erc721Handler"`
 	GenericHandler     string  `mapstructure:"genericHandler"`
-	MaxGasPrice        int64   `mapstructure:"maxGasPrice"`
-	GasMultiplier      float64 `mapstructure:"gasMultiplier"`
-	GasLimit           int64   `mapstructure:"gasLimit"`
+	MaxGasPrice        int64   `mapstructure:"maxGasPrice" default:"20000000000"`
+	GasMultiplier      float64 `mapstructure:"gasMultiplier" default:"1"`
+	GasLimit           int64   `mapstructure:"gasLimit" default:"2000000"`
 	StartBlock         int64   `mapstructure:"startBlock"`
-	BlockConfirmations int64   `mapstructure:"blockConfirmations"`
-	BlockRetryInterval uint64  `mapstructure:"blockRetryInterval"`
+	BlockConfirmations int64   `mapstructure:"blockConfirmations" default:"10"`
+	BlockRetryInterval uint64  `mapstructure:"blockRetryInterval" default:"5"`
 }
 
 func (c *RawEVMConfig) Validate() error {
@@ -59,6 +59,11 @@ func NewEVMConfig(chainConfig map[string]interface{}) (*EVMConfig, error) {
 		return nil, err
 	}
 
+	err = defaults.Set(&c)
+	if err != nil {
+		return nil, err
+	}
+
 	err = c.Validate()
 	if err != nil {
 		return nil, err
@@ -71,32 +76,12 @@ func NewEVMConfig(chainConfig map[string]interface{}) (*EVMConfig, error) {
 		Erc721Handler:      c.Erc721Handler,
 		GenericHandler:     c.GenericHandler,
 		Bridge:             c.Bridge,
-		BlockRetryInterval: consts.DefaultBlockRetryInterval,
-		GasLimit:           big.NewInt(consts.DefaultGasLimit),
-		MaxGasPrice:        big.NewInt(consts.DefaultGasPrice),
-		GasMultiplier:      big.NewFloat(consts.DefaultGasMultiplier),
+		BlockRetryInterval: time.Duration(c.BlockRetryInterval) * time.Second,
+		GasLimit:           big.NewInt(c.GasLimit),
+		MaxGasPrice:        big.NewInt(c.MaxGasPrice),
+		GasMultiplier:      big.NewFloat(c.GasMultiplier),
 		StartBlock:         big.NewInt(c.StartBlock),
-		BlockConfirmations: big.NewInt(consts.DefaultBlockConfirmations),
-	}
-
-	if c.GasLimit != 0 {
-		config.GasLimit = big.NewInt(c.GasLimit)
-	}
-
-	if c.MaxGasPrice != 0 {
-		config.MaxGasPrice = big.NewInt(c.MaxGasPrice)
-	}
-
-	if c.GasMultiplier != 0 {
-		config.GasMultiplier = big.NewFloat(c.GasMultiplier)
-	}
-
-	if c.BlockConfirmations != 0 {
-		config.BlockConfirmations = big.NewInt(c.BlockConfirmations)
-	}
-
-	if c.BlockRetryInterval != 0 {
-		config.BlockRetryInterval = time.Duration(c.BlockRetryInterval) * time.Second
+		BlockConfirmations: big.NewInt(c.BlockConfirmations),
 	}
 
 	return config, nil

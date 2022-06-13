@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -12,6 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
 )
+
+const DefaultDeployGasLimit = 6000000
 
 type Contract struct {
 	contractAddress common.Address
@@ -112,7 +113,7 @@ func (c *Contract) DeployContract(params ...interface{}) (common.Address, error)
 	if err != nil {
 		return common.Address{}, err
 	}
-	opts := transactor.TransactOptions{GasLimit: consts.DefaultDeployGasLimit}
+	opts := transactor.TransactOptions{GasLimit: DefaultDeployGasLimit}
 	hash, err := c.Transact(nil, append(c.bytecode, input...), opts)
 	if err != nil {
 		return common.Address{}, err
