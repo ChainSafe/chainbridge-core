@@ -1,0 +1,107 @@
+# Copyright 2020 ChainSafe Systems
+# SPDX-License-Identifier: LGPL-3.0-only
+version: '3'
+
+services:
+  evm1-1:
+    build:
+      context: ./geth-build
+      dockerfile: Dockerfile
+    container_name: evm1-1
+    logging:
+      driver: none
+    networks:
+      - evm1
+    ports:
+      - "8545:8545"
+      - "8546:8546"
+    environment:
+      - NODEKEY=98ab333347a12cef869f92b3de44085f9e44891e513bcf1d76a99eecbcdd5e17
+      - NETWORKID=1
+      - MINE=true
+    entrypoint: "/root/entrypoint.sh"
+
+  # SECOND CHAIN
+  evm2-1:
+    build:
+      context: ./geth-build
+      dockerfile: Dockerfile
+    container_name: evm2-1
+    logging:
+      driver: none
+    networks:
+      - evm2
+    ports:
+      - "8547:8545"
+      - "8548:8546"
+    environment:
+      - NODEKEY=98ab333347a12cef869f92b3de44085f9e44891e513bcf1d76a99eecbcdd5e17
+      - NETWORKID=2
+      - MINE=true
+    entrypoint: "/root/entrypoint.sh"
+
+  setup:
+    container_name: setup
+    build:
+      context: ../.
+      dockerfile: ./example/Dockerfile
+    command: local-setup --endpoint1 ws://evm1-1:8546 --endpoint2 ws://evm2-1:8546
+    depends_on:
+      - evm1-1
+      - evm2-1
+    networks:
+      - evm1
+      - evm2
+    restart: "no"
+
+  relayer1:
+    container_name: relayer1
+    build:
+      context: ../.
+      dockerfile: ./example/Dockerfile
+    command: run --config /cfg/config_evm-evm_1.json --fresh
+    depends_on:
+      - evm1-1
+      - evm2-1
+    networks:
+      - evm1
+      - evm2
+    volumes:
+      - ./cfg:/cfg
+    restart: always
+
+  relayer2:
+    container_name: relayer2
+    build:
+      context: ../.
+      dockerfile: ./example/Dockerfile
+    command: run --config /cfg/config_evm-evm_2.json --fresh
+    depends_on:
+      - evm1-1
+      - evm2-1
+    networks:
+      - evm1
+      - evm2
+    volumes:
+      - ./cfg:/cfg
+    restart: always
+
+  relayer3:
+    container_name: relayer3
+    build:
+      context: ../.
+      dockerfile: ./example/Dockerfile
+    command: run --config /cfg/config_evm-evm_3.json --fresh
+    depends_on:
+      - evm1-1
+      - evm2-1
+    networks:
+      - evm1
+      - evm2
+    volumes:
+      - ./cfg:/cfg
+    restart: always
+
+networks:
+  evm2:
+  evm1:

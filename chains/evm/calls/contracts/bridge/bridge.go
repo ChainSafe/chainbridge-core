@@ -13,7 +13,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/executor/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -91,7 +91,7 @@ func (c *BridgeContract) SetDepositNonce(
 	)
 }
 
-func (c *BridgeContract) SetThresholdInput(
+func (c *BridgeContract) AdminChangeRelayerThreshold(
 	threshold uint64,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {

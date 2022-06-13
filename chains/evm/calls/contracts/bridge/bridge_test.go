@@ -12,7 +12,7 @@ import (
 
 	mock_transactor "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/signAndSend"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/executor/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang/mock/gomock"
@@ -53,6 +53,7 @@ func (s *ProposalStatusTestSuite) SetupTest() {
 
 	s.proposal = *proposal.NewProposal(
 		uint8(1),
+		uint8(2),
 		uint64(1),
 		testResourceId,
 		[]byte{},
@@ -188,7 +189,7 @@ func (s *ProposalStatusTestSuite) TestBridge_SetThresholdInput_Success() {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{22, 23, 24, 25}, nil)
-	res, err := s.bridgeContract.SetThresholdInput(uint64(2), signAndSend.DefaultTransactionOptions)
+	res, err := s.bridgeContract.AdminChangeRelayerThreshold(uint64(2), signAndSend.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{22, 23, 24, 25},
 		res,

@@ -79,7 +79,6 @@ func (s *NewEVMConfigTestSuite) Test_ValidConfig() {
 	s.Equal(*actualConfig, chain.EVMConfig{
 		GeneralChainConfig: chain.GeneralChainConfig{
 			Name:     "evm1",
-			From:     "address",
 			Endpoint: "ws://domain.com",
 			Id:       id,
 		},
@@ -119,7 +118,6 @@ func (s *NewEVMConfigTestSuite) Test_ValidConfigWithCustomTxParams() {
 	s.Equal(*actualConfig, chain.EVMConfig{
 		GeneralChainConfig: chain.GeneralChainConfig{
 			Name:     "evm1",
-			From:     "address",
 			Endpoint: "ws://domain.com",
 			Id:       id,
 		},

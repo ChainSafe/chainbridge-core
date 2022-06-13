@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ChainSafe/chainbridge-core/config/relayer"
+	"github.com/creasty/defaults"
 	"github.com/spf13/viper"
 )
 
@@ -33,6 +34,10 @@ func GetConfig(path string) (Config, error) {
 
 	err = viper.Unmarshal(&rawConfig)
 	if err != nil {
+		return config, err
+	}
+
+	if err := defaults.Set(&rawConfig); err != nil {
 		return config, err
 	}
 

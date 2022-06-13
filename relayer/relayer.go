@@ -4,6 +4,7 @@
 package relayer
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
@@ -15,7 +16,7 @@ type Metrics interface {
 }
 
 type RelayedChain interface {
-	PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *message.Message)
+	PollEvents(ctx context.Context, sysErr chan<- error, msgChan chan *message.Message)
 	Write(message *message.Message) error
 	DomainID() uint8
 }
@@ -33,14 +34,14 @@ type Relayer struct {
 
 // Start function starts the relayer. Relayer routine is starting all the chains
 // and passing them with a channel that accepts unified cross chain message format
-func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
+func (r *Relayer) Start(ctx context.Context, sysErr chan error) {
 	log.Debug().Msgf("Starting relayer")
 
 	messagesChannel := make(chan *message.Message)
 	for _, c := range r.relayedChains {
 		log.Debug().Msgf("Starting chain %v", c.DomainID())
 		r.addRelayedChain(c)
-		go c.PollEvents(stop, sysErr, messagesChannel)
+		go c.PollEvents(ctx, sysErr, messagesChannel)
 	}
 
 	for {
@@ -48,7 +49,7 @@ func (r *Relayer) Start(stop <-chan struct{}, sysErr chan error) {
 		case m := <-messagesChannel:
 			go r.route(m)
 			continue
-		case <-stop:
+		case <-ctx.Done():
 			return
 		}
 	}

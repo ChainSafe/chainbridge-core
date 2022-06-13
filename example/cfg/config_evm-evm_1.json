@@ -1,0 +1,35 @@
+{
+  "relayer": {},
+  "chains": [
+    {
+      "id": 1,
+      "from": "0xff93B45308FD417dF303D6515aB04D9e89a750Ca",
+      "name": "evm1",
+      "type": "evm",
+      "endpoint": "ws://evm1-1:8546",
+      "bridge": "0xd606A00c1A39dA53EA7Bb3Ab570BBE40b156EB66",
+      "erc20Handler": "0xb83065680e6AEc805774d8545516dF4e936F0dC0",
+      "erc721Handler": "0x05C5AFACf64A6082D4933752FfB447AED63581b1",
+      "genericHandler": "0x7573B1c6de00a73e98CDac5Cd2c4a252BdC87600",
+      "gasLimit": 9000000,
+      "maxGasPrice": 20000000000,
+      "blockConfirmations": 2,
+      "key": "000000000000000000000000000000000000000000000000000000616c696365"
+    },
+    {
+      "id": 2,
+      "from": "0xff93B45308FD417dF303D6515aB04D9e89a750Ca",
+      "name": "evm2",
+      "type": "evm",
+      "endpoint": "ws://evm2-1:8546",
+      "bridge": "0xd606A00c1A39dA53EA7Bb3Ab570BBE40b156EB66",
+      "erc20Handler": "0xb83065680e6AEc805774d8545516dF4e936F0dC0",
+      "erc721Handler": "0x05C5AFACf64A6082D4933752FfB447AED63581b1",
+      "genericHandler": "0x7573B1c6de00a73e98CDac5Cd2c4a252BdC87600",
+      "gasLimit": 9000000,
+      "maxGasPrice": 20000000000,
+      "blockConfirmations": 2,
+      "key": "000000000000000000000000000000000000000000000000000000616c696365"
+    }
+  ]
+}
