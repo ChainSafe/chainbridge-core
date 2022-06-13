@@ -12,7 +12,6 @@ var (
 	BlockstoreFlagName  = "blockstore"
 	FreshStartFlagName  = "fresh"
 	LatestBlockFlagName = "latest"
-	TestKeyFlagName     = "testkey"
 )
 
 func BindFlags(rootCMD *cobra.Command) {
@@ -30,7 +29,4 @@ func BindFlags(rootCMD *cobra.Command) {
 
 	rootCMD.PersistentFlags().String(KeystoreFlagName, "./keys", "Path to keystore directory")
 	_ = viper.BindPFlag(KeystoreFlagName, rootCMD.PersistentFlags().Lookup(KeystoreFlagName))
-
-	rootCMD.PersistentFlags().String(TestKeyFlagName, "", "Applies a predetermined test keystore to the chains.")
-	_ = viper.BindPFlag(TestKeyFlagName, rootCMD.PersistentFlags().Lookup(TestKeyFlagName))
 }
