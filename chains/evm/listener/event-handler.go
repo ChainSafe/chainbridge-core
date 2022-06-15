@@ -37,21 +37,26 @@ func NewDepositEventHandler(eventListener EventListener, depositHandler DepositH
 	}
 }
 
-func (eh *DepositEventHandler) HandleEvent(block *big.Int, msgChan chan *message.Message) error {
-	deposits, err := eh.eventListener.FetchDeposits(context.Background(), eh.bridgeAddress, block, block)
+func (eh *DepositEventHandler) HandleEvent(startBlock *big.Int, endBlock *big.Int, msgChan chan []*message.Message) error {
+	deposits, err := eh.eventListener.FetchDeposits(context.Background(), eh.bridgeAddress, startBlock, endBlock)
 	if err != nil {
 		return fmt.Errorf("unable to fetch deposit events because of: %+v", err)
 	}
 
+	domainDeposits := make(map[uint8][]*message.Message)
 	for _, d := range deposits {
 		m, err := eh.depositHandler.HandleDeposit(eh.domainID, d.DestinationDomainID, d.DepositNonce, d.ResourceID, d.Data, d.HandlerResponse)
 		if err != nil {
-			log.Error().Str("block", block.String()).Uint8("domainID", eh.domainID).Msgf("%v", err)
+			log.Error().Err(err).Str("start block", startBlock.String()).Str("end block", endBlock.String()).Uint8("domainID", eh.domainID).Msgf("%v", err)
 			continue
 		}
 
-		log.Debug().Msgf("Resolved message %+v in block %s", m, block.String())
-		msgChan <- m
+		log.Debug().Msgf("Resolved message %+v in block range: %s-%s", m, startBlock.String(), endBlock.String())
+		domainDeposits[m.Destination] = append(domainDeposits[m.Destination], m)
+	}
+
+	for _, deposits := range domainDeposits {
+		msgChan <- deposits
 	}
 
 	return nil

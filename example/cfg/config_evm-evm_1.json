@@ -14,6 +14,7 @@
       "gasLimit": 9000000,
       "maxGasPrice": 20000000000,
       "blockConfirmations": 2,
+      "blockInterval": 2,
       "key": "000000000000000000000000000000000000000000000000000000616c696365"
     },
     {
@@ -29,6 +30,7 @@
       "gasLimit": 9000000,
       "maxGasPrice": 20000000000,
       "blockConfirmations": 2,
+      "blockInterval": 2,
       "key": "000000000000000000000000000000000000000000000000000000616c696365"
     }
   ]
