@@ -16,8 +16,8 @@ type Metrics interface {
 }
 
 type RelayedChain interface {
-	PollEvents(ctx context.Context, sysErr chan<- error, msgChan chan *message.Message)
-	Write(message *message.Message) error
+	PollEvents(ctx context.Context, sysErr chan<- error, msgChan chan []*message.Message)
+	Write(messages []*message.Message)
 	DomainID() uint8
 }
 
@@ -37,7 +37,7 @@ type Relayer struct {
 func (r *Relayer) Start(ctx context.Context, sysErr chan error) {
 	log.Debug().Msgf("Starting relayer")
 
-	messagesChannel := make(chan *message.Message)
+	messagesChannel := make(chan []*message.Message)
 	for _, c := range r.relayedChains {
 		log.Debug().Msgf("Starting chain %v", c.DomainID())
 		r.addRelayedChain(c)
@@ -56,28 +56,26 @@ func (r *Relayer) Start(ctx context.Context, sysErr chan error) {
 }
 
 // Route function winds destination writer by mapping DestinationID from message to registered writer.
-func (r *Relayer) route(m *message.Message) {
-	r.metrics.TrackDepositMessage(m)
-
-	destChain, ok := r.registry[m.Destination]
+func (r *Relayer) route(msgs []*message.Message) {
+	destChain, ok := r.registry[msgs[0].Destination]
 	if !ok {
-		log.Error().Msgf("no resolver for destID %v to send message registered", m.Destination)
+		log.Error().Msgf("no resolver for destID %v to send message registered", msgs[0].Destination)
 		return
 	}
 
-	for _, mp := range r.messageProcessors {
-		if err := mp(m); err != nil {
-			log.Error().Err(fmt.Errorf("error %w processing mesage %v", err, m))
-			return
+	for _, m := range msgs {
+		r.metrics.TrackDepositMessage(m)
+
+		for _, mp := range r.messageProcessors {
+			if err := mp(m); err != nil {
+				log.Error().Err(fmt.Errorf("error %w processing mesage %v", err, m))
+				return
+			}
 		}
 	}
 
-	log.Debug().Msgf("Sending message %+v to destination %v", m, m.Destination)
-
-	if err := destChain.Write(m); err != nil {
-		log.Error().Err(err).Msgf("writing message %+v", m)
-		return
-	}
+	log.Debug().Msgf("Sending messages %+v to destination %v", msgs, destChain.DomainID())
+	destChain.Write(msgs)
 }
 
 func (r *Relayer) addRelayedChain(c RelayedChain) {
