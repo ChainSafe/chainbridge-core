@@ -55,7 +55,12 @@ func (c *EVMChain) PollEvents(ctx context.Context, sysErr chan<- error, msgChan 
 
 func (c *EVMChain) Write(msg []*message.Message) {
 	for _, msg := range msg {
-		go c.writer.Execute(msg)
+		go func(msg *message.Message) {
+			err := c.writer.Execute(msg)
+			if err != nil {
+				log.Err(err).Msgf("Failed writing message %v", msg)
+			}
+		}(msg)
 	}
 }
 
