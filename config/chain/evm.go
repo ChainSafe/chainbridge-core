@@ -2,9 +2,10 @@ package chain
 
 import (
 	"fmt"
-	"github.com/creasty/defaults"
 	"math/big"
 	"time"
+
+	"github.com/creasty/defaults"
 
 	"github.com/mitchellh/mapstructure"
 )
@@ -20,6 +21,7 @@ type EVMConfig struct {
 	GasLimit           *big.Int
 	StartBlock         *big.Int
 	BlockConfirmations *big.Int
+	BlockInterval      *big.Int
 	BlockRetryInterval time.Duration
 }
 
@@ -34,6 +36,7 @@ type RawEVMConfig struct {
 	GasLimit           int64   `mapstructure:"gasLimit" default:"2000000"`
 	StartBlock         int64   `mapstructure:"startBlock"`
 	BlockConfirmations int64   `mapstructure:"blockConfirmations" default:"10"`
+	BlockInterval      int64   `mapstructure:"blockInterval" default:"5"`
 	BlockRetryInterval uint64  `mapstructure:"blockRetryInterval" default:"5"`
 }
 
@@ -82,6 +85,7 @@ func NewEVMConfig(chainConfig map[string]interface{}) (*EVMConfig, error) {
 		GasMultiplier:      big.NewFloat(c.GasMultiplier),
 		StartBlock:         big.NewInt(c.StartBlock),
 		BlockConfirmations: big.NewInt(c.BlockConfirmations),
+		BlockInterval:      big.NewInt(c.BlockInterval),
 	}
 
 	return config, nil

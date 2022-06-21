@@ -31,12 +31,13 @@ func (s *RouteTestSuite) SetupTest() {
 func (s *RouteTestSuite) TearDownTest() {}
 
 func (s *RouteTestSuite) TestLogsErrorIfDestinationDoesNotExist() {
-	s.mockMetrics.EXPECT().TrackDepositMessage(gomock.Any())
 	relayer := Relayer{
 		metrics: s.mockMetrics,
 	}
 
-	relayer.route(&message.Message{})
+	relayer.route([]*message.Message{
+		{},
+	})
 }
 
 // TestRouter tests relayers router
@@ -68,31 +69,15 @@ func (s *RouteTestSuite) TestLogsErrorIfMessageProcessorReturnsError() {
 	)
 	relayer.addRelayedChain(s.mockRelayedChain)
 
-	relayer.route(&message.Message{
-		Destination: 1,
-	})
-}
-
-func (s *RouteTestSuite) TestLogsErrorIfWriteReturnsError() {
-	s.mockMetrics.EXPECT().TrackDepositMessage(gomock.Any())
-	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1))
-	s.mockRelayedChain.EXPECT().Write(gomock.Any()).Return(fmt.Errorf("Error"))
-	relayer := NewRelayer(
-		[]RelayedChain{},
-		s.mockMetrics,
-		func(m *message.Message) error { return nil },
-	)
-	relayer.addRelayedChain(s.mockRelayedChain)
-
-	relayer.route(&message.Message{
-		Destination: 1,
+	relayer.route([]*message.Message{
+		{Destination: 1},
 	})
 }
 
 func (s *RouteTestSuite) TestWritesToDestChainIfMessageValid() {
 	s.mockMetrics.EXPECT().TrackDepositMessage(gomock.Any())
-	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1))
-	s.mockRelayedChain.EXPECT().Write(gomock.Any()).Return(nil)
+	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1)).Times(2)
+	s.mockRelayedChain.EXPECT().Write(gomock.Any())
 	relayer := NewRelayer(
 		[]RelayedChain{},
 		s.mockMetrics,
@@ -100,7 +85,7 @@ func (s *RouteTestSuite) TestWritesToDestChainIfMessageValid() {
 	)
 	relayer.addRelayedChain(s.mockRelayedChain)
 
-	relayer.route(&message.Message{
-		Destination: 1,
+	relayer.route([]*message.Message{
+		{Destination: 1},
 	})
 }

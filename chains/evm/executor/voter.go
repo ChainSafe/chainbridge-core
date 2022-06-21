@@ -110,6 +110,7 @@ func (v *EVMVoter) Execute(m *message.Message) error {
 
 	votedByTheRelayer, err := v.bridgeContract.IsProposalVotedBy(v.client.RelayerAddress(), prop)
 	if err != nil {
+		log.Error().Err(err).Msgf("Fetching is proposal %v voted by relayer failed", prop)
 		return err
 	}
 	if votedByTheRelayer {
@@ -118,7 +119,7 @@ func (v *EVMVoter) Execute(m *message.Message) error {
 
 	shouldVote, err := v.shouldVoteForProposal(prop, 0)
 	if err != nil {
-		log.Error().Err(err)
+		log.Error().Err(err).Msgf("Should vote for proposal %v failed", prop)
 		return err
 	}
 
@@ -128,12 +129,13 @@ func (v *EVMVoter) Execute(m *message.Message) error {
 	}
 	err = v.repetitiveSimulateVote(prop, 0)
 	if err != nil {
-		log.Error().Err(err)
+		log.Error().Err(err).Msgf("Simulating proposal %+v vote failed", prop)
 		return err
 	}
 
 	hash, err := v.bridgeContract.VoteProposal(prop, transactor.TransactOptions{Priority: prop.Metadata.Priority})
 	if err != nil {
+		log.Error().Err(err).Msgf("voting for proposal %+v failed", prop)
 		return fmt.Errorf("voting failed. Err: %w", err)
 	}
 

@@ -15,7 +15,7 @@ import (
 )
 
 type EventListener interface {
-	ListenToEvents(ctx context.Context, startBlock *big.Int, msgChan chan *message.Message, errChan chan<- error)
+	ListenToEvents(ctx context.Context, startBlock *big.Int, msgChan chan []*message.Message, errChan chan<- error)
 }
 
 type ProposalExecutor interface {
@@ -36,7 +36,7 @@ func NewEVMChain(listener EventListener, writer ProposalExecutor, blockstore *st
 
 // PollEvents is the goroutine that polls blocks and searches Deposit events in them.
 // Events are then sent to eventsChan.
-func (c *EVMChain) PollEvents(ctx context.Context, sysErr chan<- error, msgChan chan *message.Message) {
+func (c *EVMChain) PollEvents(ctx context.Context, sysErr chan<- error, msgChan chan []*message.Message) {
 	log.Info().Msg("Polling Blocks...")
 
 	startBlock, err := c.blockstore.GetStartBlock(
@@ -53,8 +53,15 @@ func (c *EVMChain) PollEvents(ctx context.Context, sysErr chan<- error, msgChan 
 	go c.listener.ListenToEvents(ctx, startBlock, msgChan, sysErr)
 }
 
-func (c *EVMChain) Write(msg *message.Message) error {
-	return c.writer.Execute(msg)
+func (c *EVMChain) Write(msg []*message.Message) {
+	for _, msg := range msg {
+		go func(msg *message.Message) {
+			err := c.writer.Execute(msg)
+			if err != nil {
+				log.Err(err).Msgf("Failed writing message %v", msg)
+			}
+		}(msg)
+	}
 }
 
 func (c *EVMChain) DomainID() uint8 {
