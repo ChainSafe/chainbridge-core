@@ -1,4 +1,4 @@
-# Chainbridge Core
+# Sygma Core
 
 <a href="https://discord.gg/ykXsJKfhgq">
   <img alt="discord" src="https://img.shields.io/discord/593655374469660673?label=Discord&style=for-the-badge&logo=discord&logoColor=white" />
@@ -12,7 +12,7 @@
 
 &nbsp;
 
-ChainBridge-Core was born from and built to improve the maintainability and modularity of the existing version of [ChainBridge](https://github.com/ChainSafe/chainbridge). The fundamental distinction between the two is that ChainBridge-Core is more of a framework rather than a stand-alone application.
+Sygma-Core was born from and built to improve the maintainability and modularity of the existing version of [ChainBridge](https://github.com/ChainSafe/chainbridge). The fundamental distinction between the two is that Sygma-Core is more of a framework rather than a stand-alone application.
 
 &nbsp;
 
