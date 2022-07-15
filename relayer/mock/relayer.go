@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	message "github.com/ChainSafe/chainbridge-core/relayer/message"
+	message "github.com/ChainSafe/sygma-core/relayer/message"
 	gomock "github.com/golang/mock/gomock"
 )
 

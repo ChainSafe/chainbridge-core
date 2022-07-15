@@ -3,13 +3,13 @@ package admin
 import (
 	"fmt"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
-	"github.com/ChainSafe/chainbridge-core/util"
+	"github.com/ChainSafe/sygma-core/chains/evm/calls/contracts/bridge"
+	"github.com/ChainSafe/sygma-core/chains/evm/calls/evmtransaction"
+	"github.com/ChainSafe/sygma-core/chains/evm/cli/initialize"
+	"github.com/ChainSafe/sygma-core/util"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
+	"github.com/ChainSafe/sygma-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/sygma-core/chains/evm/cli/logger"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"

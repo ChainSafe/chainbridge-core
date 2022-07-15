@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/ChainSafe/chainbridge-core/config/relayer"
+	"github.com/ChainSafe/sygma-core/config/relayer"
 	"github.com/creasty/defaults"
 	"github.com/spf13/viper"
 )

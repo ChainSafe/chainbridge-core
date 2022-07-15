@@ -1,8 +1,8 @@
 package proposal
 
 import (
-	"github.com/ChainSafe/chainbridge-core/relayer/message"
-	"github.com/ChainSafe/chainbridge-core/types"
+	"github.com/ChainSafe/sygma-core/relayer/message"
+	"github.com/ChainSafe/sygma-core/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )

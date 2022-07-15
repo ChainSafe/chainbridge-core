@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/config/chain"
+	"github.com/ChainSafe/sygma-core/config/chain"
 	"github.com/stretchr/testify/suite"
 )
 

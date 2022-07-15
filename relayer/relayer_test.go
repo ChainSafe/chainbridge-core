@@ -5,8 +5,8 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ChainSafe/chainbridge-core/relayer/message"
-	mock_relayer "github.com/ChainSafe/chainbridge-core/relayer/mock"
+	"github.com/ChainSafe/sygma-core/relayer/message"
+	mock_relayer "github.com/ChainSafe/sygma-core/relayer/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
 )

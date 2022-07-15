@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
+	"github.com/ChainSafe/sygma-core/crypto/secp256k1"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"

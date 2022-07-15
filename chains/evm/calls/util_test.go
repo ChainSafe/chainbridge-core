@@ -1,12 +1,12 @@
 package calls_test
 
 import (
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	mock_calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
+	"github.com/ChainSafe/sygma-core/chains/evm/calls"
+	mock_calls "github.com/ChainSafe/sygma-core/chains/evm/calls/mock"
 	"math/big"
 	"testing"
 
-	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
+	"github.com/ChainSafe/sygma-core/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"

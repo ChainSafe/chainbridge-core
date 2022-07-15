@@ -7,7 +7,7 @@ package mock_transactor
 import (
 	reflect "reflect"
 
-	transactor "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	transactor "github.com/ChainSafe/sygma-core/chains/evm/calls/transactor"
 	common "github.com/ethereum/go-ethereum/common"
 	gomock "github.com/golang/mock/gomock"
 )
