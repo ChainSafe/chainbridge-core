@@ -3,7 +3,7 @@ package chain
 import (
 	"fmt"
 
-	"github.com/ChainSafe/chainbridge-core/flags"
+	"github.com/ChainSafe/sygma-core/flags"
 	"github.com/spf13/viper"
 )
 

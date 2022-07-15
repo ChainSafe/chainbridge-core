@@ -5,9 +5,9 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/forwarder"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
+	"github.com/ChainSafe/sygma-core/chains/evm/calls/contracts/forwarder"
+	"github.com/ChainSafe/sygma-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/sygma-core/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"

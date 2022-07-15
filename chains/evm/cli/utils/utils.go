@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
+	"github.com/ChainSafe/sygma-core/chains/evm/calls"
+	"github.com/ChainSafe/sygma-core/chains/evm/calls/evmgaspricer"
 
 	"github.com/spf13/cobra"
 )

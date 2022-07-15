@@ -4,10 +4,10 @@ import (
 	"math/big"
 	"testing"
 
-	evmgaspricer "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
-	mock_evmgaspricer "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer/mock"
+	evmgaspricer "github.com/ChainSafe/sygma-core/chains/evm/calls/evmgaspricer"
+	mock_evmgaspricer "github.com/ChainSafe/sygma-core/chains/evm/calls/evmgaspricer/mock"
 
-	"github.com/ChainSafe/chainbridge-core/keystore"
+	"github.com/ChainSafe/sygma-core/keystore"
 	"github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/ethereum/go-ethereum/common"

@@ -3,7 +3,7 @@ package account
 import (
 	"fmt"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
+	"github.com/ChainSafe/sygma-core/chains/evm/cli/flags"
 	"github.com/spf13/cobra"
 )
 

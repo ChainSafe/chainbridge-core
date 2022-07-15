@@ -3,11 +3,11 @@ package prepare_test
 import (
 	"testing"
 
-	erc20 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
-	mock_calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	mock_transactor "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/mock"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/prepare"
+	erc20 "github.com/ChainSafe/sygma-core/chains/evm/calls/contracts/erc20"
+	mock_calls "github.com/ChainSafe/sygma-core/chains/evm/calls/mock"
+	"github.com/ChainSafe/sygma-core/chains/evm/calls/transactor"
+	mock_transactor "github.com/ChainSafe/sygma-core/chains/evm/calls/transactor/mock"
+	"github.com/ChainSafe/sygma-core/chains/evm/calls/transactor/prepare"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"

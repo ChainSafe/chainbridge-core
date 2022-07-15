@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
+	"github.com/ChainSafe/sygma-core/chains/evm/cli"
+	"github.com/ChainSafe/sygma-core/chains/evm/cli/logger"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
 )

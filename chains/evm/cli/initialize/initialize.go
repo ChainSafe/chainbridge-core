@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
-	evmgaspricer "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/prepare"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/signAndSend"
-	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
+	"github.com/ChainSafe/sygma-core/chains/evm/calls"
+	"github.com/ChainSafe/sygma-core/chains/evm/calls/evmclient"
+	evmgaspricer "github.com/ChainSafe/sygma-core/chains/evm/calls/evmgaspricer"
+	"github.com/ChainSafe/sygma-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/sygma-core/chains/evm/calls/transactor/prepare"
+	"github.com/ChainSafe/sygma-core/chains/evm/calls/transactor/signAndSend"
+	"github.com/ChainSafe/sygma-core/crypto/secp256k1"
 	"github.com/rs/zerolog/log"
 )
 

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/events"
+	"github.com/ChainSafe/sygma-core/chains/evm/calls/consts"
+	"github.com/ChainSafe/sygma-core/chains/evm/calls/events"
 	"github.com/rs/zerolog/log"
 
 	"github.com/ethereum/go-ethereum"
