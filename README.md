@@ -36,6 +36,8 @@ Since ChainBridge-Core is a library it will require writing some code to get it 
 
 You can find some examples [here](https://github.com/ChainSafe/chainbridge-core-example).
 
+The deployment scripts of this version uses the V2.1.3 solidity scripts from https://github.com/ChainSafe/sygma-solidity/tree/v2.1.3
+
 &nbsp;
 
 ## Local Setup
