@@ -57,19 +57,28 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 		case <-ctx.Done():
 			return
 		default:
+			log.Info().Msgf("-------------------------------START---------------------------------------------")
+
 			head, err := l.client.LatestBlock()
+			log.Info().Msgf("HEAD IS: %s", head)
+
 			if err != nil {
 				log.Error().Err(err).Msg("Unable to get latest block")
 				time.Sleep(l.blockRetryInterval)
 				continue
 			}
 			if startBlock == nil {
-				startBlock = head
+				startBlock = big.NewInt(head.Int64())
+				log.Info().Msgf("START BLOCK IS: %s", startBlock)
 			}
+
+			log.Info().Msgf("END BLOCK BLOCK BEFORE IS: %s", endBlock)
 			endBlock.Add(startBlock, l.blockInterval)
+			log.Info().Msgf("END BLOCK AFTER IS: %s", endBlock)
 
 			// Sleep if the difference is less than needed block confirmations; (latest - current) < BlockDelay
-			if big.NewInt(0).Sub(head, endBlock).Cmp(l.blockConfirmations) == -1 {
+			if new(big.Int).Sub(head, endBlock).Cmp(l.blockConfirmations) == -1 {
+				log.Info().Msgf("RETRYING")
 				time.Sleep(l.blockRetryInterval)
 				continue
 			}
@@ -87,7 +96,11 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 			if err != nil {
 				log.Error().Str("block", endBlock.String()).Err(err).Msg("Failed to write latest block to blockstore")
 			}
+
+			log.Info().Msgf("START BLOCK BLOCK BEFORE IS: %s", startBlock)
 			startBlock.Add(startBlock, l.blockInterval)
+			log.Info().Msgf("START BLOCK AFTER IS: %s", startBlock)
+			log.Info().Msgf("--------------------------------END-----------------------------------------------")
 		}
 	}
 }
