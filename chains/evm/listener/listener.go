@@ -57,11 +57,7 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 		case <-ctx.Done():
 			return
 		default:
-			log.Info().Msgf("-------------------------------START---------------------------------------------")
-
 			head, err := l.client.LatestBlock()
-			log.Info().Msgf("HEAD IS: %s", head)
-
 			if err != nil {
 				log.Error().Err(err).Msg("Unable to get latest block")
 				time.Sleep(l.blockRetryInterval)
