@@ -69,22 +69,17 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 			}
 			if startBlock == nil {
 				startBlock = big.NewInt(head.Int64())
-				log.Info().Msgf("START BLOCK IS: %s", startBlock)
 			}
-
-			log.Info().Msgf("END BLOCK BLOCK BEFORE IS: %s", endBlock)
 			endBlock.Add(startBlock, l.blockInterval)
-			log.Info().Msgf("END BLOCK AFTER IS: %s", endBlock)
 
 			// Sleep if the difference is less than needed block confirmations; (latest - current) < BlockDelay
 			if new(big.Int).Sub(head, endBlock).Cmp(l.blockConfirmations) == -1 {
-				log.Info().Msgf("RETRYING")
 				time.Sleep(l.blockRetryInterval)
 				continue
 			}
 
 			for _, handler := range l.eventHandlers {
-				err := handler.HandleEvent(startBlock, endBlock, msgChan)
+				err := handler.HandleEvent(startBlock, new(big.Int).Sub(endBlock, big.NewInt(1)), msgChan)
 				if err != nil {
 					log.Error().Err(err).Str("DomainID", string(l.domainID)).Msgf("Unable to handle events")
 					continue
@@ -97,10 +92,7 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 				log.Error().Str("block", endBlock.String()).Err(err).Msg("Failed to write latest block to blockstore")
 			}
 
-			log.Info().Msgf("START BLOCK BLOCK BEFORE IS: %s", startBlock)
 			startBlock.Add(startBlock, l.blockInterval)
-			log.Info().Msgf("START BLOCK AFTER IS: %s", startBlock)
-			log.Info().Msgf("--------------------------------END-----------------------------------------------")
 		}
 	}
 }
