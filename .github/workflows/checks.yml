@@ -16,7 +16,7 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.45
-          args: -v --timeout 300s
+          args: -v --timeout 300s --disable govet
 
   vet-check:
     runs-on: ubuntu-latest
