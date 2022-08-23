@@ -45,14 +45,22 @@ func (eh *DepositEventHandler) HandleEvent(startBlock *big.Int, endBlock *big.In
 
 	domainDeposits := make(map[uint8][]*message.Message)
 	for _, d := range deposits {
-		m, err := eh.depositHandler.HandleDeposit(eh.domainID, d.DestinationDomainID, d.DepositNonce, d.ResourceID, d.Data, d.HandlerResponse)
-		if err != nil {
-			log.Error().Err(err).Str("start block", startBlock.String()).Str("end block", endBlock.String()).Uint8("domainID", eh.domainID).Msgf("%v", err)
-			continue
-		}
+		func(d *events.Deposit) {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Error().Err(err).Msgf("panic occured while handling deposit %+v", d)
+				}
+			}()
 
-		log.Debug().Msgf("Resolved message %+v in block range: %s-%s", m, startBlock.String(), endBlock.String())
-		domainDeposits[m.Destination] = append(domainDeposits[m.Destination], m)
+			m, err := eh.depositHandler.HandleDeposit(eh.domainID, d.DestinationDomainID, d.DepositNonce, d.ResourceID, d.Data, d.HandlerResponse)
+			if err != nil {
+				log.Error().Err(err).Str("start block", startBlock.String()).Str("end block", endBlock.String()).Uint8("domainID", eh.domainID).Msgf("%v", err)
+				return
+			}
+
+			log.Debug().Msgf("Resolved message %+v in block range: %s-%s", m, startBlock.String(), endBlock.String())
+			domainDeposits[m.Destination] = append(domainDeposits[m.Destination], m)
+		}(d)
 	}
 
 	for _, deposits := range domainDeposits {
