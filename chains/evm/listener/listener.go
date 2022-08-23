@@ -64,18 +64,18 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 				continue
 			}
 			if startBlock == nil {
-				startBlock = head
+				startBlock = big.NewInt(head.Int64())
 			}
 			endBlock.Add(startBlock, l.blockInterval)
 
 			// Sleep if the difference is less than needed block confirmations; (latest - current) < BlockDelay
-			if big.NewInt(0).Sub(head, endBlock).Cmp(l.blockConfirmations) == -1 {
+			if new(big.Int).Sub(head, endBlock).Cmp(l.blockConfirmations) == -1 {
 				time.Sleep(l.blockRetryInterval)
 				continue
 			}
 
 			for _, handler := range l.eventHandlers {
-				err := handler.HandleEvent(startBlock, endBlock, msgChan)
+				err := handler.HandleEvent(startBlock, new(big.Int).Sub(endBlock, big.NewInt(1)), msgChan)
 				if err != nil {
 					log.Error().Err(err).Str("DomainID", string(l.domainID)).Msgf("Unable to handle events")
 					continue
@@ -87,6 +87,7 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 			if err != nil {
 				log.Error().Str("block", endBlock.String()).Err(err).Msg("Failed to write latest block to blockstore")
 			}
+
 			startBlock.Add(startBlock, l.blockInterval)
 		}
 	}
