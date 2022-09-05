@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ChainSafe/sygma-core/config"
-	"github.com/ChainSafe/sygma-core/config/relayer"
+	"github.com/ChainSafe/chainbridge-core/config"
+	"github.com/ChainSafe/chainbridge-core/config/relayer"
 	"github.com/stretchr/testify/suite"
 )
 

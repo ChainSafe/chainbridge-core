@@ -6,7 +6,7 @@ package message
 import (
 	"math/big"
 
-	"github.com/ChainSafe/sygma-core/types"
+	"github.com/ChainSafe/chainbridge-core/types"
 )
 
 type TransferType string

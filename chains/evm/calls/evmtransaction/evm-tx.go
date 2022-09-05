@@ -2,7 +2,7 @@ package evmtransaction
 
 import (
 	"crypto/ecdsa"
-	"github.com/ChainSafe/sygma-core/chains/evm/calls/evmclient"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
