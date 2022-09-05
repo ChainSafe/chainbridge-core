@@ -9,9 +9,9 @@ import (
 	big "math/big"
 	reflect "reflect"
 
-	events "github.com/ChainSafe/sygma-core/chains/evm/calls/events"
-	message "github.com/ChainSafe/sygma-core/relayer/message"
-	types "github.com/ChainSafe/sygma-core/types"
+	events "github.com/ChainSafe/chainbridge-core/chains/evm/calls/events"
+	message "github.com/ChainSafe/chainbridge-core/relayer/message"
+	types "github.com/ChainSafe/chainbridge-core/types"
 	common "github.com/ethereum/go-ethereum/common"
 	gomock "github.com/golang/mock/gomock"
 )

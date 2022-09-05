@@ -4,8 +4,8 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/ChainSafe/sygma-core/relayer/message"
-	"github.com/ChainSafe/sygma-core/types"
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
+	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/rs/zerolog/log"
 
 	"github.com/ethereum/go-ethereum/common"

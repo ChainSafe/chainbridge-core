@@ -3,9 +3,9 @@ package erc20
 import (
 	"math/big"
 
-	"github.com/ChainSafe/sygma-core/crypto/secp256k1"
+	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 
-	"github.com/ChainSafe/sygma-core/types"
+	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 
