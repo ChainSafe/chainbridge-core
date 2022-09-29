@@ -112,7 +112,20 @@ func (c *EVMClient) GetTransactionByHash(h common.Hash) (tx *types.Transaction, 
 }
 
 func (c *EVMClient) FetchEventLogs(ctx context.Context, contractAddress common.Address, event string, startBlock *big.Int, endBlock *big.Int) ([]types.Log, error) {
-	return c.FilterLogs(ctx, buildQuery(contractAddress, event, startBlock, endBlock))
+	logs, err := c.FilterLogs(ctx, buildQuery(contractAddress, event, startBlock, endBlock))
+	if err != nil {
+		return []types.Log{}, err
+	}
+
+	validLogs := make([]types.Log, 0)
+	for _, log := range logs {
+		if log.Removed {
+			continue
+		}
+
+		validLogs = append(validLogs, log)
+	}
+	return validLogs, nil
 }
 
 // SendRawTransaction accepts rlp-encode of signed transaction and sends it via RPC call
