@@ -3,6 +3,7 @@ package itx
 import (
 	"context"
 	"fmt"
+	kms "github.com/LampardNguyen234/evm-kms"
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
@@ -60,13 +61,24 @@ type ITXTransactor struct {
 	forwarder   Forwarder
 	relayCaller RelayCaller
 	kp          *secp256k1.Keypair
+	kmsSigner   kms.KMSSigner
 }
 
+// NewITXTransactor returns a new ITXTransactor using the given *secp256k1.Keypair,
 func NewITXTransactor(relayCaller RelayCaller, forwarder Forwarder, kp *secp256k1.Keypair) *ITXTransactor {
 	return &ITXTransactor{
 		relayCaller: relayCaller,
 		forwarder:   forwarder,
 		kp:          kp,
+	}
+}
+
+// NewITXTransactorWithKMSSigner returns an ITXTransactor using the given kms.KMSSigner.
+func NewITXTransactorWithKMSSigner(relayCaller RelayCaller, forwarder Forwarder, kmsSigner kms.KMSSigner) *ITXTransactor {
+	return &ITXTransactor{
+		relayCaller: relayCaller,
+		forwarder:   forwarder,
+		kmsSigner:   kmsSigner,
 	}
 }
 
@@ -138,7 +150,12 @@ func (itx *ITXTransactor) signRelayTx(tx *RelayTx) (*SignedRelayTx, error) {
 	txID := crypto.Keccak256Hash(packed)
 	msg := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(txID), string(txID.Bytes()))
 	hash := crypto.Keccak256Hash([]byte(msg))
-	sig, err := crypto.Sign(hash.Bytes(), itx.kp.PrivateKey())
+	var sig []byte
+	if itx.useKMS() {
+		sig, err = itx.kmsSigner.SignHash(hash)
+	} else {
+		sig, err = crypto.Sign(hash.Bytes(), itx.kp.PrivateKey())
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -168,4 +185,8 @@ func (itx *ITXTransactor) sendTransaction(ctx context.Context, signedTx *SignedR
 	}
 
 	return common.HexToHash(resp.RelayTransactionHash.String()), nil
+}
+
+func (itx *ITXTransactor) useKMS() bool {
+	return itx.kmsSigner != nil
 }

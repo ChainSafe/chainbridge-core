@@ -2,6 +2,7 @@ package evmtransaction
 
 import (
 	"crypto/ecdsa"
+	"fmt"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"math/big"
 
@@ -25,6 +26,29 @@ func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, domainID *big.Int) ([]byte,
 		return nil, err
 	}
 	tx, err := opts.Signer(crypto.PubkeyToAddress(key.PublicKey), a.tx)
+	if err != nil {
+		return nil, err
+	}
+	a.tx = tx
+
+	data, err := tx.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+// RawTransactOptsWithSignature does the same action as RawWithSignature.
+// However, instead of using a provided private key to sign the transaction, it only needs a bind.TransactOpts to do so.
+// This function obscures the need of accessing the private key. One can use this function with a remote KMS.
+func (a *TX) RawTransactOptsWithSignature(opts *bind.TransactOpts) ([]byte, error) {
+
+	if opts.From == common.HexToAddress("0x00") {
+		return nil, fmt.Errorf("signer address is not specified")
+	}
+
+	tx, err := opts.Signer(opts.From, a.tx)
 	if err != nil {
 		return nil, err
 	}

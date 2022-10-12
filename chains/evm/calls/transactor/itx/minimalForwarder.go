@@ -2,6 +2,7 @@ package itx
 
 import (
 	"fmt"
+	kms "github.com/LampardNguyen234/evm-kms"
 	"math/big"
 	"sync"
 
@@ -28,6 +29,7 @@ type NonceStorer interface {
 
 type MinimalForwarder struct {
 	kp                *secp256k1.Keypair
+	kmsSigner         kms.KMSSigner
 	nonce             *big.Int
 	nonceLock         sync.Mutex
 	chainID           *big.Int
@@ -40,6 +42,16 @@ func NewMinimalForwarder(chainID *big.Int, kp *secp256k1.Keypair, forwarderContr
 	return &MinimalForwarder{
 		chainID:           chainID,
 		kp:                kp,
+		forwarderContract: forwarderContract,
+		nonceStore:        nonceStore,
+	}
+}
+
+// NewMinimalForwarderWithKMSSigner creates an instance of MinimalForwarder using a remote KMSSigner.
+func NewMinimalForwarderWithKMSSigner(chainID *big.Int, kmsSigner kms.KMSSigner, forwarderContract ForwarderContract, nonceStore NonceStorer) *MinimalForwarder {
+	return &MinimalForwarder{
+		chainID:           chainID,
+		kmsSigner:         kmsSigner,
 		forwarderContract: forwarderContract,
 		nonceStore:        nonceStore,
 	}
@@ -124,7 +136,12 @@ func (c *MinimalForwarder) ForwarderData(to *common.Address, data []byte, opts t
 		return nil, err
 	}
 
-	sig, err := crypto.Sign(forwarderHash, c.kp.PrivateKey())
+	var sig []byte
+	if c.useKMS() {
+		sig, err = c.kmsSigner.SignHash(common.BytesToHash(forwarderHash))
+	} else {
+		sig, err = crypto.Sign(forwarderHash, c.kp.PrivateKey())
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -195,4 +212,8 @@ func (c *MinimalForwarder) typedHash(
 
 	rawData := []byte(fmt.Sprintf("\x19\x01%s%s", string(domainSeparator), string(typedDataHash)))
 	return crypto.Keccak256(rawData), nil
+}
+
+func (c *MinimalForwarder) useKMS() bool {
+	return c.kmsSigner != nil
 }

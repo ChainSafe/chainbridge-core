@@ -3,6 +3,7 @@ module github.com/ChainSafe/chainbridge-core
 go 1.17
 
 require (
+	github.com/LampardNguyen234/evm-kms v0.1.0-beta
 	github.com/centrifuge/go-substrate-rpc-client v2.0.0+incompatible
 	github.com/creasty/defaults v1.6.0
 	github.com/ethereum/go-ethereum v1.10.12

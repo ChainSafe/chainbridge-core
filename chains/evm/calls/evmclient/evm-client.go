@@ -6,11 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"math/big"
 	"sync"
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
+	kms "github.com/LampardNguyen234/evm-kms"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -24,7 +26,13 @@ import (
 
 type EVMClient struct {
 	*ethclient.Client
-	kp         *secp256k1.Keypair
+
+	// kmsSigner is the KMS client for signing transaction. This field is used when the private key is not provided.
+	kmsSigner kms.KMSSigner
+
+	// kp initiates a new ecdsa key pair with access to the private key.
+	kp *secp256k1.Keypair
+
 	gethClient *gethclient.Client
 	rpClient   *rpc.Client
 	nonce      *big.Int
@@ -37,6 +45,10 @@ type CommonTransaction interface {
 
 	// RawWithSignature Returns signed transaction by provided private key
 	RawWithSignature(key *ecdsa.PrivateKey, domainID *big.Int) ([]byte, error)
+
+	// RawTransactOptsWithSignature returns a signed transaction with the given *bind.TransactOpts.
+	// This method is called when no private is supplied (the case we use KMS for signing).
+	RawTransactOptsWithSignature(opts *bind.TransactOpts) ([]byte, error)
 }
 
 // NewEVMClient creates a client for EVMChain with provided
@@ -51,6 +63,20 @@ func NewEVMClient(url string, privateKey *ecdsa.PrivateKey) (*EVMClient, error) 
 	c.gethClient = gethclient.New(rpcClient)
 	c.rpClient = rpcClient
 	c.kp = secp256k1.NewKeypair(*privateKey)
+	return c, nil
+}
+
+// NewEVMClientWithKMSSigner creates a client for EVMChain with the provided KMSSigner.
+func NewEVMClientWithKMSSigner(url string, kmsClient kms.KMSSigner) (*EVMClient, error) {
+	rpcClient, err := rpc.DialContext(context.TODO(), url)
+	if err != nil {
+		return nil, err
+	}
+	c := &EVMClient{}
+	c.Client = ethclient.NewClient(rpcClient)
+	c.gethClient = gethclient.New(rpcClient)
+	c.rpClient = rpcClient
+	c.kmsSigner = kmsClient
 	return c, nil
 }
 
@@ -160,7 +186,10 @@ func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string
 }
 
 func (c *EVMClient) From() common.Address {
-	return c.kp.CommonAddress()
+	if c.kp != nil {
+		return c.kp.CommonAddress()
+	}
+	return c.kmsSigner.GetAddress()
 }
 
 func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransaction) (common.Hash, error) {
@@ -170,7 +199,13 @@ func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransac
 		// Probably chain does not support chainID eg. CELO
 		id = nil
 	}
-	rawTx, err := tx.RawWithSignature(c.kp.PrivateKey(), id)
+	var rawTx []byte
+	if c.useKMS() {
+		rawTx, err = tx.RawTransactOptsWithSignature(c.kmsSigner.GetDefaultEVMTransactor())
+	} else {
+		rawTx, err = tx.RawWithSignature(c.kp.PrivateKey(), id)
+	}
+
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -182,7 +217,7 @@ func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransac
 }
 
 func (c *EVMClient) RelayerAddress() common.Address {
-	return c.kp.CommonAddress()
+	return c.From()
 }
 
 func (c *EVMClient) LockNonce() {
@@ -197,7 +232,7 @@ func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
 	var err error
 	for i := 0; i <= 10; i++ {
 		if c.nonce == nil {
-			nonce, err := c.PendingNonceAt(context.Background(), c.kp.CommonAddress())
+			nonce, err := c.PendingNonceAt(context.Background(), c.From())
 			if err != nil {
 				time.Sleep(1 * time.Second)
 				continue
@@ -225,6 +260,10 @@ func (c *EVMClient) BaseFee() (*big.Int, error) {
 		return nil, err
 	}
 	return head.BaseFee, nil
+}
+
+func (c *EVMClient) useKMS() bool {
+	return c.kmsSigner != nil
 }
 
 func toBlockNumArg(number *big.Int) string {
