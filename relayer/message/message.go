@@ -12,7 +12,7 @@ import (
 type TransferType string
 type Metadata struct {
 	Priority uint8
-	Blob     []byte
+	Data     map[string]interface{}
 }
 
 const (
