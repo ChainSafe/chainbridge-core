@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/config/chain"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/store"
 	"github.com/rs/zerolog/log"
@@ -27,11 +26,23 @@ type EVMChain struct {
 	listener   EventListener
 	writer     ProposalExecutor
 	blockstore *store.BlockStore
-	config     *chain.EVMConfig
+
+	domainID    uint8
+	startBlock  *big.Int
+	freshStart  bool
+	latestBlock bool
 }
 
-func NewEVMChain(listener EventListener, writer ProposalExecutor, blockstore *store.BlockStore, config *chain.EVMConfig) *EVMChain {
-	return &EVMChain{listener: listener, writer: writer, blockstore: blockstore, config: config}
+func NewEVMChain(listener EventListener, writer ProposalExecutor, blockstore *store.BlockStore, domainID uint8, startBlock *big.Int, latestBlock bool, freshStart bool) *EVMChain {
+	return &EVMChain{
+		listener:    listener,
+		writer:      writer,
+		blockstore:  blockstore,
+		domainID:    domainID,
+		startBlock:  startBlock,
+		latestBlock: latestBlock,
+		freshStart:  freshStart,
+	}
 }
 
 // PollEvents is the goroutine that polls blocks and searches Deposit events in them.
@@ -40,10 +51,10 @@ func (c *EVMChain) PollEvents(ctx context.Context, sysErr chan<- error, msgChan 
 	log.Info().Msg("Polling Blocks...")
 
 	startBlock, err := c.blockstore.GetStartBlock(
-		*c.config.GeneralChainConfig.Id,
-		c.config.StartBlock,
-		c.config.GeneralChainConfig.LatestBlock,
-		c.config.GeneralChainConfig.FreshStart,
+		c.domainID,
+		c.startBlock,
+		c.latestBlock,
+		c.freshStart,
 	)
 	if err != nil {
 		sysErr <- fmt.Errorf("error %w on getting last stored block", err)
@@ -65,5 +76,5 @@ func (c *EVMChain) Write(msg []*message.Message) {
 }
 
 func (c *EVMChain) DomainID() uint8 {
-	return *c.config.GeneralChainConfig.Id
+	return c.domainID
 }
