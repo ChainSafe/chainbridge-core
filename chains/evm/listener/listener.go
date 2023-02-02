@@ -8,7 +8,6 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/config/chain"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/store"
 
@@ -36,15 +35,22 @@ type EVMListener struct {
 
 // NewEVMListener creates an EVMListener that listens to deposit events on chain
 // and calls event handler when one occurs
-func NewEVMListener(client ChainClient, eventHandlers []EventHandler, blockstore *store.BlockStore, config *chain.EVMConfig) *EVMListener {
+func NewEVMListener(
+	client ChainClient,
+	eventHandlers []EventHandler,
+	blockstore *store.BlockStore,
+	domainID uint8,
+	blockRetryInterval time.Duration,
+	blockConfirmations *big.Int,
+	blockInterval *big.Int) *EVMListener {
 	return &EVMListener{
 		client:             client,
 		eventHandlers:      eventHandlers,
 		blockstore:         blockstore,
-		domainID:           *config.GeneralChainConfig.Id,
-		blockRetryInterval: config.BlockRetryInterval,
-		blockConfirmations: config.BlockConfirmations,
-		blockInterval:      config.BlockInterval,
+		domainID:           domainID,
+		blockRetryInterval: blockRetryInterval,
+		blockConfirmations: blockConfirmations,
+		blockInterval:      blockInterval,
 	}
 }
 
