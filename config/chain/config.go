@@ -12,11 +12,11 @@ type GeneralChainConfig struct {
 	Id             *uint8 `mapstructure:"id"`
 	Endpoint       string `mapstructure:"endpoint"`
 	Type           string `mapstructure:"type"`
+	BlockstorePath string `mapstructure:"blockstorePath"`
+	FreshStart     bool   `mapstructure:"fresh"`
+	LatestBlock    bool   `mapstructure:"latest"`
 	Key            string
 	Insecure       bool
-	BlockstorePath string
-	FreshStart     bool
-	LatestBlock    bool
 }
 
 func (c *GeneralChainConfig) Validate() error {
@@ -34,7 +34,16 @@ func (c *GeneralChainConfig) Validate() error {
 }
 
 func (c *GeneralChainConfig) ParseFlags() {
-	c.BlockstorePath = viper.GetString(flags.BlockstoreFlagName)
-	c.FreshStart = viper.GetBool(flags.FreshStartFlagName)
-	c.LatestBlock = viper.GetBool(flags.LatestBlockFlagName)
+	blockstore := viper.GetString(flags.BlockstoreFlagName)
+	if blockstore != "" {
+		c.BlockstorePath = blockstore
+	}
+	freshStart := viper.GetBool(flags.FreshStartFlagName)
+	if freshStart {
+		c.FreshStart = freshStart
+	}
+	latestBlock := viper.GetBool(flags.LatestBlockFlagName)
+	if latestBlock {
+		c.LatestBlock = latestBlock
+	}
 }
