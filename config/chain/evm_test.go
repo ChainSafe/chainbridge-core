@@ -17,11 +17,6 @@ func TestRunNewEVMConfigTestSuite(t *testing.T) {
 	suite.Run(t, new(NewEVMConfigTestSuite))
 }
 
-func (s *NewEVMConfigTestSuite) SetupSuite()    {}
-func (s *NewEVMConfigTestSuite) TearDownSuite() {}
-func (s *NewEVMConfigTestSuite) SetupTest()     {}
-func (s *NewEVMConfigTestSuite) TearDownTest()  {}
-
 func (s *NewEVMConfigTestSuite) Test_FailedDecode() {
 	_, err := chain.NewEVMConfig(map[string]interface{}{
 		"gasLimit": "invalid",
@@ -63,11 +58,14 @@ func (s *NewEVMConfigTestSuite) Test_InvalidBlockConfirmation() {
 
 func (s *NewEVMConfigTestSuite) Test_ValidConfig() {
 	rawConfig := map[string]interface{}{
-		"id":       1,
-		"endpoint": "ws://domain.com",
-		"name":     "evm1",
-		"from":     "address",
-		"bridge":   "bridgeAddress",
+		"id":             1,
+		"endpoint":       "ws://domain.com",
+		"name":           "evm1",
+		"from":           "address",
+		"bridge":         "bridgeAddress",
+		"blockstorePath": "./blockstore",
+		"latest":         true,
+		"fresh":          true,
 	}
 
 	actualConfig, err := chain.NewEVMConfig(rawConfig)
@@ -77,9 +75,12 @@ func (s *NewEVMConfigTestSuite) Test_ValidConfig() {
 	s.Nil(err)
 	s.Equal(*actualConfig, chain.EVMConfig{
 		GeneralChainConfig: chain.GeneralChainConfig{
-			Name:     "evm1",
-			Endpoint: "ws://domain.com",
-			Id:       id,
+			Name:           "evm1",
+			Endpoint:       "ws://domain.com",
+			Id:             id,
+			BlockstorePath: "./blockstore",
+			FreshStart:     true,
+			LatestBlock:    true,
 		},
 		Bridge:             "bridgeAddress",
 		Erc20Handler:       "",
