@@ -1,14 +1,14 @@
 package evmtransaction
 
 import (
-	"crypto/ecdsa"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
+	"context"
 	"math/big"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 )
 
 type TX struct {
@@ -19,12 +19,12 @@ type TX struct {
 // but return raw byte representation of transaction to be compatible and interchangeable between different go-ethereum forks
 // WithSignature returns a new transaction with the given signature.
 // This signature needs to be in the [R || S || V] format where V is 0 or 1.
-func (a *TX) RawWithSignature(key *ecdsa.PrivateKey, domainID *big.Int) ([]byte, error) {
-	opts, err := bind.NewKeyedTransactorWithChainID(key, domainID)
+func (a *TX) RawWithSignature(signer evmclient.Signer, domainID *big.Int) ([]byte, error) {
+	opts, err := newTransactorWithChainID(signer, domainID)
 	if err != nil {
 		return nil, err
 	}
-	tx, err := opts.Signer(crypto.PubkeyToAddress(key.PublicKey), a.tx)
+	tx, err := opts.Signer(signer.CommonAddress(), a.tx)
 	if err != nil {
 		return nil, err
 	}
@@ -75,4 +75,30 @@ func newTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit 
 
 func (a *TX) Hash() common.Hash {
 	return a.tx.Hash()
+}
+
+// newTransactorWithChainID is a utility method to easily create a transaction signer
+// for an evmclient.Signer.
+// Mostly copies bind.NewKeyedTransactorWithChainID but sings with the provided signer
+// instead of a privateKey
+func newTransactorWithChainID(s evmclient.Signer, chainID *big.Int) (*bind.TransactOpts, error) {
+	keyAddr := s.CommonAddress()
+	if chainID == nil {
+		return nil, bind.ErrNoChainID
+	}
+	signer := types.LatestSignerForChainID(chainID)
+	return &bind.TransactOpts{
+		From: keyAddr,
+		Signer: func(address common.Address, tx *types.Transaction) (*types.Transaction, error) {
+			if address != keyAddr {
+				return nil, bind.ErrNotAuthorized
+			}
+			signature, err := s.Sign(signer.Hash(tx).Bytes())
+			if err != nil {
+				return nil, err
+			}
+			return tx.WithSignature(signer, signature)
+		},
+		Context: context.Background(),
+	}, nil
 }

@@ -80,7 +80,7 @@ Block number: %v
 From address: %s`,
 		TxHash, blockNumberBigInt, FromAddress)
 
-	ethClient, err := evmclient.NewEVMClient(url, senderKeyPair.PrivateKey())
+	ethClient, err := evmclient.NewEVMClient(url, senderKeyPair)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err

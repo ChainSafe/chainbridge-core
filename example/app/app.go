@@ -22,6 +22,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/config"
 	"github.com/ChainSafe/chainbridge-core/config/chain"
+	secp256k12 "github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/e2e/dummy"
 	"github.com/ChainSafe/chainbridge-core/flags"
 	"github.com/ChainSafe/chainbridge-core/lvldb"
@@ -60,7 +61,9 @@ func Run() error {
 					panic(err)
 				}
 
-				client, err := evmclient.NewEVMClient(config.GeneralChainConfig.Endpoint, privateKey)
+				kp := secp256k12.NewKeypair(*privateKey)
+
+				client, err := evmclient.NewEVMClient(config.GeneralChainConfig.Endpoint, kp)
 				if err != nil {
 					panic(err)
 				}

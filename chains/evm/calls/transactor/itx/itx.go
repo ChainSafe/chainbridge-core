@@ -6,7 +6,6 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -56,17 +55,22 @@ type Forwarder interface {
 	ForwarderData(to *common.Address, data []byte, opts transactor.TransactOptions) ([]byte, error)
 }
 
+type Signer interface {
+	CommonAddress() common.Address
+	Sign(digestHash []byte) ([]byte, error)
+}
+
 type ITXTransactor struct {
 	forwarder   Forwarder
 	relayCaller RelayCaller
-	kp          *secp256k1.Keypair
+	signer      Signer
 }
 
-func NewITXTransactor(relayCaller RelayCaller, forwarder Forwarder, kp *secp256k1.Keypair) *ITXTransactor {
+func NewITXTransactor(relayCaller RelayCaller, forwarder Forwarder, signer Signer) *ITXTransactor {
 	return &ITXTransactor{
 		relayCaller: relayCaller,
 		forwarder:   forwarder,
-		kp:          kp,
+		signer:      signer,
 	}
 }
 
@@ -138,7 +142,7 @@ func (itx *ITXTransactor) signRelayTx(tx *RelayTx) (*SignedRelayTx, error) {
 	txID := crypto.Keccak256Hash(packed)
 	msg := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(txID), string(txID.Bytes()))
 	hash := crypto.Keccak256Hash([]byte(msg))
-	sig, err := crypto.Sign(hash.Bytes(), itx.kp.PrivateKey())
+	sig, err := itx.signer.Sign(hash.Bytes())
 	if err != nil {
 		return nil, err
 	}

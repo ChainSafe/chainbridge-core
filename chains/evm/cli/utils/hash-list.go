@@ -43,7 +43,7 @@ func HashListCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	ethClient, err := evmclient.NewEVMClient(url, senderKeyPair.PrivateKey())
+	ethClient, err := evmclient.NewEVMClient(url, senderKeyPair)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("eth client intialization error: %v", err))
 		return err

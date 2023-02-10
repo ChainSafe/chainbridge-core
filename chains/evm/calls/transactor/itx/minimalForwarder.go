@@ -7,7 +7,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/forwarder"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -27,7 +27,7 @@ type NonceStorer interface {
 }
 
 type MinimalForwarder struct {
-	kp                *secp256k1.Keypair
+	signer            Signer
 	nonce             *big.Int
 	nonceLock         sync.Mutex
 	chainID           *big.Int
@@ -36,10 +36,10 @@ type MinimalForwarder struct {
 }
 
 // NewMinimalForwarder creates an instance of MinimalForwarder
-func NewMinimalForwarder(chainID *big.Int, kp *secp256k1.Keypair, forwarderContract ForwarderContract, nonceStore NonceStorer) *MinimalForwarder {
+func NewMinimalForwarder(chainID *big.Int, signer Signer, forwarderContract ForwarderContract, nonceStore NonceStorer) *MinimalForwarder {
 	return &MinimalForwarder{
 		chainID:           chainID,
-		kp:                kp,
+		signer:            signer,
 		forwarderContract: forwarderContract,
 		nonceStore:        nonceStore,
 	}
@@ -73,8 +73,7 @@ func (c *MinimalForwarder) UnsafeNonce() (*big.Int, error) {
 		if err != nil {
 			return nil, err
 		}
-
-		from := common.HexToAddress(c.kp.Address())
+		from := c.signer.CommonAddress()
 		contractNonce, err := c.forwarderContract.GetNonce(from)
 		if err != nil {
 			return nil, err
@@ -110,7 +109,7 @@ func (c *MinimalForwarder) ChainId() *big.Int {
 
 // ForwarderData returns ABI packed and signed byte data for a forwarded transaction
 func (c *MinimalForwarder) ForwarderData(to *common.Address, data []byte, opts transactor.TransactOptions) ([]byte, error) {
-	from := c.kp.Address()
+	from := c.signer.CommonAddress().Hex()
 	forwarderHash, err := c.typedHash(
 		from,
 		to.String(),
@@ -124,7 +123,7 @@ func (c *MinimalForwarder) ForwarderData(to *common.Address, data []byte, opts t
 		return nil, err
 	}
 
-	sig, err := crypto.Sign(forwarderHash, c.kp.PrivateKey())
+	sig, err := c.signer.Sign(forwarderHash)
 	if err != nil {
 		return nil, err
 	}
