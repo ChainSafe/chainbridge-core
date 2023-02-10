@@ -97,11 +97,6 @@ func (kp *Keypair) PublicKey() string {
 	return hexutil.Encode(secp256k1.CompressPubkey(kp.public))
 }
 
-// PrivateKey returns the keypair's private key
-func (kp *Keypair) PrivateKey() *ecdsa.PrivateKey {
-	return kp.private
-}
-
 // Sign calculates an ECDSA signature.
 // The produced signature is in the [R || S || V] format where V is 0 or 1.
 func (kp *Keypair) Sign(digestHash []byte) ([]byte, error) {
