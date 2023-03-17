@@ -7,8 +7,9 @@ import (
 	evmgaspricer "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
 	mock_evmgaspricer "github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer/mock"
 
-	"github.com/ChainSafe/chainbridge-core/keystore"
 	"github.com/ethereum/go-ethereum/core/types"
+
+	"github.com/ChainSafe/chainbridge-core/keystore"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -43,7 +44,7 @@ func (s *EVMTxTestSuite) TestNewTransactionWithStaticGasPricer() {
 	s.Nil(err)
 	tx, err := txFabric(1, &common.Address{}, big.NewInt(0), 10000, gp, []byte{})
 	s.Nil(err)
-	rawTx, err := tx.RawWithSignature(aliceKp.PrivateKey(), big.NewInt(420))
+	rawTx, err := tx.RawWithSignature(aliceKp, big.NewInt(420))
 	s.Nil(err)
 	txt := types.Transaction{}
 	err = txt.UnmarshalBinary(rawTx)
@@ -60,7 +61,7 @@ func (s *EVMTxTestSuite) TestNewTransactionWithLondonGasPricer() {
 	s.Nil(err)
 	tx, err := txFabric(1, &common.Address{}, big.NewInt(0), 10000, gp, []byte{})
 	s.Nil(err)
-	rawTx, err := tx.RawWithSignature(aliceKp.PrivateKey(), big.NewInt(420))
+	rawTx, err := tx.RawWithSignature(aliceKp, big.NewInt(420))
 	s.Nil(err)
 	txt := types.Transaction{}
 	err = txt.UnmarshalBinary(rawTx)

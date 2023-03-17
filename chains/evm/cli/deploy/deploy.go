@@ -1,7 +1,6 @@
 package deploy
 
 import (
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
@@ -20,7 +19,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/logger"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/utils"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -170,9 +168,9 @@ func DeployCLI(cmd *cobra.Command, args []string, txFabric calls.TxFabric, gasPr
 	}
 
 	log.Debug().Msgf("url: %s gas limit: %v gas price: %v", url, gasLimit, gasPrice)
-	log.Debug().Msgf("SENDER Private key 0x%s", hex.EncodeToString(crypto.FromECDSA(senderKeyPair.PrivateKey())))
+	log.Debug().Msgf("SENDER Address %s", senderKeyPair.CommonAddress().Hex())
 
-	ethClient, err := evmclient.NewEVMClient(url, senderKeyPair.PrivateKey())
+	ethClient, err := evmclient.NewEVMClient(url, senderKeyPair)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("ethereum client error: %v", err)).Msg("error initializing new EVM client")
 		return err

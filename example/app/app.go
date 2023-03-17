@@ -22,6 +22,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/config"
 	"github.com/ChainSafe/chainbridge-core/config/chain"
+	secp256k12 "github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/e2e/dummy"
 	"github.com/ChainSafe/chainbridge-core/flags"
 	"github.com/ChainSafe/chainbridge-core/lvldb"
@@ -60,7 +61,9 @@ func Run() error {
 					panic(err)
 				}
 
-				client, err := evmclient.NewEVMClient(config.GeneralChainConfig.Endpoint, privateKey)
+				kp := secp256k12.NewKeypair(*privateKey)
+
+				client, err := evmclient.NewEVMClient(config.GeneralChainConfig.Endpoint, kp)
 				if err != nil {
 					panic(err)
 				}
@@ -76,7 +79,7 @@ func Run() error {
 				eventListener := events.NewListener(client)
 				eventHandlers := make([]listener.EventHandler, 0)
 				eventHandlers = append(eventHandlers, listener.NewDepositEventHandler(eventListener, depositHandler, common.HexToAddress(config.Bridge), *config.GeneralChainConfig.Id))
-				evmListener := listener.NewEVMListener(client, eventHandlers, blockstore, config)
+				evmListener := listener.NewEVMListener(client, eventHandlers, blockstore, *config.GeneralChainConfig.Id, config.BlockRetryInterval, config.BlockConfirmations, config.BlockInterval)
 
 				mh := executor.NewEVMMessageHandler(bridgeContract)
 				mh.RegisterMessageHandler(config.Erc20Handler, executor.ERC20MessageHandler)
@@ -90,7 +93,7 @@ func Run() error {
 					evmVoter = executor.NewVoter(mh, client, bridgeContract)
 				}
 
-				chain := evm.NewEVMChain(evmListener, evmVoter, blockstore, config)
+				chain := evm.NewEVMChain(evmListener, evmVoter, blockstore, *config.GeneralChainConfig.Id, config.StartBlock, config.GeneralChainConfig.LatestBlock, config.GeneralChainConfig.FreshStart)
 
 				chains = append(chains, chain)
 			}

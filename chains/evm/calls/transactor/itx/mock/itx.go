@@ -172,3 +172,55 @@ func (mr *MockForwarderMockRecorder) UnsafeNonce() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnsafeNonce", reflect.TypeOf((*MockForwarder)(nil).UnsafeNonce))
 }
+
+// MockSigner is a mock of Signer interface.
+type MockSigner struct {
+	ctrl     *gomock.Controller
+	recorder *MockSignerMockRecorder
+}
+
+// MockSignerMockRecorder is the mock recorder for MockSigner.
+type MockSignerMockRecorder struct {
+	mock *MockSigner
+}
+
+// NewMockSigner creates a new mock instance.
+func NewMockSigner(ctrl *gomock.Controller) *MockSigner {
+	mock := &MockSigner{ctrl: ctrl}
+	mock.recorder = &MockSignerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockSigner) EXPECT() *MockSignerMockRecorder {
+	return m.recorder
+}
+
+// CommonAddress mocks base method.
+func (m *MockSigner) CommonAddress() common.Address {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CommonAddress")
+	ret0, _ := ret[0].(common.Address)
+	return ret0
+}
+
+// CommonAddress indicates an expected call of CommonAddress.
+func (mr *MockSignerMockRecorder) CommonAddress() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommonAddress", reflect.TypeOf((*MockSigner)(nil).CommonAddress))
+}
+
+// Sign mocks base method.
+func (m *MockSigner) Sign(digestHash []byte) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Sign", digestHash)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Sign indicates an expected call of Sign.
+func (mr *MockSignerMockRecorder) Sign(digestHash interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Sign", reflect.TypeOf((*MockSigner)(nil).Sign), digestHash)
+}

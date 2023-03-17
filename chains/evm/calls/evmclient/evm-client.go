@@ -2,15 +2,12 @@ package evmclient
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
 	"sync"
 	"time"
-
-	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -24,24 +21,31 @@ import (
 
 type EVMClient struct {
 	*ethclient.Client
-	kp         *secp256k1.Keypair
+	signer     Signer
 	gethClient *gethclient.Client
 	rpClient   *rpc.Client
 	nonce      *big.Int
 	nonceLock  sync.Mutex
 }
 
+type Signer interface {
+	CommonAddress() common.Address
+
+	// Sign calculates an ECDSA signature.
+	// The produced signature must be in the [R || S || V] format where V is 0 or 1.
+	Sign(digestHash []byte) ([]byte, error)
+}
+
 type CommonTransaction interface {
 	// Hash returns the transaction hash.
 	Hash() common.Hash
 
-	// RawWithSignature Returns signed transaction by provided private key
-	RawWithSignature(key *ecdsa.PrivateKey, domainID *big.Int) ([]byte, error)
+	// RawWithSignature Returns signed transaction by provided signer
+	RawWithSignature(signer Signer, domainID *big.Int) ([]byte, error)
 }
 
-// NewEVMClient creates a client for EVMChain with provided
-// private key.
-func NewEVMClient(url string, privateKey *ecdsa.PrivateKey) (*EVMClient, error) {
+// NewEVMClient creates a client for EVMChain with provided signer
+func NewEVMClient(url string, signer Signer) (*EVMClient, error) {
 	rpcClient, err := rpc.DialContext(context.TODO(), url)
 	if err != nil {
 		return nil, err
@@ -50,7 +54,7 @@ func NewEVMClient(url string, privateKey *ecdsa.PrivateKey) (*EVMClient, error) 
 	c.Client = ethclient.NewClient(rpcClient)
 	c.gethClient = gethclient.New(rpcClient)
 	c.rpClient = rpcClient
-	c.kp = secp256k1.NewKeypair(*privateKey)
+	c.signer = signer
 	return c, nil
 }
 
@@ -160,17 +164,17 @@ func (c *EVMClient) PendingCallContract(ctx context.Context, callArgs map[string
 }
 
 func (c *EVMClient) From() common.Address {
-	return c.kp.CommonAddress()
+	return c.signer.CommonAddress()
 }
 
 func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransaction) (common.Hash, error) {
 	id, err := c.ChainID(ctx)
 	if err != nil {
-		//panic(err)
+		// panic(err)
 		// Probably chain does not support chainID eg. CELO
 		id = nil
 	}
-	rawTx, err := tx.RawWithSignature(c.kp.PrivateKey(), id)
+	rawTx, err := tx.RawWithSignature(c.signer, id)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -182,7 +186,7 @@ func (c *EVMClient) SignAndSendTransaction(ctx context.Context, tx CommonTransac
 }
 
 func (c *EVMClient) RelayerAddress() common.Address {
-	return c.kp.CommonAddress()
+	return c.signer.CommonAddress()
 }
 
 func (c *EVMClient) LockNonce() {
@@ -197,7 +201,7 @@ func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
 	var err error
 	for i := 0; i <= 10; i++ {
 		if c.nonce == nil {
-			nonce, err := c.PendingNonceAt(context.Background(), c.kp.CommonAddress())
+			nonce, err := c.PendingNonceAt(context.Background(), c.signer.CommonAddress())
 			if err != nil {
 				time.Sleep(1 * time.Second)
 				continue
