@@ -61,7 +61,7 @@ func (e *ETHDepositHandler) RegisterDepositHandler(handlerAddress string, handle
 		return
 	}
 
-	log.Info().Msgf("Registered deposit handler for address %s", handlerAddress)
+	log.Debug().Msgf("Registered deposit handler for address %s", handlerAddress)
 	e.depositHandlers[common.HexToAddress(handlerAddress)] = handler
 }
 

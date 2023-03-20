@@ -70,7 +70,7 @@ func (mh *EVMMessageHandler) RegisterMessageHandler(address string, handler Mess
 		mh.handlers = make(map[common.Address]MessageHandlerFunc)
 	}
 
-	log.Info().Msgf("Registered message handler for address %s", address)
+	log.Debug().Msgf("Registered message handler for address %s", address)
 
 	mh.handlers[common.HexToAddress(address)] = handler
 }
