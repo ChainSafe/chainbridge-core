@@ -90,7 +90,7 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 			for _, handler := range l.eventHandlers {
 				err := handler.HandleEvent(startBlock, new(big.Int).Sub(endBlock, big.NewInt(1)), msgChan)
 				if err != nil {
-					l.log.Error().Err(err).Str("DomainID", string(l.domainID)).Msgf("Unable to handle events")
+					l.log.Error().Err(err).Msgf("Unable to handle events")
 					continue
 				}
 			}
