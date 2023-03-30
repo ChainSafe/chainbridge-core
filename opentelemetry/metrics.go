@@ -7,6 +7,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
+	"go.opentelemetry.io/otel/metric/unit"
 	export "go.opentelemetry.io/otel/sdk/export/metric"
 	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
 	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
@@ -15,6 +16,8 @@ import (
 
 type ChainbridgeMetrics struct {
 	DepositEventCount metric.Int64Counter
+	DepositErrorRate  metric.Int64Counter
+	ExecutionLatency  metric.Int64Histogram
 }
 
 // NewChainbridgeMetrics creates an instance of ChainbridgeMetrics
@@ -25,10 +28,19 @@ func NewChainbridgeMetrics(meter metric.Meter) *ChainbridgeMetrics {
 			"chainbridge.DepositEventCount",
 			metric.WithDescription("Number of deposit events across all chains"),
 		),
+		DepositErrorRate: metric.Must(meter).NewInt64Counter(
+			"chainbridge.DepositErrorRate",
+			metric.WithDescription("Number of deposit events that failed execution"),
+		),
+		ExecutionLatency: metric.Must(meter).NewInt64Histogram(
+			"chainbridge.ExecutionLatency",
+			metric.WithDescription("Execution time histogram between indexing event and executing it"),
+			metric.WithUnit(unit.Milliseconds),
+		),
 	}
 }
 
-func initOpenTelemetryMetrics(opts ...otlpmetrichttp.Option) (*ChainbridgeMetrics, error) {
+func InitOpenTelemetryMetrics(opts ...otlpmetrichttp.Option) (*ChainbridgeMetrics, error) {
 	ctx := context.Background()
 
 	client := otlpmetrichttp.NewClient(opts...)

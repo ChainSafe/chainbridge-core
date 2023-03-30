@@ -3,6 +3,7 @@ package opentelemetry
 import (
 	"context"
 	"net/url"
+	"time"
 
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/rs/zerolog/log"
@@ -10,7 +11,8 @@ import (
 )
 
 type OpenTelemetry struct {
-	metrics *ChainbridgeMetrics
+	metrics          *ChainbridgeMetrics
+	messageEventTime map[string]time.Time
 }
 
 // NewOpenTelemetry initializes OpenTelementry metrics
@@ -28,13 +30,14 @@ func NewOpenTelemetry(collectorRawURL string) (*OpenTelemetry, error) {
 		metricOptions = append(metricOptions, otlpmetrichttp.WithInsecure())
 	}
 
-	metrics, err := initOpenTelemetryMetrics(metricOptions...)
+	metrics, err := InitOpenTelemetryMetrics(metricOptions...)
 	if err != nil {
 		return &OpenTelemetry{}, err
 	}
 
 	return &OpenTelemetry{
-		metrics: metrics,
+		metrics:          metrics,
+		messageEventTime: make(map[string]time.Time),
 	}, nil
 }
 
@@ -42,6 +45,18 @@ func NewOpenTelemetry(collectorRawURL string) (*OpenTelemetry, error) {
 // them to OpenTelemetry collector
 func (t *OpenTelemetry) TrackDepositMessage(m *message.Message) {
 	t.metrics.DepositEventCount.Add(context.Background(), 1)
+	t.messageEventTime[m.ID()] = time.Now()
+}
+
+func (t *OpenTelemetry) TrackExecutionError(m *message.Message) {
+	t.metrics.DepositErrorRate.Add(context.Background(), 1)
+	delete(t.messageEventTime, m.ID())
+}
+
+func (t *OpenTelemetry) TrackSuccessfulExecution(m *message.Message) {
+	executionLatency := time.Since(t.messageEventTime[m.ID()])
+	t.metrics.ExecutionLatency.Record(context.Background(), executionLatency.Milliseconds())
+	delete(t.messageEventTime, m.ID())
 }
 
 // ConsoleTelemetry is telemetry that logs metrics and should be used
@@ -50,4 +65,12 @@ type ConsoleTelemetry struct{}
 
 func (t *ConsoleTelemetry) TrackDepositMessage(m *message.Message) {
 	log.Info().Msgf("Deposit message: %+v", m)
+}
+
+func (t *ConsoleTelemetry) TrackExecutionError(m *message.Message) {
+	log.Info().Msgf("Execution error: %+v", m)
+}
+
+func (t *ConsoleTelemetry) TrackSuccessfulExecution(m *message.Message) {
+	log.Error().Msgf("Successful execution: %+v", m)
 }
