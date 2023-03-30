@@ -49,7 +49,7 @@ func (t *OpenTelemetry) TrackDepositMessage(m *message.Message) {
 }
 
 func (t *OpenTelemetry) TrackExecutionError(m *message.Message) {
-	t.metrics.DepositErrorRate.Add(context.Background(), 1)
+	t.metrics.ExecutionErrorCount.Add(context.Background(), 1)
 	delete(t.messageEventTime, m.ID())
 }
 

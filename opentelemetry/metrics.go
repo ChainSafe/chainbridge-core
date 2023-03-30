@@ -15,9 +15,9 @@ import (
 )
 
 type ChainbridgeMetrics struct {
-	DepositEventCount metric.Int64Counter
-	DepositErrorRate  metric.Int64Counter
-	ExecutionLatency  metric.Int64Histogram
+	DepositEventCount   metric.Int64Counter
+	ExecutionErrorCount metric.Int64Counter
+	ExecutionLatency    metric.Int64Histogram
 }
 
 // NewChainbridgeMetrics creates an instance of ChainbridgeMetrics
@@ -28,9 +28,9 @@ func NewChainbridgeMetrics(meter metric.Meter) *ChainbridgeMetrics {
 			"chainbridge.DepositEventCount",
 			metric.WithDescription("Number of deposit events across all chains"),
 		),
-		DepositErrorRate: metric.Must(meter).NewInt64Counter(
-			"chainbridge.DepositErrorRate",
-			metric.WithDescription("Number of deposit events that failed execution"),
+		ExecutionErrorCount: metric.Must(meter).NewInt64Counter(
+			"chainbridge.ExecutionErrorCount",
+			metric.WithDescription("Number of executions that failed"),
 		),
 		ExecutionLatency: metric.Must(meter).NewInt64Histogram(
 			"chainbridge.ExecutionLatency",
