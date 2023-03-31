@@ -12,7 +12,6 @@ import (
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
 	export "go.opentelemetry.io/otel/sdk/export/metric"
-	"go.opentelemetry.io/otel/sdk/metric/aggregator/histogram"
 	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
 	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
 	"go.opentelemetry.io/otel/sdk/metric/selector/simple"
@@ -37,7 +36,7 @@ func DefaultMeter(ctx context.Context, collectorRawURL string) (metric.Meter, er
 		return metric.Meter{}, err
 	}
 
-	selector := simple.NewWithHistogramDistribution(histogram.WithExplicitBoundaries([]float64{15, 60, 300, 900, 2700, 5400}))
+	selector := simple.NewWithExactDistribution()
 	proc := processor.NewFactory(selector, export.CumulativeExportKindSelector())
 	cont := controller.New(proc, controller.WithExporter(exp))
 	global.SetMeterProvider(cont)
