@@ -102,9 +102,13 @@ func Run() error {
 		}
 	}
 
+	telemetry, err := opentelemetry.NewOpenTelemetry(configuration.RelayerConfig.OpenTelemetryCollectorURL)
+	if err != nil {
+		panic(err)
+	}
 	r := relayer.NewRelayer(
 		chains,
-		&opentelemetry.ConsoleTelemetry{},
+		telemetry,
 	)
 
 	errChn := make(chan error)

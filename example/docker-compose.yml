@@ -10,8 +10,6 @@ services:
     container_name: evm1-1
     logging:
       driver: none
-    networks:
-      - evm1
     ports:
       - "8545:8545"
       - "8546:8546"
@@ -29,8 +27,6 @@ services:
     container_name: evm2-1
     logging:
       driver: none
-    networks:
-      - evm2
     ports:
       - "8547:8545"
       - "8548:8546"
@@ -49,9 +45,6 @@ services:
     depends_on:
       - evm1-1
       - evm2-1
-    networks:
-      - evm1
-      - evm2
     restart: "no"
 
   relayer1:
@@ -63,9 +56,6 @@ services:
     depends_on:
       - evm1-1
       - evm2-1
-    networks:
-      - evm1
-      - evm2
     volumes:
       - ./cfg:/cfg
     restart: always
@@ -79,9 +69,6 @@ services:
     depends_on:
       - evm1-1
       - evm2-1
-    networks:
-      - evm1
-      - evm2
     volumes:
       - ./cfg:/cfg
     restart: always
@@ -95,12 +82,18 @@ services:
     depends_on:
       - evm1-1
       - evm2-1
-    networks:
-      - evm1
-      - evm2
     volumes:
       - ./cfg:/cfg
     restart: always
+
+  otel-collector:
+    container_name: otel-collector
+    image: otel/opentelemetry-collector
+    command: ["--config=/etc/otel-collector-config.yml"]
+    volumes:
+      - ./cfg/otel-collector-config.yml:/etc/otel-collector-config.yml
+    ports:
+      - "8889:8889"   # Prometheus exporter metrics
 
 networks:
   evm2:
