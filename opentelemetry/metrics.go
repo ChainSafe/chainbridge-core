@@ -27,7 +27,6 @@ func NewChainbridgeMetrics(meter metric.Meter) *ChainbridgeMetrics {
 		ExecutionLatencyPerRoute: metric.Must(meter).NewInt64Histogram(
 			"chainbridge.ExecutionLatencyPerRoute",
 			metric.WithDescription("Execution time histogram between indexing event and executing it per route"),
-			metric.WithUnit(unit.Milliseconds),
 		),
 		ExecutionLatency: metric.Must(meter).NewInt64Histogram(
 			"chainbridge.ExecutionLatency",

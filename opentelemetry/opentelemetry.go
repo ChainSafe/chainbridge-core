@@ -76,11 +76,11 @@ func (t *OpenTelemetry) TrackExecutionError(m *message.Message) {
 }
 
 func (t *OpenTelemetry) TrackSuccessfulExecution(m *message.Message) {
-	executionLatency := time.Since(t.messageEventTime[m.ID()])
-	t.metrics.ExecutionLatency.Record(context.Background(), executionLatency.Milliseconds())
+	executionLatency := time.Since(t.messageEventTime[m.ID()]).Milliseconds() / 1000
+	t.metrics.ExecutionLatency.Record(context.Background(), executionLatency)
 	t.metrics.ExecutionLatencyPerRoute.Record(
 		context.Background(),
-		executionLatency.Milliseconds(),
+		executionLatency,
 		attribute.Int64("source", int64(m.Source)),
 		attribute.Int64("destination", int64(m.Destination)))
 	delete(t.messageEventTime, m.ID())
