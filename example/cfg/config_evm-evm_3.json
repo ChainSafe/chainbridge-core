@@ -1,5 +1,7 @@
 {
-  "relayer": {},
+  "relayer": {
+    "opentelemetryCollectorURL": "http://otel-collector:4318"
+  },
   "chains": [
     {
       "id": 1,

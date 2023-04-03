@@ -47,6 +47,30 @@ func (mr *MockMetricsMockRecorder) TrackDepositMessage(m interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrackDepositMessage", reflect.TypeOf((*MockMetrics)(nil).TrackDepositMessage), m)
 }
 
+// TrackExecutionError mocks base method.
+func (m_2 *MockMetrics) TrackExecutionError(m *message.Message) {
+	m_2.ctrl.T.Helper()
+	m_2.ctrl.Call(m_2, "TrackExecutionError", m)
+}
+
+// TrackExecutionError indicates an expected call of TrackExecutionError.
+func (mr *MockMetricsMockRecorder) TrackExecutionError(m interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrackExecutionError", reflect.TypeOf((*MockMetrics)(nil).TrackExecutionError), m)
+}
+
+// TrackSuccessfulExecution mocks base method.
+func (m_2 *MockMetrics) TrackSuccessfulExecution(m *message.Message) {
+	m_2.ctrl.T.Helper()
+	m_2.ctrl.Call(m_2, "TrackSuccessfulExecution", m)
+}
+
+// TrackSuccessfulExecution indicates an expected call of TrackSuccessfulExecution.
+func (mr *MockMetricsMockRecorder) TrackSuccessfulExecution(m interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrackSuccessfulExecution", reflect.TypeOf((*MockMetrics)(nil).TrackSuccessfulExecution), m)
+}
+
 // MockRelayedChain is a mock of RelayedChain interface.
 type MockRelayedChain struct {
 	ctrl     *gomock.Controller
@@ -97,9 +121,11 @@ func (mr *MockRelayedChainMockRecorder) PollEvents(ctx, sysErr, msgChan interfac
 }
 
 // Write mocks base method.
-func (m *MockRelayedChain) Write(messages []*message.Message) {
+func (m *MockRelayedChain) Write(messages []*message.Message) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Write", messages)
+	ret := m.ctrl.Call(m, "Write", messages)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // Write indicates an expected call of Write.
