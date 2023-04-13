@@ -11,6 +11,7 @@ RUN go build -o /bridge ./example/
 # final stage
 FROM debian:stretch-slim
 COPY --from=builder /bridge ./
+RUN apt-get update && apt-get install -y ca-certificates
 RUN chmod +x ./bridge
 
 ENTRYPOINT ["./bridge"]
