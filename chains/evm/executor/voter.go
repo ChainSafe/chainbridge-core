@@ -14,6 +14,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/evaluate"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/executor/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
@@ -133,13 +134,27 @@ func (v *EVMVoter) Execute(m *message.Message) error {
 		return err
 	}
 
+	evaluate.SetT2(time.Now()) // Trigger Vote
 	hash, err := v.bridgeContract.VoteProposal(prop, transactor.TransactOptions{Priority: prop.Metadata.Priority})
 	if err != nil {
 		log.Error().Err(err).Msgf("voting for proposal %+v failed", prop)
 		return fmt.Errorf("voting failed. Err: %w", err)
 	}
 
+	// Check if enough vote
+
+	// evaluate.SetT2a(time.Now())
 	log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
+	isMet, err := v.IsThresholdMet(prop)
+	if err != nil {
+		log.Error().Err(err).Msgf("Check threshold of %v failed", prop)
+		return err
+	}
+
+	if isMet {
+		// evaluate.SetT2a(time.Now()) // // Finish vote, threshold met
+		evaluate.SetIsMet(true)
+	}
 	return nil
 }
 
@@ -177,6 +192,31 @@ func (v *EVMVoter) shouldVoteForProposal(prop *proposal.Proposal, tries int) (bo
 	}
 
 	return true, nil
+}
+
+func (v *EVMVoter) IsThresholdMet(prop *proposal.Proposal) (bool, error) {
+	propID := prop.GetID()
+	defer delete(v.pendingProposalVotes, propID)
+
+	// random delay to prevent all relayers checking for pending votes
+	// at the same time and all of them sending another tx
+	Sleep(time.Duration(rand.Intn(shouldVoteCheckPeriod)) * time.Second)
+
+	ps, err := v.bridgeContract.ProposalStatus(prop)
+	if err != nil {
+		return false, err
+	}
+
+	threshold, err := v.bridgeContract.GetThreshold()
+	if err != nil {
+		return false, err
+	}
+
+	if ps.YesVotesTotal+v.pendingProposalVotes[propID] >= threshold {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 // repetitiveSimulateVote repeatedly tries(5 times) to simulate vore proposal call until it succeeds

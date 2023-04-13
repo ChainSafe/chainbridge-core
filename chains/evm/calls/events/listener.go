@@ -4,8 +4,10 @@ import (
 	"context"
 	"math/big"
 	"strings"
+	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
+	"github.com/ChainSafe/chainbridge-core/evaluate"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
@@ -42,6 +44,8 @@ func (l *Listener) FetchDeposits(ctx context.Context, contractAddress common.Add
 			log.Error().Msgf("failed unpacking deposit event log: %v", err)
 			continue
 		}
+
+		evaluate.SetT1(time.Now())
 
 		d.SenderAddress = common.BytesToAddress(dl.Topics[1].Bytes())
 		log.Debug().Msgf("Found deposit log in block: %d, TxHash: %s, contractAddress: %s, sender: %s", dl.BlockNumber, dl.TxHash, dl.Address, d.SenderAddress)
