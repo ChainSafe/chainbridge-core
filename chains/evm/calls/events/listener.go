@@ -45,7 +45,7 @@ func (l *Listener) FetchDeposits(ctx context.Context, contractAddress common.Add
 			continue
 		}
 
-		evaluate.SetT1(time.Now())
+		evaluate.SetT1(d.DepositNonce, dl.TxHash.Hex() ,time.Now())
 
 		d.SenderAddress = common.BytesToAddress(dl.Topics[1].Bytes())
 		log.Debug().Msgf("Found deposit log in block: %d, TxHash: %s, contractAddress: %s, sender: %s", dl.BlockNumber, dl.TxHash, dl.Address, d.SenderAddress)

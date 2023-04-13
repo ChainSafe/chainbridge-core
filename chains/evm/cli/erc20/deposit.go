@@ -100,14 +100,8 @@ func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 }
 
 func DepositCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
-	// file, err := os.OpenFile("./log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	// if err != nil {
-	// 	log.Fatal().Err(err).Msg("failed to open log file")
-	// }
-	// defer file.Close()
-	// logger := zerolog.New(file).With().Timestamp().Logger()
 
-	evaluate.SetT0(time.Now()) // Trigger deposit
+	// evaluate.SetT0(0, time.Now()) // Trigger deposit
 	hash, err := contract.Erc20Deposit(
 		RecipientAddress, RealAmount, ResourceIdBytesArr,
 		uint8(DomainID), transactor.TransactOptions{GasLimit: gasLimit, Priority: transactor.TxPriorities[Priority]},
@@ -117,7 +111,7 @@ func DepositCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContra
 		return err
 	}
 
-	evaluate.SetT0a(time.Now()) // Finish deposit
+	evaluate.SetT0a(0, hash.Hex(), time.Now()) // Finish deposit
 
 	log.Info().Msgf(
 		"%s tokens were transferred to %s from %s with hash %s",

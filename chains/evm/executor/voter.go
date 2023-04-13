@@ -134,7 +134,7 @@ func (v *EVMVoter) Execute(m *message.Message) error {
 		return err
 	}
 
-	evaluate.SetT2(time.Now()) // Trigger Vote
+	evaluate.SetT2(prop.DepositNonce, "0", time.Now()) // Trigger Vote
 	hash, err := v.bridgeContract.VoteProposal(prop, transactor.TransactOptions{Priority: prop.Metadata.Priority})
 	if err != nil {
 		log.Error().Err(err).Msgf("voting for proposal %+v failed", prop)
@@ -143,18 +143,18 @@ func (v *EVMVoter) Execute(m *message.Message) error {
 
 	// Check if enough vote
 
-	// evaluate.SetT2a(time.Now())
+	evaluate.SetT2a(prop.DepositNonce, hash.Hex(), time.Now()) // Finish Vote
 	log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
-	isMet, err := v.IsThresholdMet(prop)
-	if err != nil {
-		log.Error().Err(err).Msgf("Check threshold of %v failed", prop)
-		return err
-	}
+	// isMet, err := v.IsThresholdMet(prop)
+	// if err != nil {
+	// 	log.Error().Err(err).Msgf("Check threshold of %v failed", prop)
+	// 	return err
+	// }
 
-	if isMet {
-		// evaluate.SetT2a(time.Now()) // // Finish vote, threshold met
-		evaluate.SetIsMet(true)
-	}
+	// if isMet {
+	// 	// evaluate.SetT2a(time.Now()) // // Finish vote, threshold met
+	// 	evaluate.SetIsMet(true)
+	// }
 	return nil
 }
 

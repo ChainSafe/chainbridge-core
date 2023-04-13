@@ -11,3 +11,5 @@ var T3 time.Time  // Finish Execute
 var T4 time.Time  // Received func
 
 var IsMet = false
+
+var currDepositHash string

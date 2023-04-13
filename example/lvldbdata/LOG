@@ -228,3 +228,101 @@
 13:28:08.940297 version@stat F·[2 1] S·998B[854B 144B] Sc·[0.50 0.00]
 13:28:08.993838 db@janitor F·5 G·0
 13:28:08.993887 db@open done T·98.091572ms
+=============== Apr 13, 2023 (UTC) ===============
+01:24:58.856727 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+01:24:58.865597 version@stat F·[2 1] S·998B[854B 144B] Sc·[0.50 0.00]
+01:24:58.865653 db@open opening
+01:24:58.865757 journal@recovery F·1
+01:24:58.866381 journal@recovery recovering @60
+01:24:58.883568 memdb@flush created L0@62 N·91 S·884B "cha..ock,v3293":"cha..ock,v3205"
+01:24:58.884038 version@stat F·[3 1] S·1KiB[1KiB 144B] Sc·[0.75 0.00]
+01:24:58.935755 db@janitor F·6 G·0
+01:24:58.935810 db@open done T·70.137306ms
+=============== Apr 13, 2023 (UTC) ===============
+01:29:45.817633 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+01:29:45.818271 version@stat F·[3 1] S·1KiB[1KiB 144B] Sc·[0.75 0.00]
+01:29:45.818378 db@open opening
+01:29:45.818536 journal@recovery F·1
+01:29:45.819563 journal@recovery recovering @63
+01:29:45.843332 memdb@flush created L0@65 N·22 S·312B "cha..ock,v3316":"cha..ock,v3297"
+01:29:45.843860 version@stat F·[4 1] S·2KiB[2KiB 144B] Sc·[1.00 0.00]
+01:29:45.897740 db@janitor F·7 G·0
+01:29:45.897904 db@open done T·79.409261ms
+01:29:45.898031 table@compaction L0·4 -> L1·1 S·2KiB Q·3318
+01:29:45.922619 table@build created L1@68 N·2 S·144B "cha..ock,v3316":"cha..ock,v3317"
+01:29:45.922694 version@stat F·[0 1] S·144B[0B 144B] Sc·[0.00 0.00]
+01:29:45.936905 table@compaction committed F-4 S-2KiB Ke·0 D·184 T·38.654619ms
+01:29:45.937200 table@remove removed @62
+01:29:45.937247 table@remove removed @59
+01:29:45.937284 table@remove removed @56
+01:29:45.937326 table@remove removed @55
+=============== Apr 13, 2023 (UTC) ===============
+01:33:42.543291 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+01:33:42.546149 version@stat F·[0 1] S·144B[0B 144B] Sc·[0.00 0.00]
+01:33:42.546303 db@open opening
+01:33:42.546446 journal@recovery F·1
+01:33:42.547535 journal@recovery recovering @66
+01:33:42.564120 memdb@flush created L0@69 N·17 S·280B "cha..ock,v3335":"cha..ock,v3319"
+01:33:42.564691 version@stat F·[1 1] S·424B[280B 144B] Sc·[0.25 0.00]
+01:33:42.616832 db@janitor F·5 G·1
+01:33:42.616972 db@janitor removing table-65
+01:33:42.617230 db@open done T·70.835629ms
+=============== Apr 13, 2023 (UTC) ===============
+01:39:23.518504 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+01:39:23.523283 version@stat F·[1 1] S·424B[280B 144B] Sc·[0.25 0.00]
+01:39:23.523347 db@open opening
+01:39:23.523452 journal@recovery F·1
+01:39:23.524567 journal@recovery recovering @70
+01:39:23.544140 memdb@flush created L0@72 N·28 S·362B "cha..ock,v3364":"cha..ock,v3337"
+01:39:23.544764 version@stat F·[2 1] S·786B[642B 144B] Sc·[0.50 0.00]
+01:39:23.603293 db@janitor F·5 G·0
+01:39:23.603456 db@open done T·80.087885ms
+=============== Apr 13, 2023 (UTC) ===============
+03:19:14.695378 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+03:19:14.701742 version@stat F·[2 1] S·786B[642B 144B] Sc·[0.50 0.00]
+03:19:14.702052 db@open opening
+03:19:14.702324 journal@recovery F·1
+03:19:14.708191 journal@recovery recovering @73
+03:19:14.740251 memdb@flush created L0@75 N·537 S·4KiB "cha..ock,v3902":"cha..ock,v3367"
+03:19:14.740818 version@stat F·[3 1] S·4KiB[4KiB 144B] Sc·[0.75 0.00]
+03:19:14.799511 db@janitor F·6 G·0
+03:19:14.799561 db@open done T·97.329173ms
+=============== Apr 13, 2023 (UTC) ===============
+07:33:13.468653 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+07:33:13.469339 version@stat F·[3 1] S·4KiB[4KiB 144B] Sc·[0.75 0.00]
+07:33:13.469465 db@open opening
+07:33:13.469623 journal@recovery F·1
+07:33:13.470695 journal@recovery recovering @76
+07:33:13.485540 memdb@flush created L0@78 N·15 S·250B "cha..ock,v3917":"cha..ock,v3904"
+07:33:13.485861 version@stat F·[4 1] S·5KiB[4KiB 144B] Sc·[1.00 0.00]
+07:33:13.537872 db@janitor F·7 G·0
+07:33:13.537986 db@open done T·68.427329ms
+07:33:13.538081 table@compaction L0·4 -> L1·1 S·5KiB Q·3919
+07:33:13.552823 table@build created L1@81 N·2 S·144B "cha..ock,v3917":"cha..ock,v3918"
+07:33:13.552975 version@stat F·[0 1] S·144B[0B 144B] Sc·[0.00 0.00]
+07:33:13.565580 table@compaction committed F-4 S-4KiB Ke·0 D·597 T·27.446232ms
+07:33:13.565719 table@remove removed @75
+07:33:13.565769 table@remove removed @72
+07:33:13.565809 table@remove removed @69
+07:33:13.565847 table@remove removed @68
+=============== Apr 13, 2023 (UTC) ===============
+08:32:32.047269 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+08:32:32.047507 version@stat F·[0 1] S·144B[0B 144B] Sc·[0.00 0.00]
+08:32:32.047564 db@open opening
+08:32:32.047630 journal@recovery F·1
+08:32:32.048697 journal@recovery recovering @79
+08:32:32.064591 memdb@flush created L0@82 N·401 S·3KiB "cha..ock,v4319":"cha..ock,v3920"
+08:32:32.075192 version@stat F·[1 1] S·3KiB[3KiB 144B] Sc·[0.25 0.00]
+08:32:32.128738 db@janitor F·5 G·1
+08:32:32.128796 db@janitor removing table-78
+08:32:32.128908 db@open done T·81.321876ms
+=============== Apr 13, 2023 (UTC) ===============
+10:03:50.736634 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+10:03:50.737372 version@stat F·[1 1] S·3KiB[3KiB 144B] Sc·[0.25 0.00]
+10:03:50.737536 db@open opening
+10:03:50.737737 journal@recovery F·1
+10:03:50.742901 journal@recovery recovering @83
+10:03:50.774371 memdb@flush created L0@85 N·646 S·4KiB "cha..ock,v4851":"cha..ock,v4322"
+10:03:50.774724 version@stat F·[2 1] S·8KiB[8KiB 144B] Sc·[0.50 0.00]
+10:03:50.830345 db@janitor F·5 G·0
+10:03:50.830395 db@open done T·92.723939ms

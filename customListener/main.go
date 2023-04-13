@@ -77,9 +77,16 @@ func main() {
 			}
 
 			if event.Status == 3 {
+				// data := event.DataHash[:]
+				// originDomainID := data[0]
+				// depositNonce := binary.BigEndian.Uint64(data[1:9])
+				// status := data[9]
+				// dataHash := data[10:]
+
+				// fmt.Printf("originDomainID: %d\ndepositNonce: %d\nstatus: %d\ndataHash: %x\n", originDomainID, depositNonce, status, dataHash)
+
 				start := time.Now()
-				evaluate.SetT3(start)
-				fmt.Println("T3", start)
+				evaluate.SetT3(event.DepositNonce, vLog.TxHash.Hex(), start)
 				fmt.Printf("ProposalEvent executed: originDomainID=%v, depositNonce=%v, status=%v, dataHash=%v\n",
 					event.OriginDomainID, event.DepositNonce, event.Status, hexutil.Encode(event.DataHash[:]))
 			}
