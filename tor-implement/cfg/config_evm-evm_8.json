@@ -1,0 +1,39 @@
+{
+  "relayer": {
+    "opentelemetryCollectorURL": "http://otel-collector:4318"
+  },
+  "chains": [
+    {
+      "id": 0,
+      "from": "0x072512B3841Fd5e8432e4C413413f226e53AA265",
+      "name": "sepolia",
+      "type": "evm",
+      "endpoint": "https://multi-orbital-vineyard.ethereum-sepolia.discover.quiknode.pro/134970db120a7d265235909912719b6d5c7d96ac/",
+      "bridge": "0x9141eBa24846567491e1FB535c02085b33306573",
+      "erc20Handler": "0xC5F1dE147460bF7DC4E3d16D5BD489341000dB8D",
+      "erc721Handler": "",
+      "genericHandler": "",
+      "gasLimit": 9000000,
+      "maxGasPrice": 20000000000,
+      "blockConfirmations": 2,
+      "blockInterval": 2,
+      "key": "d5bfef6ef8a9ceb26e8ced270c5d8399067e067c63aeb31ee1323f7016b0712a"
+    },
+    {
+      "id": 1,
+      "from": "0x072512B3841Fd5e8432e4C413413f226e53AA265",
+      "name": "fantom-testnet",
+      "type": "evm",
+      "endpoint": "https://endpoints.omniatech.io/v1/fantom/testnet/public",
+      "bridge": "0xEbFBd3Cb62E4AE2b55c31b563964aBf0ab710c84",
+      "erc20Handler": "0x4f15f11d4689646012722CB556315705259866B4",
+      "erc721Handler": "",
+      "genericHandler": "",
+      "gasLimit": 9000000,
+      "maxGasPrice": 20000000000,
+      "blockConfirmations": 2,
+      "blockInterval": 2,
+      "key": "d5bfef6ef8a9ceb26e8ced270c5d8399067e067c63aeb31ee1323f7016b0712a"
+    }
+  ]
+}

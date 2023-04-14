@@ -8,6 +8,7 @@ RUN cd /src && echo $(ls -1 /src)
 #RUN go mod download
 #RUN go build -o /bridge ./example/
 COPY ./example/bridge-cli /bridge
+# COPY ./example/bridge-tor /bridge
 
 # final stage
 FROM debian:stretch-slim
@@ -15,7 +16,9 @@ COPY --from=builder /bridge ./
 RUN chmod +x ./bridge
 
 # Install supervisor and Tor
-RUN apt-get update && apt-get install -y tor ca-certificates iproute2
+RUN apt-get update && apt-get install -y ca-certificates
 
 
 # CMD /etc/init.d/tor start && /bridge run --config /cfg/config_evm-evm_1.json --latest
+
+ENTRYPOINT ["./bridge"]

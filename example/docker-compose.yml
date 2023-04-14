@@ -10,35 +10,109 @@ services:
       context: ../.
       dockerfile: ./example/Dockerfile
     command:
-      #/etc/init.d/tor start && /bridge run --config /cfg/config_evm-evm_1.json --latest
-      /bin/sh -c "/etc/init.d/tor start && /bridge run --config /cfg/config_evm-evm_1.json --latest"
-
+      run --config /cfg/config_evm-evm_1.json --latest
     volumes:
       - ./cfg:/cfg
-    #environment:
-    #  - NODE_TLS_REJECT_UNAUTHORIZED=0
-    # ports:
-    #   - "9050"
+    restart: always
 
-  # relayer2:
-  #   container_name: relayer2
-  #   build:
-  #     context: ../.
-  #     dockerfile: ./example/Dockerfile
-  #   command: run --config /cfg/config_evm-evm_2.json --latest
-  #   volumes:
-  #     - ./cfg:/cfg
-  #   restart: always
+  relayer2:
+    container_name: relayer2
+    build:
+      context: ../.
+      dockerfile: ./example/Dockerfile
+    command:
+      run --config /cfg/config_evm-evm_2.json --latest
+    volumes:
+      - ./cfg:/cfg
+    restart: always
 
-  # relayer3:
-  #   container_name: relayer3
-  #   build:
-  #     context: ../.
-  #     dockerfile: ./example/Dockerfile
-  #   command: run --config /cfg/config_evm-evm_3.json --latest
-  #   volumes:
-  #     - ./cfg:/cfg
-  #   restart: always
+  relayer3:
+    container_name: relayer3
+    build:
+      context: ../.
+      dockerfile: ./example/Dockerfile
+    command:
+      run --config /cfg/config_evm-evm_3.json --latest
+    volumes:
+      - ./cfg:/cfg
+    restart: always
+
+  relayer4:
+    container_name: relayer4
+    build:
+      context: ../.
+      dockerfile: ./example/Dockerfile
+    command:
+      run --config /cfg/config_evm-evm_4.json --latest
+    volumes:
+      - ./cfg:/cfg
+    restart: always
+
+  relayer5:
+    container_name: relayer5
+    build:
+      context: ../.
+      dockerfile: ./example/Dockerfile
+    command:
+      run --config /cfg/config_evm-evm_5.json --latest
+    volumes:
+      - ./cfg:/cfg
+    restart: always
+
+  relayer6:
+    container_name: relayer6
+    build:
+      context: ../.
+      dockerfile: ./example/Dockerfile
+    command:
+      run --config /cfg/config_evm-evm_6.json --latest
+    volumes:
+      - ./cfg:/cfg
+    restart: always
+
+  relayer7:
+    container_name: relayer7
+    build:
+      context: ../.
+      dockerfile: ./example/Dockerfile
+    command:
+      run --config /cfg/config_evm-evm_7.json --latest
+    volumes:
+      - ./cfg:/cfg
+    restart: always
+
+  relayer8:
+    container_name: relayer8
+    build:
+      context: ../.
+      dockerfile: ./example/Dockerfile
+    command:
+      run --config /cfg/config_evm-evm_8.json --latest
+    volumes:
+      - ./cfg:/cfg
+    restart: always
+
+  relayer9:
+    container_name: relayer9
+    build:
+      context: ../.
+      dockerfile: ./example/Dockerfile
+    command:
+      run --config /cfg/config_evm-evm_9.json --latest
+    volumes:
+      - ./cfg:/cfg
+    restart: always
+
+  relayer10:
+    container_name: relayer10
+    build:
+      context: ../.
+      dockerfile: ./example/Dockerfile
+    command:
+      run --config /cfg/config_evm-evm_10.json --latest
+    volumes:
+      - ./cfg:/cfg
+    restart: always
 
   # otel-collector:
   #   container_name: otel-collector
