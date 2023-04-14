@@ -1,0 +1,5 @@
+- Build relayers (Norm vs Tor):  sudo docker-compose up --build
+- Script merge evaluate_log from containers: sudo ./example/scripts/merge_log_file.sh
+- Customized Listener T3: go run .
+- Deposit script: ./deposit.sh
+- Clean all dockers: sudo ./example/scripts/rm-all-docker.sh

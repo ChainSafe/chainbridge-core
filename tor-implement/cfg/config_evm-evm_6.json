@@ -8,7 +8,7 @@
       "from": "0xE7Bea556dE3058Ce8a0486DbFb7E29F3e4F1A95B",
       "name": "sepolia",
       "type": "evm",
-      "endpoint": "https://multi-orbital-vineyard.ethereum-sepolia.discover.quiknode.pro/134970db120a7d265235909912719b6d5c7d96ac/",
+      "endpoint": "https://endpoints.omniatech.io/v1/eth/sepolia/7afa3ff62d5b49618ff06bdf27d16c27",
       "bridge": "0x9141eBa24846567491e1FB535c02085b33306573",
       "erc20Handler": "0xC5F1dE147460bF7DC4E3d16D5BD489341000dB8D",
       "erc721Handler": "",

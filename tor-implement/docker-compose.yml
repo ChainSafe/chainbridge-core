@@ -8,9 +8,10 @@ services:
     container_name: relayer1
     build:
       context: ../.
-      dockerfile: ./example/Dockerfile
+      dockerfile: ./tor-implement/Dockerfile
     command:
-      /bin/sh -c "/etc/init.d/tor start && /bridge run --config /cfg/config_evm-evm_1.json --latest"
+      /bin/sh -c "/etc/init.d/tor start && ./bridge run --config /cfg/config_evm-evm_1.json --latest"
+      #/etc/init.d/tor start && ./bridge run --config /cfg/config_evm-evm_1.json --latest
     volumes:
       - ./cfg:/cfg
     restart: always
@@ -19,7 +20,7 @@ services:
     container_name: relayer2
     build:
       context: ../.
-      dockerfile: ./example/Dockerfile
+      dockerfile: ./tor-implement/Dockerfile
     command:
       /bin/sh -c "/etc/init.d/tor start && /bridge run --config /cfg/config_evm-evm_2.json --latest"
     volumes:
@@ -30,7 +31,7 @@ services:
     container_name: relayer3
     build:
       context: ../.
-      dockerfile: ./example/Dockerfile
+      dockerfile: ./tor-implement/Dockerfile
     command:
       /bin/sh -c "/etc/init.d/tor start && /bridge run --config /cfg/config_evm-evm_3.json --latest"
     volumes:
@@ -41,7 +42,7 @@ services:
     container_name: relayer4
     build:
       context: ../.
-      dockerfile: ./example/Dockerfile
+      dockerfile: ./tor-implement/Dockerfile
     command:
       /bin/sh -c "/etc/init.d/tor start && /bridge run --config /cfg/config_evm-evm_4.json --latest"
     volumes:
@@ -52,7 +53,7 @@ services:
     container_name: relayer5
     build:
       context: ../.
-      dockerfile: ./example/Dockerfile
+      dockerfile: ./tor-implement/Dockerfile
     command:
       /bin/sh -c "/etc/init.d/tor start && /bridge run --config /cfg/config_evm-evm_5.json --latest"
     volumes:
@@ -63,7 +64,7 @@ services:
     container_name: relayer6
     build:
       context: ../.
-      dockerfile: ./example/Dockerfile
+      dockerfile: ./tor-implement/Dockerfile
     command:
       /bin/sh -c "/etc/init.d/tor start && /bridge run --config /cfg/config_evm-evm_6.json --latest"
     volumes:
@@ -74,7 +75,7 @@ services:
     container_name: relayer7
     build:
       context: ../.
-      dockerfile: ./example/Dockerfile
+      dockerfile: ./tor-implement/Dockerfile
     command:
       /bin/sh -c "/etc/init.d/tor start && /bridge run --config /cfg/config_evm-evm_7.json --latest"
     volumes:
@@ -85,7 +86,7 @@ services:
     container_name: relayer8
     build:
       context: ../.
-      dockerfile: ./example/Dockerfile
+      dockerfile: ./tor-implement/Dockerfile
     command:
       /bin/sh -c "/etc/init.d/tor start && /bridge run --config /cfg/config_evm-evm_8.json --latest"
     volumes:
@@ -96,7 +97,7 @@ services:
     container_name: relayer9
     build:
       context: ../.
-      dockerfile: ./example/Dockerfile
+      dockerfile: ./tor-implement/Dockerfile
     command:
       /bin/sh -c "/etc/init.d/tor start && /bridge run --config /cfg/config_evm-evm_9.json --latest"
     volumes:
@@ -107,7 +108,7 @@ services:
     container_name: relayer10
     build:
       context: ../.
-      dockerfile: ./example/Dockerfile
+      dockerfile: ./tor-implement/Dockerfile
     command:
       /bin/sh -c "/etc/init.d/tor start && /bridge run --config /cfg/config_evm-evm_10.json --latest"
     volumes:
