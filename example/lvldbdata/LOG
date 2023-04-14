@@ -607,3 +607,31 @@
 22:12:19.693579 version@stat F·[1 1] S·275B[131B 144B] Sc·[0.25 0.00]
 22:12:19.696314 db@janitor F·4 G·0
 22:12:19.696374 db@open done T·5.313967ms
+=============== Apr 14, 2023 (+07) ===============
+03:24:53.711671 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+03:24:53.711896 version@stat F·[1 1] S·275B[131B 144B] Sc·[0.25 0.00]
+03:24:53.711930 db@open opening
+03:24:53.712007 journal@recovery F·1
+03:24:53.712708 journal@recovery recovering @154
+03:24:53.713621 version@stat F·[1 1] S·275B[131B 144B] Sc·[0.25 0.00]
+03:24:53.715888 db@janitor F·4 G·0
+03:24:53.715931 db@open done T·3.98766ms
+=============== Apr 14, 2023 (+07) ===============
+03:26:10.422712 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+03:26:10.422901 version@stat F·[1 1] S·275B[131B 144B] Sc·[0.25 0.00]
+03:26:10.422923 db@open opening
+03:26:10.422976 journal@recovery F·1
+03:26:10.423677 journal@recovery recovering @156
+03:26:10.424754 memdb@flush created L0@158 N·3 S·152B "cha..ock,v5730":"cha..ock,v5728"
+03:26:10.424974 version@stat F·[2 1] S·427B[283B 144B] Sc·[0.50 0.00]
+03:26:10.426864 db@janitor F·5 G·0
+03:26:10.426891 db@open done T·3.958833ms
+=============== Apr 14, 2023 (+07) ===============
+03:27:39.885876 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+03:27:39.886440 version@stat F·[2 1] S·427B[283B 144B] Sc·[0.50 0.00]
+03:27:39.886581 db@open opening
+03:27:39.886800 journal@recovery F·1
+03:27:39.901065 journal@recovery recovering @159
+03:27:39.902391 version@stat F·[2 1] S·427B[283B 144B] Sc·[0.50 0.00]
+03:27:39.904493 db@janitor F·5 G·0
+03:27:39.904524 db@open done T·17.826191ms

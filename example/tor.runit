@@ -1,0 +1,6 @@
+#!/bin/sh
+exec 2>&1
+#exec chpst -u tor /usr/bin/tor -f /etc/tor/torrc --runasdaemon 0
+chmod +x /etc/sv/tor/run
+sv tor
+

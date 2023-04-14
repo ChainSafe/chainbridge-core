@@ -24,7 +24,7 @@
       "from": "0x7Fc1B79feB30F122EfF94B78166De9913665E2e0",
       "name": "fantom-testnet",
       "type": "evm",
-      "endpoint": "https://fantom-testnet.blastapi.io/15dfa89b-e1f6-41ec-b329-dd34f509176b",
+      "endpoint": "https://endpoints.omniatech.io/v1/fantom/testnet/public",
       "bridge": "0xEbFBd3Cb62E4AE2b55c31b563964aBf0ab710c84",
       "erc20Handler": "0x4f15f11d4689646012722CB556315705259866B4",
       "erc721Handler": "",
