@@ -27,6 +27,9 @@ e2e-test:
 example:
 	docker-compose --file=./example/docker-compose.yml up
 
+build:
+	docker-compose --file=./example/docker-compose.yml up --build
+
 ## Install dependency subkey
 install-subkey:
 	curl https://getsubstrate.io -sSf | bash -s -- --fast

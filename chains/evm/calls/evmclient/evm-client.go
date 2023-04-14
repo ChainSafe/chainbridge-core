@@ -5,7 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math/big"
+	"net"
+	"net/http"
+	urlNet "net/url"
 	"sync"
 	"time"
 
@@ -44,12 +48,55 @@ type CommonTransaction interface {
 	RawWithSignature(signer Signer, domainID *big.Int) ([]byte, error)
 }
 
+// Original
+// NewEVMClient creates a client for EVMChain with provided signer
+// func NewEVMClient(url string, signer Signer) (*EVMClient, error) {
+// 	rpcClient, err := rpc.DialContext(context.TODO(), url)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	c := &EVMClient{}
+// 	c.Client = ethclient.NewClient(rpcClient)
+// 	c.gethClient = gethclient.New(rpcClient)
+// 	c.rpClient = rpcClient
+// 	c.signer = signer
+// 	return c, nil
+// }
+
 // NewEVMClient creates a client for EVMChain with provided signer
 func NewEVMClient(url string, signer Signer) (*EVMClient, error) {
-	rpcClient, err := rpc.DialContext(context.TODO(), url)
-	if err != nil {
-		return nil, err
+	// Create a Tor SOCKS proxy
+	// proxyURL, err := urlNet.Parse("socks5://127.0.0.1:9150")
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// _ = proxyURL
+
+	customizedTransport := &http.Transport{
+		// Proxy: ProxyFromEnvironment,
+		Proxy: func(req *http.Request) (*urlNet.URL, error) {
+			return urlNet.Parse("socks5://127.0.0.1:9050")
+		},
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
 	}
+
+	rpcClient, err := rpc.DialHTTPWithClient(url, &http.Client{
+		Transport: customizedTransport,
+		Timeout:   30 * time.Second,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	c := &EVMClient{}
 	c.Client = ethclient.NewClient(rpcClient)
 	c.gethClient = gethclient.New(rpcClient)
