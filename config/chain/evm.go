@@ -11,33 +11,35 @@ import (
 )
 
 type EVMConfig struct {
-	GeneralChainConfig GeneralChainConfig
-	Bridge             string
-	Erc20Handler       string
-	Erc721Handler      string
-	GenericHandler     string
-	MaxGasPrice        *big.Int
-	GasMultiplier      *big.Float
-	GasLimit           *big.Int
-	StartBlock         *big.Int
-	BlockConfirmations *big.Int
-	BlockInterval      *big.Int
-	BlockRetryInterval time.Duration
+	GeneralChainConfig     GeneralChainConfig
+	Bridge                 string
+	Erc20Handler           string
+	Erc721Handler          string
+	GenericHandler         string
+	MaxGasPrice            *big.Int
+	GasMultiplier          *big.Float
+	GasPriceIncreaseFactor *big.Int
+	GasLimit               *big.Int
+	StartBlock             *big.Int
+	BlockConfirmations     *big.Int
+	BlockInterval          *big.Int
+	BlockRetryInterval     time.Duration
 }
 
 type RawEVMConfig struct {
-	GeneralChainConfig `mapstructure:",squash"`
-	Bridge             string  `mapstructure:"bridge"`
-	Erc20Handler       string  `mapstructure:"erc20Handler"`
-	Erc721Handler      string  `mapstructure:"erc721Handler"`
-	GenericHandler     string  `mapstructure:"genericHandler"`
-	MaxGasPrice        int64   `mapstructure:"maxGasPrice" default:"20000000000"`
-	GasMultiplier      float64 `mapstructure:"gasMultiplier" default:"1"`
-	GasLimit           int64   `mapstructure:"gasLimit" default:"2000000"`
-	StartBlock         int64   `mapstructure:"startBlock"`
-	BlockConfirmations int64   `mapstructure:"blockConfirmations" default:"10"`
-	BlockInterval      int64   `mapstructure:"blockInterval" default:"5"`
-	BlockRetryInterval uint64  `mapstructure:"blockRetryInterval" default:"5"`
+	GeneralChainConfig     `mapstructure:",squash"`
+	Bridge                 string  `mapstructure:"bridge"`
+	Erc20Handler           string  `mapstructure:"erc20Handler"`
+	Erc721Handler          string  `mapstructure:"erc721Handler"`
+	GenericHandler         string  `mapstructure:"genericHandler"`
+	MaxGasPrice            int64   `mapstructure:"maxGasPrice" default:"20000000000"`
+	GasPriceIncreaseFactor int64   `mapstructure:"gasPriceIncreaseFactor" default:"15"`
+	GasMultiplier          float64 `mapstructure:"gasMultiplier" default:"1"`
+	GasLimit               int64   `mapstructure:"gasLimit" default:"2000000"`
+	StartBlock             int64   `mapstructure:"startBlock"`
+	BlockConfirmations     int64   `mapstructure:"blockConfirmations" default:"10"`
+	BlockInterval          int64   `mapstructure:"blockInterval" default:"5"`
+	BlockRetryInterval     uint64  `mapstructure:"blockRetryInterval" default:"5"`
 }
 
 func (c *RawEVMConfig) Validate() error {
@@ -74,18 +76,19 @@ func NewEVMConfig(chainConfig map[string]interface{}) (*EVMConfig, error) {
 
 	c.GeneralChainConfig.ParseFlags()
 	config := &EVMConfig{
-		GeneralChainConfig: c.GeneralChainConfig,
-		Erc20Handler:       c.Erc20Handler,
-		Erc721Handler:      c.Erc721Handler,
-		GenericHandler:     c.GenericHandler,
-		Bridge:             c.Bridge,
-		BlockRetryInterval: time.Duration(c.BlockRetryInterval) * time.Second,
-		GasLimit:           big.NewInt(c.GasLimit),
-		MaxGasPrice:        big.NewInt(c.MaxGasPrice),
-		GasMultiplier:      big.NewFloat(c.GasMultiplier),
-		StartBlock:         big.NewInt(c.StartBlock),
-		BlockConfirmations: big.NewInt(c.BlockConfirmations),
-		BlockInterval:      big.NewInt(c.BlockInterval),
+		GeneralChainConfig:     c.GeneralChainConfig,
+		Erc20Handler:           c.Erc20Handler,
+		Erc721Handler:          c.Erc721Handler,
+		GenericHandler:         c.GenericHandler,
+		Bridge:                 c.Bridge,
+		BlockRetryInterval:     time.Duration(c.BlockRetryInterval) * time.Second,
+		GasLimit:               big.NewInt(c.GasLimit),
+		MaxGasPrice:            big.NewInt(c.MaxGasPrice),
+		GasPriceIncreaseFactor: big.NewInt(c.GasPriceIncreaseFactor),
+		GasMultiplier:          big.NewFloat(c.GasMultiplier),
+		StartBlock:             big.NewInt(c.StartBlock),
+		BlockConfirmations:     big.NewInt(c.BlockConfirmations),
+		BlockInterval:          big.NewInt(c.BlockInterval),
 	}
 
 	return config, nil
