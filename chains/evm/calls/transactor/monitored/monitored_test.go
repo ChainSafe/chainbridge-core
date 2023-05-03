@@ -47,7 +47,12 @@ func (s *TransactorTestSuite) TestTransactor_SignAndSend_Success() {
 	s.mockContractCallerDispatcherClient.EXPECT().UnsafeIncreaseNonce().Return(nil)
 	s.mockContractCallerDispatcherClient.EXPECT().UnlockNonce()
 
-	t := monitored.NewMonitoredTransactor(s.mockContractCallerDispatcherClient, evmtransaction.NewTransaction, s.mockGasPricer, big.NewInt(1000), big.NewInt(15))
+	t := monitored.NewMonitoredTransactor(
+		evmtransaction.NewTransaction,
+		s.mockGasPricer,
+		s.mockContractCallerDispatcherClient,
+		big.NewInt(1000),
+		big.NewInt(15))
 	txHash, err := t.Transact(
 		&common.Address{},
 		byteData,
@@ -67,7 +72,12 @@ func (s *TransactorTestSuite) TestTransactor_SignAndSend_Fail() {
 	s.mockContractCallerDispatcherClient.EXPECT().SignAndSendTransaction(gomock.Any(), gomock.Any()).Return(common.Hash{}, fmt.Errorf("error"))
 	s.mockContractCallerDispatcherClient.EXPECT().UnlockNonce()
 
-	t := monitored.NewMonitoredTransactor(s.mockContractCallerDispatcherClient, evmtransaction.NewTransaction, s.mockGasPricer, big.NewInt(1000), big.NewInt(15))
+	t := monitored.NewMonitoredTransactor(
+		evmtransaction.NewTransaction,
+		s.mockGasPricer,
+		s.mockContractCallerDispatcherClient,
+		big.NewInt(1000),
+		big.NewInt(15))
 	_, err := t.Transact(
 		&common.Address{},
 		byteData,
@@ -89,7 +99,12 @@ func (s *TransactorTestSuite) TestTransactor_MonitoredTransaction_SuccessfulExec
 	s.mockContractCallerDispatcherClient.EXPECT().UnlockNonce()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	t := monitored.NewMonitoredTransactor(s.mockContractCallerDispatcherClient, evmtransaction.NewTransaction, s.mockGasPricer, big.NewInt(1000), big.NewInt(15))
+	t := monitored.NewMonitoredTransactor(
+		evmtransaction.NewTransaction,
+		s.mockGasPricer,
+		s.mockContractCallerDispatcherClient,
+		big.NewInt(1000),
+		big.NewInt(15))
 
 	go t.Monitor(ctx, time.Millisecond*50, time.Minute, time.Millisecond)
 	hash, err := t.Transact(
@@ -119,7 +134,12 @@ func (s *TransactorTestSuite) TestTransactor_MonitoredTransaction_TxTimeout() {
 	s.mockContractCallerDispatcherClient.EXPECT().UnlockNonce()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	t := monitored.NewMonitoredTransactor(s.mockContractCallerDispatcherClient, evmtransaction.NewTransaction, s.mockGasPricer, big.NewInt(1000), big.NewInt(15))
+	t := monitored.NewMonitoredTransactor(
+		evmtransaction.NewTransaction,
+		s.mockGasPricer,
+		s.mockContractCallerDispatcherClient,
+		big.NewInt(1000),
+		big.NewInt(15))
 
 	go t.Monitor(ctx, time.Millisecond*50, time.Millisecond, time.Millisecond)
 	hash, err := t.Transact(
@@ -149,7 +169,12 @@ func (s *TransactorTestSuite) TestTransactor_MonitoredTransaction_TransactionRes
 	s.mockContractCallerDispatcherClient.EXPECT().SignAndSendTransaction(gomock.Any(), gomock.Any()).Return(common.Hash{1, 2, 3, 4, 5}, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	t := monitored.NewMonitoredTransactor(s.mockContractCallerDispatcherClient, evmtransaction.NewTransaction, s.mockGasPricer, big.NewInt(1000), big.NewInt(15))
+	t := monitored.NewMonitoredTransactor(
+		evmtransaction.NewTransaction,
+		s.mockGasPricer,
+		s.mockContractCallerDispatcherClient,
+		big.NewInt(1000),
+		big.NewInt(15))
 
 	go t.Monitor(ctx, time.Millisecond*50, time.Minute, time.Millisecond)
 	hash, err := t.Transact(
@@ -183,7 +208,12 @@ func (s *TransactorTestSuite) TestTransactor_MonitoredTransaction_MaxGasPriceRea
 	s.mockContractCallerDispatcherClient.EXPECT().SignAndSendTransaction(gomock.Any(), gomock.Any()).Return(common.Hash{1, 2, 3, 4, 5}, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	t := monitored.NewMonitoredTransactor(s.mockContractCallerDispatcherClient, evmtransaction.NewTransaction, s.mockGasPricer, big.NewInt(10), big.NewInt(15))
+	t := monitored.NewMonitoredTransactor(
+		evmtransaction.NewTransaction,
+		s.mockGasPricer,
+		s.mockContractCallerDispatcherClient,
+		big.NewInt(10),
+		big.NewInt(15))
 
 	go t.Monitor(ctx, time.Millisecond*50, time.Minute, time.Millisecond)
 	hash, err := t.Transact(

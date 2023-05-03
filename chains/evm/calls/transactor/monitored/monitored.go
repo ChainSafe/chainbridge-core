@@ -38,9 +38,9 @@ type MonitoredTransactor struct {
 }
 
 func NewMonitoredTransactor(
-	client calls.ClientDispatcher,
 	txFabric calls.TxFabric,
 	gasPriceClient calls.GasPricer,
+	client calls.ClientDispatcher,
 	maxGasPrice *big.Int,
 	increaseFactor *big.Int,
 ) *MonitoredTransactor {
