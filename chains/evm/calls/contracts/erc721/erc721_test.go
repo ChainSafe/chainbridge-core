@@ -9,7 +9,6 @@ import (
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	mock_transactor "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/mock"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/signAndSend"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
@@ -108,7 +107,7 @@ func (s *ERC721CallsTestSuite) TestERC721Contract_AddMinter_Success() {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{1, 2, 3}, nil)
-	res, err := s.erc721Contract.AddMinter(common.HexToAddress(testInteractorAddress), signAndSend.DefaultTransactionOptions)
+	res, err := s.erc721Contract.AddMinter(common.HexToAddress(testInteractorAddress), transactor.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{1, 2, 3},
 		res,
@@ -122,7 +121,7 @@ func (s *ERC721CallsTestSuite) TestERC721Contract_MintTokens_Success() {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{1, 2, 3, 4, 5}, nil)
-	res, err := s.erc721Contract.Mint(big.NewInt(5), "token_uri", common.HexToAddress(testInteractorAddress), signAndSend.DefaultTransactionOptions)
+	res, err := s.erc721Contract.Mint(big.NewInt(5), "token_uri", common.HexToAddress(testInteractorAddress), transactor.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{1, 2, 3, 4, 5},
 		res,

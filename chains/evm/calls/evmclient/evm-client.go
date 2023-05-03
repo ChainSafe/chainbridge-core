@@ -40,6 +40,8 @@ type CommonTransaction interface {
 	// Hash returns the transaction hash.
 	Hash() common.Hash
 
+	GasPrice() []*big.Int
+
 	// RawWithSignature Returns signed transaction by provided signer
 	RawWithSignature(signer Signer, domainID *big.Int) ([]byte, error)
 }
