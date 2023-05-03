@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	secp256k1 "github.com/ethereum/go-ethereum/crypto"
 
@@ -17,7 +18,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/events"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/signAndSend"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/monitored"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/executor"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
 	"github.com/ChainSafe/chainbridge-core/config"
@@ -46,6 +47,7 @@ func Run() error {
 	}
 	blockstore := store.NewBlockStore(db)
 
+	ctx, cancel := context.WithCancel(context.Background())
 	chains := []relayer.RelayedChain{}
 	for _, chainConfig := range configuration.ChainConfigs {
 		switch chainConfig["type"] {
@@ -69,7 +71,8 @@ func Run() error {
 				}
 
 				dummyGasPricer := dummy.NewStaticGasPriceDeterminant(client, nil)
-				t := signAndSend.NewSignAndSendTransactor(evmtransaction.NewTransaction, dummyGasPricer, client)
+				t := monitored.NewMonitoredTransactor(evmtransaction.NewTransaction, dummyGasPricer, client, config.MaxGasPrice, config.GasPriceIncreaseFactor)
+				go t.Monitor(ctx, time.Minute*3, time.Minute*10, time.Minute)
 				bridgeContract := bridge.NewBridgeContract(client, common.HexToAddress(config.Bridge), t)
 
 				depositHandler := listener.NewETHDepositHandler(bridgeContract)
@@ -113,7 +116,6 @@ func Run() error {
 	)
 
 	errChn := make(chan error)
-	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go r.Start(ctx, errChn)
 
