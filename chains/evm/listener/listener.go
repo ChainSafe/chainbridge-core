@@ -11,6 +11,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/store"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -31,6 +32,8 @@ type EVMListener struct {
 	blockRetryInterval time.Duration
 	blockConfirmations *big.Int
 	blockInterval      *big.Int
+
+	log zerolog.Logger
 }
 
 // NewEVMListener creates an EVMListener that listens to deposit events on chain
@@ -43,7 +46,9 @@ func NewEVMListener(
 	blockRetryInterval time.Duration,
 	blockConfirmations *big.Int,
 	blockInterval *big.Int) *EVMListener {
+	logger := log.With().Uint8("domainID", domainID).Logger()
 	return &EVMListener{
+		log:                logger,
 		client:             client,
 		eventHandlers:      eventHandlers,
 		blockstore:         blockstore,
@@ -65,7 +70,7 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 		default:
 			head, err := l.client.LatestBlock()
 			if err != nil {
-				log.Error().Err(err).Msg("Unable to get latest block")
+				l.log.Error().Err(err).Msg("Unable to get latest block")
 				time.Sleep(l.blockRetryInterval)
 				continue
 			}
@@ -80,10 +85,12 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 				continue
 			}
 
+			l.log.Debug().Msgf("Fetching evm events for block range %s-%s", startBlock, endBlock)
+
 			for _, handler := range l.eventHandlers {
 				err := handler.HandleEvent(startBlock, new(big.Int).Sub(endBlock, big.NewInt(1)), msgChan)
 				if err != nil {
-					log.Error().Err(err).Str("DomainID", string(l.domainID)).Msgf("Unable to handle events")
+					l.log.Error().Err(err).Msgf("Unable to handle events")
 					continue
 				}
 			}
@@ -91,7 +98,7 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 			//Write to block store. Not a critical operation, no need to retry
 			err = l.blockstore.StoreBlock(endBlock, l.domainID)
 			if err != nil {
-				log.Error().Str("block", endBlock.String()).Err(err).Msg("Failed to write latest block to blockstore")
+				l.log.Error().Str("block", endBlock.String()).Err(err).Msg("Failed to write latest block to blockstore")
 			}
 
 			startBlock.Add(startBlock, l.blockInterval)

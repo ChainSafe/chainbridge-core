@@ -13,11 +13,13 @@ import (
 
 type Metrics interface {
 	TrackDepositMessage(m *message.Message)
+	TrackExecutionError(m *message.Message)
+	TrackSuccessfulExecution(m *message.Message)
 }
 
 type RelayedChain interface {
 	PollEvents(ctx context.Context, sysErr chan<- error, msgChan chan []*message.Message)
-	Write(messages []*message.Message)
+	Write(messages []*message.Message) error
 	DomainID() uint8
 }
 
@@ -55,7 +57,7 @@ func (r *Relayer) Start(ctx context.Context, sysErr chan error) {
 	}
 }
 
-// Route function winds destination writer by mapping DestinationID from message to registered writer.
+// Route function runs destination writer by mapping DestinationID from message to registered writer.
 func (r *Relayer) route(msgs []*message.Message) {
 	destChain, ok := r.registry[msgs[0].Destination]
 	if !ok {
@@ -75,7 +77,19 @@ func (r *Relayer) route(msgs []*message.Message) {
 	}
 
 	log.Debug().Msgf("Sending messages %+v to destination %v", msgs, destChain.DomainID())
-	destChain.Write(msgs)
+
+	err := destChain.Write(msgs)
+	if err != nil {
+		log.Err(err).Msgf("Failed sending messages %+v to destination %v", msgs, destChain.DomainID())
+		for _, m := range msgs {
+			r.metrics.TrackExecutionError(m)
+		}
+		return
+	}
+
+	for _, m := range msgs {
+		r.metrics.TrackSuccessfulExecution(m)
+	}
 }
 
 func (r *Relayer) addRelayedChain(c RelayedChain) {

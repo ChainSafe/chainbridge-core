@@ -74,8 +74,26 @@ func (s *RouteTestSuite) TestLogsErrorIfMessageProcessorReturnsError() {
 	})
 }
 
+func (s *RouteTestSuite) TestWriteFail() {
+	s.mockMetrics.EXPECT().TrackDepositMessage(gomock.Any())
+	s.mockMetrics.EXPECT().TrackExecutionError(gomock.Any())
+	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1)).Times(3)
+	s.mockRelayedChain.EXPECT().Write(gomock.Any()).Return(fmt.Errorf("error"))
+	relayer := NewRelayer(
+		[]RelayedChain{},
+		s.mockMetrics,
+		func(m *message.Message) error { return nil },
+	)
+	relayer.addRelayedChain(s.mockRelayedChain)
+
+	relayer.route([]*message.Message{
+		{Destination: 1},
+	})
+}
+
 func (s *RouteTestSuite) TestWritesToDestChainIfMessageValid() {
 	s.mockMetrics.EXPECT().TrackDepositMessage(gomock.Any())
+	s.mockMetrics.EXPECT().TrackSuccessfulExecution(gomock.Any())
 	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1)).Times(2)
 	s.mockRelayedChain.EXPECT().Write(gomock.Any())
 	relayer := NewRelayer(

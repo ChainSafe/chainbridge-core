@@ -5,6 +5,7 @@ package message
 
 import (
 	"math/big"
+	"strconv"
 
 	"github.com/ChainSafe/chainbridge-core/types"
 )
@@ -68,4 +69,8 @@ func NewMessage(
 		metadata,
 		transferType,
 	}
+}
+
+func (m Message) ID() string {
+	return strconv.FormatInt(int64(m.Source), 10) + "-" + strconv.FormatInt(int64(m.DepositNonce), 10)
 }

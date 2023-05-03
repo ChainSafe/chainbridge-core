@@ -64,7 +64,7 @@ func (c *EVMChain) PollEvents(ctx context.Context, sysErr chan<- error, msgChan 
 	go c.listener.ListenToEvents(ctx, startBlock, msgChan, sysErr)
 }
 
-func (c *EVMChain) Write(msg []*message.Message) {
+func (c *EVMChain) Write(msg []*message.Message) error {
 	for _, msg := range msg {
 		go func(msg *message.Message) {
 			err := c.writer.Execute(msg)
@@ -73,6 +73,8 @@ func (c *EVMChain) Write(msg []*message.Message) {
 			}
 		}(msg)
 	}
+
+	return nil
 }
 
 func (c *EVMChain) DomainID() uint8 {
