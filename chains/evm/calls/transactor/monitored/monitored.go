@@ -26,22 +26,32 @@ type RawTx struct {
 }
 
 type MonitoredTransactor struct {
-	TxFabric       calls.TxFabric
+	txFabric       calls.TxFabric
 	gasPriceClient calls.GasPricer
 	client         calls.ClientDispatcher
 
+	maxGasPrice    *big.Int
+	increaseFactor *big.Int
+
 	pendingTxns map[common.Hash]RawTx
 	txLock      sync.Mutex
-
-	resendInterval time.Duration
-	txTimeout      time.Duration
-	increaseFactor *big.Int
-	maxGasPrice    *big.Int
 }
 
-func NewMonitoredTransactor() *MonitoredTransactor {
-	t := &MonitoredTransactor{}
-	return t
+func NewMonitoredTransactor(
+	client calls.ClientDispatcher,
+	txFabric calls.TxFabric,
+	gasPriceClient calls.GasPricer,
+	maxGasPrice *big.Int,
+	increaseFactor *big.Int,
+) *MonitoredTransactor {
+	return &MonitoredTransactor{
+		client:         client,
+		gasPriceClient: gasPriceClient,
+		txFabric:       txFabric,
+		pendingTxns:    make(map[common.Hash]RawTx),
+		maxGasPrice:    maxGasPrice,
+		increaseFactor: increaseFactor,
+	}
 }
 
 func (t *MonitoredTransactor) Transact(to *common.Address, data []byte, opts transactor.TransactOptions) (*common.Hash, error) {
@@ -50,7 +60,6 @@ func (t *MonitoredTransactor) Transact(to *common.Address, data []byte, opts tra
 
 	n, err := t.client.UnsafeNonce()
 	if err != nil {
-		t.client.UnlockNonce()
 		return &common.Hash{}, err
 	}
 
@@ -77,7 +86,7 @@ func (t *MonitoredTransactor) Transact(to *common.Address, data []byte, opts tra
 		submitTime:   time.Now(),
 		creationTime: time.Now(),
 	}
-	tx, err := t.TxFabric(rawTx.nonce, rawTx.to, rawTx.value, rawTx.gasLimit, rawTx.gasPrice, rawTx.data)
+	tx, err := t.txFabric(rawTx.nonce, rawTx.to, rawTx.value, rawTx.gasLimit, rawTx.gasPrice, rawTx.data)
 	if err != nil {
 		return &common.Hash{}, err
 	}
@@ -99,8 +108,13 @@ func (t *MonitoredTransactor) Transact(to *common.Address, data []byte, opts tra
 	return &h, nil
 }
 
-func (t *MonitoredTransactor) Monitor(ctx context.Context) {
-	ticker := time.NewTicker(t.resendInterval)
+func (t *MonitoredTransactor) Monitor(
+	ctx context.Context,
+	resendInterval time.Duration,
+	txTimeout time.Duration,
+	tooNewTransaction time.Duration,
+) {
+	ticker := time.NewTicker(resendInterval)
 
 	for {
 		select {
@@ -115,36 +129,35 @@ func (t *MonitoredTransactor) Monitor(ctx context.Context) {
 				}
 				t.txLock.Unlock()
 
-				for hash, tx := range pendingTxCopy {
-					receipt, err := t.client.TransactionReceipt(context.Background(), hash)
+				for oldHash, tx := range pendingTxCopy {
+					receipt, err := t.client.TransactionReceipt(context.Background(), oldHash)
 					if err == nil {
 						if receipt.Status == types.ReceiptStatusSuccessful {
-							log.Info().Msgf("Executed transaction %s with nonce %d", hash, tx.nonce)
+							log.Info().Msgf("Executed transaction %s with nonce %d", oldHash, tx.nonce)
 						} else {
-							log.Error().Msgf("Transaction %s failed on chain with nonce %d", hash, tx.nonce)
+							log.Error().Msgf("Transaction %s failed on chain with nonce %d", oldHash, tx.nonce)
 						}
 
-						delete(t.pendingTxns, hash)
+						delete(t.pendingTxns, oldHash)
 						continue
 					}
 
-					if time.Since(tx.creationTime) > t.txTimeout {
-						log.Error().Msgf("Transaction %s with nonce %d has timed out", hash, tx.nonce)
-						delete(t.pendingTxns, hash)
+					if time.Since(tx.creationTime) > txTimeout {
+						log.Error().Msgf("Transaction %s with nonce %d has timed out", oldHash, tx.nonce)
+						delete(t.pendingTxns, oldHash)
 						continue
 					}
-					// avoid resending transaction if it just submitted
-					if time.Since(tx.submitTime) < time.Minute {
+					if time.Since(tx.submitTime) < tooNewTransaction {
 						continue
 					}
 
 					hash, err := t.resendTransaction(&tx)
 					if err != nil {
-						log.Error().Err(err).Msgf("Failed resending transaction %s with nonce %d", hash, tx.nonce)
+						log.Warn().Err(err).Msgf("Failed resending transaction %s with nonce %d", hash, tx.nonce)
 						continue
 					}
 
-					delete(t.pendingTxns, hash)
+					delete(t.pendingTxns, oldHash)
 					t.pendingTxns[hash] = tx
 				}
 			}
@@ -154,7 +167,7 @@ func (t *MonitoredTransactor) Monitor(ctx context.Context) {
 
 func (t *MonitoredTransactor) resendTransaction(tx *RawTx) (common.Hash, error) {
 	tx.gasPrice = t.increaseGas(tx.gasPrice)
-	newTx, err := t.TxFabric(tx.nonce, tx.to, tx.value, tx.gasLimit, tx.gasPrice, tx.data)
+	newTx, err := t.txFabric(tx.nonce, tx.to, tx.value, tx.gasLimit, tx.gasPrice, tx.data)
 	if err != nil {
 		return common.Hash{}, err
 	}

@@ -77,10 +77,6 @@ func (a *TX) Hash() common.Hash {
 	return a.tx.Hash()
 }
 
-func (a *TX) GasPrice() []*big.Int {
-	return []*big.Int{a.tx.GasPrice()}
-}
-
 // newTransactorWithChainID is a utility method to easily create a transaction signer
 // for an evmclient.Signer.
 // Mostly copies bind.NewKeyedTransactorWithChainID but sings with the provided signer
