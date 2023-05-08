@@ -188,7 +188,12 @@ func (t *MonitoredTransactor) increaseGas(oldGp []*big.Int) []*big.Int {
 		if increasedGp.Cmp(t.maxGasPrice) != -1 {
 			increasedGp = t.maxGasPrice
 		}
-		newGp[i] = increasedGp
+
+		if gp.Cmp(increasedGp) == 0 {
+			newGp[i] = new(big.Int).Add(gp, big.NewInt(1))
+		} else {
+			newGp[i] = increasedGp
+		}
 	}
 	return newGp
 }
