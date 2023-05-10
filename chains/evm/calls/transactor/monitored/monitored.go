@@ -30,27 +30,33 @@ type MonitoredTransactor struct {
 	gasPriceClient calls.GasPricer
 	client         calls.ClientDispatcher
 
-	maxGasPrice    *big.Int
-	increaseFactor *big.Int
+	maxGasPrice        *big.Int
+	increasePercentage *big.Int
 
 	pendingTxns map[common.Hash]RawTx
 	txLock      sync.Mutex
 }
 
+// NewMonitoredTransactor creates an instance of a transactor
+// that periodically checks sent transactions and resends them
+// with higher gas if they are stuck.
+//
+// Gas price is increased by increasePercentage param which
+// is a percentage value with which old gas price should be increased (e.g 15)
 func NewMonitoredTransactor(
 	txFabric calls.TxFabric,
 	gasPriceClient calls.GasPricer,
 	client calls.ClientDispatcher,
 	maxGasPrice *big.Int,
-	increaseFactor *big.Int,
+	increasePercentage *big.Int,
 ) *MonitoredTransactor {
 	return &MonitoredTransactor{
-		client:         client,
-		gasPriceClient: gasPriceClient,
-		txFabric:       txFabric,
-		pendingTxns:    make(map[common.Hash]RawTx),
-		maxGasPrice:    maxGasPrice,
-		increaseFactor: increaseFactor,
+		client:             client,
+		gasPriceClient:     gasPriceClient,
+		txFabric:           txFabric,
+		pendingTxns:        make(map[common.Hash]RawTx),
+		maxGasPrice:        maxGasPrice,
+		increasePercentage: increasePercentage,
 	}
 }
 
@@ -191,7 +197,7 @@ func (t *MonitoredTransactor) IncreaseGas(oldGp []*big.Int) []*big.Int {
 	newGp := make([]*big.Int, len(oldGp))
 	for i, gp := range oldGp {
 
-		percentIncreaseValue := new(big.Int).Div(new(big.Int).Mul(gp, t.increaseFactor), big.NewInt(100))
+		percentIncreaseValue := new(big.Int).Div(new(big.Int).Mul(gp, t.increasePercentage), big.NewInt(100))
 		increasedGp := new(big.Int).Add(gp, percentIncreaseValue)
 		if increasedGp.Cmp(t.maxGasPrice) != -1 {
 			increasedGp = t.maxGasPrice
