@@ -231,3 +231,29 @@ func (s *TransactorTestSuite) TestTransactor_MonitoredTransaction_MaxGasPriceRea
 	time.Sleep(time.Millisecond * 125)
 	cancel()
 }
+
+func (s *TransactorTestSuite) TestTransactor_IncreaseGas_15PercentIncrease() {
+	t := monitored.NewMonitoredTransactor(
+		evmtransaction.NewTransaction,
+		s.mockGasPricer,
+		s.mockContractCallerDispatcherClient,
+		big.NewInt(150),
+		big.NewInt(15))
+
+	newGas := t.IncreaseGas([]*big.Int{big.NewInt(1), big.NewInt(10), big.NewInt(100)})
+
+	s.Equal(newGas, []*big.Int{big.NewInt(2), big.NewInt(11), big.NewInt(115)})
+}
+
+func (s *TransactorTestSuite) TestTransactor_IncreaseGas_MaxGasReached() {
+	t := monitored.NewMonitoredTransactor(
+		evmtransaction.NewTransaction,
+		s.mockGasPricer,
+		s.mockContractCallerDispatcherClient,
+		big.NewInt(15),
+		big.NewInt(15))
+
+	newGas := t.IncreaseGas([]*big.Int{big.NewInt(1), big.NewInt(10), big.NewInt(100)})
+
+	s.Equal(newGas, []*big.Int{big.NewInt(2), big.NewInt(11), big.NewInt(15)})
+}

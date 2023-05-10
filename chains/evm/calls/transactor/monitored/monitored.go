@@ -166,7 +166,7 @@ func (t *MonitoredTransactor) Monitor(
 }
 
 func (t *MonitoredTransactor) resendTransaction(tx *RawTx) (common.Hash, error) {
-	tx.gasPrice = t.increaseGas(tx.gasPrice)
+	tx.gasPrice = t.IncreaseGas(tx.gasPrice)
 	newTx, err := t.txFabric(tx.nonce, tx.to, tx.value, tx.gasLimit, tx.gasPrice, tx.data)
 	if err != nil {
 		return common.Hash{}, err
@@ -187,9 +187,10 @@ func (t *MonitoredTransactor) resendTransaction(tx *RawTx) (common.Hash, error) 
 // If gas was 10 and the increaseFactor is 15 the new gas price
 // would be 11 (it floors the value). In case the gas price didn't
 // change it increases it by 1.
-func (t *MonitoredTransactor) increaseGas(oldGp []*big.Int) []*big.Int {
+func (t *MonitoredTransactor) IncreaseGas(oldGp []*big.Int) []*big.Int {
 	newGp := make([]*big.Int, len(oldGp))
 	for i, gp := range oldGp {
+
 		percentIncreaseValue := new(big.Int).Div(new(big.Int).Mul(gp, t.increaseFactor), big.NewInt(100))
 		increasedGp := new(big.Int).Add(gp, percentIncreaseValue)
 		if increasedGp.Cmp(t.maxGasPrice) != -1 {
