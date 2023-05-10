@@ -133,9 +133,9 @@ func (t *MonitoredTransactor) Monitor(
 					receipt, err := t.client.TransactionReceipt(context.Background(), oldHash)
 					if err == nil {
 						if receipt.Status == types.ReceiptStatusSuccessful {
-							log.Info().Msgf("Executed transaction %s with nonce %d", oldHash, tx.nonce)
+							log.Info().Uint64("nonce", tx.nonce).Msgf("Executed transaction %s with nonce %d", oldHash, tx.nonce)
 						} else {
-							log.Error().Msgf("Transaction %s failed on chain with nonce %d", oldHash, tx.nonce)
+							log.Error().Uint64("nonce", tx.nonce).Msgf("Transaction %s failed on chain", oldHash)
 						}
 
 						delete(t.pendingTxns, oldHash)
@@ -143,7 +143,7 @@ func (t *MonitoredTransactor) Monitor(
 					}
 
 					if time.Since(tx.creationTime) > txTimeout {
-						log.Error().Msgf("Transaction %s with nonce %d has timed out", oldHash, tx.nonce)
+						log.Error().Uint64("nonce", tx.nonce).Msgf("Transaction %s has timed out", oldHash)
 						delete(t.pendingTxns, oldHash)
 						continue
 					}
@@ -153,7 +153,7 @@ func (t *MonitoredTransactor) Monitor(
 
 					hash, err := t.resendTransaction(&tx)
 					if err != nil {
-						log.Warn().Err(err).Msgf("Failed resending transaction %s with nonce %d", hash, tx.nonce)
+						log.Warn().Uint64("nonce", tx.nonce).Err(err).Msgf("Failed resending transaction %s", hash)
 						continue
 					}
 
@@ -177,9 +177,16 @@ func (t *MonitoredTransactor) resendTransaction(tx *RawTx) (common.Hash, error) 
 		return common.Hash{}, err
 	}
 
+	log.Debug().Uint64("nonce", tx.nonce).Msgf("Resent transaction with hash %s", hash)
+
 	return hash, nil
 }
 
+// increase gas bumps gas price by preset percentage.
+//
+// If gas was 10 and the increaseFactor is 15 the new gas price
+// would be 11 (it floors the value). In case the gas price didn't
+// change it increases it by 1.
 func (t *MonitoredTransactor) increaseGas(oldGp []*big.Int) []*big.Int {
 	newGp := make([]*big.Int, len(oldGp))
 	for i, gp := range oldGp {
