@@ -11,7 +11,6 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 
 	mock_transactor "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/mock"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/signAndSend"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/executor/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ethereum/go-ethereum/common"
@@ -133,7 +132,7 @@ func (s *ProposalStatusTestSuite) TestBridge_AddRelayer_Success() {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{1, 2, 3, 4, 5}, nil)
-	res, err := s.bridgeContract.AddRelayer(common.HexToAddress(testRelayerAddress), signAndSend.DefaultTransactionOptions)
+	res, err := s.bridgeContract.AddRelayer(common.HexToAddress(testRelayerAddress), transactor.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{1, 2, 3, 4, 5},
 		res,
@@ -147,7 +146,7 @@ func (s *ProposalStatusTestSuite) TestBridge_AdminSetGenericResource_Success() {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{10, 11, 12, 13, 14}, nil)
-	res, err := s.bridgeContract.AdminSetGenericResource(common.HexToAddress(testHandlerAddress), [32]byte{1}, common.HexToAddress(testInteractorAddress), [4]byte{2}, big.NewInt(0), [4]byte{3}, signAndSend.DefaultTransactionOptions)
+	res, err := s.bridgeContract.AdminSetGenericResource(common.HexToAddress(testHandlerAddress), [32]byte{1}, common.HexToAddress(testInteractorAddress), [4]byte{2}, big.NewInt(0), [4]byte{3}, transactor.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{10, 11, 12, 13, 14},
 		res,
@@ -161,7 +160,7 @@ func (s *ProposalStatusTestSuite) TestBridge_AdminSetResource_Success() {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{10, 11, 12, 13, 14, 15, 16}, nil)
-	res, err := s.bridgeContract.AdminSetResource(common.HexToAddress(testHandlerAddress), testResourceId, common.HexToAddress(testContractAddress), signAndSend.DefaultTransactionOptions)
+	res, err := s.bridgeContract.AdminSetResource(common.HexToAddress(testHandlerAddress), testResourceId, common.HexToAddress(testContractAddress), transactor.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{10, 11, 12, 13, 14, 15, 16},
 		res,
@@ -175,7 +174,7 @@ func (s *ProposalStatusTestSuite) TestBridge_SetDepositNonce_Success() {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{20, 21, 22, 23}, nil)
-	res, err := s.bridgeContract.SetDepositNonce(testDomainId, uint64(0), signAndSend.DefaultTransactionOptions)
+	res, err := s.bridgeContract.SetDepositNonce(testDomainId, uint64(0), transactor.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{20, 21, 22, 23},
 		res,
@@ -189,7 +188,7 @@ func (s *ProposalStatusTestSuite) TestBridge_SetThresholdInput_Success() {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{22, 23, 24, 25}, nil)
-	res, err := s.bridgeContract.AdminChangeRelayerThreshold(uint64(2), signAndSend.DefaultTransactionOptions)
+	res, err := s.bridgeContract.AdminChangeRelayerThreshold(uint64(2), transactor.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{22, 23, 24, 25},
 		res,
@@ -203,7 +202,7 @@ func (s *ProposalStatusTestSuite) TestBridge_SetBurnableInput_Success() {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{25, 26, 27, 28}, nil)
-	res, err := s.bridgeContract.SetBurnableInput(common.HexToAddress(testHandlerAddress), common.HexToAddress(testContractAddress), signAndSend.DefaultTransactionOptions)
+	res, err := s.bridgeContract.SetBurnableInput(common.HexToAddress(testHandlerAddress), common.HexToAddress(testContractAddress), transactor.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{25, 26, 27, 28},
 		res,
@@ -217,7 +216,7 @@ func (s *ProposalStatusTestSuite) TestBridge_Erc20Deposit_Success() {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{30, 31, 32, 33}, nil)
-	res, err := s.bridgeContract.Erc20Deposit(common.HexToAddress(testInteractorAddress), big.NewInt(10), testResourceId, testDomainId, signAndSend.DefaultTransactionOptions)
+	res, err := s.bridgeContract.Erc20Deposit(common.HexToAddress(testInteractorAddress), big.NewInt(10), testResourceId, testDomainId, transactor.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{30, 31, 32, 33},
 		res,
@@ -231,7 +230,7 @@ func (s *ProposalStatusTestSuite) TestBridge_Erc721Deposit_Success() {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{32, 33, 34, 35}, nil)
-	res, err := s.bridgeContract.Erc721Deposit(big.NewInt(55), "token_uri", common.HexToAddress(testInteractorAddress), testResourceId, testDomainId, signAndSend.DefaultTransactionOptions)
+	res, err := s.bridgeContract.Erc721Deposit(big.NewInt(55), "token_uri", common.HexToAddress(testInteractorAddress), testResourceId, testDomainId, transactor.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{32, 33, 34, 35},
 		res,
@@ -245,7 +244,7 @@ func (s *ProposalStatusTestSuite) TestBridge_GenericDeposit_Success() {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{35, 36, 37, 38}, nil)
-	res, err := s.bridgeContract.GenericDeposit([]byte{1, 2, 3}, testResourceId, testDomainId, signAndSend.DefaultTransactionOptions)
+	res, err := s.bridgeContract.GenericDeposit([]byte{1, 2, 3}, testResourceId, testDomainId, transactor.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{35, 36, 37, 38},
 		res,
@@ -259,7 +258,7 @@ func (s *ProposalStatusTestSuite) TestBridge_ExecuteProposal_Success() {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{36, 37, 38}, nil)
-	res, err := s.bridgeContract.ExecuteProposal(&s.proposal, signAndSend.DefaultTransactionOptions)
+	res, err := s.bridgeContract.ExecuteProposal(&s.proposal, transactor.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{36, 37, 38},
 		res,
@@ -273,7 +272,7 @@ func (s *ProposalStatusTestSuite) TestBridge_VoteProposal_Success() {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{37, 38, 39}, nil)
-	res, err := s.bridgeContract.VoteProposal(&s.proposal, signAndSend.DefaultTransactionOptions)
+	res, err := s.bridgeContract.VoteProposal(&s.proposal, transactor.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{37, 38, 39},
 		res,
@@ -298,7 +297,7 @@ func (s *ProposalStatusTestSuite) TestBridge_Pause_Success() {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{40, 41, 42}, nil)
-	res, err := s.bridgeContract.Pause(signAndSend.DefaultTransactionOptions)
+	res, err := s.bridgeContract.Pause(transactor.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{40, 41, 42},
 		res,
@@ -312,7 +311,7 @@ func (s *ProposalStatusTestSuite) TestBridge_Unpause_Success() {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{42, 43, 44}, nil)
-	res, err := s.bridgeContract.Unpause(signAndSend.DefaultTransactionOptions)
+	res, err := s.bridgeContract.Unpause(transactor.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{42, 43, 44},
 		res,
@@ -330,7 +329,7 @@ func (s *ProposalStatusTestSuite) TestBridge_Withdraw_Success() {
 		common.HexToAddress(testHandlerAddress),
 		common.HexToAddress(testContractAddress),
 		common.HexToAddress(testInteractorAddress),
-		big.NewInt(5), signAndSend.DefaultTransactionOptions,
+		big.NewInt(5), transactor.DefaultTransactionOptions,
 	)
 	s.Equal(
 		&common.Hash{44, 45, 46},

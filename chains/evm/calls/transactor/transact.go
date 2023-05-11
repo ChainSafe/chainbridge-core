@@ -8,6 +8,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+var DefaultTransactionOptions = TransactOptions{
+	GasLimit: 2000000,
+	GasPrice: big.NewInt(0),
+	Value:    big.NewInt(0),
+}
+
 type TransactOptions struct {
 	GasLimit uint64
 	GasPrice *big.Int

@@ -209,6 +209,21 @@ func (mr *MockClientDispatcherMockRecorder) SignAndSendTransaction(ctx, tx inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignAndSendTransaction", reflect.TypeOf((*MockClientDispatcher)(nil).SignAndSendTransaction), ctx, tx)
 }
 
+// TransactionReceipt mocks base method.
+func (m *MockClientDispatcher) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TransactionReceipt", ctx, txHash)
+	ret0, _ := ret[0].(*types.Receipt)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TransactionReceipt indicates an expected call of TransactionReceipt.
+func (mr *MockClientDispatcherMockRecorder) TransactionReceipt(ctx, txHash interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TransactionReceipt", reflect.TypeOf((*MockClientDispatcher)(nil).TransactionReceipt), ctx, txHash)
+}
+
 // UnlockNonce mocks base method.
 func (m *MockClientDispatcher) UnlockNonce() {
 	m.ctrl.T.Helper()
@@ -373,6 +388,21 @@ func (m *MockContractCallerDispatcher) SignAndSendTransaction(ctx context.Contex
 func (mr *MockContractCallerDispatcherMockRecorder) SignAndSendTransaction(ctx, tx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignAndSendTransaction", reflect.TypeOf((*MockContractCallerDispatcher)(nil).SignAndSendTransaction), ctx, tx)
+}
+
+// TransactionReceipt mocks base method.
+func (m *MockContractCallerDispatcher) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TransactionReceipt", ctx, txHash)
+	ret0, _ := ret[0].(*types.Receipt)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TransactionReceipt indicates an expected call of TransactionReceipt.
+func (mr *MockContractCallerDispatcherMockRecorder) TransactionReceipt(ctx, txHash interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TransactionReceipt", reflect.TypeOf((*MockContractCallerDispatcher)(nil).TransactionReceipt), ctx, txHash)
 }
 
 // UnlockNonce mocks base method.

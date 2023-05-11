@@ -4,7 +4,6 @@ import (
 	"math/big"
 	"testing"
 
-	erc20 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	mock_calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
@@ -21,16 +20,10 @@ type TransactorTestSuite struct {
 	gomockController                   *gomock.Controller
 	mockContractCallerDispatcherClient *mock_calls.MockContractCallerDispatcher
 	mockTransactor                     *mock_transactor.MockTransactor
-	erc20ContractAddress               common.Address
-	erc20Contract                      *erc20.ERC20Contract
 	mockGasPricer                      *mock_calls.MockGasPricer
 }
 
-var (
-	erc20ContractAddress = "0x829bd824b016326a401d083b33d092293333a830"
-)
-
-func TestERC20TestSuite(t *testing.T) {
+func TestSignAndSendTestSuite(t *testing.T) {
 	suite.Run(t, new(TransactorTestSuite))
 }
 
@@ -39,10 +32,6 @@ func (s *TransactorTestSuite) TearDownSuite() {}
 func (s *TransactorTestSuite) SetupTest() {
 	s.gomockController = gomock.NewController(s.T())
 	s.mockContractCallerDispatcherClient = mock_calls.NewMockContractCallerDispatcher(s.gomockController)
-	s.erc20ContractAddress = common.HexToAddress(erc20ContractAddress)
-	s.erc20Contract = erc20.NewERC20Contract(
-		s.mockContractCallerDispatcherClient, common.HexToAddress(erc20ContractAddress), s.mockTransactor,
-	)
 	s.mockTransactor = mock_transactor.NewMockTransactor(s.gomockController)
 	s.mockGasPricer = mock_calls.NewMockGasPricer(s.gomockController)
 }

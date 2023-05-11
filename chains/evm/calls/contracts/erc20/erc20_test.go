@@ -6,8 +6,8 @@ import (
 
 	erc20 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
 	mock_calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	mock_transactor "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/mock"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/signAndSend"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
@@ -63,7 +63,7 @@ func (s *ERC20ContractCallsTestSuite) TestErc20Contract_MintTokens_Success() {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{1, 2, 3, 4, 5}, nil)
-	res, err := s.erc20contract.MintTokens(common.HexToAddress(testInteractorAddress), big.NewInt(10), signAndSend.DefaultTransactionOptions)
+	res, err := s.erc20contract.MintTokens(common.HexToAddress(testInteractorAddress), big.NewInt(10), transactor.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{1, 2, 3, 4, 5},
 		res,
@@ -77,7 +77,7 @@ func (s *ERC20ContractCallsTestSuite) TestErc20Contract_ApproveTokens_Success() 
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9}, nil)
-	res, err := s.erc20contract.ApproveTokens(common.HexToAddress(testInteractorAddress), big.NewInt(100), signAndSend.DefaultTransactionOptions)
+	res, err := s.erc20contract.ApproveTokens(common.HexToAddress(testInteractorAddress), big.NewInt(100), transactor.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9},
 		res,
@@ -112,7 +112,7 @@ func (s *ERC20ContractCallsTestSuite) TestErc20Contract_AddMinter_Success() {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(&common.Hash{1, 2, 3}, nil)
-	res, err := s.erc20contract.AddMinter(common.HexToAddress(testInteractorAddress), signAndSend.DefaultTransactionOptions)
+	res, err := s.erc20contract.AddMinter(common.HexToAddress(testInteractorAddress), transactor.DefaultTransactionOptions)
 	s.Equal(
 		&common.Hash{1, 2, 3},
 		res,

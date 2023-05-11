@@ -174,6 +174,21 @@ func (mr *MockChainClientMockRecorder) TransactionByHash(arg0, arg1 interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TransactionByHash", reflect.TypeOf((*MockChainClient)(nil).TransactionByHash), arg0, arg1)
 }
 
+// TransactionReceipt mocks base method.
+func (m *MockChainClient) TransactionReceipt(arg0 context.Context, arg1 common.Hash) (*types.Receipt, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TransactionReceipt", arg0, arg1)
+	ret0, _ := ret[0].(*types.Receipt)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TransactionReceipt indicates an expected call of TransactionReceipt.
+func (mr *MockChainClientMockRecorder) TransactionReceipt(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TransactionReceipt", reflect.TypeOf((*MockChainClient)(nil).TransactionReceipt), arg0, arg1)
+}
+
 // UnlockNonce mocks base method.
 func (m *MockChainClient) UnlockNonce() {
 	m.ctrl.T.Helper()

@@ -64,7 +64,9 @@ func (eh *DepositEventHandler) HandleEvent(startBlock *big.Int, endBlock *big.In
 	}
 
 	for _, deposits := range domainDeposits {
-		msgChan <- deposits
+		go func(d []*message.Message) {
+			msgChan <- d
+		}(deposits)
 	}
 
 	return nil
