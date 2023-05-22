@@ -77,11 +77,10 @@ func (r *Relayer) route(msgs []*message.Message) {
 	}
 
 	log.Debug().Msgf("Sending messages %+v to destination %v", msgs, destChain.DomainID())
-
 	err := destChain.Write(msgs)
 	if err != nil {
-		log.Err(err).Msgf("Failed sending messages %+v to destination %v", msgs, destChain.DomainID())
 		for _, m := range msgs {
+			log.Err(err).Msgf("Failed sending messages %+v to destination %v", m, destChain.DomainID())
 			r.metrics.TrackExecutionError(m)
 		}
 		return
