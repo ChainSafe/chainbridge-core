@@ -47,6 +47,12 @@ func Run() error {
 	}
 	blockstore := store.NewBlockStore(db)
 
+	meter, err := opentelemetry.DefaultMeter(context.Background(), configuration.RelayerConfig.OpenTelemetryCollectorURL)
+	if err != nil {
+		panic(err)
+	}
+	metrics := opentelemetry.NewOpenTelemetry(meter)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	chains := []relayer.RelayedChain{}
 	for _, chainConfig := range configuration.ChainConfigs {
@@ -82,7 +88,7 @@ func Run() error {
 				eventListener := events.NewListener(client)
 				eventHandlers := make([]listener.EventHandler, 0)
 				eventHandlers = append(eventHandlers, listener.NewDepositEventHandler(eventListener, depositHandler, common.HexToAddress(config.Bridge), *config.GeneralChainConfig.Id))
-				evmListener := listener.NewEVMListener(client, eventHandlers, blockstore, *config.GeneralChainConfig.Id, config.BlockRetryInterval, config.BlockConfirmations, config.BlockInterval)
+				evmListener := listener.NewEVMListener(client, eventHandlers, blockstore, metrics, *config.GeneralChainConfig.Id, config.BlockRetryInterval, config.BlockConfirmations, config.BlockInterval)
 
 				mh := executor.NewEVMMessageHandler(bridgeContract)
 				mh.RegisterMessageHandler(config.Erc20Handler, executor.ERC20MessageHandler)
@@ -105,11 +111,6 @@ func Run() error {
 		}
 	}
 
-	meter, err := opentelemetry.DefaultMeter(context.Background(), configuration.RelayerConfig.OpenTelemetryCollectorURL)
-	if err != nil {
-		panic(err)
-	}
-	metrics := opentelemetry.NewOpenTelemetry(meter)
 	r := relayer.NewRelayer(
 		chains,
 		metrics,

@@ -2,6 +2,7 @@ package opentelemetry
 
 import (
 	"context"
+	"math/big"
 	"net/url"
 	"time"
 
@@ -52,14 +53,18 @@ func DefaultMeter(ctx context.Context, collectorRawURL string) (metric.Meter, er
 
 type OpenTelemetry struct {
 	metrics          *ChainbridgeMetrics
+	meter            metric.Meter
 	messageEventTime map[string]time.Time
+	genericLabels    []attribute.KeyValue
 }
 
 // NewOpenTelemetry initializes OpenTelementry metrics
-func NewOpenTelemetry(meter metric.Meter) *OpenTelemetry {
-	metrics := NewChainbridgeMetrics(meter)
+func NewOpenTelemetry(meter metric.Meter, labels ...attribute.KeyValue) *OpenTelemetry {
+	metrics := NewChainbridgeMetrics(meter, labels...)
 	return &OpenTelemetry{
 		metrics:          metrics,
+		meter:            meter,
+		genericLabels:    labels,
 		messageEventTime: make(map[string]time.Time),
 	}
 }
@@ -67,22 +72,31 @@ func NewOpenTelemetry(meter metric.Meter) *OpenTelemetry {
 // TrackDepositMessage extracts metrics from deposit message and sends
 // them to OpenTelemetry collector
 func (t *OpenTelemetry) TrackDepositMessage(m *message.Message) {
-	t.metrics.DepositEventCount.Add(context.Background(), 1, attribute.Int64("source", int64(m.Source)))
+	labels := append(t.genericLabels, attribute.Int64("source", int64(m.Source)))
+	t.metrics.DepositEventCount.Add(context.Background(), 1, labels...)
 	t.messageEventTime[m.ID()] = time.Now()
 }
 
 func (t *OpenTelemetry) TrackExecutionError(m *message.Message) {
-	t.metrics.ExecutionErrorCount.Add(context.Background(), 1, attribute.Int64("destination", int64(m.Source)))
+	labels := append(t.genericLabels, attribute.Int64("destination", int64(m.Source)))
+	t.metrics.ExecutionErrorCount.Add(context.Background(), 1, labels...)
 	delete(t.messageEventTime, m.ID())
 }
 
 func (t *OpenTelemetry) TrackSuccessfulExecution(m *message.Message) {
+	labels := append(t.genericLabels, attribute.Int64("source", int64(m.Source)))
+	labels = append(labels, attribute.Int64("destination", int64(m.Destination)))
 	executionLatency := time.Since(t.messageEventTime[m.ID()]).Milliseconds() / 1000
 	t.metrics.ExecutionLatency.Record(context.Background(), executionLatency)
 	t.metrics.ExecutionLatencyPerRoute.Record(
 		context.Background(),
 		executionLatency,
-		attribute.Int64("source", int64(m.Source)),
-		attribute.Int64("destination", int64(m.Destination)))
+		labels...,
+	)
 	delete(t.messageEventTime, m.ID())
+}
+
+func (t *OpenTelemetry) TrackBlockDelta(domainID uint8, head *big.Int, current *big.Int) {
+	t.metrics.BlockDeltaMap[domainID] = new(big.Int).Sub(head, current)
+	t.meter.RecordBatch(context.Background(), []attribute.KeyValue{})
 }
