@@ -2,7 +2,6 @@ package opentelemetry
 
 import (
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/metric/unit"
 )
 
 type ChainbridgeMetrics struct {
@@ -14,24 +13,36 @@ type ChainbridgeMetrics struct {
 
 // NewChainbridgeMetrics creates an instance of ChainbridgeMetrics
 // with provided OpenTelemetry meter
-func NewChainbridgeMetrics(meter metric.Meter) *ChainbridgeMetrics {
-	return &ChainbridgeMetrics{
-		DepositEventCount: metric.Must(meter).NewInt64Counter(
-			"chainbridge.DepositEventCount",
-			metric.WithDescription("Number of deposit events per domain"),
-		),
-		ExecutionErrorCount: metric.Must(meter).NewInt64Counter(
-			"chainbridge.ExecutionErrorCount",
-			metric.WithDescription("Number of executions that failed"),
-		),
-		ExecutionLatencyPerRoute: metric.Must(meter).NewInt64Histogram(
-			"chainbridge.ExecutionLatencyPerRoute",
-			metric.WithDescription("Execution time histogram between indexing event and executing it per route"),
-		),
-		ExecutionLatency: metric.Must(meter).NewInt64Histogram(
-			"chainbridge.ExecutionLatency",
-			metric.WithDescription("Execution time histogram between indexing event and executing it"),
-			metric.WithUnit(unit.Milliseconds),
-		),
+func NewChainbridgeMetrics(meter metric.Meter) (*ChainbridgeMetrics, error) {
+	depositEventCounter, err := meter.Int64Counter(
+		"relayer.DepositEventCount",
+		metric.WithDescription("Number of deposit events per domain"))
+	if err != nil {
+		return nil, err
 	}
+	executionErrorCount, err := meter.Int64Counter(
+		"relayer.ExecutionErrorCount",
+		metric.WithDescription("Number of executions that failed"))
+	if err != nil {
+		return nil, err
+	}
+	executionLatencyPerRoute, err := meter.Int64Histogram(
+		"relayer.ExecutionLatencyPerRoute",
+		metric.WithDescription("Execution time histogram between indexing event and executing it per route"))
+	if err != nil {
+		return nil, err
+	}
+	executionLatency, err := meter.Int64Histogram(
+		"relayer.ExecutionLatency",
+		metric.WithDescription("Execution time histogram between indexing even`t and executing it"),
+		metric.WithUnit("ms"))
+	if err != nil {
+		return nil, err
+	}
+	return &ChainbridgeMetrics{
+		DepositEventCount:        depositEventCounter,
+		ExecutionErrorCount:      executionErrorCount,
+		ExecutionLatencyPerRoute: executionLatencyPerRoute,
+		ExecutionLatency:         executionLatency,
+	}, nil
 }

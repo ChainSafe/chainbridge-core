@@ -14,7 +14,7 @@ import (
 type Metrics interface {
 	TrackDepositMessage(m *message.Message)
 	TrackExecutionError(m *message.Message)
-	TrackSuccessfulExecution(m *message.Message)
+	TrackSuccessfulExecutionLatency(m *message.Message)
 }
 
 type RelayedChain interface {
@@ -87,7 +87,7 @@ func (r *Relayer) route(msgs []*message.Message) {
 	}
 
 	for _, m := range msgs {
-		r.metrics.TrackSuccessfulExecution(m)
+		r.metrics.TrackSuccessfulExecutionLatency(m)
 	}
 }
 

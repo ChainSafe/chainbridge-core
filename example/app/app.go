@@ -105,11 +105,19 @@ func Run() error {
 		}
 	}
 
-	meter, err := opentelemetry.DefaultMeter(context.Background(), configuration.RelayerConfig.OpenTelemetryCollectorURL)
+	mp, err := opentelemetry.InitMetricProvider(context.Background(), configuration.RelayerConfig.OpenTelemetryCollectorURL)
 	if err != nil {
 		panic(err)
 	}
-	metrics := opentelemetry.NewOpenTelemetry(meter)
+	defer func() {
+		if err := mp.Shutdown(context.Background()); err != nil {
+			log.Error().Msgf("Error shutting down meter provider: %v", err)
+		}
+	}()
+	metrics, err := opentelemetry.NewOpenTelemetry(mp.Meter("relayer-metric-provider"), configuration.RelayerConfig.Env, configuration.RelayerConfig.Id)
+	if err != nil {
+		panic(err)
+	}
 	r := relayer.NewRelayer(
 		chains,
 		metrics,

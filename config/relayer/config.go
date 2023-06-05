@@ -10,12 +10,16 @@ type RelayerConfig struct {
 	OpenTelemetryCollectorURL string
 	LogLevel                  zerolog.Level
 	LogFile                   string
+	Env                       string
+	Id                        string
 }
 
 type RawRelayerConfig struct {
 	OpenTelemetryCollectorURL string `mapstructure:"OpenTelemetryCollectorURL" json:"opentelemetryCollectorURL"`
 	LogLevel                  string `mapstructure:"LogLevel" json:"logLevel" default:"info"`
 	LogFile                   string `mapstructure:"LogFile" json:"logFile" default:"out.log"`
+	Env                       string `mapstructure:"Env" json:"env"`
+	Id                        string `mapstructure:"Id" json:"id"`
 }
 
 func (c *RawRelayerConfig) Validate() error {
@@ -38,6 +42,8 @@ func NewRelayerConfig(rawConfig RawRelayerConfig) (RelayerConfig, error) {
 
 	config.LogFile = rawConfig.LogFile
 	config.OpenTelemetryCollectorURL = rawConfig.OpenTelemetryCollectorURL
+	config.Env = rawConfig.Env
+	config.Id = rawConfig.Id
 
 	return config, nil
 }

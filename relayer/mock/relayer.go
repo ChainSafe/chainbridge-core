@@ -59,16 +59,16 @@ func (mr *MockMetricsMockRecorder) TrackExecutionError(m interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrackExecutionError", reflect.TypeOf((*MockMetrics)(nil).TrackExecutionError), m)
 }
 
-// TrackSuccessfulExecution mocks base method.
-func (m_2 *MockMetrics) TrackSuccessfulExecution(m *message.Message) {
+// TrackSuccessfulExecutionLatency mocks base method.
+func (m_2 *MockMetrics) TrackSuccessfulExecutionLatency(m *message.Message) {
 	m_2.ctrl.T.Helper()
-	m_2.ctrl.Call(m_2, "TrackSuccessfulExecution", m)
+	m_2.ctrl.Call(m_2, "TrackSuccessfulExecutionLatency", m)
 }
 
-// TrackSuccessfulExecution indicates an expected call of TrackSuccessfulExecution.
-func (mr *MockMetricsMockRecorder) TrackSuccessfulExecution(m interface{}) *gomock.Call {
+// TrackSuccessfulExecutionLatency indicates an expected call of TrackSuccessfulExecutionLatency.
+func (mr *MockMetricsMockRecorder) TrackSuccessfulExecutionLatency(m interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrackSuccessfulExecution", reflect.TypeOf((*MockMetrics)(nil).TrackSuccessfulExecution), m)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrackSuccessfulExecutionLatency", reflect.TypeOf((*MockMetrics)(nil).TrackSuccessfulExecutionLatency), m)
 }
 
 // MockRelayedChain is a mock of RelayedChain interface.
