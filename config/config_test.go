@@ -2,7 +2,6 @@ package config_test
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -32,10 +31,9 @@ func (s *GetConfigTestSuite) Test_MissingChainType() {
 		}},
 	}
 	file, _ := json.Marshal(data)
-	_ = ioutil.WriteFile("test.json", file, 0644)
+	_ = os.WriteFile("test.json", file, 0644)
 
 	_, err := config.GetConfig("test.json")
-
 	_ = os.Remove("test.json")
 	s.NotNil(err)
 	s.Equal(err.Error(), "Chain 'type' must be provided for every configured chain")
@@ -51,7 +49,7 @@ func (s *GetConfigTestSuite) Test_InvalidRelayerConfig() {
 		}},
 	}
 	file, _ := json.Marshal(data)
-	_ = ioutil.WriteFile("test.json", file, 0644)
+	_ = os.WriteFile("test.json", file, 0644)
 
 	_, err := config.GetConfig("test.json")
 
@@ -71,7 +69,7 @@ func (s *GetConfigTestSuite) Test_ValidConfig() {
 		}},
 	}
 	file, _ := json.Marshal(data)
-	_ = ioutil.WriteFile("test.json", file, 0644)
+	_ = os.WriteFile("test.json", file, 0644)
 
 	actualConfig, err := config.GetConfig("test.json")
 

@@ -12,63 +12,63 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockMetrics is a mock of Metrics interface.
-type MockMetrics struct {
+// MockDepositMeter is a mock of DepositMeter interface.
+type MockDepositMeter struct {
 	ctrl     *gomock.Controller
-	recorder *MockMetricsMockRecorder
+	recorder *MockDepositMeterMockRecorder
 }
 
-// MockMetricsMockRecorder is the mock recorder for MockMetrics.
-type MockMetricsMockRecorder struct {
-	mock *MockMetrics
+// MockDepositMeterMockRecorder is the mock recorder for MockDepositMeter.
+type MockDepositMeterMockRecorder struct {
+	mock *MockDepositMeter
 }
 
-// NewMockMetrics creates a new mock instance.
-func NewMockMetrics(ctrl *gomock.Controller) *MockMetrics {
-	mock := &MockMetrics{ctrl: ctrl}
-	mock.recorder = &MockMetricsMockRecorder{mock}
+// NewMockDepositMeter creates a new mock instance.
+func NewMockDepositMeter(ctrl *gomock.Controller) *MockDepositMeter {
+	mock := &MockDepositMeter{ctrl: ctrl}
+	mock.recorder = &MockDepositMeterMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockMetrics) EXPECT() *MockMetricsMockRecorder {
+func (m *MockDepositMeter) EXPECT() *MockDepositMeterMockRecorder {
 	return m.recorder
 }
 
 // TrackDepositMessage mocks base method.
-func (m_2 *MockMetrics) TrackDepositMessage(m *message.Message) {
+func (m_2 *MockDepositMeter) TrackDepositMessage(m *message.Message) {
 	m_2.ctrl.T.Helper()
 	m_2.ctrl.Call(m_2, "TrackDepositMessage", m)
 }
 
 // TrackDepositMessage indicates an expected call of TrackDepositMessage.
-func (mr *MockMetricsMockRecorder) TrackDepositMessage(m interface{}) *gomock.Call {
+func (mr *MockDepositMeterMockRecorder) TrackDepositMessage(m interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrackDepositMessage", reflect.TypeOf((*MockMetrics)(nil).TrackDepositMessage), m)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrackDepositMessage", reflect.TypeOf((*MockDepositMeter)(nil).TrackDepositMessage), m)
 }
 
 // TrackExecutionError mocks base method.
-func (m_2 *MockMetrics) TrackExecutionError(m *message.Message) {
+func (m_2 *MockDepositMeter) TrackExecutionError(m *message.Message) {
 	m_2.ctrl.T.Helper()
 	m_2.ctrl.Call(m_2, "TrackExecutionError", m)
 }
 
 // TrackExecutionError indicates an expected call of TrackExecutionError.
-func (mr *MockMetricsMockRecorder) TrackExecutionError(m interface{}) *gomock.Call {
+func (mr *MockDepositMeterMockRecorder) TrackExecutionError(m interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrackExecutionError", reflect.TypeOf((*MockMetrics)(nil).TrackExecutionError), m)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrackExecutionError", reflect.TypeOf((*MockDepositMeter)(nil).TrackExecutionError), m)
 }
 
-// TrackSuccessfulExecution mocks base method.
-func (m_2 *MockMetrics) TrackSuccessfulExecution(m *message.Message) {
+// TrackSuccessfulExecutionLatency mocks base method.
+func (m_2 *MockDepositMeter) TrackSuccessfulExecutionLatency(m *message.Message) {
 	m_2.ctrl.T.Helper()
-	m_2.ctrl.Call(m_2, "TrackSuccessfulExecution", m)
+	m_2.ctrl.Call(m_2, "TrackSuccessfulExecutionLatency", m)
 }
 
-// TrackSuccessfulExecution indicates an expected call of TrackSuccessfulExecution.
-func (mr *MockMetricsMockRecorder) TrackSuccessfulExecution(m interface{}) *gomock.Call {
+// TrackSuccessfulExecutionLatency indicates an expected call of TrackSuccessfulExecutionLatency.
+func (mr *MockDepositMeterMockRecorder) TrackSuccessfulExecutionLatency(m interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrackSuccessfulExecution", reflect.TypeOf((*MockMetrics)(nil).TrackSuccessfulExecution), m)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrackSuccessfulExecutionLatency", reflect.TypeOf((*MockDepositMeter)(nil).TrackSuccessfulExecutionLatency), m)
 }
 
 // MockRelayedChain is a mock of RelayedChain interface.

@@ -14,7 +14,7 @@ import (
 type RouteTestSuite struct {
 	suite.Suite
 	mockRelayedChain *mock_relayer.MockRelayedChain
-	mockMetrics      *mock_relayer.MockMetrics
+	mockMetrics      *mock_relayer.MockDepositMeter
 }
 
 func TestRunRouteTestSuite(t *testing.T) {
@@ -26,7 +26,7 @@ func (s *RouteTestSuite) TearDownSuite() {}
 func (s *RouteTestSuite) SetupTest() {
 	gomockController := gomock.NewController(s.T())
 	s.mockRelayedChain = mock_relayer.NewMockRelayedChain(gomockController)
-	s.mockMetrics = mock_relayer.NewMockMetrics(gomockController)
+	s.mockMetrics = mock_relayer.NewMockDepositMeter(gomockController)
 }
 func (s *RouteTestSuite) TearDownTest() {}
 
@@ -93,7 +93,7 @@ func (s *RouteTestSuite) TestWriteFail() {
 
 func (s *RouteTestSuite) TestWritesToDestChainIfMessageValid() {
 	s.mockMetrics.EXPECT().TrackDepositMessage(gomock.Any())
-	s.mockMetrics.EXPECT().TrackSuccessfulExecution(gomock.Any())
+	s.mockMetrics.EXPECT().TrackSuccessfulExecutionLatency(gomock.Any())
 	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1)).Times(2)
 	s.mockRelayedChain.EXPECT().Write(gomock.Any())
 	relayer := NewRelayer(

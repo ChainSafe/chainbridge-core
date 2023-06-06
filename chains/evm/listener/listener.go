@@ -23,14 +23,14 @@ type ChainClient interface {
 	LatestBlock() (*big.Int, error)
 }
 
-type Metrics interface {
+type BlockDeltaMeter interface {
 	TrackBlockDelta(domainID uint8, head *big.Int, current *big.Int)
 }
 
 type EVMListener struct {
 	client        ChainClient
 	eventHandlers []EventHandler
-	metrics       Metrics
+	metrics       BlockDeltaMeter
 
 	domainID           uint8
 	blockstore         *store.BlockStore
@@ -47,7 +47,7 @@ func NewEVMListener(
 	client ChainClient,
 	eventHandlers []EventHandler,
 	blockstore *store.BlockStore,
-	metrics Metrics,
+	metrics BlockDeltaMeter,
 	domainID uint8,
 	blockRetryInterval time.Duration,
 	blockConfirmations *big.Int,

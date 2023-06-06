@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	secp256k1 "github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm"
@@ -47,11 +49,20 @@ func Run() error {
 	}
 	blockstore := store.NewBlockStore(db)
 
-	meter, err := opentelemetry.DefaultMeter(context.Background(), configuration.RelayerConfig.OpenTelemetryCollectorURL)
+	mp, err := opentelemetry.InitMetricProvider(context.Background(), configuration.RelayerConfig.OpenTelemetryCollectorURL)
 	if err != nil {
 		panic(err)
 	}
-	metrics := opentelemetry.NewOpenTelemetry(meter)
+	defer func() {
+		if err := mp.Shutdown(context.Background()); err != nil {
+			log.Error().Msgf("Error shutting down meter provider: %v", err)
+		}
+	}()
+
+	metrics, err := opentelemetry.NewRelayerMetrics(mp.Meter("relayer-metric-provider"), attribute.String("relayerid", configuration.RelayerConfig.Id), attribute.String("env", configuration.RelayerConfig.Env))
+	if err != nil {
+		panic(err)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	chains := []relayer.RelayedChain{}

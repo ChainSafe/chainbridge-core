@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/ChainSafe/chainbridge-core/crypto"
@@ -76,7 +76,7 @@ func ReadFromFileAndDecrypt(filename string, password []byte, keytype string) (c
 		return nil, err
 	}
 
-	data, err := ioutil.ReadFile(filepath.Clean(fp))
+	data, err := os.ReadFile(filepath.Clean(fp))
 	if err != nil {
 		return nil, err
 	}
