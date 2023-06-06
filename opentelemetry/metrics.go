@@ -71,8 +71,8 @@ type RelayerMetrics struct {
 }
 
 // NewRelayerMetrics initializes OpenTelemetry metrics
-func NewRelayerMetrics(meter metric.Meter, env, relayerID string) (*RelayerMetrics, error) {
-	opts := api.WithAttributes(attribute.String("relayerid", relayerID), attribute.String("env", env))
+func NewRelayerMetrics(meter metric.Meter, attributes ...attribute.KeyValue) (*RelayerMetrics, error) {
+	opts := api.WithAttributes(attributes...)
 	depositEventCounter, err := meter.Int64Counter(
 		"relayer.DepositEventCount",
 		metric.WithDescription("Number of deposit events per domain"))
