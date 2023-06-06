@@ -2,6 +2,7 @@ package opentelemetry
 
 import (
 	"context"
+	"math/big"
 	"net/url"
 	"time"
 
@@ -56,46 +57,115 @@ func InitMetricProvider(ctx context.Context, agentURL string) (*sdkmetric.MeterP
 	return meterProvider, nil
 }
 
-type OpenTelemetry struct {
-	metrics          *ChainbridgeMetrics
-	messageEventTime map[string]time.Time
-	Opts             api.MeasurementOption
+type RelayerMetrics struct {
+	meter metric.Meter
+	Opts  api.MeasurementOption
+
+	DepositEventCount        metric.Int64Counter
+	MessageEventTime         map[string]time.Time
+	ExecutionErrorCount      metric.Int64Counter
+	ExecutionLatency         metric.Int64Histogram
+	ExecutionLatencyPerRoute metric.Int64Histogram
+	BlockDelta               metric.Int64ObservableGauge
+	BlockDeltaMap            map[uint8]*big.Int
 }
 
-// NewOpenTelemetry initializes OpenTelementry metrics
-func NewOpenTelemetry(meter metric.Meter, env, relayerID string) (*OpenTelemetry, error) {
+// NewRelayerMetrics initializes OpenTelemetry metrics
+func NewRelayerMetrics(meter metric.Meter, env, relayerID string) (*RelayerMetrics, error) {
 	opts := api.WithAttributes(attribute.String("relayerid", relayerID), attribute.String("env", env))
-	metrics, err := NewChainbridgeMetrics(meter)
+	depositEventCounter, err := meter.Int64Counter(
+		"relayer.DepositEventCount",
+		metric.WithDescription("Number of deposit events per domain"))
+	if err != nil {
+		return nil, err
+
+	}
+	executionErrorCount, err := meter.Int64Counter(
+		"relayer.ExecutionErrorCount",
+		metric.WithDescription("Number of executions that failed"))
 	if err != nil {
 		return nil, err
 	}
-	return &OpenTelemetry{
-		metrics:          metrics,
-		messageEventTime: make(map[string]time.Time),
-		Opts:             opts,
+	executionLatencyPerRoute, err := meter.Int64Histogram(
+		"relayer.ExecutionLatencyPerRoute",
+		metric.WithDescription("Execution time histogram between indexing event and executing it per route"))
+	if err != nil {
+		return nil, err
+	}
+	executionLatency, err := meter.Int64Histogram(
+		"relayer.ExecutionLatency",
+		metric.WithDescription("Execution time histogram between indexing even`t and executing it"),
+		metric.WithUnit("ms"))
+	if err != nil {
+		return nil, err
+	}
+
+	blockDeltaMap := make(map[uint8]*big.Int)
+
+	blockDeltaGauge, err := meter.Int64ObservableGauge(
+		"relayer.BlockDelta",
+		metric.WithInt64Callback(func(context context.Context, result metric.Int64Observer) error {
+			for domainID, delta := range blockDeltaMap {
+				result.Observe(delta.Int64(),
+					opts,
+					metric.WithAttributes(attribute.Int64("domainID", int64(domainID))),
+				)
+			}
+			return nil
+		}),
+		metric.WithDescription("Difference between chain head and current indexed block per domain"),
+	)
+	return &RelayerMetrics{
+		meter:                    meter,
+		MessageEventTime:         make(map[string]time.Time),
+		Opts:                     opts,
+		DepositEventCount:        depositEventCounter,
+		ExecutionErrorCount:      executionErrorCount,
+		ExecutionLatencyPerRoute: executionLatencyPerRoute,
+		ExecutionLatency:         executionLatency,
+		BlockDelta:               blockDeltaGauge,
+		BlockDeltaMap:            blockDeltaMap,
 	}, err
 }
 
 // TrackDepositMessage extracts metrics from deposit message and sends
 // them to OpenTelemetry collector
-func (t *OpenTelemetry) TrackDepositMessage(m *message.Message) {
-	t.metrics.DepositEventCount.Add(context.Background(), 1, t.Opts, api.WithAttributes(attribute.Int64("source", int64(m.Source))))
-	t.messageEventTime[m.ID()] = time.Now()
+func (t *RelayerMetrics) TrackDepositMessage(m *message.Message) {
+	t.DepositEventCount.Add(context.Background(), 1, t.Opts, api.WithAttributes(attribute.Int64("source", int64(m.Source))))
+	t.MessageEventTime[m.ID()] = time.Now()
 }
 
-func (t *OpenTelemetry) TrackExecutionError(m *message.Message) {
-	t.metrics.ExecutionErrorCount.Add(context.Background(), 1, t.Opts, api.WithAttributes(attribute.Int64("destination", int64(m.Source))))
-	delete(t.messageEventTime, m.ID())
+func (t *RelayerMetrics) TrackExecutionError(m *message.Message) {
+	t.ExecutionErrorCount.Add(context.Background(), 1, t.Opts, api.WithAttributes(attribute.Int64("destination", int64(m.Source))))
+	delete(t.MessageEventTime, m.ID())
 }
 
-func (t *OpenTelemetry) TrackSuccessfulExecutionLatency(m *message.Message) {
-	executionLatency := time.Since(t.messageEventTime[m.ID()]).Milliseconds() / 1000
-	t.metrics.ExecutionLatency.Record(context.Background(), executionLatency)
-	t.metrics.ExecutionLatencyPerRoute.Record(
+func (t *RelayerMetrics) TrackSuccessfulExecutionLatency(m *message.Message) {
+	executionLatency := time.Since(t.MessageEventTime[m.ID()]).Milliseconds() / 1000
+	t.ExecutionLatency.Record(context.Background(), executionLatency)
+	t.ExecutionLatencyPerRoute.Record(
 		context.Background(),
 		executionLatency,
 		t.Opts,
 		api.WithAttributes(attribute.Int64("source", int64(m.Source))),
-		api.WithAttributes(attribute.Int64("destination", int64(m.Destination))))
-	delete(t.messageEventTime, m.ID())
+		api.WithAttributes(attribute.Int64("destination", int64(m.Destination))),
+	)
+	delete(t.MessageEventTime, m.ID())
+}
+
+func (t *RelayerMetrics) TrackSuccessfulExecution(m *message.Message) {
+	executionLatency := time.Since(t.MessageEventTime[m.ID()]).Milliseconds() / 1000
+	t.ExecutionLatency.Record(context.Background(), executionLatency)
+	t.ExecutionLatencyPerRoute.Record(
+		context.Background(),
+		executionLatency,
+		t.Opts,
+		api.WithAttributes(attribute.Int64("source", int64(m.Source))),
+		api.WithAttributes(attribute.Int64("destination", int64(m.Destination))),
+	)
+	delete(t.MessageEventTime, m.ID())
+}
+
+func (t *RelayerMetrics) TrackBlockDelta(domainID uint8, head *big.Int, current *big.Int) {
+	t.BlockDeltaMap[domainID] = new(big.Int).Sub(head, current)
 }

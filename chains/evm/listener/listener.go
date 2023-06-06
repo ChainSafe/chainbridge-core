@@ -23,9 +23,14 @@ type ChainClient interface {
 	LatestBlock() (*big.Int, error)
 }
 
+type BlockDeltaMeter interface {
+	TrackBlockDelta(domainID uint8, head *big.Int, current *big.Int)
+}
+
 type EVMListener struct {
 	client        ChainClient
 	eventHandlers []EventHandler
+	metrics       BlockDeltaMeter
 
 	domainID           uint8
 	blockstore         *store.BlockStore
@@ -42,6 +47,7 @@ func NewEVMListener(
 	client ChainClient,
 	eventHandlers []EventHandler,
 	blockstore *store.BlockStore,
+	metrics BlockDeltaMeter,
 	domainID uint8,
 	blockRetryInterval time.Duration,
 	blockConfirmations *big.Int,
@@ -50,6 +56,7 @@ func NewEVMListener(
 	return &EVMListener{
 		log:                logger,
 		client:             client,
+		metrics:            metrics,
 		eventHandlers:      eventHandlers,
 		blockstore:         blockstore,
 		domainID:           domainID,
@@ -85,6 +92,7 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 				continue
 			}
 
+			l.metrics.TrackBlockDelta(l.domainID, head, endBlock)
 			l.log.Debug().Msgf("Fetching evm events for block range %s-%s", startBlock, endBlock)
 
 			for _, handler := range l.eventHandlers {

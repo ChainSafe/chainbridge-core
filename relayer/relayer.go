@@ -11,7 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type Metrics interface {
+type DepositMeter interface {
 	TrackDepositMessage(m *message.Message)
 	TrackExecutionError(m *message.Message)
 	TrackSuccessfulExecutionLatency(m *message.Message)
@@ -23,12 +23,12 @@ type RelayedChain interface {
 	DomainID() uint8
 }
 
-func NewRelayer(chains []RelayedChain, metrics Metrics, messageProcessors ...message.MessageProcessor) *Relayer {
+func NewRelayer(chains []RelayedChain, metrics DepositMeter, messageProcessors ...message.MessageProcessor) *Relayer {
 	return &Relayer{relayedChains: chains, messageProcessors: messageProcessors, metrics: metrics}
 }
 
 type Relayer struct {
-	metrics           Metrics
+	metrics           DepositMeter
 	relayedChains     []RelayedChain
 	registry          map[uint8]RelayedChain
 	messageProcessors []message.MessageProcessor

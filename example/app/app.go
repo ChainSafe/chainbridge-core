@@ -47,6 +47,21 @@ func Run() error {
 	}
 	blockstore := store.NewBlockStore(db)
 
+	mp, err := opentelemetry.InitMetricProvider(context.Background(), configuration.RelayerConfig.OpenTelemetryCollectorURL)
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err := mp.Shutdown(context.Background()); err != nil {
+			log.Error().Msgf("Error shutting down meter provider: %v", err)
+		}
+	}()
+
+	metrics, err := opentelemetry.NewRelayerMetrics(mp.Meter("relayer-metric-provider"), configuration.RelayerConfig.Env, configuration.RelayerConfig.Id)
+	if err != nil {
+		panic(err)
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	chains := []relayer.RelayedChain{}
 	for _, chainConfig := range configuration.ChainConfigs {
@@ -82,7 +97,7 @@ func Run() error {
 				eventListener := events.NewListener(client)
 				eventHandlers := make([]listener.EventHandler, 0)
 				eventHandlers = append(eventHandlers, listener.NewDepositEventHandler(eventListener, depositHandler, common.HexToAddress(config.Bridge), *config.GeneralChainConfig.Id))
-				evmListener := listener.NewEVMListener(client, eventHandlers, blockstore, *config.GeneralChainConfig.Id, config.BlockRetryInterval, config.BlockConfirmations, config.BlockInterval)
+				evmListener := listener.NewEVMListener(client, eventHandlers, blockstore, metrics, *config.GeneralChainConfig.Id, config.BlockRetryInterval, config.BlockConfirmations, config.BlockInterval)
 
 				mh := executor.NewEVMMessageHandler(bridgeContract)
 				mh.RegisterMessageHandler(config.Erc20Handler, executor.ERC20MessageHandler)
@@ -105,19 +120,6 @@ func Run() error {
 		}
 	}
 
-	mp, err := opentelemetry.InitMetricProvider(context.Background(), configuration.RelayerConfig.OpenTelemetryCollectorURL)
-	if err != nil {
-		panic(err)
-	}
-	defer func() {
-		if err := mp.Shutdown(context.Background()); err != nil {
-			log.Error().Msgf("Error shutting down meter provider: %v", err)
-		}
-	}()
-	metrics, err := opentelemetry.NewOpenTelemetry(mp.Meter("relayer-metric-provider"), configuration.RelayerConfig.Env, configuration.RelayerConfig.Id)
-	if err != nil {
-		panic(err)
-	}
 	r := relayer.NewRelayer(
 		chains,
 		metrics,
