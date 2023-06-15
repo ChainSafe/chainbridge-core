@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/big"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
@@ -68,6 +69,8 @@ type RelayerMetrics struct {
 	ExecutionLatencyPerRoute metric.Int64Histogram
 	BlockDelta               metric.Int64ObservableGauge
 	BlockDeltaMap            map[uint8]*big.Int
+
+	lock sync.Mutex
 }
 
 // NewRelayerMetrics initializes OpenTelemetry metrics
@@ -132,11 +135,17 @@ func NewRelayerMetrics(meter metric.Meter, attributes ...attribute.KeyValue) (*R
 // them to OpenTelemetry collector
 func (t *RelayerMetrics) TrackDepositMessage(m *message.Message) {
 	t.DepositEventCount.Add(context.Background(), 1, t.Opts, api.WithAttributes(attribute.Int64("source", int64(m.Source))))
+
+	t.lock.Lock()
+	defer t.lock.Unlock()
 	t.MessageEventTime[m.ID()] = time.Now()
 }
 
 func (t *RelayerMetrics) TrackExecutionError(m *message.Message) {
 	t.ExecutionErrorCount.Add(context.Background(), 1, t.Opts, api.WithAttributes(attribute.Int64("destination", int64(m.Source))))
+
+	t.lock.Lock()
+	defer t.lock.Unlock()
 	delete(t.MessageEventTime, m.ID())
 }
 
@@ -150,6 +159,9 @@ func (t *RelayerMetrics) TrackSuccessfulExecutionLatency(m *message.Message) {
 		api.WithAttributes(attribute.Int64("source", int64(m.Source))),
 		api.WithAttributes(attribute.Int64("destination", int64(m.Destination))),
 	)
+
+	t.lock.Lock()
+	defer t.lock.Unlock()
 	delete(t.MessageEventTime, m.ID())
 }
 
@@ -163,9 +175,15 @@ func (t *RelayerMetrics) TrackSuccessfulExecution(m *message.Message) {
 		api.WithAttributes(attribute.Int64("source", int64(m.Source))),
 		api.WithAttributes(attribute.Int64("destination", int64(m.Destination))),
 	)
+
+	t.lock.Lock()
+	defer t.lock.Unlock()
 	delete(t.MessageEventTime, m.ID())
 }
 
 func (t *RelayerMetrics) TrackBlockDelta(domainID uint8, head *big.Int, current *big.Int) {
+	t.lock.Lock()
+	defer t.lock.Unlock()
+
 	t.BlockDeltaMap[domainID] = new(big.Int).Sub(head, current)
 }
