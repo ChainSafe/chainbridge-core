@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"math/big"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/events"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/types"
@@ -38,8 +42,14 @@ func NewDepositEventHandler(eventListener EventListener, depositHandler DepositH
 }
 
 func (eh *DepositEventHandler) HandleEvent(startBlock *big.Int, endBlock *big.Int, msgChan chan []*message.Message) error {
-	deposits, err := eh.eventListener.FetchDeposits(context.Background(), eh.bridgeAddress, startBlock, endBlock)
+	tp := otel.GetTracerProvider()
+	ctxWithSpan, span := tp.Tracer("relayer-core-tracer").Start(context.Background(), "relayer.core.DepositEventHandler.HandleEvent")
+	defer span.End()
+	span.SetAttributes(attribute.String("startBlock", startBlock.String()), attribute.String("endBlock", endBlock.String()))
+
+	deposits, err := eh.eventListener.FetchDeposits(ctxWithSpan, eh.bridgeAddress, startBlock, endBlock)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return fmt.Errorf("unable to fetch deposit events because of: %+v", err)
 	}
 
@@ -55,6 +65,7 @@ func (eh *DepositEventHandler) HandleEvent(startBlock *big.Int, endBlock *big.In
 			m, err := eh.depositHandler.HandleDeposit(eh.domainID, d.DestinationDomainID, d.DepositNonce, d.ResourceID, d.Data, d.HandlerResponse)
 			if err != nil {
 				log.Error().Err(err).Str("start block", startBlock.String()).Str("end block", endBlock.String()).Uint8("domainID", eh.domainID).Msgf("%v", err)
+				span.SetStatus(codes.Error, err.Error())
 				return
 			}
 
@@ -68,6 +79,6 @@ func (eh *DepositEventHandler) HandleEvent(startBlock *big.Int, endBlock *big.In
 			msgChan <- d
 		}(deposits)
 	}
-
+	span.SetStatus(codes.Ok, "Deposits handled")
 	return nil
 }
