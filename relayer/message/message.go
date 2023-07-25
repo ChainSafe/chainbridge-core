@@ -54,7 +54,7 @@ type Message struct {
 	Type         TransferType
 }
 
-func (m *Message) PayloadToString() string {
+func (m *Message) payloadToString() string {
 	var payload bytes.Buffer
 	for _, v := range m.Payload {
 		bv, ok := v.([]byte)
