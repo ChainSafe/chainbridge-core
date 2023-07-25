@@ -66,21 +66,20 @@ func (r *Relayer) route(msgs []*message.Message) {
 	}
 
 	for _, m := range msgs {
+		log.Debug().Msgf("Routing message %+v to destination %v", m.String(), destChain.DomainID())
 		r.metrics.TrackDepositMessage(m)
-
 		for _, mp := range r.messageProcessors {
 			if err := mp(m); err != nil {
-				log.Error().Err(fmt.Errorf("error %w processing mesage %v", err, m))
+				log.Error().Err(fmt.Errorf("error %w processing mesage %v", err, m.String()))
 				return
 			}
 		}
 	}
 
-	log.Debug().Msgf("Sending messages %+v to destination %v", msgs, destChain.DomainID())
 	err := destChain.Write(msgs)
 	if err != nil {
 		for _, m := range msgs {
-			log.Err(err).Msgf("Failed sending messages %+v to destination %v", m, destChain.DomainID())
+			log.Err(err).Msgf("Failed sending message %s to destination %v", m.String(), destChain.DomainID())
 			r.metrics.TrackExecutionError(m)
 		}
 		return

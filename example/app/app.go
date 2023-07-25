@@ -38,6 +38,9 @@ import (
 )
 
 func Run() error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	configuration, err := config.GetConfig(viper.GetString(flags.ConfigFlagName))
 	if err != nil {
 		panic(err)
@@ -49,7 +52,9 @@ func Run() error {
 	}
 	blockstore := store.NewBlockStore(db)
 
-	mp, err := opentelemetry.InitMetricProvider(context.Background(), configuration.RelayerConfig.OpenTelemetryCollectorURL)
+	OTLPResource := opentelemetry.InitResource(fmt.Sprintf("Relayer-%s", configuration.RelayerConfig.Id))
+
+	mp, err := opentelemetry.InitMetricProvider(ctx, OTLPResource, configuration.RelayerConfig.OpenTelemetryCollectorURL)
 	if err != nil {
 		panic(err)
 	}
@@ -59,12 +64,21 @@ func Run() error {
 		}
 	}()
 
+	tp, err := opentelemetry.InitTracesProvider(ctx, OTLPResource, configuration.RelayerConfig.OpenTelemetryCollectorURL)
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			log.Error().Msgf("Error shutting down tracer provider: %v", err)
+		}
+	}()
+
 	metrics, err := opentelemetry.NewRelayerMetrics(mp.Meter("relayer-metric-provider"), attribute.String("relayerid", configuration.RelayerConfig.Id), attribute.String("env", configuration.RelayerConfig.Env))
 	if err != nil {
 		panic(err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
 	chains := []relayer.RelayedChain{}
 	for _, chainConfig := range configuration.ChainConfigs {
 		switch chainConfig["type"] {
@@ -128,7 +142,6 @@ func Run() error {
 	)
 
 	errChn := make(chan error)
-	defer cancel()
 	go r.Start(ctx, errChn)
 
 	sysErr := make(chan os.Signal, 1)

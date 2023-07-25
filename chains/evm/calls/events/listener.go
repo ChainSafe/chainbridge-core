@@ -5,6 +5,11 @@ import (
 	"math/big"
 	"strings"
 
+	"go.opentelemetry.io/otel/codes"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -30,8 +35,14 @@ func NewListener(client ChainClient) *Listener {
 }
 
 func (l *Listener) FetchDeposits(ctx context.Context, contractAddress common.Address, startBlock *big.Int, endBlock *big.Int) ([]*Deposit, error) {
+	tp := otel.GetTracerProvider()
+	ctx, span := tp.Tracer("relayer-core-tracer").Start(context.Background(), "relayer.core.Listener.FetchDeposits")
+	defer span.End()
+	span.SetAttributes(attribute.String("startBlock", startBlock.String()), attribute.String("endBlock", endBlock.String()))
+
 	logs, err := l.client.FetchEventLogs(ctx, contractAddress, string(DepositSig), startBlock, endBlock)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 	deposits := make([]*Deposit, 0)
@@ -40,6 +51,7 @@ func (l *Listener) FetchDeposits(ctx context.Context, contractAddress common.Add
 		d, err := l.UnpackDeposit(l.abi, dl.Data)
 		if err != nil {
 			log.Error().Msgf("failed unpacking deposit event log: %v", err)
+			span.RecordError(err)
 			continue
 		}
 
@@ -48,7 +60,7 @@ func (l *Listener) FetchDeposits(ctx context.Context, contractAddress common.Add
 
 		deposits = append(deposits, d)
 	}
-
+	span.SetStatus(codes.Ok, "Deposits fetched")
 	return deposits, nil
 }
 

@@ -69,7 +69,7 @@ func (c *EVMChain) Write(msg []*message.Message) error {
 		go func(msg *message.Message) {
 			err := c.writer.Execute(msg)
 			if err != nil {
-				log.Err(err).Msgf("Failed writing message %v", msg)
+				log.Err(err).Msgf("Failed writing message %v", msg.String())
 			}
 		}(msg)
 	}
