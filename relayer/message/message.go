@@ -76,7 +76,7 @@ func (m *Message) String() string {
 				Payload: %s, 
 				Metadata: %+v, 
 				Type: %s`,
-		m.Source, m.Destination, m.DepositNonce, m.ResourceId, m.PayloadToString(), m.Metadata, m.Type)
+		m.Source, m.Destination, m.DepositNonce, m.ResourceId, m.payloadToString(), m.Metadata, m.Type)
 }
 
 func NewMessage(
