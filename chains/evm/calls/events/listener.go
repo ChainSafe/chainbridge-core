@@ -36,11 +36,11 @@ func NewListener(client ChainClient) *Listener {
 
 func (l *Listener) FetchDeposits(ctx context.Context, contractAddress common.Address, startBlock *big.Int, endBlock *big.Int) ([]*Deposit, error) {
 	tp := otel.GetTracerProvider()
-	ctx, span := tp.Tracer("relayer-core-tracer").Start(context.Background(), "relayer.core.Listener.FetchDeposits")
+	ctxWithSpan, span := tp.Tracer("relayer-core-tracer").Start(ctx, "relayer.core.Listener.FetchDeposits")
 	defer span.End()
 	span.SetAttributes(attribute.String("startBlock", startBlock.String()), attribute.String("endBlock", endBlock.String()))
 
-	logs, err := l.client.FetchEventLogs(ctx, contractAddress, string(DepositSig), startBlock, endBlock)
+	logs, err := l.client.FetchEventLogs(ctxWithSpan, contractAddress, string(DepositSig), startBlock, endBlock)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err

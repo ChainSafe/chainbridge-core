@@ -29,6 +29,9 @@ func InitTracesProvider(ctx context.Context, res *sdkresource.Resource, agentURL
 	traceHTTP := otlptracehttp.NewClient(traceOptions...)
 
 	traceExp, err := otlptrace.New(ctx, traceHTTP)
+	if err != nil {
+		return nil, err
+	}
 	tp := tracesdk.NewTracerProvider(
 		tracesdk.WithBatcher(traceExp),
 		tracesdk.WithResource(res),

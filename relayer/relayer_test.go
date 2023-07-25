@@ -61,7 +61,7 @@ func (s *RouteTestSuite) TestAdjustDecimalsForERC20AmountMessageProcessor() {
 
 func (s *RouteTestSuite) TestLogsErrorIfMessageProcessorReturnsError() {
 	s.mockMetrics.EXPECT().TrackDepositMessage(gomock.Any())
-	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1))
+	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1)).Times(2)
 	relayer := NewRelayer(
 		[]RelayedChain{},
 		s.mockMetrics,
