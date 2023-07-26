@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"math/big"
 
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/events"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 type EventListener interface {
@@ -46,7 +45,7 @@ func (eh *DepositEventHandler) HandleEvent(startBlock *big.Int, endBlock *big.In
 	ctxWithSpan, span := tp.Tracer("relayer-core-tracer").Start(context.Background(), "relayer.core.DepositEventHandler.HandleEvent")
 	defer span.End()
 	span.SetAttributes(attribute.String("startBlock", startBlock.String()), attribute.String("endBlock", endBlock.String()))
-
+	logger := log.With().Str("trace_id", span.SpanContext().TraceID().String()).Logger()
 	deposits, err := eh.eventListener.FetchDeposits(ctxWithSpan, eh.bridgeAddress, startBlock, endBlock)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
@@ -64,12 +63,12 @@ func (eh *DepositEventHandler) HandleEvent(startBlock *big.Int, endBlock *big.In
 
 			m, err := eh.depositHandler.HandleDeposit(eh.domainID, d.DestinationDomainID, d.DepositNonce, d.ResourceID, d.Data, d.HandlerResponse)
 			if err != nil {
-				log.Error().Err(err).Str("start block", startBlock.String()).Str("end block", endBlock.String()).Uint8("domainID", eh.domainID).Msgf("%v", err)
+				logger.Error().Err(err).Str("start block", startBlock.String()).Str("end block", endBlock.String()).Uint8("domainID", eh.domainID).Msgf("%v", err)
 				span.SetStatus(codes.Error, err.Error())
 				return
 			}
 
-			log.Debug().Msgf("Resolved message %+v in block range: %s-%s", m, startBlock.String(), endBlock.String())
+			logger.Debug().Str("msg_id", m.ID()).Msgf("Resolved message %s in block range: %s-%s", m.String(), startBlock.String(), endBlock.String())
 			domainDeposits[m.Destination] = append(domainDeposits[m.Destination], m)
 		}(d)
 	}

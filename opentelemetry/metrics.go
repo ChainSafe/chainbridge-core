@@ -17,7 +17,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
 
-func InitResource(serviceName string) *sdkresource.Resource {
+func InitResource(serviceName, env string) *sdkresource.Resource {
 	res, _ := sdkresource.New(context.Background(),
 		sdkresource.WithProcess(),
 		sdkresource.WithTelemetrySDK(),
@@ -25,6 +25,7 @@ func InitResource(serviceName string) *sdkresource.Resource {
 		sdkresource.WithAttributes(
 			semconv.ServiceName(serviceName),
 		),
+		sdkresource.WithAttributes(attribute.String("env", env)),
 	)
 	return res
 }

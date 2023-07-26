@@ -64,18 +64,12 @@ func (m *Message) payloadToString() string {
 		}
 		payload.Write(bv)
 	}
-	return payload.String()
+	return fmt.Sprintf("%x", payload)
 }
 
 func (m *Message) String() string {
 	return fmt.Sprintf(
-		`Source: %d; 
-				Destination: %d, 
-				DepositNonce: %d, 
-				ResourceID: %x, 
-				Payload: %s, 
-				Metadata: %+v, 
-				Type: %s`,
+		`Source: %d;Destination: %d,DepositNonce: %d,ResourceID: %x,Payload: %s,Metadata: %+v,Type: %s`,
 		m.Source, m.Destination, m.DepositNonce, m.ResourceId, m.payloadToString(), m.Metadata, m.Type)
 }
 

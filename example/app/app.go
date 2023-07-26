@@ -52,7 +52,7 @@ func Run() error {
 	}
 	blockstore := store.NewBlockStore(db)
 
-	OTLPResource := opentelemetry.InitResource(fmt.Sprintf("Relayer-%s", configuration.RelayerConfig.Id))
+	OTLPResource := opentelemetry.InitResource(fmt.Sprintf("Relayer-%s", configuration.RelayerConfig.Id), configuration.RelayerConfig.Env)
 
 	mp, err := opentelemetry.InitMetricProvider(ctx, OTLPResource, configuration.RelayerConfig.OpenTelemetryCollectorURL)
 	if err != nil {
