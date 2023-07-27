@@ -1,7 +1,7 @@
 # Copyright 2020 ChainSafe Systems
 # SPDX-License-Identifier: LGPL-3.0-only
 
-FROM  golang:1.18-stretch AS builder
+FROM  golang:1.19 AS builder
 ADD . /src
 WORKDIR /src
 RUN cd /src && echo $(ls -1 /src)
