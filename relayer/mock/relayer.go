@@ -121,15 +121,15 @@ func (mr *MockRelayedChainMockRecorder) PollEvents(ctx, sysErr, msgChan interfac
 }
 
 // Write mocks base method.
-func (m *MockRelayedChain) Write(messages []*message.Message) error {
+func (m *MockRelayedChain) Write(ctx context.Context, messages []*message.Message) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Write", messages)
+	ret := m.ctrl.Call(m, "Write", ctx, messages)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Write indicates an expected call of Write.
-func (mr *MockRelayedChainMockRecorder) Write(messages interface{}) *gomock.Call {
+func (mr *MockRelayedChainMockRecorder) Write(ctx, messages interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Write", reflect.TypeOf((*MockRelayedChain)(nil).Write), messages)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Write", reflect.TypeOf((*MockRelayedChain)(nil).Write), ctx, messages)
 }
