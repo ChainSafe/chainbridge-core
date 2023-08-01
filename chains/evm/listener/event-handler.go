@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math/big"
 
+	traceapi "go.opentelemetry.io/otel/trace"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/events"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/types"
@@ -68,6 +70,7 @@ func (eh *DepositEventHandler) HandleEvent(ctx context.Context, startBlock *big.
 			}
 
 			logger.Debug().Str("msg_id", m.ID()).Msgf("Resolved message %s in block range: %s-%s", m.String(), startBlock.String(), endBlock.String())
+			span.AddEvent("Resolved message", traceapi.WithAttributes(attribute.String("msg_id", m.ID()), attribute.String("msg_type", string(m.Type))))
 			domainDeposits[m.Destination] = append(domainDeposits[m.Destination], m)
 		}(d)
 	}
