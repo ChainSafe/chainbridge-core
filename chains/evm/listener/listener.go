@@ -77,8 +77,7 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 		case <-ctx.Done():
 			return
 		default:
-			tp := otel.GetTracerProvider()
-			ctxWithSpan, span := tp.Tracer("relayer-listener").Start(ctx, "relayer.core.EVMListener.ListenToEvents")
+			ctxWithSpan, span := otel.Tracer("relayer-core").Start(ctx, "relayer.core.EVMListener.ListenToEvents")
 			logger := l.log.With().Str("trace_id", span.SpanContext().TraceID().String()).Logger()
 			head, err := l.client.LatestBlock()
 			if err != nil {

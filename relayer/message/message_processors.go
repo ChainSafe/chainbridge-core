@@ -19,8 +19,7 @@ type MessageProcessor func(ctx context.Context, message *Message) error
 // using this  params processor converts amount for one chain to another for provided decimals with floor rounding
 func AdjustDecimalsForERC20AmountMessageProcessor(args ...interface{}) MessageProcessor {
 	return func(ctx context.Context, m *Message) error {
-		tp := otel.GetTracerProvider()
-		_, span := tp.Tracer("relayer-route").Start(ctx, "relayer.core.MessageProcessor.AdjustDecimalsForERC20AmountMessageProcessor")
+		_, span := otel.Tracer("relayer-core").Start(ctx, "relayer.core.MessageProcessor.AdjustDecimalsForERC20AmountMessageProcessor")
 		span.SetAttributes(attribute.String("msg_id", m.ID()), attribute.String("msg_type", string(m.Type)))
 		defer span.End()
 		if len(args) == 0 {

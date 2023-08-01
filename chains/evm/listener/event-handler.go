@@ -41,8 +41,7 @@ func NewDepositEventHandler(eventListener EventListener, depositHandler DepositH
 }
 
 func (eh *DepositEventHandler) HandleEvent(ctx context.Context, startBlock *big.Int, endBlock *big.Int, msgChan chan []*message.Message) error {
-	tp := otel.GetTracerProvider()
-	ctxWithSpan, span := tp.Tracer("relayer-listener").Start(ctx, "relayer.core.DepositEventHandler.HandleEvent")
+	ctxWithSpan, span := otel.Tracer("relayer-core").Start(ctx, "relayer.core.DepositEventHandler.HandleEvent")
 	defer span.End()
 	span.SetAttributes(attribute.String("startBlock", startBlock.String()), attribute.String("endBlock", endBlock.String()))
 	logger := log.With().Str("trace_id", span.SpanContext().TraceID().String()).Logger()

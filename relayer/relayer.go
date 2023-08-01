@@ -64,8 +64,7 @@ func (r *Relayer) Start(ctx context.Context, sysErr chan error) {
 
 // Route function runs destination writer by mapping DestinationID from message to registered writer.
 func (r *Relayer) route(msgs []*message.Message) {
-	tp := otel.GetTracerProvider()
-	ctxWithSpan, span := tp.Tracer("relayer-route").Start(context.Background(), "relayer.core.Route")
+	ctxWithSpan, span := otel.Tracer("relayer-core").Start(context.Background(), "relayer.core.Route")
 	defer span.End()
 
 	destChain, ok := r.registry[msgs[0].Destination]
