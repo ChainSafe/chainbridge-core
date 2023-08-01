@@ -6,10 +6,10 @@ ADD . /src
 WORKDIR /src
 RUN cd /src && echo $(ls -1 /src)
 RUN go mod download
-RUN go build -o /bridge ./example/
+RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -o /bridge ./example/
 
 # final stage
-FROM debian:stretch-slim
+FROM debian:stable-slim
 COPY --from=builder /bridge ./
 RUN chmod +x ./bridge
 

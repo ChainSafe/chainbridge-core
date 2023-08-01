@@ -52,7 +52,7 @@ services:
     build:
       context: ../.
       dockerfile: ./example/Dockerfile
-    command: sh -c "sleep 5 && ./bridge run --config /cfg/config_evm-evm_1.json --fresh"
+    command: run --config /cfg/config_evm-evm_1.json --fresh
     depends_on:
       - evm1-1
       - evm2-1
@@ -65,7 +65,7 @@ services:
     build:
       context: ../.
       dockerfile: ./example/Dockerfile
-    command: sh -c "sleep 5 && ./bridge run --config /cfg/config_evm-evm_2.json --fresh"
+    command: run --config /cfg/config_evm-evm_2.json --fresh
     depends_on:
       - evm1-1
       - evm2-1
@@ -78,7 +78,7 @@ services:
     build:
       context: ../.
       dockerfile: ./example/Dockerfile
-    command: sh -c "sleep 5 && ./bridge run --config /cfg/config_evm-evm_3.json --fresh"
+    command: run --config /cfg/config_evm-evm_3.json
     depends_on:
       - evm1-1
       - evm2-1
