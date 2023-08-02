@@ -76,12 +76,12 @@ func (r *Relayer) route(msgs []*message.Message) {
 
 	log.Debug().Msgf("Routing %d messages to destination %d", len(msgs), destChain.DomainID())
 	for _, m := range msgs {
-		span.AddEvent("Routing message", traceapi.WithAttributes(attribute.String("msg_id", m.ID()), attribute.String("msg_type", string(m.Type))))
-		log.Debug().Str("msg_id", m.ID()).Msgf("Routing message %+v", m.String())
+		span.AddEvent("Routing message", traceapi.WithAttributes(attribute.String("msg.id", m.ID()), attribute.String("msg.type", string(m.Type))))
+		log.Debug().Str("msg.id", m.ID()).Msgf("Routing message %+v", m.String())
 		r.metrics.TrackDepositMessage(m)
 		for _, mp := range r.messageProcessors {
 			if err := mp(ctxWithSpan, m); err != nil {
-				log.Error().Str("msg_id", m.ID()).Err(fmt.Errorf("error %w processing message %v", err, m.String()))
+				log.Error().Str("msg.id", m.ID()).Err(fmt.Errorf("error %w processing message %v", err, m.String()))
 				return
 			}
 		}
@@ -90,7 +90,7 @@ func (r *Relayer) route(msgs []*message.Message) {
 	err := destChain.Write(ctxWithSpan, msgs)
 	if err != nil {
 		for _, m := range msgs {
-			log.Err(err).Str("msg_id", m.ID()).Msgf("Failed sending message %s to destination %v", m.String(), destChain.DomainID())
+			log.Err(err).Str("msg.id", m.ID()).Msgf("Failed sending message %s to destination %v", m.String(), destChain.DomainID())
 			r.metrics.TrackExecutionError(m)
 		}
 		return

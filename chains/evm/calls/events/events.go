@@ -2,6 +2,7 @@ package events
 
 import (
 	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -41,5 +42,5 @@ type Deposit struct {
 }
 
 func (d *Deposit) TraceEventAttributes() []attribute.KeyValue {
-	return []attribute.KeyValue{attribute.Int("deposit_dstdomain", int(d.DestinationDomainID)), attribute.String("deposit_rID", fmt.Sprintf("%x", d.ResourceID)), attribute.String("tx_sender", d.SenderAddress.Hex())}
+	return []attribute.KeyValue{attribute.Int("deposit.dstdomain", int(d.DestinationDomainID)), attribute.String("deposit.rID", fmt.Sprintf("%x", d.ResourceID)), attribute.String("tx.sender", d.SenderAddress.Hex())}
 }

@@ -45,7 +45,7 @@ func (mh *EVMMessageHandler) HandleMessage(m *message.Message) (*proposal.Propos
 	if err != nil {
 		return nil, err
 	}
-	log.Info().Str("msg_id", m.ID()).Msg("Handling new message")
+	log.Info().Str("msg.id", m.ID()).Msg("Handling new message")
 	prop, err := handleMessage(m, addr, *mh.handlerMatcher.ContractAddress())
 	if err != nil {
 		return nil, err

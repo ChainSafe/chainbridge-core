@@ -20,7 +20,7 @@ type MessageProcessor func(ctx context.Context, message *Message) error
 func AdjustDecimalsForERC20AmountMessageProcessor(args ...interface{}) MessageProcessor {
 	return func(ctx context.Context, m *Message) error {
 		_, span := otel.Tracer("relayer-core").Start(ctx, "relayer.core.MessageProcessor.AdjustDecimalsForERC20AmountMessageProcessor")
-		span.SetAttributes(attribute.String("msg_id", m.ID()), attribute.String("msg_type", string(m.Type)))
+		span.SetAttributes(attribute.String("msg.id", m.ID()), attribute.String("msg.type", string(m.Type)))
 		defer span.End()
 		if len(args) == 0 {
 			span.SetStatus(codes.Error, "processor requires 1 argument")
@@ -51,7 +51,7 @@ func AdjustDecimalsForERC20AmountMessageProcessor(args ...interface{}) MessagePr
 			diff := sourceDecimal - destDecimal
 			roundedAmount := big.NewInt(0)
 			roundedAmount.Div(amount, big.NewInt(0).Exp(big.NewInt(10), big.NewInt(0).SetUint64(diff), nil))
-			log.Info().Str("msg_id", m.ID()).Msgf("amount %s rounded to %s from chain %v to chain %v", amount.String(), roundedAmount.String(), m.Source, m.Destination)
+			log.Info().Str("msg.id", m.ID()).Msgf("amount %s rounded to %s from chain %v to chain %v", amount.String(), roundedAmount.String(), m.Source, m.Destination)
 			m.Payload[0] = roundedAmount.Bytes()
 			span.SetStatus(codes.Ok, "msg processed")
 			return nil
@@ -61,7 +61,7 @@ func AdjustDecimalsForERC20AmountMessageProcessor(args ...interface{}) MessagePr
 			roundedAmount := big.NewInt(0)
 			roundedAmount.Mul(amount, big.NewInt(0).Exp(big.NewInt(10), big.NewInt(0).SetUint64(diff), nil))
 			m.Payload[0] = roundedAmount.Bytes()
-			log.Info().Str("msg_id", m.ID()).Msgf("amount %s rounded to %s from chain %v to chain %v", amount.String(), roundedAmount.String(), m.Source, m.Destination)
+			log.Info().Str("msg.id", m.ID()).Msgf("amount %s rounded to %s from chain %v to chain %v", amount.String(), roundedAmount.String(), m.Source, m.Destination)
 		}
 		return nil
 	}

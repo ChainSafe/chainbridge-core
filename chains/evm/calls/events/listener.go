@@ -56,7 +56,7 @@ func (l *Listener) FetchDeposits(ctx context.Context, contractAddress common.Add
 
 		d.SenderAddress = common.BytesToAddress(dl.Topics[1].Bytes())
 		logger.Debug().Msgf("Found deposit log in block: %d, TxHash: %s, contractAddress: %s, sender: %s", dl.BlockNumber, dl.TxHash, dl.Address, d.SenderAddress)
-		span.AddEvent("Found deposit", traceapi.WithAttributes(append(d.TraceEventsttributes(), attribute.String("tx_hash", dl.TxHash.Hex()))...))
+		span.AddEvent("Found deposit", traceapi.WithAttributes(append(d.TraceEventAttributes(), attribute.String("tx.hash", dl.TxHash.Hex()))...))
 		deposits = append(deposits, d)
 	}
 	span.SetStatus(codes.Ok, "Deposits fetched")

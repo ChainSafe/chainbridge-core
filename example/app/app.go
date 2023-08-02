@@ -74,7 +74,7 @@ func Run() error {
 		}
 	}()
 
-	metrics, err := opentelemetry.NewRelayerMetrics(mp.Meter("relayer-metric-provider"), attribute.String("relayerid", configuration.RelayerConfig.Id), attribute.String("env", configuration.RelayerConfig.Env))
+	metrics, err := opentelemetry.NewRelayerMetrics(mp.Meter("relayer-metric-provider"), attribute.String("relayer.id", configuration.RelayerConfig.Id), attribute.String("env", configuration.RelayerConfig.Env))
 	if err != nil {
 		panic(err)
 	}

@@ -69,8 +69,8 @@ func (eh *DepositEventHandler) HandleEvent(ctx context.Context, startBlock *big.
 				return
 			}
 
-			logger.Debug().Str("msg_id", m.ID()).Msgf("Resolved message %s in block range: %s-%s", m.String(), startBlock.String(), endBlock.String())
-			span.AddEvent("Resolved message", traceapi.WithAttributes(attribute.String("msg_id", m.ID()), attribute.String("msg_type", string(m.Type))))
+			logger.Debug().Str("msg.id", m.ID()).Msgf("Resolved message %s in block range: %s-%s", m.String(), startBlock.String(), endBlock.String())
+			span.AddEvent("Resolved message", traceapi.WithAttributes(attribute.String("msg.id", m.ID()), attribute.String("msg.type", string(m.Type))))
 			domainDeposits[m.Destination] = append(domainDeposits[m.Destination], m)
 		}(d)
 	}
