@@ -40,6 +40,6 @@ type Deposit struct {
 	HandlerResponse []byte
 }
 
-func (d *Deposit) TraceEventsttributes() []attribute.KeyValue {
+func (d *Deposit) TraceEventAttributes() []attribute.KeyValue {
 	return []attribute.KeyValue{attribute.Int("deposit_dstdomain", int(d.DestinationDomainID)), attribute.String("deposit_rID", fmt.Sprintf("%x", d.ResourceID)), attribute.String("tx_sender", d.SenderAddress.Hex())}
 }
