@@ -17,19 +17,20 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
 
-func initResource() *sdkresource.Resource {
+func InitResource(serviceName, env string) *sdkresource.Resource {
 	res, _ := sdkresource.New(context.Background(),
 		sdkresource.WithProcess(),
 		sdkresource.WithTelemetrySDK(),
 		sdkresource.WithHost(),
 		sdkresource.WithAttributes(
-			semconv.ServiceName("relayer"),
+			semconv.ServiceName(serviceName),
 		),
+		sdkresource.WithAttributes(attribute.String("env", env)),
 	)
 	return res
 }
 
-func InitMetricProvider(ctx context.Context, agentURL string) (*sdkmetric.MeterProvider, error) {
+func InitMetricProvider(ctx context.Context, res *sdkresource.Resource, agentURL string) (*sdkmetric.MeterProvider, error) {
 	collectorURL, err := url.Parse(agentURL)
 	if err != nil {
 		return nil, err
@@ -52,7 +53,7 @@ func InitMetricProvider(ctx context.Context, agentURL string) (*sdkmetric.MeterP
 
 	meterProvider := sdkmetric.NewMeterProvider(
 		sdkmetric.WithReader(httpMetricReader),
-		sdkmetric.WithResource(initResource()),
+		sdkmetric.WithResource(res),
 	)
 
 	return meterProvider, nil

@@ -78,7 +78,7 @@ services:
     build:
       context: ../.
       dockerfile: ./example/Dockerfile
-    command: run --config /cfg/config_evm-evm_3.json --fresh
+    command: run --config /cfg/config_evm-evm_3.json
     depends_on:
       - evm1-1
       - evm2-1

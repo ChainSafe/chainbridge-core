@@ -1,6 +1,7 @@
 package listener_test
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"testing"
@@ -39,7 +40,7 @@ func (s *DepositHandlerTestSuite) Test_FetchDepositFails() {
 	s.mockEventListener.EXPECT().FetchDeposits(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return([]*events.Deposit{}, fmt.Errorf("error"))
 
 	msgChan := make(chan []*message.Message, 1)
-	err := s.depositEventHandler.HandleEvent(big.NewInt(0), big.NewInt(5), msgChan)
+	err := s.depositEventHandler.HandleEvent(context.Background(), big.NewInt(0), big.NewInt(5), msgChan)
 
 	s.NotNil(err)
 	s.Equal(len(msgChan), 0)
@@ -83,7 +84,7 @@ func (s *DepositHandlerTestSuite) Test_HandleDepositFails_ExecutionContinue() {
 	)
 
 	msgChan := make(chan []*message.Message, 2)
-	err := s.depositEventHandler.HandleEvent(big.NewInt(0), big.NewInt(5), msgChan)
+	err := s.depositEventHandler.HandleEvent(context.Background(), big.NewInt(0), big.NewInt(5), msgChan)
 	msgs := <-msgChan
 
 	s.Nil(err)
@@ -130,7 +131,7 @@ func (s *DepositHandlerTestSuite) Test_HandleDepositPanis_ExecutionContinues() {
 	)
 
 	msgChan := make(chan []*message.Message, 2)
-	err := s.depositEventHandler.HandleEvent(big.NewInt(0), big.NewInt(5), msgChan)
+	err := s.depositEventHandler.HandleEvent(context.Background(), big.NewInt(0), big.NewInt(5), msgChan)
 	msgs := <-msgChan
 
 	s.Nil(err)
@@ -178,7 +179,7 @@ func (s *DepositHandlerTestSuite) Test_SuccessfulHandleDeposit() {
 	)
 
 	msgChan := make(chan []*message.Message, 2)
-	err := s.depositEventHandler.HandleEvent(big.NewInt(0), big.NewInt(5), msgChan)
+	err := s.depositEventHandler.HandleEvent(context.Background(), big.NewInt(0), big.NewInt(5), msgChan)
 	msgs := <-msgChan
 
 	s.Nil(err)

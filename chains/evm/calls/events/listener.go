@@ -10,6 +10,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	traceapi "go.opentelemetry.io/otel/trace"
 )
 
 type ChainClient interface {
@@ -30,8 +34,14 @@ func NewListener(client ChainClient) *Listener {
 }
 
 func (l *Listener) FetchDeposits(ctx context.Context, contractAddress common.Address, startBlock *big.Int, endBlock *big.Int) ([]*Deposit, error) {
-	logs, err := l.client.FetchEventLogs(ctx, contractAddress, string(DepositSig), startBlock, endBlock)
+	ctxWithSpan, span := otel.Tracer("relayer-core").Start(ctx, "relayer.core.Listener.FetchDeposits")
+	defer span.End()
+	span.SetAttributes(attribute.String("startBlock", startBlock.String()), attribute.String("endBlock", endBlock.String()))
+	logger := log.With().Str("trace_id", span.SpanContext().TraceID().String()).Logger()
+
+	logs, err := l.client.FetchEventLogs(ctxWithSpan, contractAddress, string(DepositSig), startBlock, endBlock)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 	deposits := make([]*Deposit, 0)
@@ -39,16 +49,17 @@ func (l *Listener) FetchDeposits(ctx context.Context, contractAddress common.Add
 	for _, dl := range logs {
 		d, err := l.UnpackDeposit(l.abi, dl.Data)
 		if err != nil {
-			log.Error().Msgf("failed unpacking deposit event log: %v", err)
+			logger.Error().Msgf("failed unpacking deposit event log: %v", err)
+			span.RecordError(err)
 			continue
 		}
 
 		d.SenderAddress = common.BytesToAddress(dl.Topics[1].Bytes())
-		log.Debug().Msgf("Found deposit log in block: %d, TxHash: %s, contractAddress: %s, sender: %s", dl.BlockNumber, dl.TxHash, dl.Address, d.SenderAddress)
-
+		logger.Debug().Msgf("Found deposit log in block: %d, TxHash: %s, contractAddress: %s, sender: %s", dl.BlockNumber, dl.TxHash, dl.Address, d.SenderAddress)
+		span.AddEvent("Found deposit", traceapi.WithAttributes(append(d.TraceEventAttributes(), attribute.String("tx.hash", dl.TxHash.Hex()))...))
 		deposits = append(deposits, d)
 	}
-
+	span.SetStatus(codes.Ok, "Deposits fetched")
 	return deposits, nil
 }
 

@@ -1,9 +1,12 @@
 package events
 
 import (
+	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type EventSig string
@@ -36,4 +39,8 @@ type Deposit struct {
 	// ERC721Handler: responds with deposited token metadata acquired by calling a tokenURI method in the token contract
 	// GenericHandler: responds with the raw bytes returned from the call to the target contract
 	HandlerResponse []byte
+}
+
+func (d *Deposit) TraceEventAttributes() []attribute.KeyValue {
+	return []attribute.KeyValue{attribute.Int("deposit.dstdomain", int(d.DestinationDomainID)), attribute.String("deposit.rID", fmt.Sprintf("%x", d.ResourceID)), attribute.String("tx.sender", d.SenderAddress.Hex())}
 }
