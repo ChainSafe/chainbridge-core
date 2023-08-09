@@ -78,7 +78,7 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 			return
 		default:
 			ctxWithSpan, span := otel.Tracer("relayer-core").Start(ctx, "relayer.core.EVMListener.ListenToEvents")
-			logger := l.log.With().Str("trace_id", span.SpanContext().TraceID().String()).Logger()
+			logger := l.log.With().Str("dd.trace_id", span.SpanContext().TraceID().String()).Logger()
 			head, err := l.client.LatestBlock()
 			if err != nil {
 				logger.Error().Err(err).Msg("Unable to get latest block")
