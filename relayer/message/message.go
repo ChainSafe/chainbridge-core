@@ -72,5 +72,5 @@ func NewMessage(
 }
 
 func (m Message) ID() string {
-	return strconv.FormatInt(int64(m.Source), 10) + "-" + strconv.FormatInt(int64(m.DepositNonce), 10)
+	return strconv.FormatInt(int64(m.Source), 10) + "-" + strconv.FormatInt(int64(m.Destination), 10) + "-" + strconv.FormatInt(int64(m.DepositNonce), 10)
 }
