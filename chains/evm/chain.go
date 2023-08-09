@@ -18,7 +18,7 @@ type EventListener interface {
 }
 
 type ProposalExecutor interface {
-	Execute(message *message.Message) error
+	Execute(ctx context.Context, message *message.Message) error
 }
 
 // EVMChain is struct that aggregates all data required for
@@ -64,12 +64,12 @@ func (c *EVMChain) PollEvents(ctx context.Context, sysErr chan<- error, msgChan 
 	go c.listener.ListenToEvents(ctx, startBlock, msgChan, sysErr)
 }
 
-func (c *EVMChain) Write(msg []*message.Message) error {
+func (c *EVMChain) Write(ctx context.Context, msg []*message.Message) error {
 	for _, msg := range msg {
 		go func(msg *message.Message) {
-			err := c.writer.Execute(msg)
+			err := c.writer.Execute(ctx, msg)
 			if err != nil {
-				log.Err(err).Msgf("Failed writing message %v", msg)
+				log.Err(err).Msgf("Failed writing message %v", msg.String())
 			}
 		}(msg)
 	}

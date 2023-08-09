@@ -1,6 +1,7 @@
 package relayer
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"testing"
@@ -50,7 +51,7 @@ func (s *RouteTestSuite) TestAdjustDecimalsForERC20AmountMessageProcessor() {
 			a.Bytes(), // 145.5567 tokens
 		},
 	}
-	err := message.AdjustDecimalsForERC20AmountMessageProcessor(map[uint8]uint64{1: 18, 2: 2})(msg)
+	err := message.AdjustDecimalsForERC20AmountMessageProcessor(map[uint8]uint64{1: 18, 2: 2})(context.Background(), msg)
 	s.Nil(err)
 	amount := new(big.Int).SetBytes(msg.Payload[0].([]byte))
 	if amount.Cmp(big.NewInt(14555)) != 0 {
@@ -61,11 +62,11 @@ func (s *RouteTestSuite) TestAdjustDecimalsForERC20AmountMessageProcessor() {
 
 func (s *RouteTestSuite) TestLogsErrorIfMessageProcessorReturnsError() {
 	s.mockMetrics.EXPECT().TrackDepositMessage(gomock.Any())
-	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1))
+	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1)).Times(2)
 	relayer := NewRelayer(
 		[]RelayedChain{},
 		s.mockMetrics,
-		func(m *message.Message) error { return fmt.Errorf("error") },
+		func(ctx context.Context, m *message.Message) error { return fmt.Errorf("error") },
 	)
 	relayer.addRelayedChain(s.mockRelayedChain)
 
@@ -78,11 +79,11 @@ func (s *RouteTestSuite) TestWriteFail() {
 	s.mockMetrics.EXPECT().TrackDepositMessage(gomock.Any())
 	s.mockMetrics.EXPECT().TrackExecutionError(gomock.Any())
 	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1)).Times(3)
-	s.mockRelayedChain.EXPECT().Write(gomock.Any()).Return(fmt.Errorf("error"))
+	s.mockRelayedChain.EXPECT().Write(gomock.Any(), gomock.Any()).Return(fmt.Errorf("error"))
 	relayer := NewRelayer(
 		[]RelayedChain{},
 		s.mockMetrics,
-		func(m *message.Message) error { return nil },
+		func(ctx context.Context, m *message.Message) error { return nil },
 	)
 	relayer.addRelayedChain(s.mockRelayedChain)
 
@@ -95,11 +96,11 @@ func (s *RouteTestSuite) TestWritesToDestChainIfMessageValid() {
 	s.mockMetrics.EXPECT().TrackDepositMessage(gomock.Any())
 	s.mockMetrics.EXPECT().TrackSuccessfulExecutionLatency(gomock.Any())
 	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1)).Times(2)
-	s.mockRelayedChain.EXPECT().Write(gomock.Any())
+	s.mockRelayedChain.EXPECT().Write(gomock.Any(), gomock.Any())
 	relayer := NewRelayer(
 		[]RelayedChain{},
 		s.mockMetrics,
-		func(m *message.Message) error { return nil },
+		func(ctx context.Context, m *message.Message) error { return nil },
 	)
 	relayer.addRelayedChain(s.mockRelayedChain)
 

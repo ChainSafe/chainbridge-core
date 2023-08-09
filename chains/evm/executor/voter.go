@@ -102,7 +102,7 @@ func NewVoter(mh MessageHandler, client ChainClient, bridgeContract BridgeContra
 
 // Execute checks if relayer already voted and is threshold
 // satisfied and casts a vote if it isn't.
-func (v *EVMVoter) Execute(m *message.Message) error {
+func (v *EVMVoter) Execute(ctx context.Context, m *message.Message) error {
 	prop, err := v.mh.HandleMessage(m)
 	if err != nil {
 		return err

@@ -4,6 +4,8 @@
 package message
 
 import (
+	"bytes"
+	"fmt"
 	"math/big"
 	"strconv"
 
@@ -11,6 +13,7 @@ import (
 )
 
 type TransferType string
+
 type Metadata struct {
 	Priority uint8
 	Data     map[string]interface{}
@@ -49,6 +52,25 @@ type Message struct {
 	Payload      []interface{} // data associated with event sequence
 	Metadata     Metadata      // Arbitrary data that will be most likely be used by the relayer
 	Type         TransferType
+}
+
+func (m *Message) payloadToString() string {
+	var payload bytes.Buffer
+	for _, v := range m.Payload {
+		bv, ok := v.([]byte)
+		// All the payload should be in []byte type so this might never be a problem
+		if !ok {
+			continue
+		}
+		payload.Write(bv)
+	}
+	return fmt.Sprintf("%x", payload)
+}
+
+func (m *Message) String() string {
+	return fmt.Sprintf(
+		`Source: %d;Destination: %d,DepositNonce: %d,ResourceID: %x,Payload: %s,Metadata: %+v,Type: %s`,
+		m.Source, m.Destination, m.DepositNonce, m.ResourceId, m.payloadToString(), m.Metadata, m.Type)
 }
 
 func NewMessage(

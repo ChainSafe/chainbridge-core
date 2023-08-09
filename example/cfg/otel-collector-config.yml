@@ -8,6 +8,8 @@ exporters:
   prometheus:
     endpoint: 0.0.0.0:8889
     namespace: default
+  jaeger:
+    endpoint: 0.0.0.0:14250
 
 extensions:
   health_check:
@@ -18,3 +20,6 @@ service:
     metrics:
       exporters: [prometheus]
       receivers: [otlp]
+    traces:
+      receivers: [otlp]
+      exporters: [jaeger]

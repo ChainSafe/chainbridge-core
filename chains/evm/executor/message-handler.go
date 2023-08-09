@@ -45,7 +45,7 @@ func (mh *EVMMessageHandler) HandleMessage(m *message.Message) (*proposal.Propos
 	if err != nil {
 		return nil, err
 	}
-	log.Info().Str("type", string(m.Type)).Uint8("src", m.Source).Uint8("dst", m.Destination).Uint64("nonce", m.DepositNonce).Str("resourceID", fmt.Sprintf("%x", m.ResourceId)).Msg("Handling new message")
+	log.Info().Str("msg.id", m.ID()).Msg("Handling new message")
 	prop, err := handleMessage(m, addr, *mh.handlerMatcher.ContractAddress())
 	if err != nil {
 		return nil, err
