@@ -37,7 +37,7 @@ func (l *Listener) FetchDeposits(ctx context.Context, contractAddress common.Add
 	ctxWithSpan, span := otel.Tracer("relayer-core").Start(ctx, "relayer.core.Listener.FetchDeposits")
 	defer span.End()
 	span.SetAttributes(attribute.String("startBlock", startBlock.String()), attribute.String("endBlock", endBlock.String()))
-	logger := log.With().Str("trace_id", span.SpanContext().TraceID().String()).Logger()
+	logger := log.With().Str("dd.trace_id", span.SpanContext().TraceID().String()).Logger()
 
 	logs, err := l.client.FetchEventLogs(ctxWithSpan, contractAddress, string(DepositSig), startBlock, endBlock)
 	if err != nil {

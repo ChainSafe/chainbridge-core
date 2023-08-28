@@ -46,7 +46,7 @@ func (eh *DepositEventHandler) HandleEvent(ctx context.Context, startBlock *big.
 	ctxWithSpan, span := otel.Tracer("relayer-core").Start(ctx, "relayer.core.DepositEventHandler.HandleEvent")
 	defer span.End()
 	span.SetAttributes(attribute.String("startBlock", startBlock.String()), attribute.String("endBlock", endBlock.String()))
-	logger := log.With().Str("trace_id", span.SpanContext().TraceID().String()).Logger()
+	logger := log.With().Str("dd.trace_id", span.SpanContext().TraceID().String()).Logger()
 	deposits, err := eh.eventListener.FetchDeposits(ctxWithSpan, eh.bridgeAddress, startBlock, endBlock)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
