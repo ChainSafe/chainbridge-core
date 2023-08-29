@@ -68,7 +68,7 @@ func NewMonitoredTransactor(
 }
 
 func (t *MonitoredTransactor) Transact(ctx context.Context, to *common.Address, data []byte, opts transactor.TransactOptions) (*common.Hash, error) {
-	ctx, span := otel.Tracer("relayer-core").Start(ctx, "relayer.core.EVMListener.ListenToEvents")
+	_, span := otel.Tracer("relayer-core").Start(ctx, "relayer.core.EVMListener.ListenToEvents")
 
 	t.client.LockNonce()
 	defer t.client.UnlockNonce()
@@ -246,7 +246,7 @@ func (t *MonitoredTransactor) resendTransaction(ctx context.Context, tx *RawTx) 
 // would be 11 (it floors the value). In case the gas price didn't
 // change it increases it by 1.
 func (t *MonitoredTransactor) IncreaseGas(ctx context.Context, oldGp []*big.Int) []*big.Int {
-	ctx, span := otel.Tracer("relayer-core").Start(ctx, "relayer.sygma.evm.transactor.Monitor.IncreaseGas")
+	_, span := otel.Tracer("relayer-core").Start(ctx, "relayer.sygma.evm.transactor.Monitor.IncreaseGas")
 	newGp := make([]*big.Int, len(oldGp))
 	for i, gp := range oldGp {
 		percentIncreaseValue := new(big.Int).Div(new(big.Int).Mul(gp, t.increasePercentage), big.NewInt(100))
