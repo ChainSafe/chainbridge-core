@@ -3,6 +3,7 @@ package contracts
 import (
 	"context"
 	"fmt"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ethereum/go-ethereum"
@@ -60,12 +61,12 @@ func (c *Contract) UnpackResult(method string, output []byte) ([]interface{}, er
 	return res, err
 }
 
-func (c *Contract) ExecuteTransaction(method string, opts transactor.TransactOptions, args ...interface{}) (*common.Hash, error) {
+func (c *Contract) ExecuteTransaction(ctx context.Context, method string, opts transactor.TransactOptions, args ...interface{}) (*common.Hash, error) {
 	input, err := c.PackMethod(method, args...)
 	if err != nil {
 		return nil, err
 	}
-	h, err := c.Transact(&c.contractAddress, input, opts)
+	h, err := c.Transact(ctx, &c.contractAddress, input, opts)
 	if err != nil {
 		log.Error().
 			Str("contract", c.contractAddress.String()).
@@ -114,7 +115,7 @@ func (c *Contract) DeployContract(params ...interface{}) (common.Address, error)
 		return common.Address{}, err
 	}
 	opts := transactor.TransactOptions{GasLimit: DefaultDeployGasLimit}
-	hash, err := c.Transact(nil, append(c.bytecode, input...), opts)
+	hash, err := c.Transact(context.Background(), nil, append(c.bytecode, input...), opts)
 	if err != nil {
 		return common.Address{}, err
 	}
