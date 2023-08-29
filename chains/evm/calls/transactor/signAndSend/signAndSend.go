@@ -32,12 +32,12 @@ func NewSignAndSendTransactor(txFabric calls.TxFabric, gasPriceClient calls.GasP
 
 func (t *signAndSendTransactor) Transact(ctx context.Context, to *common.Address, data []byte, opts transactor.TransactOptions) (*common.Hash, error) {
 	_, span := otel.Tracer("relayer-core").Start(ctx, "relayer.core.Transactor.signAndSendTransactor.Transact")
+	defer span.End()
 	t.client.LockNonce()
 	n, err := t.client.UnsafeNonce()
 	if err != nil {
 		t.client.UnlockNonce()
 		span.RecordError(fmt.Errorf("unable to get unsafe nonce with err: %w", err))
-		span.End()
 		return &common.Hash{}, err
 	}
 
@@ -45,7 +45,6 @@ func (t *signAndSendTransactor) Transact(ctx context.Context, to *common.Address
 	if err != nil {
 		t.client.UnlockNonce()
 		span.RecordError(fmt.Errorf("unable to merge transaction options with err: %w", err))
-		span.End()
 		return &common.Hash{}, err
 	}
 
@@ -55,7 +54,6 @@ func (t *signAndSendTransactor) Transact(ctx context.Context, to *common.Address
 		if err != nil {
 			t.client.UnlockNonce()
 			span.RecordError(fmt.Errorf("unable to define gas price with err: %w", err))
-			span.End()
 			return &common.Hash{}, err
 		}
 	}
@@ -70,7 +68,6 @@ func (t *signAndSendTransactor) Transact(ctx context.Context, to *common.Address
 	if err != nil {
 		t.client.UnlockNonce()
 		span.RecordError(fmt.Errorf("unable to call TxFabric with err: %w", err))
-		span.End()
 		return &common.Hash{}, err
 	}
 
@@ -78,7 +75,6 @@ func (t *signAndSendTransactor) Transact(ctx context.Context, to *common.Address
 	if err != nil {
 		t.client.UnlockNonce()
 		span.RecordError(fmt.Errorf("unable to SignAndSendTransaction with err: %w", err))
-		span.End()
 		return &common.Hash{}, err
 	}
 
@@ -86,17 +82,14 @@ func (t *signAndSendTransactor) Transact(ctx context.Context, to *common.Address
 	t.client.UnlockNonce()
 	if err != nil {
 		span.RecordError(fmt.Errorf("unable to UnsafeIncreaseNonce with err: %w", err))
-		span.End()
 		return &common.Hash{}, err
 	}
 
 	_, err = t.client.WaitAndReturnTxReceipt(h)
 	if err != nil {
 		span.RecordError(fmt.Errorf("unable to WaitAndReturnTxReceipt with err: %w", err))
-		span.End()
 		return &common.Hash{}, err
 	}
 	span.SetStatus(codes.Ok, "Transaction sent")
-	span.End()
 	return &h, nil
 }
