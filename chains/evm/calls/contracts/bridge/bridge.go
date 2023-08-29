@@ -130,6 +130,7 @@ func (c *BridgeContract) deposit(
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
 	return c.ExecuteTransaction(
+		context.Background(),
 		"deposit",
 		opts,
 		destDomainID, resourceID, data,
@@ -217,6 +218,7 @@ func (c *BridgeContract) ExecuteProposal(
 		Str("handler", proposal.HandlerAddress.String()).
 		Msgf("Execute proposal")
 	return c.ExecuteTransaction(
+		context.Background(),
 		"executeProposal",
 		opts,
 		proposal.Source, proposal.DepositNonce, proposal.Data, proposal.ResourceId, true,
@@ -233,6 +235,7 @@ func (c *BridgeContract) VoteProposal(
 		Str("handler", proposal.HandlerAddress.String()).
 		Msgf("Vote proposal")
 	return c.ExecuteTransaction(
+		context.Background(),
 		"voteProposal",
 		opts,
 		proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data,
@@ -255,6 +258,7 @@ func (c *BridgeContract) SimulateVoteProposal(proposal *proposal.Proposal) error
 func (c *BridgeContract) Pause(opts transactor.TransactOptions) (*common.Hash, error) {
 	log.Debug().Msg("Pause transfers")
 	return c.ExecuteTransaction(
+		context.Background(),
 		"adminPauseTransfers",
 		opts,
 	)
@@ -263,6 +267,7 @@ func (c *BridgeContract) Pause(opts transactor.TransactOptions) (*common.Hash, e
 func (c *BridgeContract) Unpause(opts transactor.TransactOptions) (*common.Hash, error) {
 	log.Debug().Msg("Unpause transfers")
 	return c.ExecuteTransaction(
+		context.Background(),
 		"adminUnpauseTransfers",
 		opts,
 	)
@@ -284,7 +289,7 @@ func (c *BridgeContract) Withdraw(
 	data.Write(common.LeftPadBytes(recipientAddress.Bytes(), 32))
 	data.Write(common.LeftPadBytes(amountOrTokenId.Bytes(), 32))
 
-	return c.ExecuteTransaction("adminWithdraw", opts, handlerAddress, data.Bytes())
+	return c.ExecuteTransaction(context.Background(), "adminWithdraw", opts, handlerAddress, data.Bytes())
 }
 
 func (c *BridgeContract) GetThreshold() (uint8, error) {

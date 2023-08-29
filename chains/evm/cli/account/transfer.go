@@ -2,6 +2,7 @@ package account
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"math/big"
 	"os"
@@ -78,7 +79,7 @@ func ProcessTransferBaseCurrencyFlags(cmd *cobra.Command, args []string) error {
 }
 func TransferBaseCurrency(cmd *cobra.Command, args []string, t transactor.Transactor) error {
 	hash, err := t.Transact(
-		&RecipientAddress, nil, transactor.TransactOptions{Value: WeiAmount, GasLimit: gasLimit},
+		context.Background(), &RecipientAddress, nil, transactor.TransactOptions{Value: WeiAmount, GasLimit: gasLimit},
 	)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("base currency deposit error: %v", err))

@@ -62,6 +62,7 @@ func (s *ERC20ContractCallsTestSuite) TestErc20Contract_MintTokens_Success() {
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
+		gomock.Any(),
 	).Return(&common.Hash{1, 2, 3, 4, 5}, nil)
 	res, err := s.erc20contract.MintTokens(common.HexToAddress(testInteractorAddress), big.NewInt(10), transactor.DefaultTransactionOptions)
 	s.Equal(
@@ -73,6 +74,7 @@ func (s *ERC20ContractCallsTestSuite) TestErc20Contract_MintTokens_Success() {
 
 func (s *ERC20ContractCallsTestSuite) TestErc20Contract_ApproveTokens_Success() {
 	s.mockTransactor.EXPECT().Transact(
+		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
@@ -108,6 +110,7 @@ func (s *ERC20ContractCallsTestSuite) TestErc20Contract_AddMinter_Success() {
 		nil,
 	).Return([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25}, nil)
 	s.mockTransactor.EXPECT().Transact(
+		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),

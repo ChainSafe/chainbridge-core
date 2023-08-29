@@ -1,6 +1,7 @@
 package prepare_test
 
 import (
+	"context"
 	"testing"
 
 	erc20 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
@@ -49,6 +50,7 @@ func (s *TransactorTestSuite) TestTransactor_WithPrepare_Success() {
 
 	var trans = prepare.NewPrepareTransactor()
 	txHash, err := trans.Transact(
+		context.Background(),
 		&common.Address{},
 		byteData,
 		transactor.TransactOptions{},

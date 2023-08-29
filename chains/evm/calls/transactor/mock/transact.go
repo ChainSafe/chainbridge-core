@@ -5,6 +5,7 @@
 package mock_transactor
 
 import (
+	context "context"
 	reflect "reflect"
 
 	transactor "github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
@@ -36,16 +37,16 @@ func (m *MockTransactor) EXPECT() *MockTransactorMockRecorder {
 }
 
 // Transact mocks base method.
-func (m *MockTransactor) Transact(to *common.Address, data []byte, opts transactor.TransactOptions) (*common.Hash, error) {
+func (m *MockTransactor) Transact(ctx context.Context, to *common.Address, data []byte, opts transactor.TransactOptions) (*common.Hash, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Transact", to, data, opts)
+	ret := m.ctrl.Call(m, "Transact", ctx, to, data, opts)
 	ret0, _ := ret[0].(*common.Hash)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Transact indicates an expected call of Transact.
-func (mr *MockTransactorMockRecorder) Transact(to, data, opts interface{}) *gomock.Call {
+func (mr *MockTransactorMockRecorder) Transact(ctx, to, data, opts interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Transact", reflect.TypeOf((*MockTransactor)(nil).Transact), to, data, opts)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Transact", reflect.TypeOf((*MockTransactor)(nil).Transact), ctx, to, data, opts)
 }

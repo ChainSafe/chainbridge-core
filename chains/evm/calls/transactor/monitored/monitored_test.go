@@ -54,6 +54,7 @@ func (s *TransactorTestSuite) TestTransactor_SignAndSend_Success() {
 		big.NewInt(1000),
 		big.NewInt(15))
 	txHash, err := t.Transact(
+		context.Background(),
 		&common.Address{},
 		byteData,
 		transactor.TransactOptions{},
@@ -79,6 +80,7 @@ func (s *TransactorTestSuite) TestTransactor_SignAndSend_Fail() {
 		big.NewInt(1000),
 		big.NewInt(15))
 	_, err := t.Transact(
+		context.Background(),
 		&common.Address{},
 		byteData,
 		transactor.TransactOptions{},
@@ -108,6 +110,7 @@ func (s *TransactorTestSuite) TestTransactor_MonitoredTransaction_SuccessfulExec
 
 	go t.Monitor(ctx, time.Millisecond*50, time.Minute, time.Millisecond)
 	hash, err := t.Transact(
+		context.Background(),
 		&common.Address{},
 		byteData,
 		transactor.TransactOptions{},
@@ -143,6 +146,7 @@ func (s *TransactorTestSuite) TestTransactor_MonitoredTransaction_TxTimeout() {
 
 	go t.Monitor(ctx, time.Millisecond*50, time.Millisecond, time.Millisecond)
 	hash, err := t.Transact(
+		context.Background(),
 		&common.Address{},
 		byteData,
 		transactor.TransactOptions{},
@@ -178,6 +182,7 @@ func (s *TransactorTestSuite) TestTransactor_MonitoredTransaction_TransactionRes
 
 	go t.Monitor(ctx, time.Millisecond*50, time.Minute, time.Millisecond)
 	hash, err := t.Transact(
+		context.Background(),
 		&common.Address{},
 		byteData,
 		transactor.TransactOptions{},
@@ -217,6 +222,7 @@ func (s *TransactorTestSuite) TestTransactor_MonitoredTransaction_MaxGasPriceRea
 
 	go t.Monitor(ctx, time.Millisecond*50, time.Minute, time.Millisecond)
 	hash, err := t.Transact(
+		context.Background(),
 		&common.Address{},
 		byteData,
 		transactor.TransactOptions{},
@@ -240,7 +246,7 @@ func (s *TransactorTestSuite) TestTransactor_IncreaseGas_15PercentIncrease() {
 		big.NewInt(150),
 		big.NewInt(15))
 
-	newGas := t.IncreaseGas([]*big.Int{big.NewInt(1), big.NewInt(10), big.NewInt(100)})
+	newGas := t.IncreaseGas(context.Background(), []*big.Int{big.NewInt(1), big.NewInt(10), big.NewInt(100)})
 
 	s.Equal(newGas, []*big.Int{big.NewInt(2), big.NewInt(11), big.NewInt(115)})
 }
@@ -253,7 +259,7 @@ func (s *TransactorTestSuite) TestTransactor_IncreaseGas_MaxGasReached() {
 		big.NewInt(15),
 		big.NewInt(15))
 
-	newGas := t.IncreaseGas([]*big.Int{big.NewInt(1), big.NewInt(10), big.NewInt(100)})
+	newGas := t.IncreaseGas(context.Background(), []*big.Int{big.NewInt(1), big.NewInt(10), big.NewInt(100)})
 
 	s.Equal(newGas, []*big.Int{big.NewInt(2), big.NewInt(11), big.NewInt(15)})
 }

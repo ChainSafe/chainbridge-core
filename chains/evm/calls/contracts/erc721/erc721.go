@@ -1,11 +1,13 @@
 package erc721
 
 import (
+	"context"
+	"math/big"
+	"strings"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts"
-	"math/big"
-	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -35,21 +37,21 @@ func (c *ERC721Contract) AddMinter(
 	if err != nil {
 		return nil, err
 	}
-	return c.ExecuteTransaction("grantRole", opts, role, minter)
+	return c.ExecuteTransaction(context.Background(), "grantRole", opts, role, minter)
 }
 
 func (c *ERC721Contract) Approve(
 	tokenId *big.Int, recipient common.Address, opts transactor.TransactOptions,
 ) (*common.Hash, error) {
 	log.Debug().Msgf("Approving %s token for %s", tokenId.String(), recipient.String())
-	return c.ExecuteTransaction("approve", opts, recipient, tokenId)
+	return c.ExecuteTransaction(context.Background(), "approve", opts, recipient, tokenId)
 }
 
 func (c *ERC721Contract) Mint(
 	tokenId *big.Int, metadata string, destination common.Address, opts transactor.TransactOptions,
 ) (*common.Hash, error) {
 	log.Debug().Msgf("Minting tokens %s to %s", tokenId.String(), destination.String())
-	return c.ExecuteTransaction("mint", opts, destination, tokenId, metadata)
+	return c.ExecuteTransaction(context.Background(), "mint", opts, destination, tokenId, metadata)
 }
 
 func (c *ERC721Contract) Owner(tokenId *big.Int) (*common.Address, error) {
