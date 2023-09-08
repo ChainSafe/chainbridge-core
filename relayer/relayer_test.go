@@ -80,7 +80,7 @@ func (s *RouteTestSuite) TestLogsErrorIfMessageProcessorReturnsError() {
 func (s *RouteTestSuite) TestWriteFail() {
 	s.mockMetrics.EXPECT().TrackDepositMessage(gomock.Any())
 	s.mockMetrics.EXPECT().TrackExecutionError(gomock.Any())
-	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1)).Times(3)
+	s.mockRelayedChain.EXPECT().DomainID().Return(uint8(1)).Times(2)
 	s.mockRelayedChain.EXPECT().Write(gomock.Any(), gomock.Any()).Return(fmt.Errorf("error"))
 	relayer := NewRelayer(
 		[]RelayedChain{},

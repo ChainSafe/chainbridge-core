@@ -77,7 +77,11 @@ func (r *Relayer) route(msgs []*message.Message) {
 			span,
 			fmt.Sprintf("routing message %s", m.String()),
 			attribute.String("msg.id", m.ID()),
-			attribute.String("msg.type", string(m.Type)))
+			attribute.String("msg.type", string(m.Type)),
+			attribute.String("msg.dstChainId", fmt.Sprintf("%d", destChain.DomainID())),
+			attribute.String("msg.srcChainId", fmt.Sprintf("%d", m.Source)),
+		)
+
 		r.metrics.TrackDepositMessage(m)
 		for _, mp := range r.messageProcessors {
 			if err := mp(ctx, m); err != nil {
