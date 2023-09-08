@@ -4,42 +4,22 @@ receivers:
       grpc:
       http:
 
-processors:
-  batch:
-    timeout: 10s
-    send_batch_max_size: 1000
-    send_batch_size: 100
-
 exporters:
-  otlp:
-    endpoint: "jaeger:4317"
-    tls:
-      insecure: true
-    retry_on_failure:
-      enabled: true
-
   prometheus:
-    endpoint: "otel-collector:8889"
-    namespace: relayer
-    send_timestamps: true
-    enable_open_metrics: true
-    add_metric_suffixes: false
-    resource_to_telemetry_conversion:
-      enabled: true
+    endpoint: 0.0.0.0:8889
+    namespace: default
+  jaeger:
+    endpoint: 0.0.0.0:14250
 
-  logging:
-    loglevel: debug
-    sampling_initial: 5
-    sampling_thereafter: 200
-
+extensions:
+  health_check:
 
 service:
+  extensions: [health_check]
   pipelines:
     metrics:
+      exporters: [prometheus]
       receivers: [otlp]
-      processors:  [batch]
-      exporters: [prometheus, logging]
     traces:
       receivers: [otlp]
-      processors: [batch]
-      exporters: [otlp]
+      exporters: [jaeger]
