@@ -6,6 +6,8 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ChainSafe/chainbridge-core/relayer/message/processors"
+
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	mock_relayer "github.com/ChainSafe/chainbridge-core/relayer/mock"
 	"github.com/golang/mock/gomock"
@@ -51,7 +53,7 @@ func (s *RouteTestSuite) TestAdjustDecimalsForERC20AmountMessageProcessor() {
 			a.Bytes(), // 145.5567 tokens
 		},
 	}
-	err := message.AdjustDecimalsForERC20AmountMessageProcessor(map[uint8]uint64{1: 18, 2: 2})(context.Background(), msg)
+	err := processors.AdjustDecimalsForERC20AmountMessageProcessor(map[uint8]uint64{1: 18, 2: 2})(context.Background(), msg)
 	s.Nil(err)
 	amount := new(big.Int).SetBytes(msg.Payload[0].([]byte))
 	if amount.Cmp(big.NewInt(14555)) != 0 {

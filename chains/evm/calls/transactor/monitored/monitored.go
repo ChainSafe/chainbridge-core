@@ -7,14 +7,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ChainSafe/chainbridge-core/observability"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/rs/zerolog/log"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	traceapi "go.opentelemetry.io/otel/trace"
 )
 
@@ -71,21 +70,20 @@ func NewMonitoredTransactor(
 }
 
 func (t *MonitoredTransactor) Transact(ctx context.Context, to *common.Address, data []byte, opts transactor.TransactOptions) (*common.Hash, error) {
-	_, span := otel.Tracer("relayer-core").Start(ctx, "relayer.core.evm.transactor.Monitor")
+	_, span, _ := observability.CreateSpanAndLoggerFromContext(ctx, "relayer-core", "relayer.core.evm.monitoredTransactor.Transact")
 	defer span.End()
+
 	t.client.LockNonce()
 	defer t.client.UnlockNonce()
 
 	n, err := t.client.UnsafeNonce()
 	if err != nil {
-		span.RecordError(fmt.Errorf("unable to get unsafe nonce with err: %w", err))
-		return &common.Hash{}, err
+		return &common.Hash{}, observability.LogAndRecordErrorWithStatus(nil, span, err, "failed to call UnsafeNonce")
 	}
 
 	err = transactor.MergeTransactionOptions(&opts, &transactor.DefaultTransactionOptions)
 	if err != nil {
-		span.RecordError(fmt.Errorf("unable to merge transaction options with err: %w", err))
-		return &common.Hash{}, err
+		return &common.Hash{}, observability.LogAndRecordErrorWithStatus(nil, span, err, "failed to MergeTransactionOptions")
 	}
 
 	gp := []*big.Int{opts.GasPrice}
@@ -116,17 +114,14 @@ func (t *MonitoredTransactor) Transact(ctx context.Context, to *common.Address, 
 	}
 	tx, err := t.txFabric(rawTx.nonce, rawTx.to, rawTx.value, rawTx.gasLimit, rawTx.gasPrice, rawTx.data)
 	if err != nil {
-		span.RecordError(fmt.Errorf("unable to call TxFabric with err: %w", err))
-		return &common.Hash{}, err
+		return &common.Hash{}, observability.LogAndRecordErrorWithStatus(nil, span, err, "unable to call TxFabric")
 	}
 
 	h, err := t.client.SignAndSendTransaction(context.TODO(), tx)
 	if err != nil {
-		span.RecordError(fmt.Errorf("unable to SignAndSendTransaction with err: %w", err))
-		span.SetStatus(codes.Error, "unable to SignAndSendTransaction")
-		return &common.Hash{}, err
+		return &common.Hash{}, observability.LogAndRecordErrorWithStatus(nil, span, err, "unable to SignAndSendTransaction")
 	}
-	span.AddEvent("Executed transaction", traceapi.WithAttributes(attribute.String("tx.hash", h.String())))
+	span.AddEvent("Transaction sent", traceapi.WithAttributes(attribute.String("tx.hash", h.String())))
 
 	t.txLock.Lock()
 	t.pendingTxns[h] = rawTx
@@ -134,11 +129,8 @@ func (t *MonitoredTransactor) Transact(ctx context.Context, to *common.Address, 
 
 	err = t.client.UnsafeIncreaseNonce()
 	if err != nil {
-		span.RecordError(fmt.Errorf("unable to UnsafeIncreaseNonce with err: %w", err))
-		span.SetStatus(codes.Error, "unable to UnsafeIncreaseNonce")
-		return &common.Hash{}, err
+		return &common.Hash{}, observability.LogAndRecordErrorWithStatus(nil, span, err, "unable to UnsafeIncreaseNonce")
 	}
-
 	return &h, nil
 }
 
@@ -167,29 +159,25 @@ func (t *MonitoredTransactor) Monitor(
 					if time.Since(tx.submitTime) < tooNewTransaction {
 						continue
 					}
-					txContextWithSpan, span := otel.Tracer("relayer-core").Start(traceapi.ContextWithSpanContext(ctx, traceapi.NewSpanContext(traceapi.SpanContextConfig{TraceID: tx.traceID})), "relayer.core.evm.transactor.Monitor")
-					logger := log.With().Str("dd.trace_id", span.SpanContext().TraceID().String()).Logger()
-
+					txContextWithSpan, span, logger := observability.CreateSpanAndLoggerFromContext(
+						traceapi.ContextWithSpanContext(ctx, traceapi.NewSpanContext(traceapi.SpanContextConfig{TraceID: tx.traceID})),
+						"relayer-core",
+						"relayer.core.evm.transactor.Monitor",
+						attribute.String("tx.hash", oldHash.String()), attribute.Int64("tx.nonce", int64(tx.nonce)))
 					receipt, err := t.client.TransactionReceipt(context.Background(), oldHash)
 					if err == nil {
 						if receipt.Status == types.ReceiptStatusSuccessful {
-							logger.Info().Uint64("nonce", tx.nonce).Msgf("Executed transaction %s with nonce %d", oldHash, tx.nonce)
-							span.AddEvent("Executed transaction", traceapi.WithAttributes(attribute.String("tx.hash", oldHash.String()), attribute.Int64("tx.nonce", int64(tx.nonce))))
-							span.SetStatus(codes.Ok, "Executed transaction")
-							span.End()
+							observability.LogAndEvent(logger.Info(), span, fmt.Sprintf("Executed transaction %s with nonce %d", oldHash, tx.nonce))
 						} else {
-							logger.Error().Uint64("nonce", tx.nonce).Msgf("Transaction %s failed on chain", oldHash)
-							span.RecordError(fmt.Errorf("transaction execution failed on chain with error %w", err), traceapi.WithAttributes(attribute.String("tx.hash", oldHash.String()), attribute.Int64("tx.nonce", int64(tx.nonce))))
-							span.SetStatus(codes.Error, "Transaction execution failed on chain")
-							span.End()
+							_ = observability.LogAndRecordErrorWithStatus(&logger, span, fmt.Errorf("on-chain execution fail"), fmt.Sprintf("transaction %s failed on chain", oldHash))
 						}
+						span.End()
 						delete(t.pendingTxns, oldHash)
 						continue
 					}
 
 					if time.Since(tx.creationTime) > txTimeout {
-						logger.Error().Uint64("nonce", tx.nonce).Msgf("Transaction %s has timed out", oldHash)
-						span.RecordError(fmt.Errorf("transaction has timed out"), traceapi.WithAttributes(attribute.String("tx.hash", oldHash.String()), attribute.Int64("tx.nonce", int64(tx.nonce))))
+						_ = observability.LogAndRecordErrorWithStatus(&logger, span, fmt.Errorf("transaction has timed out"), fmt.Sprintf("transaction %s failed on chain", oldHash))
 						span.End()
 						delete(t.pendingTxns, oldHash)
 						continue
@@ -199,9 +187,10 @@ func (t *MonitoredTransactor) Monitor(
 					if err != nil {
 						span.RecordError(fmt.Errorf("error resending transaction %w", err), traceapi.WithAttributes(attribute.String("tx.hash", oldHash.String()), attribute.Int64("tx.nonce", int64(tx.nonce))))
 						logger.Warn().Uint64("nonce", tx.nonce).Err(err).Msgf("Failed resending transaction %s", oldHash)
+						_ = observability.LogAndRecordError(&logger, span, err, "failed resending transaction")
 						continue
 					}
-					span.AddEvent("Resending transaction", traceapi.WithAttributes(attribute.String("tx.newHash", hash.String())))
+					span.AddEvent("Transaction resent", traceapi.WithAttributes(attribute.String("tx.newHash", hash.String())))
 					span.End()
 
 					delete(t.pendingTxns, oldHash)
@@ -213,7 +202,14 @@ func (t *MonitoredTransactor) Monitor(
 }
 
 func (t *MonitoredTransactor) resendTransaction(ctx context.Context, tx *RawTx) (common.Hash, error) {
-	tx.gasPrice = t.IncreaseGas(ctx, tx.gasPrice)
+	ctx, span, logger := observability.CreateSpanAndLoggerFromContext(ctx, "relayer-core", "relayer.core.evm.transactor.Monitor.resendTransaction")
+	defer span.End()
+	tx.gasPrice = t.IncreaseGas(tx.gasPrice)
+	if len(tx.gasPrice) > 1 {
+		observability.LogAndEvent(logger.Debug(), span, "Calculated GasPrice", attribute.String("tx.gasTipCap", tx.gasPrice[0].String()), attribute.String("tx.gasFeeCap", tx.gasPrice[1].String()))
+	} else {
+		observability.LogAndEvent(logger.Debug(), span, "Calculated GasPrice", attribute.String("tx.gp", tx.gasPrice[0].String()))
+	}
 	newTx, err := t.txFabric(tx.nonce, tx.to, tx.value, tx.gasLimit, tx.gasPrice, tx.data)
 	if err != nil {
 		return common.Hash{}, err
@@ -223,9 +219,6 @@ func (t *MonitoredTransactor) resendTransaction(ctx context.Context, tx *RawTx) 
 	if err != nil {
 		return common.Hash{}, err
 	}
-
-	log.Debug().Uint64("nonce", tx.nonce).Msgf("Resent transaction with hash %s", hash)
-
 	return hash, nil
 }
 
@@ -234,8 +227,7 @@ func (t *MonitoredTransactor) resendTransaction(ctx context.Context, tx *RawTx) 
 // If gas was 10 and the increaseFactor is 15 the new gas price
 // would be 11 (it floors the value). In case the gas price didn't
 // change it increases it by 1.
-func (t *MonitoredTransactor) IncreaseGas(ctx context.Context, oldGp []*big.Int) []*big.Int {
-	_, span := otel.Tracer("relayer-core").Start(ctx, "relayer.core.evm.transactor.Monitor.IncreaseGas")
+func (t *MonitoredTransactor) IncreaseGas(oldGp []*big.Int) []*big.Int {
 	newGp := make([]*big.Int, len(oldGp))
 	for i, gp := range oldGp {
 		percentIncreaseValue := new(big.Int).Div(new(big.Int).Mul(gp, t.increasePercentage), big.NewInt(100))
@@ -250,11 +242,5 @@ func (t *MonitoredTransactor) IncreaseGas(ctx context.Context, oldGp []*big.Int)
 			newGp[i] = increasedGp
 		}
 	}
-	if len(newGp) > 1 {
-		span.AddEvent("Calculated GasPrice", traceapi.WithAttributes(attribute.String("tx.gasTipCap", newGp[0].String()), attribute.String("tx.gasFeeCap", newGp[1].String())))
-	} else {
-		span.AddEvent("Calculated GasPrice", traceapi.WithAttributes(attribute.String("tx.gp", newGp[0].String())))
-	}
-	span.End()
 	return newGp
 }

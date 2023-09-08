@@ -78,7 +78,7 @@ func (c *Contract) ExecuteTransaction(ctx context.Context, method string, opts t
 		Str("txHash", h.String()).
 		Str("contract", c.contractAddress.String()).
 		Msgf("method %s executed", method)
-	return h, err
+	return h, nil
 }
 
 func (c *Contract) CallContract(method string, args ...interface{}) ([]interface{}, error) {

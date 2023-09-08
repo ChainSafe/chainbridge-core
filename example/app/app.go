@@ -29,7 +29,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/e2e/dummy"
 	"github.com/ChainSafe/chainbridge-core/flags"
 	"github.com/ChainSafe/chainbridge-core/lvldb"
-	"github.com/ChainSafe/chainbridge-core/opentelemetry"
+	"github.com/ChainSafe/chainbridge-core/observability"
 	"github.com/ChainSafe/chainbridge-core/relayer"
 	"github.com/ChainSafe/chainbridge-core/store"
 	"github.com/ethereum/go-ethereum/common"
@@ -52,9 +52,9 @@ func Run() error {
 	}
 	blockstore := store.NewBlockStore(db)
 
-	OTLPResource := opentelemetry.InitResource(fmt.Sprintf("Relayer-%s", configuration.RelayerConfig.Id), configuration.RelayerConfig.Env)
+	OTLPResource := observability.InitResource(fmt.Sprintf("Relayer-%s", configuration.RelayerConfig.Id), configuration.RelayerConfig.Env)
 
-	mp, err := opentelemetry.InitMetricProvider(ctx, OTLPResource, configuration.RelayerConfig.OpenTelemetryCollectorURL)
+	mp, err := observability.InitMetricProvider(ctx, OTLPResource, configuration.RelayerConfig.OpenTelemetryCollectorURL)
 	if err != nil {
 		panic(err)
 	}
@@ -64,7 +64,7 @@ func Run() error {
 		}
 	}()
 
-	tp, err := opentelemetry.InitTracesProvider(ctx, OTLPResource, configuration.RelayerConfig.OpenTelemetryCollectorURL)
+	tp, err := observability.InitTracesProvider(ctx, OTLPResource, configuration.RelayerConfig.OpenTelemetryCollectorURL)
 	if err != nil {
 		panic(err)
 	}
@@ -74,7 +74,7 @@ func Run() error {
 		}
 	}()
 
-	metrics, err := opentelemetry.NewRelayerMetrics(mp.Meter("relayer-metric-provider"), attribute.String("relayer.id", configuration.RelayerConfig.Id), attribute.String("env", configuration.RelayerConfig.Env))
+	metrics, err := observability.NewRelayerMetrics(mp.Meter("relayer-metric-provider"), attribute.String("relayer.id", configuration.RelayerConfig.Id), attribute.String("env", configuration.RelayerConfig.Env))
 	if err != nil {
 		panic(err)
 	}
