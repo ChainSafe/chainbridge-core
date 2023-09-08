@@ -56,6 +56,9 @@ You can also review our [Local Setup Guide](https://github.com/ChainSafe/chainbr
 
 &nbsp;
 
+### Tracing
+Jaeger traces observer will be available at [http://localhost:16686/](http://localhost:16686/)
+
 ## Contributing
 
 Chainbridge-core is a open project and welcomes contributions of all kinds: code, docs, and more. If you wish to submit more complex changes,
