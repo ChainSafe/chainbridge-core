@@ -37,7 +37,7 @@ func (l *Listener) FetchDeposits(ctx context.Context, contractAddress common.Add
 
 	logs, err := l.client.FetchEventLogs(ctx, contractAddress, string(DepositSig), startBlock, endBlock)
 	if err != nil {
-		return nil, observability.LogAndRecordErrorWithStatus(&logger, span, err, "failed FetchEventLogs")
+		return nil, observability.LogAndRecordErrorWithStatus(nil, span, err, "failed FetchEventLogs")
 	}
 	deposits := make([]*Deposit, 0)
 
