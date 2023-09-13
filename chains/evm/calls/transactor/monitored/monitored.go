@@ -26,11 +26,7 @@ type RawTx struct {
 	data         []byte
 	submitTime   time.Time
 	creationTime time.Time
-}
-
-type RawTxWithTraceID struct {
-	RawTx
-	traceID traceapi.TraceID
+	traceID      traceapi.TraceID
 }
 
 type MonitoredTransactor struct {
@@ -41,7 +37,7 @@ type MonitoredTransactor struct {
 	maxGasPrice        *big.Int
 	increasePercentage *big.Int
 
-	pendingTxns map[common.Hash]RawTxWithTraceID
+	pendingTxns map[common.Hash]RawTx
 
 	txLock sync.Mutex
 }
@@ -63,7 +59,7 @@ func NewMonitoredTransactor(
 		client:             client,
 		gasPriceClient:     gasPriceClient,
 		txFabric:           txFabric,
-		pendingTxns:        make(map[common.Hash]RawTxWithTraceID),
+		pendingTxns:        make(map[common.Hash]RawTx),
 		maxGasPrice:        maxGasPrice,
 		increasePercentage: increasePercentage,
 	}
@@ -95,18 +91,16 @@ func (t *MonitoredTransactor) Transact(ctx context.Context, to *common.Address, 
 	}
 	span.AddEvent("Calculated GasPrice", traceapi.WithAttributes(attribute.StringSlice("tx.gp", calls.BigIntSliceToStringSlice(gp))))
 
-	rawTx := RawTxWithTraceID{
-		RawTx{
-			to:           to,
-			nonce:        n.Uint64(),
-			value:        opts.Value,
-			gasLimit:     opts.GasLimit,
-			gasPrice:     gp,
-			data:         data,
-			submitTime:   time.Now(),
-			creationTime: time.Now(),
-		},
-		span.SpanContext().TraceID(),
+	rawTx := RawTx{
+		to:           to,
+		nonce:        n.Uint64(),
+		value:        opts.Value,
+		gasLimit:     opts.GasLimit,
+		gasPrice:     gp,
+		data:         data,
+		submitTime:   time.Now(),
+		creationTime: time.Now(),
+		traceID:      span.SpanContext().TraceID(),
 	}
 	tx, err := t.txFabric(rawTx.nonce, rawTx.to, rawTx.value, rawTx.gasLimit, rawTx.gasPrice, rawTx.data)
 	if err != nil {
@@ -145,7 +139,7 @@ func (t *MonitoredTransactor) Monitor(
 		case <-ticker.C:
 			{
 				t.txLock.Lock()
-				pendingTxCopy := make(map[common.Hash]RawTxWithTraceID, len(t.pendingTxns))
+				pendingTxCopy := make(map[common.Hash]RawTx, len(t.pendingTxns))
 				for k, v := range t.pendingTxns {
 					pendingTxCopy[k] = v
 				}
@@ -179,7 +173,7 @@ func (t *MonitoredTransactor) Monitor(
 						continue
 					}
 
-					hash, err := t.resendTransaction(txContextWithSpan, &tx.RawTx)
+					hash, err := t.resendTransaction(txContextWithSpan, &tx)
 					if err != nil {
 						span.RecordError(fmt.Errorf("error resending transaction %w", err), traceapi.WithAttributes(attribute.String("tx.hash", oldHash.String()), attribute.Int64("tx.nonce", int64(tx.nonce))))
 						logger.Warn().Uint64("nonce", tx.nonce).Err(err).Msgf("Failed resending transaction %s", oldHash)
