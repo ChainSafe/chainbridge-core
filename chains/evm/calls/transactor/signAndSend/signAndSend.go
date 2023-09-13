@@ -29,7 +29,7 @@ func NewSignAndSendTransactor(txFabric calls.TxFabric, gasPriceClient calls.GasP
 }
 
 func (t *signAndSendTransactor) Transact(ctx context.Context, to *common.Address, data []byte, opts transactor.TransactOptions) (*common.Hash, error) {
-	ctx, span, logger := observability.CreateSpanAndLoggerFromContext(ctx, "relayer-core", "relayer.core.Transactor.signAndSendTransactor.Transact")
+	ctx, span, _ := observability.CreateSpanAndLoggerFromContext(ctx, "relayer-core", "relayer.core.Transactor.signAndSendTransactor.Transact")
 	defer span.End()
 
 	t.client.LockNonce()
@@ -54,11 +54,7 @@ func (t *signAndSendTransactor) Transact(ctx context.Context, to *common.Address
 		}
 	}
 
-	if len(gp) > 1 {
-		observability.LogAndEvent(logger.Debug(), span, "Calculated GasPrice", attribute.String("tx.gasTipCap", gp[0].String()), attribute.String("tx.gasFeeCap", gp[1].String()))
-	} else {
-		observability.LogAndEvent(logger.Debug(), span, "Calculated GasPrice", attribute.String("tx.gp", gp[0].String()))
-	}
+	span.AddEvent("Calculated GasPrice", traceapi.WithAttributes(attribute.StringSlice("tx.gp", calls.BigIntSliceToStringSlice(gp))))
 
 	tx, err := t.TxFabric(n.Uint64(), to, opts.Value, opts.GasLimit, gp, data)
 	if err != nil {

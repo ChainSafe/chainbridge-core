@@ -72,3 +72,11 @@ func WeiAmountToUser(amount *big.Int, decimals *big.Int) (*big.Float, error) {
 	}
 	return new(big.Float).Quo(amountFloat, big.NewFloat(gomath.Pow10(int(decimals.Int64())))), nil
 }
+
+func BigIntSliceToStringSlice(arr []*big.Int) []string {
+	var sArr = make([]string, len(arr))
+	for i, v := range arr {
+		sArr[i] = v.String()
+	}
+	return sArr
+}

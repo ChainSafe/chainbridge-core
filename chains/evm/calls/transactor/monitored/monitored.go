@@ -93,11 +93,7 @@ func (t *MonitoredTransactor) Transact(ctx context.Context, to *common.Address, 
 			return &common.Hash{}, err
 		}
 	}
-	if len(gp) > 1 {
-		span.AddEvent("Calculated GasPrice", traceapi.WithAttributes(attribute.String("tx.gasTipCap", gp[0].String()), attribute.String("tx.gasFeeCap", gp[1].String())))
-	} else {
-		span.AddEvent("Calculated GasPrice", traceapi.WithAttributes(attribute.String("tx.gp", gp[0].String())))
-	}
+	span.AddEvent("Calculated GasPrice", traceapi.WithAttributes(attribute.StringSlice("tx.gp", calls.BigIntSliceToStringSlice(gp))))
 
 	rawTx := RawTxWithTraceID{
 		RawTx{
