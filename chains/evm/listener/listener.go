@@ -8,15 +8,14 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/relayer/message"
-	"github.com/ChainSafe/chainbridge-core/store"
+	"github.com/ChainSafe/sygma-core/store"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
 type EventHandler interface {
-	HandleEvent(startBlock *big.Int, endBlock *big.Int, msgChan chan []*message.Message) error
+	HandleEvents(startBlock *big.Int, endBlock *big.Int) error
 }
 
 type ChainClient interface {
@@ -68,7 +67,7 @@ func NewEVMListener(
 
 // ListenToEvents goes block by block of a network and executes event handlers that are
 // configured for the listener.
-func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, msgChan chan []*message.Message, errChn chan<- error) {
+func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, errChn chan<- error) {
 	endBlock := big.NewInt(0)
 	for {
 		select {
@@ -96,7 +95,7 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 			l.log.Debug().Msgf("Fetching evm events for block range %s-%s", startBlock, endBlock)
 
 			for _, handler := range l.eventHandlers {
-				err := handler.HandleEvent(startBlock, new(big.Int).Sub(endBlock, big.NewInt(1)), msgChan)
+				err := handler.HandleEvents(startBlock, new(big.Int).Sub(endBlock, big.NewInt(1)))
 				if err != nil {
 					l.log.Error().Err(err).Msgf("Unable to handle events")
 					continue

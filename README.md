@@ -1,10 +1,7 @@
-# Chainbridge Core
+# Sygma Core
 
 <a href="https://discord.gg/ykXsJKfhgq">
   <img alt="discord" src="https://img.shields.io/discord/593655374469660673?label=Discord&style=for-the-badge&logo=discord&logoColor=white" />
-</a>
-<a href="https://chainbridge-docs.chainsafe.io">
-  <img alt="docs" src="https://img.shields.io/badge/GitBook-7B36ED?style=for-the-badge&logo=gitbook&logoColor=white/" />
 </a>
 <a href="https://golang.org">
 <img alt="go" src="https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white" />
@@ -12,7 +9,7 @@
 
 &nbsp;
 
-Chainbridge-Core was born from and built to improve the maintainability and modularity of the existing version of [ChainBridge](https://github.com/ChainSafe/chainbridge). The fundamental distinction between the two is that Chainbridge-Core is more of a framework rather than a stand-alone application.
+Sygma-Core encompasses reusable modules to easily build relayers based on Sygma contracts.
 
 &nbsp;
 
@@ -28,37 +25,12 @@ Chainbridge-Core was born from and built to improve the maintainability and modu
 4. [Contributing](#contributing)
 
 
-## Installation
-Refer to the [installation](https://github.com/ChainSafe/chainbridge-docs/blob/develop/docs/installation.md) guide for assistance with installing the ChainBridge binary.
-
-## Usage
-Since ChainBridge-Core is a library it will require writing some code to get it running.
-
-You can find some examples [here](https://github.com/ChainSafe/chainbridge-core-example).
-
-The deployment scripts of this version uses the V2.1.3 solidity scripts from https://github.com/ChainSafe/sygma-solidity/tree/v2.1.3
-
-&nbsp;
-
-## Local Setup
-
-This section allows developers with a way to quickly and with minimal effort stand-up a local development environment in order to test out functionality of the ChainBridge.
-
-### Example
-The example developer setup can be run with the `make example` command which will create a 3 relayer setup with 2 EVM networks with already preconfigured ERC20, ERC721 and Generic handlers and appropriate assets.
-
-##### ^ this command will execute a shell script that contains instructions for running two EVM chains via [Docker](https://www.docker.com/) (`docker-compose`). Note: this entire process will likely take a few minutes to run.
-
-
-&nbsp;
-
-You can also review our [Local Setup Guide](https://github.com/ChainSafe/chainbridge-docs/blob/develop/docs/guides/local-setup-guide.md) for a more detailed example of setting up a local development environment manually.
 
 &nbsp;
 
 ## Contributing
 
-Chainbridge-core is a open project and welcomes contributions of all kinds: code, docs, and more. If you wish to submit more complex changes,
+Sygma-core is a open project and welcomes contributions of all kinds: code, docs, and more. If you wish to submit more complex changes,
 please check up with the core devs first on our [Discord Server](https://discord.gg/ykXsJKfhgq) (look for CHAINBRIDGE category) or submit an issue on the repo to ensure those changes are in line with the general
 philoshophy of the project or get some early feedback.
 

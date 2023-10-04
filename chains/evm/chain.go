@@ -8,17 +8,17 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/relayer/message"
-	"github.com/ChainSafe/chainbridge-core/store"
+	"github.com/ChainSafe/sygma-core/store"
+	"github.com/ChainSafe/sygma-core/types"
 	"github.com/rs/zerolog/log"
 )
 
 type EventListener interface {
-	ListenToEvents(ctx context.Context, startBlock *big.Int, msgChan chan []*message.Message, errChan chan<- error)
+	ListenToEvents(ctx context.Context, startBlock *big.Int, errChan chan<- error)
 }
 
 type ProposalExecutor interface {
-	Execute(message *message.Message) error
+	Execute(message *types.Message) error
 }
 
 // EVMChain is struct that aggregates all data required for
@@ -47,7 +47,7 @@ func NewEVMChain(listener EventListener, writer ProposalExecutor, blockstore *st
 
 // PollEvents is the goroutine that polls blocks and searches Deposit events in them.
 // Events are then sent to eventsChan.
-func (c *EVMChain) PollEvents(ctx context.Context, sysErr chan<- error, msgChan chan []*message.Message) {
+func (c *EVMChain) PollEvents(ctx context.Context, sysErr chan<- error) {
 	log.Info().Msg("Polling Blocks...")
 
 	startBlock, err := c.blockstore.GetStartBlock(
@@ -61,12 +61,12 @@ func (c *EVMChain) PollEvents(ctx context.Context, sysErr chan<- error, msgChan 
 		return
 	}
 
-	go c.listener.ListenToEvents(ctx, startBlock, msgChan, sysErr)
+	go c.listener.ListenToEvents(ctx, startBlock, sysErr)
 }
 
-func (c *EVMChain) Write(msg []*message.Message) error {
+func (c *EVMChain) Write(msg []*types.Message) error {
 	for _, msg := range msg {
-		go func(msg *message.Message) {
+		go func(msg *types.Message) {
 			err := c.writer.Execute(msg)
 			if err != nil {
 				log.Err(err).Msgf("Failed writing message %v", msg)

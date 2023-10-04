@@ -33,12 +33,9 @@ install-subkey:
 	cargo install --force --git https://github.com/paritytech/substrate subkey
 
 genmocks:
-	mockgen -destination=./chains/evm/calls/evmgaspricer/mock/gas-pricer.go -source=./chains/evm/calls/evmgaspricer/gas-pricer.go
-	mockgen -destination=./relayer/mock/relayer.go -source=./relayer/relayer.go
-	mockgen -source=chains/evm/calls/calls.go -destination=chains/evm/calls/mock/calls.go
-	mockgen -source=chains/evm/calls/transactor/transact.go -destination=chains/evm/calls/transactor/mock/transact.go
-	mockgen -destination=chains/evm/executor/mock/voter.go github.com/ChainSafe/chainbridge-core/chains/evm/executor ChainClient,MessageHandler,BridgeContract
-	mockgen -destination=./chains/evm/calls/transactor/itx/mock/itx.go -source=./chains/evm/calls/transactor/itx/itx.go
-	mockgen -destination=./chains/evm/calls/transactor/itx//mock/minimalForwarder.go -source=./chains/evm/calls/transactor/itx/minimalForwarder.go
-	mockgen -destination=chains/evm/cli/bridge/mock/vote-proposal.go -source=./chains/evm/cli/bridge/vote-proposal.go
-	mockgen -destination=chains/evm/listener/mock/listener.go -source=./chains/evm/listener/event-handler.go
+	mockgen -destination=./mock/client.go -source=./chains/evm/client/client.go -package mock
+	mockgen -destination=./mock/gas.go -source=./chains/evm/transactor/gas/gas-pricer.go -package mock
+	mockgen -destination=./mock/relayer.go -source=./relayer/relayer.go -package mock
+	mockgen -source=chains/evm/transactor/transact.go -destination=./mock/transact.go -package mock
+	mockgen -source=chains/evm/transactor/signAndSend/signAndSend.go -destination=./mock/signAndSend.go -package mock
+	mockgen -source=./store/store.go -destination=./mock/store.go -package mock

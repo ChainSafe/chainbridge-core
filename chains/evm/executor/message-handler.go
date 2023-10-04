@@ -1,14 +1,9 @@
 package executor
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
-	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/executor/proposal"
-	"github.com/ChainSafe/chainbridge-core/relayer/message"
-	"github.com/ChainSafe/chainbridge-core/types"
+	"github.com/ChainSafe/sygma-core/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 )
@@ -18,7 +13,7 @@ type HandlerMatcher interface {
 	ContractAddress() *common.Address
 }
 
-type MessageHandlerFunc func(m *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error)
+type MessageHandlerFunc func(m *types.Message, handlerAddr, bridgeAddress common.Address) (*types.Proposal, error)
 
 // NewEVMMessageHandler creates an instance of EVMMessageHandler that contains
 // message handler functions for converting deposit message into a chain specific
@@ -34,7 +29,7 @@ type EVMMessageHandler struct {
 	handlers       map[common.Address]MessageHandlerFunc
 }
 
-func (mh *EVMMessageHandler) HandleMessage(m *message.Message) (*proposal.Proposal, error) {
+func (mh *EVMMessageHandler) HandleMessage(m *types.Message) (*types.Proposal, error) {
 	// Matching resource ID with handler.
 	addr, err := mh.handlerMatcher.GetHandlerAddressForResourceID(m.ResourceId)
 	if err != nil {
@@ -73,67 +68,4 @@ func (mh *EVMMessageHandler) RegisterMessageHandler(address string, handler Mess
 	log.Debug().Msgf("Registered message handler for address %s", address)
 
 	mh.handlers[common.HexToAddress(address)] = handler
-}
-
-func ERC20MessageHandler(m *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
-	if len(m.Payload) != 2 {
-		return nil, errors.New("malformed payload. Len  of payload should be 2")
-	}
-	amount, ok := m.Payload[0].([]byte)
-	if !ok {
-		return nil, errors.New("wrong payload amount format")
-	}
-	recipient, ok := m.Payload[1].([]byte)
-	if !ok {
-		return nil, errors.New("wrong payload recipient format")
-	}
-	var data []byte
-	data = append(data, common.LeftPadBytes(amount, 32)...) // amount (uint256)
-	recipientLen := big.NewInt(int64(len(recipient))).Bytes()
-	data = append(data, common.LeftPadBytes(recipientLen, 32)...) // length of recipient (uint256)
-	data = append(data, recipient...)                             // recipient ([]byte)
-	return proposal.NewProposal(m.Source, m.Destination, m.DepositNonce, m.ResourceId, data, handlerAddr, bridgeAddress, m.Metadata), nil
-}
-
-func ERC721MessageHandler(msg *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
-
-	if len(msg.Payload) != 3 {
-		return nil, errors.New("malformed payload. Len  of payload should be 3")
-	}
-	tokenID, ok := msg.Payload[0].([]byte)
-	if !ok {
-		return nil, errors.New("wrong payload tokenID format")
-	}
-	recipient, ok := msg.Payload[1].([]byte)
-	if !ok {
-		return nil, errors.New("wrong payload recipient format")
-	}
-	metadata, ok := msg.Payload[2].([]byte)
-	if !ok {
-		return nil, errors.New("wrong payload metadata format")
-	}
-	data := bytes.Buffer{}
-	data.Write(common.LeftPadBytes(tokenID, 32))
-	recipientLen := big.NewInt(int64(len(recipient))).Bytes()
-	data.Write(common.LeftPadBytes(recipientLen, 32))
-	data.Write(recipient)
-	metadataLen := big.NewInt(int64(len(metadata))).Bytes()
-	data.Write(common.LeftPadBytes(metadataLen, 32))
-	data.Write(metadata)
-	return proposal.NewProposal(msg.Source, msg.Destination, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress, msg.Metadata), nil
-}
-
-func GenericMessageHandler(msg *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
-	if len(msg.Payload) != 1 {
-		return nil, errors.New("malformed payload. Len  of payload should be 1")
-	}
-	metadata, ok := msg.Payload[0].([]byte)
-	if !ok {
-		return nil, errors.New("wrong payload metadata format")
-	}
-	data := bytes.Buffer{}
-	metadataLen := big.NewInt(int64(len(metadata))).Bytes()
-	data.Write(common.LeftPadBytes(metadataLen, 32)) // length of metadata (uint256)
-	data.Write(metadata)
-	return proposal.NewProposal(msg.Source, msg.Destination, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress, msg.Metadata), nil
 }

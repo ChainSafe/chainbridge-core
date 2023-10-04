@@ -5,17 +5,17 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ChainSafe/chainbridge-core/store"
-	mock_store "github.com/ChainSafe/chainbridge-core/store/mock"
-	"github.com/golang/mock/gomock"
+	"github.com/ChainSafe/sygma-core/mock"
+	"github.com/ChainSafe/sygma-core/store"
 	"github.com/stretchr/testify/suite"
 	"github.com/syndtr/goleveldb/leveldb"
+	"go.uber.org/mock/gomock"
 )
 
 type NonceStoreTestSuite struct {
 	suite.Suite
 	nonceStore           *store.NonceStore
-	keyValueReaderWriter *mock_store.MockKeyValueReaderWriter
+	keyValueReaderWriter *mock.MockKeyValueReaderWriter
 }
 
 func TestRunNonceStoreTestSuite(t *testing.T) {
@@ -26,7 +26,7 @@ func (s *NonceStoreTestSuite) SetupSuite()    {}
 func (s *NonceStoreTestSuite) TearDownSuite() {}
 func (s *NonceStoreTestSuite) SetupTest() {
 	gomockController := gomock.NewController(s.T())
-	s.keyValueReaderWriter = mock_store.NewMockKeyValueReaderWriter(gomockController)
+	s.keyValueReaderWriter = mock.NewMockKeyValueReaderWriter(gomockController)
 	s.nonceStore = store.NewNonceStore(s.keyValueReaderWriter)
 }
 func (s *NonceStoreTestSuite) TearDownTest() {}

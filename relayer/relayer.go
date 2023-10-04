@@ -5,50 +5,47 @@ package relayer
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/ChainSafe/chainbridge-core/relayer/message"
+	"github.com/ChainSafe/sygma-core/types"
 	"github.com/rs/zerolog/log"
 )
 
 type DepositMeter interface {
-	TrackDepositMessage(m *message.Message)
-	TrackExecutionError(m *message.Message)
-	TrackSuccessfulExecutionLatency(m *message.Message)
+	TrackDepositMessage(m *types.Message)
+	TrackExecutionError(m *types.Message)
+	TrackSuccessfulExecutionLatency(m *types.Message)
 }
 
 type RelayedChain interface {
-	PollEvents(ctx context.Context, sysErr chan<- error, msgChan chan []*message.Message)
-	Write(messages []*message.Message) error
+	PollEvents(ctx context.Context, sysErr chan<- error)
+	Write(messages []*types.Message) error
 	DomainID() uint8
 }
 
-func NewRelayer(chains []RelayedChain, metrics DepositMeter, messageProcessors ...message.MessageProcessor) *Relayer {
-	return &Relayer{relayedChains: chains, messageProcessors: messageProcessors, metrics: metrics}
+func NewRelayer(chains []RelayedChain, metrics DepositMeter) *Relayer {
+	return &Relayer{relayedChains: chains, metrics: metrics}
 }
 
 type Relayer struct {
-	metrics           DepositMeter
-	relayedChains     []RelayedChain
-	registry          map[uint8]RelayedChain
-	messageProcessors []message.MessageProcessor
+	metrics       DepositMeter
+	relayedChains []RelayedChain
+	registry      map[uint8]RelayedChain
 }
 
 // Start function starts the relayer. Relayer routine is starting all the chains
 // and passing them with a channel that accepts unified cross chain message format
-func (r *Relayer) Start(ctx context.Context, sysErr chan error) {
+func (r *Relayer) Start(ctx context.Context, msgChan chan []*types.Message, sysErr chan error) {
 	log.Debug().Msgf("Starting relayer")
 
-	messagesChannel := make(chan []*message.Message)
 	for _, c := range r.relayedChains {
 		log.Debug().Msgf("Starting chain %v", c.DomainID())
 		r.addRelayedChain(c)
-		go c.PollEvents(ctx, sysErr, messagesChannel)
+		go c.PollEvents(ctx, sysErr)
 	}
 
 	for {
 		select {
-		case m := <-messagesChannel:
+		case m := <-msgChan:
 			go r.route(m)
 			continue
 		case <-ctx.Done():
@@ -58,22 +55,11 @@ func (r *Relayer) Start(ctx context.Context, sysErr chan error) {
 }
 
 // Route function runs destination writer by mapping DestinationID from message to registered writer.
-func (r *Relayer) route(msgs []*message.Message) {
+func (r *Relayer) route(msgs []*types.Message) {
 	destChain, ok := r.registry[msgs[0].Destination]
 	if !ok {
 		log.Error().Msgf("no resolver for destID %v to send message registered", msgs[0].Destination)
 		return
-	}
-
-	for _, m := range msgs {
-		r.metrics.TrackDepositMessage(m)
-
-		for _, mp := range r.messageProcessors {
-			if err := mp(m); err != nil {
-				log.Error().Err(fmt.Errorf("error %w processing mesage %v", err, m))
-				return
-			}
-		}
 	}
 
 	log.Debug().Msgf("Sending messages %+v to destination %v", msgs, destChain.DomainID())
