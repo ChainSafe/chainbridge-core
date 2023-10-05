@@ -68,6 +68,30 @@ func (s *Erc721HandlerTestSuite) TestErc721DepositHandlerEmptyMetadata() {
 	s.Equal(expected, m)
 }
 
+func (s *Erc721HandlerTestSuite) TestErc721DepositHandlerArbitraryFunctionError() {
+	recipient := common.HexToAddress("0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b")
+
+	calldata := deposit.ConstructErc721DepositData(recipient.Bytes(), big.NewInt(2), []byte{})
+	depositLog := &eventhandlers.Deposit{
+		DestinationDomainID: 0,
+		ResourceID:          [32]byte{0},
+		DepositNonce:        1,
+		Data:                calldata,
+		HandlerResponse:     []byte{},
+	}
+
+	sourceID := uint8(1)
+	conf := &Config{}
+
+	erc721DepositHandler := deposithandlers.Erc721DepositHandler{
+		ArbitraryFunction: testErrFunc,
+		Config:            conf,
+	}
+	_, err := erc721DepositHandler.HandleDeposit(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
+
+	s.NotNil(err)
+}
+
 func (s *Erc721HandlerTestSuite) TestErc721DepositHandlerIncorrectDataLen() {
 	metadata := []byte("0xdeadbeef")
 
