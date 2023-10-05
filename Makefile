@@ -39,3 +39,4 @@ genmocks:
 	mockgen -source=chains/evm/transactor/transact.go -destination=./mock/transact.go -package mock
 	mockgen -source=chains/evm/transactor/signAndSend/signAndSend.go -destination=./mock/signAndSend.go -package mock
 	mockgen -source=./store/store.go -destination=./mock/store.go -package mock
+	mockgen -destination=chains/evm/eventhandlers/mock/eventhandlers.go -source=./chains/evm/eventhandlers/event-handler.go -package mock
