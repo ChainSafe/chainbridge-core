@@ -1,6 +1,7 @@
 package bridge_test
 
 import (
+	"context"
 	"encoding/hex"
 	"errors"
 	"math/big"
@@ -100,7 +101,7 @@ func (s *ProposalStatusTestSuite) TestPrepare_WithdrawInput_Success() {
 	recipientAddress := common.HexToAddress("0x8e5F72B158BEDf0ab50EDa78c70dFC118158C272")
 	amountOrTokenId := big.NewInt(1)
 
-	s.mockTransactor.EXPECT().Transact(&s.bridgeAddress, gomock.Any(), gomock.Any()).Times(1).Return(
+	s.mockTransactor.EXPECT().Transact(context.Background(), &s.bridgeAddress, gomock.Any(), gomock.Any()).Times(1).Return(
 		&common.Hash{}, nil,
 	)
 
@@ -128,6 +129,7 @@ func (s *ProposalStatusTestSuite) TestDeployContract_Success() {
 
 func (s *ProposalStatusTestSuite) TestBridge_AddRelayer_Success() {
 	s.mockTransactor.EXPECT().Transact(
+		context.Background(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
@@ -142,6 +144,7 @@ func (s *ProposalStatusTestSuite) TestBridge_AddRelayer_Success() {
 
 func (s *ProposalStatusTestSuite) TestBridge_AdminSetGenericResource_Success() {
 	s.mockTransactor.EXPECT().Transact(
+		context.Background(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
@@ -156,6 +159,7 @@ func (s *ProposalStatusTestSuite) TestBridge_AdminSetGenericResource_Success() {
 
 func (s *ProposalStatusTestSuite) TestBridge_AdminSetResource_Success() {
 	s.mockTransactor.EXPECT().Transact(
+		context.Background(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
@@ -170,6 +174,7 @@ func (s *ProposalStatusTestSuite) TestBridge_AdminSetResource_Success() {
 
 func (s *ProposalStatusTestSuite) TestBridge_SetDepositNonce_Success() {
 	s.mockTransactor.EXPECT().Transact(
+		context.Background(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
@@ -184,6 +189,7 @@ func (s *ProposalStatusTestSuite) TestBridge_SetDepositNonce_Success() {
 
 func (s *ProposalStatusTestSuite) TestBridge_SetThresholdInput_Success() {
 	s.mockTransactor.EXPECT().Transact(
+		context.Background(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
@@ -198,6 +204,7 @@ func (s *ProposalStatusTestSuite) TestBridge_SetThresholdInput_Success() {
 
 func (s *ProposalStatusTestSuite) TestBridge_SetBurnableInput_Success() {
 	s.mockTransactor.EXPECT().Transact(
+		context.Background(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
@@ -212,6 +219,7 @@ func (s *ProposalStatusTestSuite) TestBridge_SetBurnableInput_Success() {
 
 func (s *ProposalStatusTestSuite) TestBridge_Erc20Deposit_Success() {
 	s.mockTransactor.EXPECT().Transact(
+		context.Background(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
@@ -226,6 +234,7 @@ func (s *ProposalStatusTestSuite) TestBridge_Erc20Deposit_Success() {
 
 func (s *ProposalStatusTestSuite) TestBridge_Erc721Deposit_Success() {
 	s.mockTransactor.EXPECT().Transact(
+		context.Background(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
@@ -240,6 +249,7 @@ func (s *ProposalStatusTestSuite) TestBridge_Erc721Deposit_Success() {
 
 func (s *ProposalStatusTestSuite) TestBridge_GenericDeposit_Success() {
 	s.mockTransactor.EXPECT().Transact(
+		context.Background(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
@@ -254,6 +264,7 @@ func (s *ProposalStatusTestSuite) TestBridge_GenericDeposit_Success() {
 
 func (s *ProposalStatusTestSuite) TestBridge_ExecuteProposal_Success() {
 	s.mockTransactor.EXPECT().Transact(
+		context.Background(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
@@ -268,6 +279,7 @@ func (s *ProposalStatusTestSuite) TestBridge_ExecuteProposal_Success() {
 
 func (s *ProposalStatusTestSuite) TestBridge_VoteProposal_Success() {
 	s.mockTransactor.EXPECT().Transact(
+		context.Background(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
@@ -293,6 +305,7 @@ func (s *ProposalStatusTestSuite) TestBridge_SimulateVoteProposal_Success() {
 
 func (s *ProposalStatusTestSuite) TestBridge_Pause_Success() {
 	s.mockTransactor.EXPECT().Transact(
+		context.Background(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
@@ -307,6 +320,7 @@ func (s *ProposalStatusTestSuite) TestBridge_Pause_Success() {
 
 func (s *ProposalStatusTestSuite) TestBridge_Unpause_Success() {
 	s.mockTransactor.EXPECT().Transact(
+		context.Background(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
@@ -321,6 +335,7 @@ func (s *ProposalStatusTestSuite) TestBridge_Unpause_Success() {
 
 func (s *ProposalStatusTestSuite) TestBridge_Withdraw_Success() {
 	s.mockTransactor.EXPECT().Transact(
+		context.Background(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),

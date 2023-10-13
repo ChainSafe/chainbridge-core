@@ -2,6 +2,7 @@ package bridge
 
 import (
 	"bytes"
+	"context"
 	"math/big"
 	"strconv"
 	"strings"
@@ -41,6 +42,7 @@ func (c *BridgeContract) AddRelayer(
 ) (*common.Hash, error) {
 	log.Debug().Msgf("Adding new relayer %s", relayerAddr.String())
 	return c.ExecuteTransaction(
+		context.Background(),
 		"adminAddRelayer",
 		opts,
 		relayerAddr,
@@ -58,6 +60,7 @@ func (c *BridgeContract) AdminSetGenericResource(
 ) (*common.Hash, error) {
 	log.Debug().Msgf("Setting generic resource %s", hexutil.Encode(rID[:]))
 	return c.ExecuteTransaction(
+		context.Background(),
 		"adminSetGenericResource",
 		opts,
 		handler, rID, addr, depositFunctionSig, depositerOffset, executeFunctionSig,
@@ -72,6 +75,7 @@ func (c *BridgeContract) AdminSetResource(
 ) (*common.Hash, error) {
 	log.Debug().Msgf("Setting resource %s", hexutil.Encode(rID[:]))
 	return c.ExecuteTransaction(
+		context.Background(),
 		"adminSetResource",
 		opts,
 		handlerAddr, rID, targetContractAddr,
@@ -85,6 +89,7 @@ func (c *BridgeContract) SetDepositNonce(
 ) (*common.Hash, error) {
 	log.Debug().Msgf("Setting deposit nonce %d for %d", depositNonce, domainId)
 	return c.ExecuteTransaction(
+		context.Background(),
 		"adminSetDepositNonce",
 		opts,
 		domainId, depositNonce,
@@ -97,6 +102,7 @@ func (c *BridgeContract) AdminChangeRelayerThreshold(
 ) (*common.Hash, error) {
 	log.Debug().Msgf("Setting threshold %d", threshold)
 	return c.ExecuteTransaction(
+		context.Background(),
 		"adminChangeRelayerThreshold",
 		opts,
 		big.NewInt(0).SetUint64(threshold),
@@ -110,6 +116,7 @@ func (c *BridgeContract) SetBurnableInput(
 ) (*common.Hash, error) {
 	log.Debug().Msgf("Setting burnable input for %s", tokenContractAddr.String())
 	return c.ExecuteTransaction(
+		context.Background(),
 		"adminSetBurnable",
 		opts,
 		handlerAddr, tokenContractAddr,
@@ -123,6 +130,7 @@ func (c *BridgeContract) deposit(
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
 	return c.ExecuteTransaction(
+		context.Background(),
 		"deposit",
 		opts,
 		destDomainID, resourceID, data,
@@ -210,6 +218,7 @@ func (c *BridgeContract) ExecuteProposal(
 		Str("handler", proposal.HandlerAddress.String()).
 		Msgf("Execute proposal")
 	return c.ExecuteTransaction(
+		context.Background(),
 		"executeProposal",
 		opts,
 		proposal.Source, proposal.DepositNonce, proposal.Data, proposal.ResourceId, true,
@@ -226,6 +235,7 @@ func (c *BridgeContract) VoteProposal(
 		Str("handler", proposal.HandlerAddress.String()).
 		Msgf("Vote proposal")
 	return c.ExecuteTransaction(
+		context.Background(),
 		"voteProposal",
 		opts,
 		proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data,
@@ -248,6 +258,7 @@ func (c *BridgeContract) SimulateVoteProposal(proposal *proposal.Proposal) error
 func (c *BridgeContract) Pause(opts transactor.TransactOptions) (*common.Hash, error) {
 	log.Debug().Msg("Pause transfers")
 	return c.ExecuteTransaction(
+		context.Background(),
 		"adminPauseTransfers",
 		opts,
 	)
@@ -256,6 +267,7 @@ func (c *BridgeContract) Pause(opts transactor.TransactOptions) (*common.Hash, e
 func (c *BridgeContract) Unpause(opts transactor.TransactOptions) (*common.Hash, error) {
 	log.Debug().Msg("Unpause transfers")
 	return c.ExecuteTransaction(
+		context.Background(),
 		"adminUnpauseTransfers",
 		opts,
 	)
@@ -277,7 +289,7 @@ func (c *BridgeContract) Withdraw(
 	data.Write(common.LeftPadBytes(recipientAddress.Bytes(), 32))
 	data.Write(common.LeftPadBytes(amountOrTokenId.Bytes(), 32))
 
-	return c.ExecuteTransaction("adminWithdraw", opts, handlerAddress, data.Bytes())
+	return c.ExecuteTransaction(context.Background(), "adminWithdraw", opts, handlerAddress, data.Bytes())
 }
 
 func (c *BridgeContract) GetThreshold() (uint8, error) {

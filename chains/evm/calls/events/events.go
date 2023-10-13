@@ -3,6 +3,8 @@ package events
 import (
 	"fmt"
 
+	"github.com/status-im/keycard-go/hexutils"
+
 	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -42,5 +44,11 @@ type Deposit struct {
 }
 
 func (d *Deposit) TraceEventAttributes() []attribute.KeyValue {
-	return []attribute.KeyValue{attribute.Int("deposit.dstdomain", int(d.DestinationDomainID)), attribute.String("deposit.rID", fmt.Sprintf("%x", d.ResourceID)), attribute.String("tx.sender", d.SenderAddress.Hex())}
+	return []attribute.KeyValue{attribute.Int("deposit.dstdomain", int(d.DestinationDomainID)), attribute.String("deposit.rID", fmt.Sprintf("%x", d.ResourceID)), attribute.String("deposit.sender", d.SenderAddress.Hex())}
+}
+
+func (d *Deposit) String() string {
+	return fmt.Sprintf(
+		`Destination: %d,DepositNonce: %d,ResourceID: %x,Sender: %s, Data: %s, HandlerResponse: %s`,
+		d.DestinationDomainID, d.DepositNonce, d.ResourceID, d.SenderAddress.Hex(), hexutils.BytesToHex(d.Data), hexutils.BytesToHex(d.HandlerResponse))
 }

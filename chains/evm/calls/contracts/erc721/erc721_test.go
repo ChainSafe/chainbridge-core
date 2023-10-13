@@ -80,6 +80,7 @@ func (s *ERC721CallsTestSuite) TestERC721Contract_UnpackResult_InvalidData_Fail(
 
 func (s *ERC721CallsTestSuite) TestERC721Contract_Approve_Success() {
 	s.mockTransactor.EXPECT().Transact(
+		gomock.Any(),
 		&s.erc721ContractAddress,
 		gomock.Any(),
 		transactor.TransactOptions{},
@@ -106,6 +107,7 @@ func (s *ERC721CallsTestSuite) TestERC721Contract_AddMinter_Success() {
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
+		gomock.Any(),
 	).Return(&common.Hash{1, 2, 3}, nil)
 	res, err := s.erc721Contract.AddMinter(common.HexToAddress(testInteractorAddress), transactor.DefaultTransactionOptions)
 	s.Equal(
@@ -117,6 +119,7 @@ func (s *ERC721CallsTestSuite) TestERC721Contract_AddMinter_Success() {
 
 func (s *ERC721CallsTestSuite) TestERC721Contract_MintTokens_Success() {
 	s.mockTransactor.EXPECT().Transact(
+		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),

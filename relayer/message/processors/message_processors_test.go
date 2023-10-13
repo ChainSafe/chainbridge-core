@@ -1,15 +1,17 @@
-package message
+package processors
 
 import (
 	"context"
 	"math/big"
 	"testing"
+
+	"github.com/ChainSafe/chainbridge-core/relayer/message"
 )
 
 // TestRouter tests relayers router
 func TestAdjustDecimalsForERC20AmountMessageProcessor(t *testing.T) {
 	a, _ := big.NewInt(0).SetString("145556700000000000000", 10) // 145.5567 tokens
-	msg := &Message{
+	msg := &message.Message{
 		Destination: 2,
 		Source:      1,
 		Payload: []interface{}{
@@ -24,7 +26,7 @@ func TestAdjustDecimalsForERC20AmountMessageProcessor(t *testing.T) {
 	if amount.Cmp(big.NewInt(14555)) != 0 {
 		t.Fatal(amount.String())
 	}
-	msg2 := &Message{
+	msg2 := &message.Message{
 		Destination: 1,
 		Source:      2,
 		Payload: []interface{}{

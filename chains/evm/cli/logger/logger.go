@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/ChainSafe/chainbridge-core/logger"
+	"github.com/ChainSafe/chainbridge-core/observability"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/pflag"
@@ -43,5 +43,5 @@ func LoggerMetadata(cmdName string, flagSet *pflag.FlagSet) {
 	// PartsExclude - omit log level and execution time from final log
 	logConsoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, PartsExclude: []string{"level", "time"}}
 	logFileWriter := zerolog.ConsoleWriter{Out: file, PartsExclude: []string{"level", "time"}}
-	logger.ConfigureLogger(zerolog.DebugLevel, logConsoleWriter, logFileWriter)
+	observability.ConfigureLogger(zerolog.DebugLevel, logConsoleWriter, logFileWriter)
 }

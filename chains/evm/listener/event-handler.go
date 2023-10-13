@@ -2,17 +2,15 @@ package listener
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 
-	traceapi "go.opentelemetry.io/otel/trace"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/events"
+	"github.com/ChainSafe/chainbridge-core/observability"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/rs/zerolog/log"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )
@@ -43,14 +41,16 @@ func NewDepositEventHandler(eventListener EventListener, depositHandler DepositH
 }
 
 func (eh *DepositEventHandler) HandleEvent(ctx context.Context, startBlock *big.Int, endBlock *big.Int, msgChan chan []*message.Message) error {
-	ctxWithSpan, span := otel.Tracer("relayer-core").Start(ctx, "relayer.core.DepositEventHandler.HandleEvent")
+	ctxWithSpan, span, logger := observability.CreateSpanAndLoggerFromContext(
+		ctx,
+		"relayer-core",
+		"relayer.core.DepositEventHandler.HandleEvent",
+		attribute.String("startBlock", startBlock.String()), attribute.String("endBlock", endBlock.String()))
 	defer span.End()
-	span.SetAttributes(attribute.String("startBlock", startBlock.String()), attribute.String("endBlock", endBlock.String()))
-	logger := log.With().Str("dd.trace_id", span.SpanContext().TraceID().String()).Logger()
+
 	deposits, err := eh.eventListener.FetchDeposits(ctxWithSpan, eh.bridgeAddress, startBlock, endBlock)
 	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return fmt.Errorf("unable to fetch deposit events because of: %+v", err)
+		return observability.LogAndRecordErrorWithStatus(nil, span, err, "unable to fetch deposit events")
 	}
 
 	domainDeposits := make(map[uint8][]*message.Message)
@@ -58,7 +58,7 @@ func (eh *DepositEventHandler) HandleEvent(ctx context.Context, startBlock *big.
 		func(d *events.Deposit) {
 			defer func() {
 				if r := recover(); r != nil {
-					log.Error().Err(err).Msgf("panic occured while handling deposit %+v", d)
+					_ = observability.LogAndRecordError(&logger, span, errors.New("panic"), "panic occured while handling deposit", d.TraceEventAttributes()...)
 				}
 			}()
 
@@ -68,10 +68,13 @@ func (eh *DepositEventHandler) HandleEvent(ctx context.Context, startBlock *big.
 				span.SetStatus(codes.Error, err.Error())
 				return
 			}
-
-			logger.Debug().Str("msg.id", m.ID()).Msgf("Resolved message %s in block range: %s-%s", m.String(), startBlock.String(), endBlock.String())
-			span.AddEvent("Resolved message", traceapi.WithAttributes(attribute.String("msg.id", m.ID()), attribute.String("msg.type", string(m.Type))))
 			domainDeposits[m.Destination] = append(domainDeposits[m.Destination], m)
+			observability.LogAndEvent(
+				logger.Debug(),
+				span,
+				fmt.Sprintf("Resolved message %s in block range: %s-%s", m.String(), startBlock.String(), endBlock.String()),
+				attribute.String("msg.id", m.ID()),
+				attribute.String("msg.type", string(m.Type)))
 		}(d)
 	}
 
@@ -80,6 +83,5 @@ func (eh *DepositEventHandler) HandleEvent(ctx context.Context, startBlock *big.
 			msgChan <- d
 		}(deposits)
 	}
-	span.SetStatus(codes.Ok, "Deposits handled")
 	return nil
 }

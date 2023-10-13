@@ -1,7 +1,12 @@
 package contracts
 
 import (
+	"context"
 	"errors"
+	"math/big"
+	"strings"
+	"testing"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	mock_calls "github.com/ChainSafe/chainbridge-core/chains/evm/calls/mock"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
@@ -10,9 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
-	"math/big"
-	"strings"
-	"testing"
 )
 
 type ContractTestSuite struct {
@@ -66,12 +68,13 @@ func (s *ContractTestSuite) TestContract_UnpackResult_InvalidRequest_Fail() {
 
 func (s *ContractTestSuite) TestContract_ExecuteTransaction_ValidRequest_Success() {
 	s.mockTransactor.EXPECT().Transact(
+		context.Background(),
 		&common.Address{},
 		gomock.Any(),
 		transactor.TransactOptions{},
 	).Return(&common.Hash{}, nil)
 	hash, err := s.contract.ExecuteTransaction(
-		"approve",
+		context.Background(), "approve",
 		transactor.TransactOptions{}, common.Address{}, big.NewInt(10),
 	)
 	s.Nil(err)
@@ -80,11 +83,13 @@ func (s *ContractTestSuite) TestContract_ExecuteTransaction_ValidRequest_Success
 
 func (s *ContractTestSuite) TestContract_ExecuteTransaction_TransactError_Fail() {
 	s.mockTransactor.EXPECT().Transact(
+		context.Background(),
 		&common.Address{},
 		gomock.Any(),
 		transactor.TransactOptions{},
 	).Return(nil, errors.New("error"))
 	hash, err := s.contract.ExecuteTransaction(
+		context.Background(),
 		"approve",
 		transactor.TransactOptions{}, common.Address{}, big.NewInt(10),
 	)
@@ -94,6 +99,7 @@ func (s *ContractTestSuite) TestContract_ExecuteTransaction_TransactError_Fail()
 
 func (s *ContractTestSuite) TestContract_ExecuteTransaction_InvalidRequest_Fail() {
 	hash, err := s.contract.ExecuteTransaction(
+		context.Background(),
 		"approve",
 		transactor.TransactOptions{}, common.Address{}, // missing one argument
 	)
@@ -149,7 +155,7 @@ func (s *ContractTestSuite) TestContract_DeployContract_InvalidRequest_Fail() {
 
 func (s *ContractTestSuite) TestContract_DeployContract_TransactionError_Fail() {
 	s.mockTransactor.EXPECT().Transact(
-		nil, gomock.Any(), gomock.Any(),
+		context.Background(), nil, gomock.Any(), gomock.Any(),
 	).Times(1).Return(&common.Hash{}, errors.New("error"))
 	res, err := s.contract.DeployContract("TestERC721", "TST721", "")
 	s.Equal(common.Address{}, res)
@@ -158,7 +164,7 @@ func (s *ContractTestSuite) TestContract_DeployContract_TransactionError_Fail() 
 
 func (s *ContractTestSuite) TestContract_DeployContract_GetTxByHashError_Fail() {
 	s.mockTransactor.EXPECT().Transact(
-		nil, gomock.Any(), gomock.Any(),
+		context.Background(), nil, gomock.Any(), gomock.Any(),
 	).Times(1).Return(&common.Hash{}, nil)
 	s.mockContractCallerDispatcherClient.EXPECT().GetTransactionByHash(
 		common.Hash{},

@@ -9,12 +9,13 @@ import (
 	"math/big"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/ChainSafe/chainbridge-core/observability"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/ChainSafe/chainbridge-core/store"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/codes"
 )
 
 type EventHandler interface {
@@ -77,13 +78,11 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 		case <-ctx.Done():
 			return
 		default:
-			ctxWithSpan, span := otel.Tracer("relayer-core").Start(ctx, "relayer.core.EVMListener.ListenToEvents")
-			logger := l.log.With().Str("dd.trace_id", span.SpanContext().TraceID().String()).Logger()
+			ctxWithSpan, span, logger := observability.CreateSpanAndLoggerFromContext(ctx, "relayer-core", "relayer.core.EVMListener.ListenToEvents")
 			head, err := l.client.LatestBlock()
 			if err != nil {
-				logger.Error().Err(err).Msg("Unable to get latest block")
 				time.Sleep(l.blockRetryInterval)
-				span.RecordError(fmt.Errorf("unable to get latest block with err: %w", err))
+				_ = observability.LogAndRecordError(&logger, span, err, "Unable to get latest block")
 				span.End()
 				continue
 			}
@@ -95,19 +94,19 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 			// Sleep if the difference is less than needed block confirmations; (latest - current) < BlockDelay
 			if new(big.Int).Sub(head, endBlock).Cmp(l.blockConfirmations) == -1 {
 				time.Sleep(l.blockRetryInterval)
-				span.AddEvent("The block difference is too low")
-				span.SetStatus(codes.Ok, "The block difference is too low")
+				observability.LogAndEvent(logger.Debug(), span, fmt.Sprintf("Block difference is less then %s", l.blockConfirmations))
 				span.End()
 				continue
 			}
 
 			l.metrics.TrackBlockDelta(l.domainID, head, endBlock)
-			logger.Debug().Msgf("Fetching evm events for block range %s-%s", startBlock, endBlock)
+
+			observability.LogAndEvent(logger.Debug(), span, fmt.Sprintf("Fetching evm events for block range %s-%s", startBlock, endBlock), attribute.String("startBlock", startBlock.String()), attribute.String("endBlock", endBlock.String()))
 
 			for _, handler := range l.eventHandlers {
 				err := handler.HandleEvent(ctxWithSpan, startBlock, new(big.Int).Sub(endBlock, big.NewInt(1)), msgChan)
 				if err != nil {
-					logger.Error().Err(err).Msgf("Unable to handle events")
+					_ = observability.LogAndRecordError(&logger, span, err, "Unable to handle event")
 					continue
 				}
 			}
@@ -115,12 +114,9 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 			//Write to block store. Not a critical operation, no need to retry
 			err = l.blockstore.StoreBlock(endBlock, l.domainID)
 			if err != nil {
-				logger.Error().Str("block", endBlock.String()).Err(err).Msg("Failed to write latest block to blockstore")
-				span.RecordError(fmt.Errorf("failed to write latest block to blockstore: %w", err))
+				_ = observability.LogAndRecordError(&logger, span, err, "Failed to write latest block to blockstore")
 			}
-
 			startBlock.Add(startBlock, l.blockInterval)
-			span.SetStatus(codes.Ok, "Listened to events")
 			span.End()
 		}
 	}

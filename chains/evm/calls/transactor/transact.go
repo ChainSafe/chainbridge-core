@@ -1,6 +1,7 @@
 package transactor
 
 import (
+	"context"
 	"math/big"
 
 	"github.com/imdario/mergo"
@@ -40,5 +41,5 @@ func MergeTransactionOptions(primary *TransactOptions, additional *TransactOptio
 }
 
 type Transactor interface {
-	Transact(to *common.Address, data []byte, opts TransactOptions) (*common.Hash, error)
+	Transact(ctx context.Context, to *common.Address, data []byte, opts TransactOptions) (*common.Hash, error)
 }

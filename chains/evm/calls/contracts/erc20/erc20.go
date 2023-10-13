@@ -1,11 +1,13 @@
 package erc20
 
 import (
+	"context"
+	"math/big"
+	"strings"
+
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"math/big"
-	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -43,7 +45,7 @@ func (c *ERC20Contract) MintTokens(
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
 	log.Debug().Msgf("Minting %s tokens to %s", amount.String(), to.String())
-	return c.ExecuteTransaction("mint", opts, to, amount)
+	return c.ExecuteTransaction(context.Background(), "mint", opts, to, amount)
 }
 
 func (c *ERC20Contract) ApproveTokens(
@@ -52,7 +54,7 @@ func (c *ERC20Contract) ApproveTokens(
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
 	log.Debug().Msgf("Approving %s tokens for %s", target.String(), amount.String())
-	return c.ExecuteTransaction("approve", opts, target, amount)
+	return c.ExecuteTransaction(context.Background(), "approve", opts, target, amount)
 }
 
 func (c *ERC20Contract) MinterRole() ([32]byte, error) {
@@ -73,5 +75,5 @@ func (c *ERC20Contract) AddMinter(
 	if err != nil {
 		return nil, err
 	}
-	return c.ExecuteTransaction("grantRole", opts, role, minter)
+	return c.ExecuteTransaction(context.Background(), "grantRole", opts, role, minter)
 }

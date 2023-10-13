@@ -1,6 +1,7 @@
 package signAndSend_test
 
 import (
+	"context"
 	"math/big"
 	"testing"
 
@@ -54,6 +55,7 @@ func (s *TransactorTestSuite) TestTransactor_SignAndSend_Success() {
 		s.mockContractCallerDispatcherClient,
 	)
 	txHash, err := trans.Transact(
+		context.Background(),
 		&common.Address{},
 		byteData,
 		transactor.TransactOptions{},
