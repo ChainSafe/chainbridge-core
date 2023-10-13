@@ -1,209 +1,166 @@
 package listener_test
 
 import (
-	"errors"
+	"context"
+	"fmt"
 	"math/big"
 	"testing"
+	"time"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/events"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
+	mock_listener "github.com/ChainSafe/chainbridge-core/chains/evm/listener/mock"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
-
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
 )
 
-var errIncorrectCalldataLen = errors.New("invalid calldata length: less than 84 bytes")
-
 type ListenerTestSuite struct {
 	suite.Suite
+	listener            *listener.EVMListener
+	mockClient          *mock_listener.MockChainClient
+	mockEventHandler    *mock_listener.MockEventHandler
+	mockBlockStorer     *mock_listener.MockBlockStorer
+	mockBlockDeltaMeter *mock_listener.MockBlockDeltaMeter
+	domainID            uint8
 }
 
 func TestRunTestSuite(t *testing.T) {
 	suite.Run(t, new(ListenerTestSuite))
 }
 
-func (s *ListenerTestSuite) TestErc20HandleEvent() {
-	// 0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b
-	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}
-
-	// construct ERC20 deposit data
-	// follows behavior of solidity tests
-	// https://github.com/ChainSafe/chainbridge-solidity/blob/develop/test/contractBridge/depositERC20.js#L46-L50
-	var calldata []byte
-	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(2), 32)...)
-	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(recipientByteSlice))), 32)...)
-	calldata = append(calldata, recipientByteSlice...)
-
-	depositLog := &events.Deposit{
-		DestinationDomainID: 0,
-		ResourceID:          [32]byte{0},
-		DepositNonce:        1,
-		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
-		Data:                calldata,
-		HandlerResponse:     []byte{},
-	}
-
-	sourceID := uint8(1)
-	amountParsed := calldata[:32]
-	recipientAddressParsed := calldata[64:]
-
-	expected := &message.Message{
-		Source:       sourceID,
-		Destination:  depositLog.DestinationDomainID,
-		DepositNonce: depositLog.DepositNonce,
-		ResourceId:   depositLog.ResourceID,
-		Type:         message.FungibleTransfer,
-		Payload: []interface{}{
-			amountParsed,
-			recipientAddressParsed,
-		},
-	}
-
-	m, err := listener.Erc20DepositHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
-	s.Nil(err)
-	s.NotNil(m)
-	s.Equal(m, expected)
+func (s *ListenerTestSuite) SetupTest() {
+	ctrl := gomock.NewController(s.T())
+	s.domainID = 1
+	s.mockClient = mock_listener.NewMockChainClient(ctrl)
+	s.mockEventHandler = mock_listener.NewMockEventHandler(ctrl)
+	s.mockBlockStorer = mock_listener.NewMockBlockStorer(ctrl)
+	s.mockBlockDeltaMeter = mock_listener.NewMockBlockDeltaMeter(ctrl)
+	s.listener = listener.NewEVMListener(
+		s.mockClient,
+		[]listener.EventHandler{s.mockEventHandler, s.mockEventHandler},
+		s.mockBlockStorer,
+		s.mockBlockDeltaMeter,
+		s.domainID,
+		time.Millisecond*75,
+		big.NewInt(5),
+		big.NewInt(5))
 }
 
-func (s *ListenerTestSuite) TestErc20HandleEventIncorrectCalldataLen() {
-	// 0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b
-	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}
+func (s *ListenerTestSuite) Test_ListenToEvents_RetriesIfBlockUnavailable() {
+	s.mockClient.EXPECT().LatestBlock().Return(big.NewInt(0), fmt.Errorf("error"))
 
-	// construct ERC20 deposit data
-	// follows behavior of solidity tests
-	// https://github.com/ChainSafe/chainbridge-solidity/blob/develop/test/contractBridge/depositERC20.js#L46-L50
-	var calldata []byte
-	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(2), 16)...)
-	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(recipientByteSlice))), 16)...)
-	calldata = append(calldata, recipientByteSlice...)
+	ctx, cancel := context.WithCancel(context.Background())
+	msgChan := make(chan []*message.Message, 2)
+	go s.listener.ListenToEvents(ctx, nil, msgChan, nil)
 
-	depositLog := &events.Deposit{
-		DestinationDomainID: 0,
-		ResourceID:          [32]byte{0},
-		DepositNonce:        1,
-		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
-		Data:                calldata,
-		HandlerResponse:     []byte{},
-	}
-
-	sourceID := uint8(1)
-
-	m, err := listener.Erc20DepositHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
-	s.Nil(m)
-	s.EqualError(err, errIncorrectCalldataLen.Error())
+	time.Sleep(time.Millisecond * 50)
+	cancel()
 }
 
-func (s *ListenerTestSuite) TestErc721HandleEvent_WithMetadata_Sucess() {
-	// 0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b
-	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}
+func (s *ListenerTestSuite) Test_ListenToEvents_SleepsIfBlockTooNew() {
+	s.mockClient.EXPECT().LatestBlock().Return(big.NewInt(109), nil)
 
-	metadataByteSlice := []byte{132, 121, 165, 51, 119, 4, 194, 218, 249, 250, 250, 212, 173, 9, 147, 218, 249, 250, 250, 4, 194, 218, 132, 121, 194, 218, 132, 121, 194, 218, 132, 121}
+	ctx, cancel := context.WithCancel(context.Background())
+	msgChan := make(chan []*message.Message, 2)
 
-	var calldata []byte
-	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(2), 32)...)
-	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(recipientByteSlice))), 32)...)
-	calldata = append(calldata, recipientByteSlice...)
-	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(metadataByteSlice))), 32)...)
-	calldata = append(calldata, metadataByteSlice...)
+	go s.listener.ListenToEvents(ctx, big.NewInt(100), msgChan, nil)
 
-	depositLog := &events.Deposit{
-		DestinationDomainID: 0,
-		ResourceID:          [32]byte{0},
-		DepositNonce:        1,
-		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
-		Data:                calldata,
-		HandlerResponse:     []byte{},
-	}
-
-	sourceID := uint8(1)
-	tokenIdParsed := calldata[:32]
-	recipientAddressParsed := calldata[64:84]
-	metadataParsed := calldata[116:]
-
-	expected := &message.Message{
-		Source:       sourceID,
-		Destination:  depositLog.DestinationDomainID,
-		DepositNonce: depositLog.DepositNonce,
-		ResourceId:   depositLog.ResourceID,
-		Type:         message.NonFungibleTransfer,
-		Payload: []interface{}{
-			tokenIdParsed,
-			recipientAddressParsed,
-			metadataParsed,
-		},
-	}
-
-	m, err := listener.Erc721DepositHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
-	s.Nil(err)
-	s.NotNil(m)
-	s.Equal(expected, m)
+	time.Sleep(time.Millisecond * 50)
+	cancel()
 }
 
-func (s *ListenerTestSuite) TestErc721HandleEvent_WithoutMetadata_Success() {
-	// 0xf1e58fb17704c2da8479a533f9fad4ad0993ca6b
-	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194, 218, 132, 121, 165, 51, 249, 250, 212, 173, 9, 147, 202, 107}
+func (s *ListenerTestSuite) Test_ListenToEvents_RetriesInCaseOfHandlerFailure() {
+	startBlock := big.NewInt(100)
+	endBlock := big.NewInt(105)
+	head := big.NewInt(110)
+	msgChan := make(chan []*message.Message, 2)
 
-	var calldata []byte
-	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(2), 32)...)
-	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(recipientByteSlice))), 32)...)
-	calldata = append(calldata, recipientByteSlice...)
-	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(0)), 32)...)
+	// First pass
+	s.mockClient.EXPECT().LatestBlock().Return(head, nil)
+	s.mockBlockDeltaMeter.EXPECT().TrackBlockDelta(uint8(1), head, endBlock)
+	s.mockEventHandler.EXPECT().HandleEvent(startBlock, new(big.Int).Sub(endBlock, big.NewInt(1)), msgChan).Return(fmt.Errorf("error"))
+	// Second pass
+	s.mockClient.EXPECT().LatestBlock().Return(head, nil)
+	s.mockBlockDeltaMeter.EXPECT().TrackBlockDelta(uint8(1), head, endBlock)
+	s.mockEventHandler.EXPECT().HandleEvent(startBlock, new(big.Int).Sub(endBlock, big.NewInt(1)), msgChan).Return(nil)
+	s.mockEventHandler.EXPECT().HandleEvent(startBlock, new(big.Int).Sub(endBlock, big.NewInt(1)), msgChan).Return(nil)
+	s.mockBlockStorer.EXPECT().StoreBlock(endBlock, s.domainID).Return(nil)
+	// third pass
+	s.mockClient.EXPECT().LatestBlock().Return(head, nil)
 
-	depositLog := &events.Deposit{
-		DestinationDomainID: 0,
-		ResourceID:          [32]byte{0},
-		DepositNonce:        1,
-		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
-		Data:                calldata,
-		HandlerResponse:     []byte{},
-	}
+	ctx, cancel := context.WithCancel(context.Background())
 
-	sourceID := uint8(1)
-	tokenIdParsed := calldata[:32]
-	recipientAddressParsed := calldata[64:84]
-	var metadataParsed []byte
+	go s.listener.ListenToEvents(ctx, big.NewInt(100), msgChan, nil)
 
-	expected := &message.Message{
-		Source:       sourceID,
-		Destination:  depositLog.DestinationDomainID,
-		DepositNonce: depositLog.DepositNonce,
-		ResourceId:   depositLog.ResourceID,
-		Type:         message.NonFungibleTransfer,
-		Payload: []interface{}{
-			tokenIdParsed,
-			recipientAddressParsed,
-			metadataParsed,
-		},
-	}
-
-	m, err := listener.Erc721DepositHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
-	s.Nil(err)
-	s.NotNil(m)
-	s.Equal(expected, m)
+	time.Sleep(time.Millisecond * 50)
+	cancel()
 }
 
-func (s *ListenerTestSuite) TestErc721HandleEvent_IncorrectCalldataLen_Failure() {
-	recipientByteSlice := []byte{241, 229, 143, 177, 119, 4, 194}
+func (s *ListenerTestSuite) Test_ListenToEvents_StoresBlockIfEventHandlingSuccessful() {
+	startBlock := big.NewInt(100)
+	endBlock := big.NewInt(105)
+	head := big.NewInt(110)
+	msgChan := make(chan []*message.Message, 2)
 
-	var calldata []byte
-	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(2), 32)...)
-	calldata = append(calldata, math.PaddedBigBytes(big.NewInt(int64(len(recipientByteSlice))), 16)...)
-	calldata = append(calldata, recipientByteSlice...)
+	s.mockClient.EXPECT().LatestBlock().Return(head, nil)
+	// prevent infinite runs
+	s.mockClient.EXPECT().LatestBlock().Return(big.NewInt(95), nil)
+	s.mockBlockDeltaMeter.EXPECT().TrackBlockDelta(uint8(1), head, endBlock)
+	s.mockEventHandler.EXPECT().HandleEvent(startBlock, new(big.Int).Sub(endBlock, big.NewInt(1)), msgChan).Return(nil)
+	s.mockEventHandler.EXPECT().HandleEvent(startBlock, new(big.Int).Sub(endBlock, big.NewInt(1)), msgChan).Return(nil)
+	s.mockBlockStorer.EXPECT().StoreBlock(endBlock, s.domainID).Return(nil)
 
-	depositLog := &events.Deposit{
-		DestinationDomainID: 0,
-		ResourceID:          [32]byte{0},
-		DepositNonce:        1,
-		SenderAddress:       common.HexToAddress("0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485"),
-		Data:                calldata,
-		HandlerResponse:     []byte{},
-	}
+	ctx, cancel := context.WithCancel(context.Background())
 
-	sourceID := uint8(1)
+	go s.listener.ListenToEvents(ctx, big.NewInt(100), msgChan, nil)
 
-	m, err := listener.Erc721DepositHandler(sourceID, depositLog.DestinationDomainID, depositLog.DepositNonce, depositLog.ResourceID, depositLog.Data, depositLog.HandlerResponse)
-	s.Nil(m)
-	s.EqualError(err, errIncorrectCalldataLen.Error())
+	time.Sleep(time.Millisecond * 50)
+	cancel()
+}
+
+func (s *ListenerTestSuite) Test_ListenToEvents_IgnoresBlocStorerError() {
+	startBlock := big.NewInt(100)
+	endBlock := big.NewInt(105)
+	head := big.NewInt(110)
+	msgChan := make(chan []*message.Message, 2)
+
+	s.mockClient.EXPECT().LatestBlock().Return(head, nil)
+	// prevent infinite runs
+	s.mockClient.EXPECT().LatestBlock().Return(big.NewInt(95), nil)
+	s.mockBlockDeltaMeter.EXPECT().TrackBlockDelta(uint8(1), head, endBlock)
+	s.mockEventHandler.EXPECT().HandleEvent(startBlock, new(big.Int).Sub(endBlock, big.NewInt(1)), msgChan).Return(nil)
+	s.mockEventHandler.EXPECT().HandleEvent(startBlock, new(big.Int).Sub(endBlock, big.NewInt(1)), msgChan).Return(nil)
+	s.mockBlockStorer.EXPECT().StoreBlock(endBlock, s.domainID).Return(fmt.Errorf("error"))
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go s.listener.ListenToEvents(ctx, big.NewInt(100), msgChan, nil)
+
+	time.Sleep(time.Millisecond * 50)
+	cancel()
+}
+
+func (s *ListenerTestSuite) Test_ListenToEvents_UsesHeadAsStartBlockIfNilPassed() {
+	startBlock := big.NewInt(110)
+	endBlock := big.NewInt(115)
+	oldHead := big.NewInt(110)
+	newHead := big.NewInt(120)
+	msgChan := make(chan []*message.Message, 2)
+
+	s.mockClient.EXPECT().LatestBlock().Return(oldHead, nil)
+	s.mockClient.EXPECT().LatestBlock().Return(newHead, nil)
+	s.mockClient.EXPECT().LatestBlock().Return(big.NewInt(65), nil)
+
+	s.mockBlockDeltaMeter.EXPECT().TrackBlockDelta(uint8(1), big.NewInt(120), endBlock)
+
+	s.mockEventHandler.EXPECT().HandleEvent(startBlock, new(big.Int).Sub(endBlock, big.NewInt(1)), msgChan).Return(nil)
+	s.mockEventHandler.EXPECT().HandleEvent(startBlock, new(big.Int).Sub(endBlock, big.NewInt(1)), msgChan).Return(nil)
+	s.mockBlockStorer.EXPECT().StoreBlock(endBlock, s.domainID).Return(nil)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go s.listener.ListenToEvents(ctx, nil, msgChan, nil)
+
+	time.Sleep(time.Millisecond * 100)
+	cancel()
 }
