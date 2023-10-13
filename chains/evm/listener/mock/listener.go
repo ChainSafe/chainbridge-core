@@ -44,7 +44,7 @@ func (m *MockEventHandler) HandleEvent(startBlock, endBlock *big.Int, msgChan ch
 }
 
 // HandleEvent indicates an expected call of HandleEvent.
-func (mr *MockEventHandlerMockRecorder) HandleEvent(startBlock, endBlock, msgChan any) *gomock.Call {
+func (mr *MockEventHandlerMockRecorder) HandleEvent(startBlock, endBlock, msgChan interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HandleEvent", reflect.TypeOf((*MockEventHandler)(nil).HandleEvent), startBlock, endBlock, msgChan)
 }
@@ -117,7 +117,7 @@ func (m *MockBlockDeltaMeter) TrackBlockDelta(domainID uint8, head, current *big
 }
 
 // TrackBlockDelta indicates an expected call of TrackBlockDelta.
-func (mr *MockBlockDeltaMeterMockRecorder) TrackBlockDelta(domainID, head, current any) *gomock.Call {
+func (mr *MockBlockDeltaMeterMockRecorder) TrackBlockDelta(domainID, head, current interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrackBlockDelta", reflect.TypeOf((*MockBlockDeltaMeter)(nil).TrackBlockDelta), domainID, head, current)
 }
@@ -154,7 +154,7 @@ func (m *MockBlockStorer) StoreBlock(block *big.Int, domainID uint8) error {
 }
 
 // StoreBlock indicates an expected call of StoreBlock.
-func (mr *MockBlockStorerMockRecorder) StoreBlock(block, domainID any) *gomock.Call {
+func (mr *MockBlockStorerMockRecorder) StoreBlock(block, domainID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreBlock", reflect.TypeOf((*MockBlockStorer)(nil).StoreBlock), block, domainID)
 }

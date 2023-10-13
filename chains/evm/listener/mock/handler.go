@@ -49,7 +49,7 @@ func (m *MockEventListener) FetchDeposits(ctx context.Context, address common.Ad
 }
 
 // FetchDeposits indicates an expected call of FetchDeposits.
-func (mr *MockEventListenerMockRecorder) FetchDeposits(ctx, address, startBlock, endBlock any) *gomock.Call {
+func (mr *MockEventListenerMockRecorder) FetchDeposits(ctx, address, startBlock, endBlock interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchDeposits", reflect.TypeOf((*MockEventListener)(nil).FetchDeposits), ctx, address, startBlock, endBlock)
 }
@@ -87,7 +87,7 @@ func (m *MockDepositHandler) HandleDeposit(sourceID, destID uint8, nonce uint64,
 }
 
 // HandleDeposit indicates an expected call of HandleDeposit.
-func (mr *MockDepositHandlerMockRecorder) HandleDeposit(sourceID, destID, nonce, resourceID, calldata, handlerResponse any) *gomock.Call {
+func (mr *MockDepositHandlerMockRecorder) HandleDeposit(sourceID, destID, nonce, resourceID, calldata, handlerResponse interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HandleDeposit", reflect.TypeOf((*MockDepositHandler)(nil).HandleDeposit), sourceID, destID, nonce, resourceID, calldata, handlerResponse)
 }
