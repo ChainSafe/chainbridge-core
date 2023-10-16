@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
-	"github.com/ChainSafe/chainbridge-core/store"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -27,13 +26,17 @@ type BlockDeltaMeter interface {
 	TrackBlockDelta(domainID uint8, head *big.Int, current *big.Int)
 }
 
+type BlockStorer interface {
+	StoreBlock(block *big.Int, domainID uint8) error
+}
+
 type EVMListener struct {
 	client        ChainClient
 	eventHandlers []EventHandler
 	metrics       BlockDeltaMeter
 
 	domainID           uint8
-	blockstore         *store.BlockStore
+	blockstore         BlockStorer
 	blockRetryInterval time.Duration
 	blockConfirmations *big.Int
 	blockInterval      *big.Int
@@ -46,7 +49,7 @@ type EVMListener struct {
 func NewEVMListener(
 	client ChainClient,
 	eventHandlers []EventHandler,
-	blockstore *store.BlockStore,
+	blockstore BlockStorer,
 	metrics BlockDeltaMeter,
 	domainID uint8,
 	blockRetryInterval time.Duration,
@@ -70,6 +73,7 @@ func NewEVMListener(
 // configured for the listener.
 func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, msgChan chan []*message.Message, errChn chan<- error) {
 	endBlock := big.NewInt(0)
+loop:
 	for {
 		select {
 		case <-ctx.Done():
@@ -98,9 +102,10 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, startBlock *big.Int, m
 			for _, handler := range l.eventHandlers {
 				err := handler.HandleEvent(startBlock, new(big.Int).Sub(endBlock, big.NewInt(1)), msgChan)
 				if err != nil {
-					l.log.Error().Err(err).Msgf("Unable to handle events")
-					continue
+					l.log.Warn().Err(err).Msgf("Unable to handle events")
+					continue loop
 				}
+
 			}
 
 			//Write to block store. Not a critical operation, no need to retry
