@@ -12,6 +12,9 @@
 
 &nbsp;
 
+# Migration Notice 
+Please note the Chainbridge-Core repo will be migrated to Sygma-Core as part of ongoing work to update the codebase. See [Sygma](https://github.com/sygmaprotocol) to learn more.
+
 Chainbridge-Core was born from and built to improve the maintainability and modularity of the existing version of [ChainBridge](https://github.com/ChainSafe/chainbridge). The fundamental distinction between the two is that Chainbridge-Core is more of a framework rather than a stand-alone application.
 
 &nbsp;
