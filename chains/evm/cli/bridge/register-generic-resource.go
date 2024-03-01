@@ -60,8 +60,9 @@ func BindRegisterGenericResourceFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&ResourceID, "resource", "", "Resource ID to query")
 	cmd.Flags().StringVar(&Bridge, "bridge", "", "Bridge contract address")
 	cmd.Flags().StringVar(&Target, "target", "", "Contract address or hash storage to be registered")
-	cmd.Flags().StringVar(&Deposit, "deposit", "0x00000000", "Deposit function signature")
-	cmd.Flags().StringVar(&Execute, "execute", "0x00000000", "Execute proposal function signature")
+	cmd.Flags().StringVar(&Deposit, "deposit", "00000000", "Deposit function signature")
+	cmd.Flags().Uint64Var(&DepositerOffset, "depositerOffset", 0, "Offset to find the bridge tx depositer address inside the metadata sent on a deposit")
+	cmd.Flags().StringVar(&Execute, "execute", "00000000", "Execute proposal function signature")
 	cmd.Flags().BoolVar(&Hash, "hash", false, "Treat signature inputs as function prototype strings, hash and take the first 4 bytes")
 	flags.MarkFlagsAsRequired(cmd, "handler", "resource", "bridge", "target")
 }
@@ -103,12 +104,32 @@ func ProcessRegisterGenericResourceFlags(cmd *cobra.Command, args []string) erro
 	ResourceIdBytesArr = callsUtil.SliceTo32Bytes(resourceIdBytes)
 
 	if Hash {
+		// We must check whether both a deposit and execute function signature is provide or else
+		// an invalid hash of 0x00000000 will be taken and set as a function selector in the handler
 		DepositSigBytes = callsUtil.GetSolidityFunctionSig([]byte(Deposit))
 		ExecuteSigBytes = callsUtil.GetSolidityFunctionSig([]byte(Execute))
+		if Deposit == "00000000" {
+			DepositSigBytes = [4]byte{}
+		}
+		if Execute == "00000000" {
+			ExecuteSigBytes = [4]byte{}
+		}
 	} else {
-		copy(DepositSigBytes[:], []byte(Deposit)[:])
-		copy(ExecuteSigBytes[:], []byte(Execute)[:])
+		depositBytes, err := hex.DecodeString(Deposit)
+		if err != nil {
+			return err
+		}
+		copy(DepositSigBytes[:], depositBytes[:])
+
+		executeBytes, err := hex.DecodeString(Execute)
+		if err != nil {
+			return err
+		}
+		copy(ExecuteSigBytes[:], executeBytes[:])
 	}
+
+	log.Debug().Msgf("DepositSigBytes: %x\n", DepositSigBytes[:])
+	log.Debug().Msgf("ExecuteSigBytes: %x\n", ExecuteSigBytes[:])
 
 	return nil
 }
@@ -116,12 +137,20 @@ func ProcessRegisterGenericResourceFlags(cmd *cobra.Command, args []string) erro
 func RegisterGenericResource(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
 	log.Info().Msgf("Registering contract %s with resource ID %s on handler %s", TargetContractAddr, ResourceID, HandlerAddr)
 
+	depositerOffsetBigInt := new(big.Int).SetUint64(DepositerOffset)
+	log.Info().Msgf("handlerAddr: %s, resourceId: %s, targetcontract: %s, depositsigbytes: %s, depositerOffset: %s, executeSigBytes: %s",
+		HandlerAddr,
+		ResourceIdBytesArr,
+		TargetContractAddr,
+		string(DepositSigBytes[:]),
+		depositerOffsetBigInt,
+		string(DepositSigBytes[:]))
 	h, err := contract.AdminSetGenericResource(
 		HandlerAddr,
 		ResourceIdBytesArr,
 		TargetContractAddr,
 		DepositSigBytes,
-		big.NewInt(int64(DepositerOffset)),
+		depositerOffsetBigInt,
 		ExecuteSigBytes,
 		transactor.TransactOptions{GasLimit: gasLimit},
 	)
